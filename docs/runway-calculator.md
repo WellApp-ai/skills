@@ -1,0 +1,74 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../assets/brand/well-logo-white.svg">
+    <img src="../assets/brand/well-logo-black.svg" alt="Well" width="180">
+  </picture>
+</p>
+
+# Runway Calculator
+
+**Know exactly how many months and days of cash you have left.**
+
+## What it does
+
+Nobody should have to build a spreadsheet just to answer "how much runway do we have?" This skill checks your real bank balances against what you've actually been spending, and gives you a plain answer — in months *and* days — plus the exact math behind it, so you can trust the number or double-check it yourself.
+
+## Required data in Well
+
+- **Banking connector** — *required.* This is where your real cash balance comes from.
+- **Accounting connector or bank transaction history** — *required.* This is how the skill works out your burn rate (how fast you're spending).
+
+---
+
+## Installation
+
+### AI Assisted (Recommended)
+
+Paste this into any AI agent — Claude, Codex, Cursor, OpenCode, and others:
+
+<!-- NOTE: repo is currently private, so this raw link 404s until WellApp-ai/skills
+     goes public. Link is permanent (no token) and will work as-is once it does. -->
+
+```
+Install the following official skill from Well.
+
+**Instructions**:
+
+1. Fetch this file: 
+    https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/runway-calculator/SKILL.md
+2. Download and display this file to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
+3. Install this skill.
+4. Before replying to the user, ensure you have named the downloaded file "SKILL.md". This is crucial for the rest of the steps.
+5. If the MCP https://api.wellapp.ai/v1/mcp is not installed: suggest it to the user and explain how to add a new MCP.
+```
+
+### Manual Setup
+
+#### Claude Desktop
+
+Download the `.zip` and drag it into **Settings → Capabilities → Skills** (or use **Upload skill**):
+
+[⬇ Download runway-calculator.zip](https://github.com/WellApp-ai/skills/raw/main/dist/runway-calculator.zip)
+
+#### Advanced
+
+<!-- placeholder: swap for the real skills.sh org/listing once this skill is actually published there -->
+
+Install directly from **[skills.sh/wellapp](https://skills.sh/wellapp)**:
+
+```bash
+npx skills add wellapp/runway-calculator
+```
+
+---
+
+[← Back to all skills](../README.md#available-skills)
+
+<p align="center">
+  <img src="https://wellapp.ai/images/badges/soc2.avif" alt="SOC 2 Type I" height="40">
+  <img src="https://wellapp.ai/images/badges/gdpr.avif" alt="GDPR Compliant" height="40">
+</p>
+
+<p align="center">
+    <sub><b>Well is SOC-2 Type I and GDPR Compliant</b></sub>
+</p>
