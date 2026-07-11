@@ -24,6 +24,8 @@ Do not use this skill when:
 
 - The user wants a runway/cash-remaining answer — use the `runway-calculator` skill instead.
 - The user wants a raw transaction export, not a categorized breakdown — a plain `well_query_records` call on `transactions` is enough.
+- The user wants bills sorted by *due date* for cash-flow planning, not ranked by amount — use the `bills-due` skill instead.
+- The user wants a deep dive on one specific vendor (full contact info, full history) — use the `company-profile` skill instead.
 - No Well MCP connection is available and the user does not want to set one up — say so instead of guessing at numbers.
 
 ## Inputs

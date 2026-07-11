@@ -23,6 +23,8 @@ Use this skill when the user asks:
 Do not use this skill when:
 
 - The user wants a spend/category breakdown without a runway figure — use `expense-breakdown` instead.
+- The user just wants the current cash balance, no burn or runway math — use the `cash-position` skill instead.
+- The user wants a historical cash trend over time, not a forward-looking runway — use the `cash-balance-trend` skill instead.
 - The workspace has no bank/cash connector at all and the user declines to connect one — say runway can't be computed instead of estimating from nothing.
 
 ## Inputs

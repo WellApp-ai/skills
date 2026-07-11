@@ -1,8 +1,8 @@
 {
   "name": "well-skills",
-  "version": "1.0.0",
-  "description": "Grounded financial answers — expense breakdowns and cash runway calculations — computed live from Well's MCP financial graph.",
-  "keywords": ["finance", "runway", "expenses", "accounting", "cfo", "mcp", "well"],
+  "version": "1.1.0",
+  "description": "Grounded financial answers — expenses, runway, cash position, receivables, payables, FX exposure, reconciliation, and invoice drafting — computed live from Well's MCP financial graph.",
+  "keywords": ["finance", "runway", "expenses", "accounting", "cfo", "mcp", "well", "invoicing", "receivables", "reconciliation", "fx"],
   "skills": "./skills",
   "mcpServers": {
     "well": {
@@ -18,6 +18,6 @@
     "termsOfServiceURL": "https://wellapp.ai/terms/",
     "logo": "./assets/brand/well-logo-black.svg",
     "logoDark": "./assets/brand/well-logo-white.svg",
-    "defaultPrompt": ["What's my runway?", "Where does our money go?"]
+    "defaultPrompt": ["What's my runway?", "Where does our money go?", "Who owes us money?", "Draft an invoice for this client"]
   }
 }

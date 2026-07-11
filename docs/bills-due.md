@@ -1,0 +1,74 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="../assets/brand/well-logo-white.svg">
+    <img src="../assets/brand/well-logo-black.svg" alt="Well" width="180">
+  </picture>
+</p>
+
+# Bills Due
+
+**See exactly what's coming due, in what order, and how much cash it adds up to.**
+
+## What it does
+
+Instead of scanning a stack of invoices to figure out what's due next, ask your AI assistant "what bills are coming due?" and it pulls a date-ordered payment calendar straight from your synced invoices — overdue, due this week, due this month, and due later — with a running total so you can see how much cash is about to go out and by when.
+
+## Required data in Well
+
+- **Invoicing / bills connector** — *required.* This is where your unpaid and partially-paid bills come from.
+- **Banking or accounting connector** — *optional.* Not required to see the bills calendar, but helps confirm which bills have actually been paid.
+
+---
+
+## Installation
+
+### AI Assisted (Recommended)
+
+Paste this into any AI agent — Claude, Codex, Cursor, OpenCode, and others:
+
+<!-- NOTE: repo is currently private, so this raw link 404s until WellApp-ai/skills
+     goes public. Link is permanent (no token) and will work as-is once it does. -->
+
+```
+Install the following official skill from Well.
+
+**Instructions**:
+
+1. Fetch this file: 
+    https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/bills-due/SKILL.md
+2. Download and display this file to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
+3. Install this skill.
+4. Before replying to the user, ensure you have named the downloaded file "SKILL.md". This is crucial for the rest of the steps.
+5. If the MCP https://api.wellapp.ai/v1/mcp is not installed: suggest it to the user and explain how to add a new MCP.
+```
+
+### Manual Setup
+
+#### Claude Desktop
+
+Download the `.skill` file and double-click it — Claude Desktop installs it immediately, no drag-and-drop, no unzipping:
+
+[⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/bills-due.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/bills-due.zip)
+
+#### Advanced
+
+<!-- placeholder: swap for the real skills.sh org/listing once this skill is actually published there -->
+
+Install directly from **[skills.sh/wellapp](https://skills.sh/wellapp)**:
+
+```bash
+npx skills add wellapp/bills-due
+```
+
+---
+
+[← Back to all skills](../README.md#available-skills)
+
+<p align="center">
+  <img src="https://wellapp.ai/images/badges/soc2.avif" alt="SOC 2 Type I" height="40">
+  <img src="https://wellapp.ai/images/badges/gdpr.avif" alt="GDPR Compliant" height="40">
+</p>
+
+<p align="center">
+    <sub><b>Well is SOC-2 Type I and GDPR Compliant</b></sub>
+</p>
