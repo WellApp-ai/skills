@@ -4,7 +4,11 @@
   "description": "Grounded financial answers — expense breakdowns and cash runway calculations — computed live from Well's MCP financial graph.",
   "keywords": ["finance", "runway", "expenses", "accounting", "cfo", "mcp", "well"],
   "skills": "./skills",
-  "mcpServers": "./.mcp.json",
+  "mcpServers": {
+    "well": {
+      "url": "https://api.wellapp.ai/v1/mcp"
+    }
+  },
   "interface": {
     "displayName": "Well Financial Skills",
     "shortDescription": "Grounded financial answers from your real ledger and bank data.",
