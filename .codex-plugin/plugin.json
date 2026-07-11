@@ -1,0 +1,19 @@
+{
+  "name": "well-skills",
+  "version": "1.0.0",
+  "description": "Grounded financial answers — expense breakdowns and cash runway calculations — computed live from Well's MCP financial graph.",
+  "keywords": ["finance", "runway", "expenses", "accounting", "cfo", "mcp", "well"],
+  "skills": "./skills",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Well Financial Skills",
+    "shortDescription": "Grounded financial answers from your real ledger and bank data.",
+    "developerName": "Well App, Inc.",
+    "category": "Finance",
+    "websiteURL": "https://wellapp.ai",
+    "termsOfServiceURL": "https://wellapp.ai/terms/",
+    "logo": "./assets/brand/well-logo-black.svg",
+    "logoDark": "./assets/brand/well-logo-white.svg",
+    "defaultPrompt": ["What's my runway?", "Where does our money go?"]
+  }
+}
