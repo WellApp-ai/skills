@@ -1,0 +1,6 @@
+.DS_Store
+telemetry/
+# Skill-building related
+CLAUDE.md
+.githooks
+Makefile

@@ -1,0 +1,217 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/brand/well-logo-white.svg">
+    <img src="assets/brand/well-logo-black.svg" alt="Well" width="220">
+  </picture>
+</p>
+
+<p align="center"><strong>Grounded financial answers, delivered to you by your favorite agent.</strong></p>
+
+<p align="center">
+  <a href="https://skills.sh/wellapp"><img src="https://img.shields.io/badge/skills.sh-Browse%20Well%20skills-6b5b95" alt="Browse on skills.sh"></a>
+  <a href="#installation"><img src="https://img.shields.io/badge/Claude%20Desktop-Ready-d97757" alt="Claude Desktop double click install"></a>
+</p>
+
+> You don't have to dig through ledgers, invoices, and bank feeds by hand. Ask, and get a grounded answer with the receipts attached.
+
+## What is Well?
+
+**Well is the financial operating layer for founders, finance leads, and lean teams.** It connects to your bank accounts, accounting software, and invoicing tools, and gives your AI assistant secure, live access to that data through a standard called MCP — so it can answer with your real numbers instead of guessing.
+
+No more exporting CSVs, copy-pasting numbers between tabs, or waiting on a bookkeeper to answer "how much runway do we actually have?" Well keeps your ledger, invoices, balances, and transactions synced and ready to query, in real time, from the tools you already use — Claude, Cursor, ChatGPT, and more.
+
+```
+https://api.wellapp.ai/v1/mcp
+```
+
+That's the address your AI assistant connects to. You'll add it once, during setup. ([Jump to setup](#installation))
+
+## Why these skills exist
+
+Connecting Well gives your AI assistant the tools to reach your data. On its own, that doesn't teach it *how* to use them well — what to check first, how to handle an account that's still syncing, or how to avoid blending three currencies into one meaningless number. That judgment is exactly what turns raw data into an answer you can trust.
+
+This repo packages that judgment as **Agent Skills** — playbooks any AI assistant can follow. Each one confirms your account, checks there's enough real data to trust, pulls the right numbers, and — when something's missing — says so plainly instead of guessing.
+
+**What this saves you:**
+
+- **No more manual reconciliation.** A question like "what's my runway?" that used to mean opening three tools and building a spreadsheet now takes one prompt.
+- **No guessed numbers.** Every answer states its currency, as-of date, and how it was computed — so you can trust it or double-check it in seconds.
+- **No re-explaining your stack.** The skill already knows where to find what, so you don't have to walk your AI assistant through your setup every time.
+- **No dead ends.** If something isn't connected yet, the skill tells you exactly what to connect instead of returning nothing or making something up.
+
+## Available skills
+
+| Skill | Description | Details |
+|---|---|---|
+| `expense-breakdown` | "Where does our money go?" — top expense categories and the biggest outstanding bills, from the ledger and invoices. | [View details →](docs/expense-breakdown.md) |
+| `runway-calculator` | "What's our runway?" — real cash on hand vs. trailing burn, stated in months and days, with the full formula shown. | [View details →](docs/runway-calculator.md) |
+| `cash-position` | "How much cash do we have right now?" — a point-in-time snapshot across every connected account. | [View details →](docs/cash-position.md) |
+| `cash-balance-trend` | "Is our cash going up or down?" — a historical trend from real balance snapshots, never a forecast. | [View details →](docs/cash-balance-trend.md) |
+| `accounts-receivable-aging` | "Who owes us money, and since when?" — outstanding customer invoices bucketed by days overdue. | [View details →](docs/accounts-receivable-aging.md) |
+| `bills-due` | "What bills are due, and when?" — accounts payable sorted by due date with a running cash-out total. | [View details →](docs/bills-due.md) |
+| `rank-clients-by-ltv` | "Who are our best customers?" — customers ranked by total paid revenue to date. | [View details →](docs/rank-clients-by-ltv.md) |
+| `fx-exposure` | "How exposed are we to currency risk?" — cash and invoices in foreign currencies, converted at real rates. | [View details →](docs/fx-exposure.md) |
+| `company-profile` | "Give me a 360 view of this company" — profile, contacts, and the full invoice relationship, customer or vendor. | [View details →](docs/company-profile.md) |
+| `payment-invoice-lookup` | "What happened with this payment?" — match a payment to its invoice, or list every unreconciled one. | [View details →](docs/payment-invoice-lookup.md) |
+| `missing-receipts` | "Which expenses are missing receipts?" — invoices with no source document attached, for compliance. | [View details →](docs/missing-receipts.md) |
+| `draft-invoice` | "Draft an invoice for this client" — creates a real invoice record in Well from a chat description. | [View details →](docs/draft-invoice.md) |
+
+---
+
+## Installation
+
+### Assisted by AI (Recommended)
+
+Paste this into any AI agent — Claude, Codex, Cursor, OpenCode, and others — to install all the skills:
+
+<!-- NOTE: repo is currently private, so these raw links 404 until WellApp-ai/skills
+     goes public. Links are permanent (no tokens) and will work as-is once it does. -->
+
+```
+Install the following official skills from Well. Instructions:
+
+1. Fetch these files:
+    a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/expense-breakdown/SKILL.md
+    b. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/runway-calculator/SKILL.md
+    c. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cash-position/SKILL.md
+    d. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cash-balance-trend/SKILL.md
+    e. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounts-receivable-aging/SKILL.md
+    f. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/bills-due/SKILL.md
+    g. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/rank-clients-by-ltv/SKILL.md
+    h. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/fx-exposure/SKILL.md
+    i. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/company-profile/SKILL.md
+    j. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/payment-invoice-lookup/SKILL.md
+    k. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/missing-receipts/SKILL.md
+    l. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/draft-invoice/SKILL.md
+2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
+3. Create a summary table with skill names and descriptions extracted from the frontmatter
+4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
+5. If you can, install these skills yourself.
+6. If the MCP https://api.wellapp.ai/v1/mcp is not installed: suggest it to the user and explain them how to add a new MCP.
+```
+
+### Claude Code Plugin Marketplace
+
+If you use Claude Code, this repo is also a plugin marketplace — one install wires up every skill and the Well connection:
+
+<!-- NOTE: repo is currently private, so this clones over git and 404s until
+     WellApp-ai/skills goes public — same caveat as the AI-assisted prompt above. -->
+
+```
+/plugin marketplace add WellApp-ai/skills
+/plugin install well-skills@wellapp
+```
+
+You'll be asked to sign in to Well the first time a skill needs your data.
+
+### Codex CLI Plugin
+
+If you use Codex CLI, this repo is also a Codex plugin — one install wires up every skill and the Well connection:
+
+<!-- NOTE: repo is currently private, so this clones over git and 404s until
+     WellApp-ai/skills goes public — same caveat as the AI-assisted prompt above. -->
+
+```bash
+codex plugin marketplace add WellApp-ai/skills
+codex plugin add well-skills@wellapp
+```
+
+You'll be asked to sign in to Well the first time a skill needs your data.
+
+### Manual Installation
+
+> [!NOTE]
+> Using Codex CLI? The [Codex CLI Plugin](#codex-cli-plugin) above does both steps below in one command.
+
+#### Step 1: Connect Well
+
+Your data is processed and kept secure at Well. To access it, your AI assistant needs to open a secure connection with Well — this is called MCP, and it's the standard way AI tools connect to outside services. Here's how to set it up:
+
+Add this address in your host's connection settings:
+
+```
+https://api.wellapp.ai/v1/mcp
+```
+
+- **Claude Code**: `claude mcp add --transport http well https://api.wellapp.ai/v1/mcp`
+- **Claude Desktop**: Settings → Connectors → Add custom connector.
+- **Other AI tools** (Cursor, Codex, etc.): add it wherever that tool manages its connections.
+
+The first time your assistant needs your data, you'll be asked to sign in and approve access to your Well workspace — no passwords or API keys to manage.
+
+Next, give it the skills below so it knows how to use that connection well.
+
+#### Step 2: Install all the skills
+
+> [!NOTE]
+> We strongly suggest installing the skills you find relevant among the one listed in the table [here](#available-skills).
+
+##### Claude Desktop
+
+Download the `.skill` file and double-click it to install — Claude Desktop installs it immediately, no drag-and-drop, no unzipping.
+
+| Skill | Description | Download |
+|---|---|---|
+| `expense-breakdown` | Break down where a company's money goes — top expense categories and biggest outstanding bills. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/expense-breakdown.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/expense-breakdown.zip) |
+| `runway-calculator` | Calculate true cash runway in months and days from real balances and trailing burn. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/runway-calculator.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/runway-calculator.zip) |
+| `cash-position` | Point-in-time snapshot of current cash across every connected account. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/cash-position.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/cash-position.zip) |
+| `cash-balance-trend` | Historical cash balance trend from real balance snapshots. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/cash-balance-trend.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/cash-balance-trend.zip) |
+| `accounts-receivable-aging` | Outstanding customer invoices bucketed by days overdue. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/accounts-receivable-aging.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/accounts-receivable-aging.zip) |
+| `bills-due` | Accounts payable sorted by due date with a running cash-out total. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/bills-due.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/bills-due.zip) |
+| `rank-clients-by-ltv` | Customers ranked by total paid revenue to date. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/rank-clients-by-ltv.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/rank-clients-by-ltv.zip) |
+| `fx-exposure` | Cash and invoices in foreign currencies, converted at real exchange rates. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/fx-exposure.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/fx-exposure.zip) |
+| `company-profile` | A 360 view of one company — profile, contacts, and the invoice relationship. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/company-profile.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/company-profile.zip) |
+| `payment-invoice-lookup` | Match a payment to its invoice, or list every unreconciled one. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/payment-invoice-lookup.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/payment-invoice-lookup.zip) |
+| `missing-receipts` | Invoices with no source document attached, for compliance. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/missing-receipts.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/missing-receipts.zip) |
+| `draft-invoice` | Create a real invoice record in Well from a chat description. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/draft-invoice.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/draft-invoice.zip) |
+
+##### For Advanced Users
+
+<!-- placeholder: swap for the real skills.sh org/listing once these skills are actually published there -->
+
+Install directly from **[skills.sh/wellapp](https://skills.sh/wellapp)**:
+
+```bash
+npx skills add wellapp/expense-breakdown
+npx skills add wellapp/runway-calculator
+npx skills add wellapp/cash-position
+npx skills add wellapp/cash-balance-trend
+npx skills add wellapp/accounts-receivable-aging
+npx skills add wellapp/bills-due
+npx skills add wellapp/rank-clients-by-ltv
+npx skills add wellapp/fx-exposure
+npx skills add wellapp/company-profile
+npx skills add wellapp/payment-invoice-lookup
+npx skills add wellapp/missing-receipts
+npx skills add wellapp/draft-invoice
+```
+
+---
+
+## FAQ
+
+**Q: Is my financial data stored in this repo or on GitHub?**
+A: No. This repo only contains instructions for your AI assistant. Every number is fetched live from Well, scoped to your own workspace, and never stored here.
+
+**Q: Do I need a Well account to use these skills?**
+A: Yes — a Well workspace connected to at least one bank or accounting tool. If you don't have one yet, each skill walks you through setting it up before it answers anything.
+
+**Q: What happens if a skill can't get enough data?**
+A: It says so plainly, tells you exactly what to connect, and — as a last resort — links you to ask the same question directly inside Well, rather than guessing a number.
+
+**Q: Can I use these skills outside Claude?**
+A: Yes. `SKILL.md` is an open format — any Agent-Skills-compatible host (Codex, Cursor, OpenCode, and others) can load the files under `skills/` or `.agents/skills/`.
+
+## License
+
+Copyright (c) 2026 Well App, Inc. Licensed under [PolyForm Perimeter 1.0.0](LICENSE) — free to use, including commercially, in any Agent-Skills-compatible host, but not to build a competing product or service. See [LICENSE](LICENSE) for the full terms and the [Well Terms of Service](https://wellapp.ai/terms/) for terms governing the Well platform itself.
+
+
+<p align="center">
+  <img src="https://wellapp.ai/images/badges/soc2.avif" alt="SOC 2 Type I" height="50">
+  <img src="https://wellapp.ai/images/badges/gdpr.avif" alt="GDPR Compliant" height="50">
+</p>
+
+<p align="center">
+    <b>Well is SOC-2 Type I and GDPR Compliant</b> 
+</p>
