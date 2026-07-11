@@ -46,9 +46,9 @@ Install the following official skill from Well.
 
 #### Claude Desktop
 
-Download the `.zip` and drag it into **Settings → Capabilities → Skills** (or use **Upload skill**):
+Download the `.skill` file and double-click it — Claude Desktop installs it immediately, no drag-and-drop, no unzipping:
 
-[⬇ Download runway-calculator.zip](https://github.com/WellApp-ai/skills/raw/main/dist/runway-calculator.zip)
+[⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/runway-calculator.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/runway-calculator.zip)
 
 #### Advanced
 
