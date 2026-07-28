@@ -51,7 +51,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 2. **Confirm the account.** Call `well_list_workspaces()`.
    - Auth error → no Well MCP connection yet; trigger the Well connector's OAuth/DCR handshake, then retry.
-   - Zero or one workspace → use it, or say none exist. Multiple → ask the user which one.
+   - Zero or one workspace → use it, or say none exist. Multiple → ask the user which one — unless the question plausibly spans more than one related entity (e.g. sibling legal entities), in which case ask whether they want a combined view, and if so query each relevant workspace and merge rather than silently picking one.
 
 3. **Verify the workspace has enough data.** Query `workspace_connectors` for `status: enabled` entries, then spot-check `well_query_records` (1 row) on `companies` and `invoices`.
    - If no connector is enabled, or both spot-checks return zero rows, call `well_list_connectors()`, present the top install links, and stop — there is nothing to compose a profile from yet.
@@ -71,7 +71,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 7. **Normalize currency.** If invoice totals span more than one `local_currency`, either convert to one base currency via `exchange_rates` and note the rate/date used, or report totals per currency — never blend currencies silently.
 
-8. **If any required step errors or returns unusable data**, do not guess. The fallback is: (a) state the fallback question plainly in your reply (e.g. "give me a 360 view of [company]"), (b) answer it yourself using whatever partial Well MCP data you already have, clearly caveated, and (c) give the user a direct link to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can ask it there directly and get a second opinion from their own AI assistant.
+8. **If any required step errors or returns unusable data**, do not guess. If the failure is transient (a network/timeout error on the MCP call itself), retry once before falling back — don't dead-end on a blip. If it errors again or the data stays unusable, the fallback is: (a) state the fallback question plainly in your reply (e.g. "give me a 360 view of [company]"), (b) answer it yourself using whatever partial Well MCP data you already have, clearly caveated, and (c) give the user a direct link to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can ask it there directly and get a second opinion from their own AI assistant.
 
 ## Output requirements
 

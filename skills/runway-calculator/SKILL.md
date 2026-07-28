@@ -51,7 +51,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 2. **Confirm the account.** Call `well_list_workspaces()`.
    - Auth error → no Well MCP connection yet; trigger the Well connector's OAuth/DCR handshake, then retry.
-   - Zero or one workspace → use it, or say none exist. Multiple → ask the user which one.
+   - Zero or one workspace → use it, or say none exist. Multiple → ask the user which one — unless the question plausibly spans more than one related entity (e.g. sibling legal entities), in which case ask whether they want a combined view, and if so query each relevant workspace and merge rather than silently picking one.
 
 3. **Verify enough connections exist.** Query `workspace_connectors` for `status: enabled` entries, then spot-check `well_query_records` on `accounts` (1 row) and `transactions` (1 row) for actual data.
    - If cash balances or transaction history are missing, call `well_list_connectors()`, hand the user the top install links (bank connectors first — runway needs a real cash balance), and stop.
@@ -59,9 +59,12 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 4. **Get cash on hand.** `well_get_schema({ root: "accounts" })`, then query `accounts` for current balances across all connected cash accounts. Sum them; if multiple currencies are present, convert via `exchange_rates` into one base currency and note which rate/date was used.
 
-5. **Get the burn rate.** `well_get_schema({ root: "account_balances" })` and/or `transactions`. Prefer `account_balances`/`ledger_accounts` (expense-account movement) over raw transactions when available, since it matches Well's own financial statements. Pull the trailing window (default 3 full months), sum net cash outflow per month, and average it.
+5. **Get the burn rate.** `well_get_schema({ root: "account_balances" })` and/or `transactions`. Check whether both the ledger (`account_balances`/`ledger_accounts`) and raw `transactions` return usable data for the trailing window.
+   - If only one source has usable data, use it and say which. If **both** the ledger and raw transactions are usable, ask the user which they consider authoritative for burn before computing — the ledger matches Well's own financial statements, but don't silently prefer it and treat transactions as a mere fallback.
+   - Pull the trailing window (default 3 full months) from the chosen source, sum net cash outflow per month, and average it.
    - If net cash flow is zero or positive (the company isn't burning), report that explicitly — runway is "not applicable / cash-flow positive," not a divide-by-zero.
    - When the ledger path is used, unclassified spend (cash movement with no `ledger_accounts` mapping) understates burn and overstates runway. Check the share of outflow that's unclassified in the window and disclose it if material, rather than presenting the runway figure as unconditionally complete.
+   - Spot-check the outflow for transactions whose counterparty resolves to the workspace's own company — that pattern typically signals an unconnected sibling account or an internal transfer being miscounted as real spend, which would distort the burn figure. Exclude or flag any found, and name the gap in plain language rather than presenting a partial picture as complete.
 
 6. **Compute runway.**
    - `runway_months = cash_on_hand / avg_monthly_burn`
@@ -70,7 +73,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 7. **Show the context, not just the number:** cash on hand (currency, as-of date), average monthly burn (currency, window used), and how stale the underlying sync is.
 
-8. **If any step errors, or the data is too thin to trust** (e.g. under a full month of transaction history), do not fabricate a number. The fallback is: (a) state the fallback question plainly in your reply ("What's my runway?"), (b) give your best caveated estimate from whatever partial data you have, or say plainly that it can't be computed yet, and (c) link the user to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can ask it there directly and get a second opinion from their own AI assistant.
+8. **If any step errors, or the data is too thin to trust** (e.g. under a full month of transaction history), do not fabricate a number. If the failure is transient (a network/timeout error on the MCP call itself), retry once before falling back — don't dead-end on a blip. If it errors again or the data stays too thin, the fallback is: (a) state the fallback question plainly in your reply ("What's my runway?"), (b) give your best caveated estimate from whatever partial data you have, or say plainly that it can't be computed yet, and (c) link the user to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can ask it there directly and get a second opinion from their own AI assistant.
 
 ## Output requirements
 
@@ -81,6 +84,7 @@ Return:
 - Average monthly burn: amount, currency, and the trailing window used to compute it.
 - The formula used (cash ÷ average monthly burn) so the number is auditable, not a black box.
 - A freshness/caveat line (sync recency; whether currency conversion was applied; whether burn looks unusually seasonal/one-off).
+- A one-line pointer to `expense-breakdown` if the user wants to see what's driving the burn.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 8's fallback was used, the fallback answer and link, clearly labeled as a fallback.
 
@@ -97,6 +101,8 @@ Before finishing, verify:
 - The trailing window used for burn is stated, not left implicit.
 - Data staleness (last successful sync) is surfaced when it's more than a few days old.
 - If burn came from the ledger path, unclassified/unmapped spend was checked and disclosed when material, not silently absorbed into an understated burn figure.
+- If both the ledger and raw transactions had usable data, the user was asked which is authoritative rather than the ledger being silently preferred.
+- Outflow was spot-checked for same-company counterparties (a sign of an unconnected sibling account or internal transfer distorting burn), and any found were flagged rather than absorbed silently.
 - Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation — not forced into every answer.
 
 ## Examples

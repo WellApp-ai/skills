@@ -83,7 +83,7 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 
 7. **Be explicit that this only creates the record in Well.** State plainly that no email/delivery to the client occurred — the user still needs to send the invoice themselves.
 
-8. **If MCP tools aren't available, or the workspace can't be resolved,** use the same fallback as the read-only skills: state the natural-language request plainly (e.g. "draft an invoice for Acme Corp"), note that nothing could be created, and if a workspace was at least resolved, link the user to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can create it directly there.
+8. **If MCP tools aren't available, or the workspace can't be resolved,** use the same fallback as the read-only skills: state the natural-language request plainly (e.g. "draft an invoice for Acme Corp"), note that nothing could be created, and if a workspace was at least resolved, link the user to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can create it directly there. If a transient (network/timeout) error hits one of the *read* calls in steps 2-3 (resolving the workspace or looking up a company match), retry that call once before falling back. Never apply this retry to the `well_create_invoice_from_data` write in step 5 — a retried write risks creating a duplicate invoice; step 6 already covers write failures (surface the real error, no silent retry).
 
 ## Output requirements
 
