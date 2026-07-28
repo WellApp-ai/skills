@@ -67,7 +67,7 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 
 8. **State the scope limit plainly.** Regardless of how many results are found, tell the user this skill only finds the gap — it cannot fetch or collect the missing receipt from a vendor portal, email, or anywhere else.
 
-9. **If any required step errors or returns unusable data**, do not guess. The fallback is: (a) state the fallback question plainly in your reply (e.g. "Which expenses are missing receipts?"), (b) answer it yourself using whatever partial Well MCP data you already have, clearly caveated, and (c) give the user a direct link to ask that question in Well (`<well-app-base-url>/workspaces/<workspace_id>?q=which%20expenses%20are%20missing%20receipts`) so they can get a second opinion from their own AI assistant there.
+9. **If any required step errors or returns unusable data**, do not guess. The fallback is: (a) state the fallback question plainly in your reply (e.g. "Which expenses are missing receipts?"), (b) answer it yourself using whatever partial Well MCP data you already have, clearly caveated, and (c) give the user a direct link to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can ask it there directly and get a second opinion from their own AI assistant.
 
 ## Output requirements
 

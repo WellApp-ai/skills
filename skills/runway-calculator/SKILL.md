@@ -61,6 +61,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 5. **Get the burn rate.** `well_get_schema({ root: "account_balances" })` and/or `transactions`. Prefer `account_balances`/`ledger_accounts` (expense-account movement) over raw transactions when available, since it matches Well's own financial statements. Pull the trailing window (default 3 full months), sum net cash outflow per month, and average it.
    - If net cash flow is zero or positive (the company isn't burning), report that explicitly — runway is "not applicable / cash-flow positive," not a divide-by-zero.
+   - When the ledger path is used, unclassified spend (cash movement with no `ledger_accounts` mapping) understates burn and overstates runway. Check the share of outflow that's unclassified in the window and disclose it if material, rather than presenting the runway figure as unconditionally complete.
 
 6. **Compute runway.**
    - `runway_months = cash_on_hand / avg_monthly_burn`
@@ -69,7 +70,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 7. **Show the context, not just the number:** cash on hand (currency, as-of date), average monthly burn (currency, window used), and how stale the underlying sync is.
 
-8. **If any step errors, or the data is too thin to trust** (e.g. under a full month of transaction history), do not fabricate a number. The fallback is: (a) state the fallback question plainly in your reply ("What's my runway?"), (b) give your best caveated estimate from whatever partial data you have, or say plainly that it can't be computed yet, and (c) link the user to ask that question directly in Well (`<well-app-base-url>/workspaces/<workspace_id>?q=what%27s%20my%20runway`) so they can get a second opinion from their own AI assistant there.
+8. **If any step errors, or the data is too thin to trust** (e.g. under a full month of transaction history), do not fabricate a number. The fallback is: (a) state the fallback question plainly in your reply ("What's my runway?"), (b) give your best caveated estimate from whatever partial data you have, or say plainly that it can't be computed yet, and (c) link the user to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can ask it there directly and get a second opinion from their own AI assistant.
 
 ## Output requirements
 
@@ -95,6 +96,7 @@ Before finishing, verify:
 - The final answer states runway in **both months and days**, per the user's requirement.
 - The trailing window used for burn is stated, not left implicit.
 - Data staleness (last successful sync) is surfaced when it's more than a few days old.
+- If burn came from the ledger path, unclassified/unmapped spend was checked and disclosed when material, not silently absorbed into an understated burn figure.
 - Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation — not forced into every answer.
 
 ## Examples

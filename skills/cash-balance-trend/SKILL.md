@@ -65,14 +65,14 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 
 7. **Describe the trend, using only real rows.** State the direction (up, down, or flat) and the magnitude of change from the first to the last real data point in the window. Never interpolate between snapshots and never extrapolate past the last real `account_balances` row — this skill reports history only.
 
-8. **If any required step errors or returns unusable data**, do not guess. The fallback is: (a) state the fallback question plainly in your reply (e.g. "Is our cash going up or down?"), (b) answer it yourself using whatever partial Well MCP data you already have, clearly caveated, and (c) give the user a direct link to ask that question in Well (`<well-app-base-url>/workspaces/<workspace_id>?q=is%20our%20cash%20going%20up%20or%20down`) so they can get a second opinion from their own AI assistant there.
+8. **If any required step errors or returns unusable data**, do not guess. The fallback is: (a) state the fallback question plainly in your reply (e.g. "Is our cash going up or down?"), (b) answer it yourself using whatever partial Well MCP data you already have, clearly caveated, and (c) give the user a direct link to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can ask it there directly and get a second opinion from their own AI assistant.
 
 ## Output requirements
 
 Return:
 
 - The window covered (start date to end date).
-- The time-series data points: date, balance, currency — described narratively and/or as a simple table, clear enough that the user or their AI host could plot it. This skill does not render an actual chart.
+- The time-series data points: date, balance, currency — as a simple table by default. If the user didn't already say whether they want a table or a chart, ask their preference rather than silently picking one; render a chart only if the host environment supports it and the user wants one.
 - The overall direction (up/down/flat) and the magnitude of change over the window.
 - An explicit one-line statement that no future projection was made — this is historical fact only.
 - A one-line note on which account(s) fed the series and any currency handling applied.

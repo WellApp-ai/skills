@@ -62,7 +62,7 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 
 6. **Sum by currency.** Group balances by `currency`. If the user asked for a single converted total and more than one currency is present, convert via `exchange_rates` into one base currency and state the rate/date used. Otherwise report a clearly-labeled per-currency breakdown — never blend currencies silently.
 
-7. **If any required step errors or returns unusable data**, do not guess. The fallback is: (a) state the fallback question plainly in your reply (e.g. "What's our cash position?"), (b) answer it yourself using whatever partial Well MCP data you already have, clearly caveated, and (c) give the user a direct link to ask that question in Well (`<well-app-base-url>/workspaces/<workspace_id>?q=what%27s%20our%20cash%20position`) so they can get a second opinion from their own AI assistant there.
+7. **If any required step errors or returns unusable data**, do not guess. The fallback is: (a) state the fallback question plainly in your reply (e.g. "What's our cash position?"), (b) answer it yourself using whatever partial Well MCP data you already have, clearly caveated, and (c) give the user a direct link to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can ask it there directly and get a second opinion from their own AI assistant.
 
 ## Output requirements
 
