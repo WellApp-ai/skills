@@ -28,9 +28,11 @@ loop L1(control, root, filter):
         examined  += page.rows.length
         pages     += 1
         cursor    := page.nextCursor
-    until cursor == null OR pages >= PAGE_BUDGET
+    until cursor == null OR pages >= PAGE_BUDGET   # PAGE_BUDGET = 20 (~10k rows), per control point
 
-    if cursor != null:            # budget exhausted before the data did
+    if total == 0:                # <- EMPTY POPULATION, NOT A CLEAN ONE
+        verdict := INCONCLUSIVE   # unless the control point sets empty_is_pass: true
+    else if cursor != null:       # budget exhausted before the data did
         verdict := SAMPLED        # <- NEVER "pass"
     else if examined < total:
         verdict := INCONCLUSIVE   # rows vanished mid-loop; a sync wrote during the sweep
@@ -41,6 +43,11 @@ loop L1(control, root, filter):
 
 Three rules that are not optional:
 
+- **An empty population is not a clean one.** `total == 0` means the check had nothing to examine,
+  not that everything examined was fine. A workspace with zero cards must not "pass" the five
+  card checks; a month with no transactions must not "pass" every reconciliation check. `total == 0`
+  is `INCONCLUSIVE` unless the control point explicitly declares `empty_is_pass: true` (only
+  correct where absence IS the passing state — e.g. "no duplicate accounts exist").
 - **`SAMPLED` is not `pass`.** A truncated scan reports `SAMPLED` with the page depth reached. An
   unqualified green over a truncated scan is the sweep lying in exactly the way the 12 skills do.
 - **`examined < total` means INCONCLUSIVE, not pass.** The two reads are not a consistent snapshot;

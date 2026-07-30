@@ -152,6 +152,7 @@ Open a reference only when a workflow step sends you there. Do not preload them.
 | [`references/control-points-einvoicing.md`](references/control-points-einvoicing.md) | gates 7–8 — `IPAY-`, `EINV-` |
 | [`references/latent-assumptions.md`](references/latent-assumptions.md) | gate 9 — `ASSUME-` |
 | [`references/tolerances.md`](references/tolerances.md) | **before declaring any failure** |
+| [`references/known-issues.md`](references/known-issues.md) | **before trusting any verdict** — 19 open audit findings; gates 1, 6, 7 and 8 are not fully runnable |
 | [`references/mcp-surface-limits.md`](references/mcp-surface-limits.md) | a check looks unexpressible, or a green needs qualifying |
 | [`references/schema-facts.md`](references/schema-facts.md) | a field name, enum value, or status vocabulary is in doubt |
 | [`references/baseline-2026-07-29.md`](references/baseline-2026-07-29.md) | comparing against the last recorded baseline — **dated; re-probe before citing** |
@@ -273,9 +274,14 @@ merge verdicts across workspaces**. Detail: [`references/sweep-spine.md`](refere
 
 Return:
 
-- **A one-line verdict per workspace and month**: `COMPLETE: pass/fail · EXHAUSTIVE: pass/fail`, plus
-  red and amber counts. The two verdicts are reported **separately, never merged into one score** —
-  that separation is the point of the skill.
+- **A one-line verdict per workspace and month**: `COMPLETE: … · EXHAUSTIVE: …`, plus red and amber
+  counts. The two verdicts are reported **separately, never merged into one score** — that
+  separation is the point of the skill. Compute each bucket's verdict by this rule, in order:
+  any red ⇒ **`fail`**; else any amber ⇒ **`pass (with findings)`**; else **`pass`**. Then, if the
+  bucket contains **any** `INCONCLUSIVE` or `SAMPLED` control point, append **`(partial — N not
+  evaluated)`**. A bare `pass` is only legal when every control point in that bucket returned `pass`
+  over a fully examined population. The severity floor is a *reporting* filter and never changes a
+  verdict.
 - **A table of failing control points only** (passing ones collapse to a count), each with: id,
   bucket, severity, count of offending records, up to 5 example ids, and the `records_url` when
   available.
@@ -342,14 +348,16 @@ two verdicts separately with the scope that earned them:
 
 ```
 Maxime · June 2026 · as of 2026-07-29T09:12Z
-COMPLETE: pass · EXHAUSTIVE: pass — 0 red, 0 amber
-Scope swept: 1 of 1 workspace · 1 month · 87 of 90 control points ran · 3 INCONCLUSIVE
+COMPLETE: pass (partial — 3 not evaluated) · EXHAUSTIVE: pass (partial — 3 not evaluated)
+0 red, 0 amber · 3 INCONCLUSIVE
+Scope swept: 1 of 1 workspace · 1 month · control points ran 87, not evaluated 3
 Loop proof: transactions examined 1,904 / 1,904 (4 pages, cursor null)
             accounts examined 30 / 30 · parents unchecked: none
 ```
 
-Then list the 3 INCONCLUSIVE checks with the reason each could not be evaluated — never folded into
-the pass count — the collapsed "87 passed" line, and the month-chain state. A pass still states its
+Note the verdict is **`pass (partial)`**, not `pass` — three checks were never evaluated, so the
+bucket cannot claim a bare pass. Then list those three with the reason each could not run — never
+folded into the pass count — the collapsed "87 passed" line, and the month-chain state. A pass still states its
 scope: had the loop stopped at the page budget with a cursor outstanding, the verdict is `SAMPLED`,
 not `pass`. Volunteer no cash figure.
 
