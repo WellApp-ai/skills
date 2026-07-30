@@ -27,7 +27,7 @@ not only the one under audit.
 
 | id | name | bucket | check | sev |
 |---|---|---|---|---|
-| `DOC-02` | **False green** — `document_pk` resolves to nothing | complete | `{"_and":[{"document_pk":{"_is_null":false}},{"_not":{"document":{}}}]}` — the relation inherits the `deleted_at IS NULL` + workspace filter, so a soft-deleted or out-of-scope document returns `document: null` while the FK stays populated | red |
+| `DOC-02` | **False green** — `document_pk` resolves to nothing. **The one canonical dangling-attachment control point** | complete | `{"_and":[{"document_pk":{"_is_null":false}},{"_not":{"document":{}}}]}` — the relation inherits the `deleted_at IS NULL` + workspace filter, so a soft-deleted or out-of-scope document returns `document: null` while the FK stays populated. `BOOK-document-resolves` and `GRAPH-invoice-document-pk-dangling` checked this same population and were folded in here; the `GRAPH-` copy's amber is superseded by the red below | red |
 | `DOC-03` | No recorded content | complete | `size < 1024` red; `1024–5120` amber; `content_checksum IS NULL` while `processing_status = extracted` red (the hasher only writes after reading bytes) | red |
 | `DOC-04` | MIME cannot be evidence | complete | `type _nin` the typed allow-list, derived from the **existing** `ACCEPTED_DOCUMENT_FORMATS` const — do not invent a second list. `application/octet-stream` is its own finding (the magic-byte middleware should have rewritten it). **Never `_like` on `filename`** — filename is user-updatable, `type` is not | red |
 | `DOC-05` | Attached but invoice not extracted from it | complete | `document.processing_status _in [pending, extracting, failed, rejected, skipped]` — split the report: `failed`/`rejected` = unreadable file, the invoice data came from elsewhere (a decorative attachment) | red |
@@ -39,8 +39,17 @@ not only the one under audit.
 **Two ids referenced but not defined here.** The tolerance paragraph below suppresses `DOC-01` and
 the bound formula does not use `DOC-09`; neither id has a row in the table above. Until each is
 written, treat any rule naming `DOC-01` as applying to `BOOK-invoice-has-document` (the "no document
-attached" check it evidently means), and treat `DOC-09` as vacant — **do not invent a definition to
-close the numbering.**
+attached" check it evidently means, and the canonical null-`document_pk` row now that
+`RECON-invoice-missing-document` is folded into it), and treat `DOC-09` as vacant — **do not invent a
+definition to close the numbering.**
+
+**What the missing-receipt gap is checked by, once each.** Null `document_pk` →
+`BOOK-invoice-has-document`. Populated but dangling → `DOC-02`. The orphan direction → `DOC-08`, which is
+the `C` term. **Unadjudicated overlap:** `GRAPH-orphan-documents-and-media` states a broader version
+of the same orphan predicate (documents *and* `media`, no MIME or size filter, amber). Until one is
+made canonical, count `C` from `DOC-08` only — the `media` half must never enter the attachment error
+rate. With that rule the `A`/`B`/`C` terms each resolve to exactly one control point, so no term
+double-counts a row.
 
 **The two-direction bound — the formula, and the reporting rule.** Over one period and workspace:
 

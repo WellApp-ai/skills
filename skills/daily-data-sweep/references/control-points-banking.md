@@ -68,7 +68,7 @@ currency_rate_at}]`. `payment_means` = 14 fields (`account_pk`, `card_pk`, `chec
 | `BANK-txn-category-resolves` | Category is a live catalogue entry | complete | `category_key` is a **member of the 47 shipped keys** in `transaction-category.const.ts` — set membership, **not** a join, because `categories` has no `key` column (see § source-side defects); also check `category_taxonomy_version` is uniform | key outside the shipped set, or mixed taxonomy versions in one chart window | red |
 | `BANK-txn-amount-nonzero` | Amount is real | complete | `instructed_amount.amount` null **or `= 0`** | any row | red |
 | `BANK-txn-amount-currency` | Amount carries a currency | complete | `instructed_amount.currency` null | any | red |
-| `BANK-account-has-currency` | complete | Every account states its currency | `accounts` where `currency _is_null` | any row | red | cash-position, cash-balance-trend, fx-exposure — a currency-less balance cannot be summed or converted |
+| `BANK-account-has-currency` | Every account states its currency | complete | `accounts` where `currency _is_null` | any row | red |
 | `BANK-txn-date-present` | Datable | complete | `booking_date IS NULL` **and** `value_date IS NULL` **and** `executed_at IS NULL`; window on `COALESCE` of the three | any | red |
 | `BANK-txn-ledger-mapped` | Mapped to a ledger account | complete | `ledger_account_pk _is_null`, and `ledger_account_role` consistency | any row | red |
 | `BANK-txn-no-cross-connector-dup` | Same movement not ingested twice | complete | group by (abs(`instructed_amount.amount`), currency, date, normalized `remittance.unstructured`) across **different** `source_workspace_connector_pk` on the same account | any group ≥2 | red |

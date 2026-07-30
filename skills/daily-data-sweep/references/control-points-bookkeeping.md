@@ -119,11 +119,25 @@ checks ARE expressible.
 | `BOOK-txn-proof-decided` | Undecided vs decided-no-invoice | complete | **INCONCLUSIVE — no disposition field exists.** As specified: disposition enum ≠ null. Neither `transactions` nor `invoice_transactions` carries one (§ the disposition gap) | not evaluable — emit `INCONCLUSIVE`, never a colour | blocked |
 | `BOOK-proof-not-required-misuse` | `not_required` on a row that needs one | complete | **INCONCLUSIVE — depends on the missing disposition field.** As specified: disposition `not_required` where `flow_kind`/`category_key` implies a supplier invoice | not evaluable — emit `INCONCLUSIVE`, never a colour | blocked |
 | `BOOK-edge-not-human-confirmed` | Reconciliation is all model output | complete | `edge_status: confirmed` **and** `match_method: llm_matched` with no human actor | any edge | amber |
-| `BOOK-edge-confidence-floor` | Low-confidence matches surfaced | complete | `confidence < 0.85` | any unreviewed | amber |
-| `BOOK-edge-amount-agrees` | Edge amount matches the invoice | complete | `allocation_type: full` and abs(`amount` − invoice `grand_total`) > tolerance §14 | any | red |
-| `BOOK-edge-overallocated` | Allocations exceed the invoice | complete | sum of live edge `amount` per `invoice_pk` > `grand_total` + tolerance | any | red |
-| `BOOK-edge-currency-consistent` | Cross-currency edge has a rate | complete | edge `currency` ≠ invoice `local_currency` and `exchange_rate_pk IS NULL` | any | red |
-| `BOOK-edge-dangling` | Edge points at a dead row | complete | `invoice_pk` or `transaction_pk` resolving to absent/soft-deleted | any | red |
+| `BOOK-edge-confidence-floor` | Unconfirmed and low-confidence matches — **edges, not categories** | complete | `invoice_transactions` with `edge_status: provisional` **or** `confidence < 0.85` (tolerance 10's match floor). **Not a duplicate of `RECON-low-confidence-category`**: that one is the classifier's `category_confidence` on `transactions` at a 0.70 floor. Tolerance 10 governs both floors, which makes them read alike; the populations and the fields differ, so do not merge them | any unreviewed; the backlog arm past 10 business days | amber |
+| `BOOK-edge-amount-agrees` | Edge amount matches the invoice | complete | `allocation_type: full` and abs(`amount` − invoice `grand_total`) > tolerance §14 (**0.01 same-currency, 0.5% cross-currency**); run the same comparison against the **transaction's own amount**, which can diverge from the edge `amount` on a `full` allocation. **This row owns the `full`-allocation arm only** — the summed-edge and `paid_amount` directions belong to `BOOK-edge-overallocated`, `RECON-partial-allocation-shortfall` and `RECON-paid-amount-vs-allocation`; re-checking them here counts the same invoice four times | any edge in the `full` set | red |
+| `BOOK-edge-overallocated` | Allocations exceed the invoice `[EXPENSIVE]` | complete | sum of live edge `amount` per `invoice_pk` > `grand_total` + tolerance §14. Requires client-side paging at the 500-row cap — budget as a paged job with checkpoint/resume. The opposite direction, gated on `payment_status: paid`, is `RECON-partial-allocation-shortfall` | any | red |
+| `BOOK-edge-currency-consistent` | Cross-currency edge has a live rate | complete | compare edge `currency` and `invoices.local_currency` against `transactions.instructed_amount.currency`; accept `accounting_currency` **only when `exchange_rate_pk` resolves live** | neither currency matches; or they differ and `exchange_rate_pk` is null **or dangling** | red |
+| `BOOK-edge-dangling` | Edge points at a dead row | complete | `invoice_pk` or `transaction_pk` resolving to absent/soft-deleted. Write the predicate against the **relation** (`_not: {invoice: {}}`), never a bare `_is_null` on the FK column — only the relation traversal sees a soft-deleted target | any | red |
+
+**Four edge rows above are the canonical form of a check that a second family also carried.**
+`GRAPH-invoice-transaction-currency-mismatch`, `GRAPH-invoice-transaction-amount-mismatch` (its
+`full` arm), `GRAPH-invoice-transaction-dangling-side`, `RECON-overallocated-invoice` and
+`RECON-provisional-match-backlog` are removed in favour of `BOOK-edge-currency-consistent`,
+`BOOK-edge-amount-agrees`, `BOOK-edge-dangling`, `BOOK-edge-overallocated` and
+`BOOK-edge-confidence-floor` respectively — an edge property is owned by the proof chain, and every
+threshold and secondary arm the removed rows carried is folded into the rows above. Why it matters
+in the report: a `full` edge hiding a residual **drops the invoice out of AR-aging and bills-due
+entirely**, and a header-only `paid_amount`/`balance_due` check cannot catch it because those fields
+were written from the same bad edge; a EUR payment bound to a USD invoice makes
+payment-invoice-lookup's settlement assertion false while fx-exposure counts the money under two
+currencies; and payment-invoice-lookup has **no branch** for an edge that exists and resolves to
+nothing — it reports a match it cannot display.
 
 **Removed: `BOOK-proof-lost-trend`** (`lost` share rising, sweep over sweep). Deleted rather than
 marked blocked. **Every sweep run is cold** — the MCP is read-only and exposes no output root, so no
@@ -140,7 +154,7 @@ field (§ the disposition gap) and a sweep-result store exist.
 | id | name | bucket | check | fail signal | sev |
 |---|---|---|---|---|---|
 | `BOOK-invoice-both-parties` | Issuer and receiver both identified | complete | `invoices.issuer_pk` or `receiver_pk` null | any row | red |
-| `BOOK-invoice-core-fields` | complete | Invoices carry the fields the skills read | `invoices` where any of `grand_total` / `local_currency` / `issue_date` / `due_date` `_is_null` | any row | red | accounts-receivable-aging, bills-due, rank-clients-by-ltv |
+| `BOOK-invoice-core-fields` | Invoices carry the fields the skills read | complete | `invoices` where any of `grand_total` / `local_currency` / `issue_date` / `due_date` `_is_null` | any row | red |
 | `BOOK-party-matches-txn-counterparty` | One invoice side IS the transaction's counterparty | complete | resolve txn counterparty via `debtor_/creditor_payment_means` → `payment_means.company_pk`; assert it equals `issuer_pk` **or** `receiver_pk`. **Rows whose counterparty does not resolve are excluded and returned as `INCONCLUSIVE`, never as pass** — they are counted by `BOOK-party-match-unverifiable` | neither side matches, on a row where the counterparty *did* resolve | red |
 | `BOOK-party-match-unverifiable` | Size of the population the above cannot judge | complete | txn counterparty null. This control point **is** evaluable — it counts the unevaluable rows; it is the check above that returns `INCONCLUSIVE` for them | any row | red |
 
@@ -148,8 +162,17 @@ field (§ the disposition gap) and a sweep-result store exist.
 
 | id | name | bucket | check | fail signal | sev |
 |---|---|---|---|---|---|
-| `BOOK-invoice-has-document` | Document attached | complete | `invoices.document_pk IS NULL` | any row past the grace window (`DOC-` tolerances) | red |
-| `BOOK-document-resolves` | Not a phantom attachment | complete | `document_pk` non-null resolving to absent/soft-deleted | any | red |
+| `BOOK-invoice-has-document` | Document attached | complete | `invoices.document_pk IS NULL`, in-window. A **populated but dangling** pointer is `DOC-02`, a different defect | past the grace window on the differentiated `DOC-` ladder: 3 business days after `issue_date` by default; **5 calendar days and red from the first occurrence** for card/expense receipts above the €25 FR simplified-invoice VAT threshold; 10 days for transfer-settled supplier invoices | red; **amber** for the transfer-settled class |
 | `BOOK-document-has-content` | File is **recorded**, not a 0-byte placeholder | complete | `documents.size < 1024` or `content_checksum IS NULL`. A green here means "content recorded", **never** "file retrievable" — `bucket`/`path` are unvalidated strings (see `control-points-documents.md`) | any row | red |
 | `BOOK-document-right-kind` | Mime is a document kind that can be a receipt | complete | **typed exact-match allow-list of mime types — never a substring test on a filename**; reuse the existing `ACCEPTED_DOCUMENT_FORMATS` const rather than inventing a second list | any outside the list | amber |
 | `BOOK-document-tenancy` | Document belongs to this workspace | exhaustive | document's workspace ≠ invoice's workspace | any | red |
+
+**`BOOK-document-resolves` is removed; the canonical is `DOC-02`.** The same population — an invoice
+whose `document_pk` is populated while the `documents` row is absent or soft-deleted — was carried by
+three ids across three gates (`BOOK-document-resolves`, `GRAPH-invoice-document-pk-dangling`, `DOC-02`).
+`DOC-02` survives because it is the definitional row: it holds the live Hasura predicate and it is the
+`B` term of the two-direction bound in `control-points-documents.md`, which nothing else can supply.
+Severity is red, as `BOOK-document-resolves` had it — the amber the `GRAPH-` copy carried is
+superseded. `BOOK-invoice-has-document` above is the *null* direction and stays here; `DOC-02` is the
+*dangling* direction. `BOOK-document-tenancy` overlaps `DOC-07` in intent but is stated against the
+invoice-side workspace, so both stand until that pair is adjudicated.

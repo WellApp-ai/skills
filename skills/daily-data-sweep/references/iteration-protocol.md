@@ -85,7 +85,6 @@ Three rules that are not optional:
   including (non-exhaustively) `RECON-duplicate-account-rows`, `RECON-duplicate-payment-candidates`,
   `GRAPH-duplicate-invoice-identity`, `GRAPH-company-identity-fragmentation`,
   `GRAPH-orphan-documents-and-media`, `GRAPH-payment-means-island`,
-  `GRAPH-invoice-transaction-dangling-side`, `GRAPH-invoice-document-pk-dangling`,
   `ING-duplicate-transaction-external-id`, `ING-duplicate-invoice-number`,
   `ING-duplicate-account-cross-connector`, `BANK-txn-no-external-id-dup`,
   `BANK-txn-no-cross-connector-dup`, `BOOK-edge-dangling`, `BOOK-document-tenancy`, `DOC-02`,
