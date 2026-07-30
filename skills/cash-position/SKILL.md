@@ -71,7 +71,8 @@ Return:
 - A per-account breakdown: account name, native amount/currency, converted amount, as-of timestamp — straight from `well_get_cash_position`'s `accounts` field.
 - An explicit one-line statement that this is a **snapshot** — no burn rate or runway is implied by this number.
 - A freshness/caveat line: any `partial`/`excluded`/`hints` the tool surfaced.
-- If the user seems to want to know how long this cash will last, a one-line pointer to `runway-calculator`.
+- Whether the picture is complete: which banking connectors are connected versus still missing, so the user knows whether this total covers every account they hold or a partial view gated by what's connected today.
+- A one-line pointer to `runway-calculator` for how long this cash will last — burn rate and runway.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 5's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
 
@@ -85,6 +86,7 @@ Before finishing, verify:
 - The total and per-account breakdown came straight from `well_get_cash_position`'s response, not re-derived from raw `accounts`/`account_balances`/`exchange_rates` reads.
 - If `partial: true`, the `excluded` count and any `hints` were disclosed rather than silently absorbed into the total.
 - Every number carries a currency and an as-of timestamp.
+- Which banking connectors are connected versus missing was stated, so the user knows whether the picture is complete or partial.
 - The answer never computes or implies a burn rate or runway figure.
 - Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation — not forced into every answer.
 

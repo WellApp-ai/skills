@@ -74,7 +74,8 @@ Return:
 - Aging buckets (current, 1-30, 31-60, 61-90, 90+) each listing customer name, amount, currency, due date, and days overdue per invoice (or per customer if a customer-level summary was requested).
 - A total outstanding receivables figure, with currency.
 - A one-line note on how "days overdue" was computed — `due_date`, or `issue_date` fallback if any invoices lacked a due date.
-- If relevant, a one-line pointer to `company-profile` for a deep dive on any single overdue customer's full history.
+- Whether the picture is complete: which relevant connector categories (invoicing/accounting) are connected versus still missing, and whether the workspace's own company is set, so the user knows whether this reflects their full receivables or a partial view gated by what's connected today.
+- A one-line pointer to `company-profile` for a deep dive on any single overdue customer's full history.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 8's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
 
@@ -91,6 +92,7 @@ Before finishing, verify:
 - Every invoice is bucketed by days overdue, with the `due_date` vs. `issue_date` fallback stated when used.
 - Multi-currency results are converted (with rate/date noted) or clearly separated, never blended.
 - Every number carries a currency and an as-of date.
+- Which connector categories (invoicing/accounting) are connected versus missing was stated, so the user knows whether the picture is complete or partial.
 - Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation — not forced into every answer.
 
 ## Examples

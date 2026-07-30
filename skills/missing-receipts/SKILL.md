@@ -78,6 +78,8 @@ Return:
 - A list of the affected invoices (issuer/receiver, amount, currency, issue date, invoice number), capped at 20 — if more exist, state the total count and that the list was capped.
 - If the secondary transaction check was run, a one-line note on how many transactions have no linked document.
 - An explicit one-line statement that this is a find-only check: auto-collection of a missing receipt is not available.
+- Whether the picture is complete: which relevant connector categories (invoicing/bills for the primary invoice check, banking or accounting for the secondary transaction check) are connected versus still missing, so the user knows whether this covers every expense they hold or only the invoices gated by what's connected today.
+- A one-line pointer to `payment-invoice-lookup` for the matching problem — a payment with no invoice behind it, rather than an invoice with no document attached.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 9's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
 
@@ -93,6 +95,7 @@ Before finishing, verify:
 - If the secondary transaction check was attempted, the relation name was discovered from the schema, not hardcoded.
 - Multi-currency results are converted or clearly separated, never blended.
 - Every number carries a currency and a date.
+- Which connector categories (invoicing/bills, banking or accounting) are connected versus missing was stated, so the user knows whether the picture is complete or partial.
 - The "find-only, no auto-collect" limitation was stated plainly in the output, not implied.
 - Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation — not forced into every answer.
 

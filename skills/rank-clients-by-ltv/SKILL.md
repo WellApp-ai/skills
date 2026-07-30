@@ -78,6 +78,8 @@ Return:
 - A ranked table: customer name, total paid revenue, currency, and share of total paid revenue across all ranked customers. If the user didn't already say whether they want a table or a chart, ask their preference rather than silently picking one — this is a comparison across customers, so a bar chart is the natural fit if they want one.
 - The as-of date the ranking was computed against.
 - An explicit one-line caveat: this is realized paid-invoice revenue to date, not a predictive customer-lifetime-value model.
+- Whether the picture is complete: which relevant connector categories (invoicing/accounting) are connected versus still missing, and whether the workspace's own company is set, so the user knows whether this ranking reflects their full revenue history or a partial view gated by what's connected today.
+- A one-line pointer to `company-profile` for a deep dive on any single top customer's full relationship history.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 9's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
 
@@ -94,6 +96,7 @@ Before finishing, verify:
 - Only invoices where the workspace is **issuer** were counted — receiving invoices would be spend, not revenue.
 - Multi-currency results are converted (with rate/date noted) or clearly separated, never blended.
 - Every number carries a currency and an as-of date.
+- Which connector categories (invoicing/accounting) are connected versus missing was stated, so the user knows whether the picture is complete or partial.
 - The "not a predictive lifetime-value model" caveat is present in the output.
 - Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation — not forced into every answer.
 

@@ -74,7 +74,8 @@ Return:
 - The as-of date the calendar was generated for.
 - Bills grouped into overdue / due this week / due this month / due later, each bill showing vendor name, amount, currency, and due date.
 - A running cumulative total per bucket (and, if useful, at key dates within a bucket), so the user can see cash outflow building up over time.
-- A one-line note that this is date-ordered cash-planning (not amount-ranked) — pointing to `expense-breakdown` for the biggest-bills framing.
+- Whether the picture is complete: which relevant connector categories (invoicing/bills, and banking or accounting to confirm what's actually been paid) are connected versus still missing, so the user knows whether this calendar reflects every bill they owe or a partial view gated by what's connected today.
+- A one-line pointer to `expense-breakdown` for the biggest-bills (amount-ranked) framing, noting that this skill is date-ordered cash-planning rather than amount-ranked.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 8's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
 
@@ -92,6 +93,7 @@ Before finishing, verify:
 - The running cumulative total was computed correctly while walking the sorted list.
 - Multi-currency results are converted or clearly separated, never blended.
 - Every number carries a currency and an as-of date.
+- Which connector categories (invoicing/bills, banking or accounting) are connected versus missing was stated, so the user knows whether the picture is complete or partial.
 - Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation — not forced into every answer.
 
 ## Examples

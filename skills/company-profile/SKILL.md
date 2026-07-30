@@ -81,6 +81,8 @@ Return:
 - Contact channels found: emails, phones, locations, web links — or a note that none are on file.
 - Invoice relationship summary: as issuer (count, total, currency, as-of date) and as receiver (count, total, currency, as-of date), each stated separately.
 - A one-line note on how the relationship was framed (issuer/receiver vs. `own_company`, or that framing wasn't possible because `own_company` is unset).
+- Whether the picture is complete: which relevant connector categories (invoicing/bills, and any connector syncing company contact details) are connected versus still missing, so the user knows whether this profile reflects the full relationship or a partial one gated by what's connected today.
+- A one-line pointer to `accounts-receivable-aging` for the aging view across every customer, when this company turns out to owe the workspace money.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 8's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
 
@@ -97,6 +99,7 @@ Before finishing, verify:
 - Transaction-level history was never queried against a fabricated direct company FK — it was treated as a secondary lookup through `debtor_payment_means`/`creditor_payment_means` → `PaymentMeans`, with the invoice relation used as the primary answer.
 - Multi-currency invoice totals were converted (with rate/date noted) or clearly kept separate, never blended.
 - Every number carries a currency and an as-of date.
+- Which connector categories (invoicing/bills, company contact details) are connected versus missing was stated, so the user knows whether the picture is complete or partial.
 - Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation — not forced into every answer.
 
 ## Examples

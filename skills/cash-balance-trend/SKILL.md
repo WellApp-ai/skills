@@ -76,7 +76,8 @@ Return:
 - The overall direction (up/down/flat) and the magnitude of change over the window.
 - An explicit one-line statement that no future projection was made — this is historical fact only.
 - A one-line note on which account(s) fed the series and any currency handling applied.
-- If the trend suggests the user may want a forward-looking answer, a one-line pointer to `runway-calculator`.
+- Whether the picture is complete: which banking connectors are connected versus still missing, and whether every connected account has more than one synced balance period, so the user knows whether this trend covers their full cash position or a partial one gated by what's connected today.
+- A one-line pointer to `runway-calculator` for the forward-looking question — burn rate and how long the cash lasts.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 8's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
 
@@ -92,6 +93,7 @@ Before finishing, verify:
 - An account with only one `account_balances` row was flagged as "not enough history for a trend" rather than faked into a direction.
 - Multi-currency results were converted (with rate/date noted) or clearly kept separate, never blended.
 - Every number carries a currency and a date.
+- Which banking connectors are connected versus missing was stated, so the user knows whether the picture is complete or partial.
 - The answer never states or implies a future balance — the "no projection made" line is present.
 - Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation — not forced into every answer.
 

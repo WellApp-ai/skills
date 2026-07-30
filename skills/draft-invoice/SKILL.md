@@ -94,6 +94,8 @@ Return:
   - Success → the returned `invoice_id` and `reference_number`.
   - Failure → the exact error, plus a question to the user about how to proceed.
 - An explicit statement that this only created the record in Well — no email/delivery occurred.
+- Whether the picture is complete: which issuer/receiver details came from existing Well records versus fresh from the user, and — if the `companies` search found no match for the client — that Well has nothing on file for them yet, so the user knows nothing was silently substituted.
+- A one-line pointer to `payment-invoice-lookup` for finding the payment that settles this invoice once the client pays.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. Skip it if it feels forced.
 - If step 8's fallback was used, the caveated note plus the workspace link, clearly labeled as a fallback.
 
@@ -110,6 +112,7 @@ Before finishing, verify:
 - The user explicitly confirmed the complete draft before `well_create_invoice_from_data` was called.
 - The result — success or the real error — was reported honestly, with no silent retry on a guessed correction.
 - The "record-creation only, no send/email" limitation was stated in the final response.
+- Which details came from existing Well records versus fresh from the user was stated, so nothing appears silently substituted.
 - Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation.
 
 ## Examples

@@ -76,6 +76,8 @@ Return:
 - The home/reporting currency and how it was determined (asked vs. inferred from workspace data).
 - A per-currency exposure table: original amount, converted home-currency amount, the rate and rate_date used, and % of total exposure. If the user didn't already say whether they want a table or a chart, ask their preference rather than silently picking one — this is a composition of exposure at a point in time, so a pie or donut chart is the natural fit if they want one.
 - The as-of date the exposure and rates were computed against.
+- Whether the picture is complete: which relevant connector categories (banking for cash exposure, invoicing/bills for receivable and payable exposure) are connected versus still missing — with only one of the two connected, say plainly that this is cash-only or invoice-only exposure rather than their full currency risk.
+- A one-line pointer to `cash-position` for the plain cash total without the currency-risk framing.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 8's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
 
@@ -92,6 +94,7 @@ Before finishing, verify:
 - `well_get_schema` was called before the first query of `invoices`, `accounts`, `account_balances`, and `exchange_rates`.
 - Every conversion cites the rate and `rate_date` actually used, with the at-or-before fallback stated if an exact-date rate wasn't available.
 - Every number carries a currency, and every total is anchored to an as-of date.
+- Which connector categories (banking, invoicing/bills) are connected versus missing was stated, so a cash-only or invoice-only exposure figure is never presented as the full picture.
 - Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation — not forced into every answer.
 
 ## Examples

@@ -78,6 +78,8 @@ Return:
 - For workflow (A): the matched (or explicitly unmatched) result, with `match_method`, `confidence`, `edge_status`, and `allocation_type` clearly labeled — and currency + date on every amount. Include `reasoning` when present so the user can judge the match themselves.
 - For workflow (B): a list of unmatched items, each with date, amount, currency, and counterparty (if resolvable), plus a total count and total value of the gap. Items whose counterparty matches the workspace's own company flagged separately as likely unconnected-sibling-account/internal-transfer noise, not genuine reconciliation gaps.
 - Any match with `edge_status: provisional` or low `confidence` labeled as such, not presented as certain.
+- Whether the picture is complete: reconciliation needs both sides, so state which relevant connector categories (invoicing/bills for invoices, banking or accounting for transactions) are connected versus still missing — with only one side connected, an "unmatched" result may just mean the other side was never synced.
+- A one-line pointer to `missing-receipts` for the documentation gap — an invoice with no receipt or PDF attached, rather than a payment with no invoice matched to it.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 7's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
 
@@ -96,6 +98,7 @@ Before finishing, verify:
 - Low-confidence or `provisional` matches are labeled as such rather than presented as certain.
 - Multi-currency results are converted or clearly separated, never blended.
 - Every number carries a currency and a date.
+- Which connector categories (invoicing/bills, banking or accounting) are connected versus missing was stated — an unmatched result was never presented as a genuine gap when the other side of the reconciliation was never synced.
 - Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation — not forced into every answer.
 
 ## Examples
