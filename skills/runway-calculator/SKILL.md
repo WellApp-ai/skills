@@ -41,6 +41,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 - `well_list_workspaces` — resolve the workspace.
 - `well_get_runway` — the authoritative cash-on-hand, trailing-average burn, and computed runway — the exact same deterministic numbers (sign-convention detection, internal-transfer exclusion, FX conversion already applied) the Well app's own canvas KPI card renders. Call this directly; do not re-derive cash or burn yourself from raw `accounts`/`transactions`/`account_balances` reads — that path is more error-prone and can drift from what the app shows.
+- `well_get_cost_structure` — the deterministic category breakdown of the latest closed month's outflow, used here only as a supplementary "what's driving your burn" view alongside the runway headline. Same computation the Well app's canvas cost-structure chart renders; never re-derive categories yourself.
 - `well_query_records` — read `workspace_connectors` to check which connectors are enabled before attempting a computation.
 - `well_list_connectors` — surface install links when cash/accounting data is missing.
 - Well's OAuth/DCR flow (or the Well connector's `authenticate` tool, if the host exposes one) — if no Well MCP connection exists yet.
@@ -61,14 +62,19 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
    - `"ok"` → a real months figure — proceed to step 5.
    - `"capped"` → runway exceeds 36 months; report as "more than 36 months," not the raw number.
    - `"infinite"` → cash is positive and the workspace isn't burning (net inflow); say so explicitly — this is "not applicable / cash-flow positive," not a divide-by-zero.
-   - `"insufficient_data"` → not enough connected cash/transaction data to compute. Treat this the same as step 6's fallback below — don't retry the same call expecting a different answer.
+   - `"insufficient_data"` → not enough connected cash/transaction data to compute. Treat this the same as step 7's fallback below — don't retry the same call expecting a different answer.
    - `partial: true` means some accounts or transactions were excluded from the computation (e.g. a missing FX rate) — surface the `excluded` counts and any `hints` as a caveat rather than presenting the number as unconditionally complete.
 
 5. **Compute months + days.** The tool returns `months` as a single decimal figure (e.g. `7.3`), not pre-split into months/days:
    - `whole_months = floor(months)`; remaining days = `(months - whole_months) * 30.44` (average days per month).
    - Always state the result as **"X months and Y days"** — never months alone, never a bare decimal-months figure. (Skip this split for `"capped"`/`"infinite"` — there's no meaningful days remainder to compute.)
 
-6. **If the tool call itself errors, or returns `"insufficient_data"`**, do not fabricate a number. If the failure is transient (a network/timeout error on the MCP call itself), retry once before falling back — don't dead-end on a blip. If it errors again or stays `"insufficient_data"`, the fallback is: (a) state the fallback question plainly in your reply ("What's my runway?"), (b) give your best caveated estimate from whatever partial data the tool did return, or say plainly that it can't be computed yet, and (c) link the user to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can ask it there directly and get a second opinion from their own AI assistant.
+6. **Surface what's driving the burn.** Call `well_get_cost_structure()` and present its top categories as a clearly-labeled supplementary view alongside the runway headline, so the burn figure isn't an unexplained number. Three things must be stated, not glossed:
+   - The two windows differ. Cost structure covers the **latest closed month**; burn is the trailing average over `avg_burn.trailing_months` (default last 3 full months). Say so plainly.
+   - These categories are **not** a decomposition of the burn figure — they won't sum to it, and you should not present them as if they reconcile.
+   - This step is supplementary, never blocking. If the call errors or returns no entries, still report the runway headline and say the burn-drivers view is unavailable — do not treat it as a failure of the runway calculation.
+
+7. **If the runway tool call itself errors, or returns `"insufficient_data"`**, do not fabricate a number. If the failure is transient (a network/timeout error on the MCP call itself), retry once before falling back — don't dead-end on a blip. If it errors again or stays `"insufficient_data"`, the fallback is: (a) state the fallback question plainly in your reply ("What's my runway?"), (b) give your best caveated estimate from whatever partial data the tool did return, or say plainly that it can't be computed yet, and (c) link the user to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can ask it there directly and get a second opinion from their own AI assistant.
 
 ## Output requirements
 
@@ -79,9 +85,11 @@ Return:
 - Average monthly burn: amount, currency, and the trailing window used to compute it — straight from `avg_burn`.
 - The formula used (cash ÷ average monthly burn) so the number is auditable, not a black box — this is the same computation the Well app itself renders, not a skill-side estimate.
 - A freshness/caveat line (sync recency from `as_of`; any `partial`/`excluded`/`hints` the tool surfaced).
-- A one-line pointer to `expense-breakdown` if the user wants to see what's driving the burn.
+- **What's driving the burn** — the top spend categories from `well_get_cost_structure`, clearly labeled as a supplementary view: it covers the latest closed month, not the trailing burn window, and it is not a decomposition of the burn figure. If that call failed or returned nothing, say the view is unavailable rather than omitting it silently.
+- Whether the picture is complete: which relevant connector categories (bank/cash, accounting) are connected versus still missing, so the user knows whether this runway reflects their full cash position or a partial one gated by what's connected today.
+- A one-line pointer to `expense-breakdown` for the full ranked spend breakdown plus the largest outstanding bills.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
-- If step 6's fallback was used, the fallback answer and link, clearly labeled as a fallback.
+- If step 7's fallback was used, the fallback answer and link, clearly labeled as a fallback.
 
 ## Quality checks
 
@@ -95,6 +103,9 @@ Before finishing, verify:
 - The trailing window used for burn (`avg_burn.trailing_months`) is stated, not left implicit.
 - Data staleness (`as_of`) is surfaced when it's more than a few days old.
 - If `partial: true`, the `excluded` counts and any `hints` were disclosed rather than silently absorbed into the number.
+- The burn-drivers view came from `well_get_cost_structure`, was labeled supplementary, and its window mismatch with the burn window was stated — never presented as a breakdown that sums to the burn figure.
+- A failed or empty `well_get_cost_structure` call was reported as an unavailable supplementary view, not allowed to block or invalidate the runway headline.
+- Which connector categories (bank/cash, accounting) are connected versus missing was stated, so the user knows whether the picture is complete or partial.
 - Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation — not forced into every answer.
 
 ## Examples
@@ -105,7 +116,7 @@ Before finishing, verify:
 
 ### Expected behavior
 
-Resolve the workspace, confirm a connector is enabled, call `well_get_runway()`, and answer with a headline like "You have approximately 7 months and 12 days of runway," followed by the cash figure, burn figure, window, and as-of date — all read directly from the tool's response.
+Resolve the workspace, confirm a connector is enabled, call `well_get_runway()`, and answer with a headline like "You have approximately 7 months and 12 days of runway," followed by the cash figure, burn figure, window, and as-of date — all read directly from the tool's response. Then call `well_get_cost_structure()` and add the top spend categories as a labeled "what's driving your burn" view, noting it covers the latest closed month rather than the trailing burn window.
 
 ### Example request
 
