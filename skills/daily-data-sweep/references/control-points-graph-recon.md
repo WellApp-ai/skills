@@ -6,7 +6,7 @@ Gates 4 and 5. Cross-root join families; both share the non-atomicity caveat —
 
 ## Control points — ENTITY GRAPH (`GRAPH-`)
 
-Contributed by the financial-graph review. **Every check here filters `deleted_at IS NULL` on
+**Every check here filters `deleted_at IS NULL` on
 every root traversed, on both sides of every join** — see the soft-delete caveat in § Known
 limits.
 
@@ -45,15 +45,15 @@ limits.
 
 ### A principle worth keeping
 
-The graph review deliberately authored **no invariants** on `blueprint_runs`, `tasks`,
-`billing_events`, `chat_conversations`, `memberships`, `locations`, `subscription`,
-`override_version`, `billing_context` — no skill breaks or lies if they drift. **A red nobody
+**No invariants** are authored on `blueprint_runs`, `tasks`, `billing_events`,
+`chat_conversations`, `memberships`, `locations`, `subscription`, `override_version`,
+`billing_context` — no skill breaks or lies if they drift. **A red nobody
 can act on trains the operator to ignore the sweep.** Apply that test to every control point
 added later.
 
 ## Control points — RECONCILIATION & CLOSE (`RECON-`)
 
-Contributed by the reconciliation review. `[EXPENSIVE]` = requires client-side paging at the
+`[EXPENSIVE]` = requires client-side paging at the
 500-row cap; budget as a paged job with checkpoint/resume, on a slower cadence than the cheap
 `totalCount` checks.
 

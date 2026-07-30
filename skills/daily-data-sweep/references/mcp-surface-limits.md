@@ -10,10 +10,10 @@ Verified schema facts live in [`schema-facts.md`](schema-facts.md); dated measur
 
 ## SCOPE WARNING — two sets of numbers in this file, both correct
 
-Every count I measured comes from the **MCP, scoped to the 3 workspaces the caller can access**.
-A reviewer ran SQL against the **whole production DB**. They differ by ~16×:
+Every count measured over the **MCP is scoped to the 3 workspaces the caller can access**. SQL run
+against the **whole production DB** covers a different population. They differ by ~16×:
 
-| metric | my MCP scope (3 workspaces) | prod-wide SQL |
+| metric | MCP scope (3 workspaces) | prod-wide SQL |
 |---|---|---|
 | invoices | 1,517 | **33,753** |
 | transactions | 1,904 | **24,925** |
@@ -21,10 +21,10 @@ A reviewer ran SQL against the **whole production DB**. They differ by ~16×:
 
 **Neither is wrong.** But a sweep must never mix them, and a "verdict" computed at one scope must
 never be reported at the other. Every output line must state the scope it was computed over. The
-`accounts` gap in particular means my "~24 duplicates of one account" is a finding about *one
-workspace*, not a platform-wide rate — and prod-wide, `accounts.ownership` splits
+`accounts` gap in particular means the "~24 duplicates of one account" figure is a finding about
+*one workspace*, not a platform-wide rate — and prod-wide, `accounts.ownership` splits
 **284 workspace / 61 counterparty / 58 unknown**, so the ownership picture is far better populated
-than my 3-workspace sample suggested.
+than the 3-workspace sample suggests.
 
 ## Known limits of the MCP surface — what this sweep CANNOT check
 

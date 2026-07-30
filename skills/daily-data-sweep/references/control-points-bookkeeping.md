@@ -15,8 +15,8 @@ and any banking details on the invoice linked to a real account or payment means
 
 **"No invoice found yet" and "no invoice is required" must never look identical in the data.**
 Today they do — and that is the single most important gap in this family. A `not_required` /
-`lost` disposition belongs **on the link between invoice and payment**, so that a swept, decided
-transaction is distinguishable from an unswept one. See § the disposition gap below.
+`lost` disposition belongs **on the transaction**, so that a swept, decided transaction is
+distinguishable from an unswept one. See § the disposition gap below.
 
 ### Live audit — all 3 workspaces, probed 2026-07-29
 
@@ -39,11 +39,10 @@ reconciliation rests on unreviewed model output.** The sweep must therefore repo
 `confirmed AND llm_matched AND no human actor` as its own amber class, and the model needs a
 distinct human-confirmation marker (see § Known limits — there is no audit-trail root).
 
-### Corrections to this family
+### Schema constraints that shape this family
 
-**My disposition proposal was wrong about WHERE.** I said the disposition belongs "on the link
-between invoice and payment". It cannot: **`invoice_transactions.invoice_pk` is NOT NULL**, so a
-row cannot exist to say *there is no invoice* — you would need a sentinel invoice, which is the
+**The disposition cannot live on the link:** **`invoice_transactions.invoice_pk` is NOT NULL**, so
+a row cannot exist to say *there is no invoice* — that would require a sentinel invoice, which is the
 null-object anti-pattern and would corrupt every `invoices` aggregate and the AR/AP posting path.
 
 The obligation to hold proof belongs to the **transaction**; the link is the *satisfaction* of
@@ -52,7 +51,7 @@ positive evidence — mirroring the `category_*` provenance pattern already on t
 (`category_source` / `category_status` / `category_confidence`), so reviewers know the shape and
 the CHECK-constraint precedent exists.
 
-**`documents` CAN prove file integrity — my "pending schema read" resolves to buildable.**
+**`documents` CAN prove file integrity — the check is buildable today.**
 `documents` has 20 columns including **`size` (NOT NULL)**, **`type` (NOT NULL, the MIME field)**,
 and **`content_checksum`** (SHA-256 over *metadata-stripped* content — PDF `/Info`/dates/`/ID`
 removed, JPEG APP/COM stripped, PNG text chunks stripped), plus `processing_status` /
@@ -70,10 +69,10 @@ wrong table. All document integrity routes through `documents`.
 through multiple `invoice_transactions` edges — correct shape — but it also means a transaction
 whose single slot holds a bank-statement PDF **cannot also hold the supplier invoice**.
 
-**Refining the `confirmed` trap.** `edge_status` is `confirmed | provisional` and **defaults to
+**The `confirmed` trap, precisely.** `edge_status` is `confirmed | provisional` and **defaults to
 `confirmed`** — and `provisional` is documented as the 0.55–0.85 review tier that is *"filtered
-out of downstream pipes until a human confirms"*. So my "100% confirmed" finding is sharper than
-I stated: the review tier **is never being used**. Likewise `match_method` includes
+out of downstream pipes until a human confirms"*. All 252 edges carry `confirmed`, so the review
+tier **is never being used**. Likewise `match_method` includes
 **`human_approved`** as a value, and **zero rows carry it**. Proof-of-payment is a downstream
 pipe, so the correct floor is not a new confidence number — it is honouring the existing contract:
 only `edge_status = 'confirmed'` counts as proof, and a `provisional` edge must never satisfy it.
@@ -112,7 +111,7 @@ gross "no proof link" counts without distinguishing a backlog from a completed j
 
 Confirmed: `invoice_transactions` carries a **per-edge `amount` + `currency` + `accounting_amount`
 + `accounting_currency` + `exchange_rate_pk`** — so over-allocation and cross-currency match
-checks ARE expressible (this corrects an earlier reviewer who reported no per-edge amount).
+checks ARE expressible.
 
 #### Proof of payment
 
@@ -143,6 +142,6 @@ checks ARE expressible (this corrects an earlier reviewer who reported no per-ed
 |---|---|---|---|---|
 | `BOOK-invoice-has-document` | Document attached | `invoices.document_pk IS NULL` | **live 1,304/1,517 = 86%** | red |
 | `BOOK-document-resolves` | Not a phantom attachment | `document_pk` non-null resolving to absent/soft-deleted | any | red |
-| `BOOK-document-has-content` | File is real, not a 0-byte placeholder | needs a size/checksum/mime field on `documents`/`media` | **pending schema read** | red |
+| `BOOK-document-has-content` | File is real, not a 0-byte placeholder | `documents.size < 1024` or `content_checksum IS NULL` | any row | red |
 | `BOOK-document-right-kind` | Mime is a document kind that can be a receipt | **typed exact-match allow-list of mime types — never a substring test on a filename** | any outside the list | amber |
 | `BOOK-document-tenancy` | Document belongs to this workspace | document's workspace ≠ invoice's workspace | any | red |

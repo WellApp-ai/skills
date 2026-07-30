@@ -194,9 +194,26 @@ merge verdicts across workspaces**. Detail: [`references/sweep-spine.md`](refere
      only on explicit request. This confirmation gate stands; the retry-immediately rule above applies
      to the login and connector steps only and never overrides it.
 
-3. **Verify connector sufficiency.** Query `workspace_connectors` for the connector types the selected
-   families need, filtering on the **set** of non-`enabled` statuses rather than any single one. Then
-   spot-check with a 1-row query against the data the sweep actually needs.
+3. **Verify connector sufficiency.** Query `workspace_connectors` for the connector types the
+   selected families need. `status` is a stored, filterable enum with **eight** values — bucket them
+   exactly, never by "not `enabled`":
+
+   | bucket | values | sweep behaviour |
+   |---|---|---|
+   | healthy | `enabled`, `processing` | proceed; `processing` is transient, do not cry wolf on a first sync |
+   | **broken — stopped feeding** | `degraded`, `error`, `need_reconnect`, `suspended` | **fire the breadth check** |
+   | not set up yet | `to_configure` | count in total only; not participating in sync |
+   | deliberately off | `disabled` | count in total only; not a defect |
+
+   This mirrors `CONNECTOR_STATUS_BUCKET` in the close flow, so the sweep and the close agree.
+   A "not `enabled`" filter is wrong in both directions: it cries wolf on `to_configure`/`disabled`
+   and treats `processing` as broken.
+
+   **`degraded` needs no user action** — the grant is still valid, syncs are failing, and it clears
+   itself back to `enabled` on the next successful sync. Word its remediation as *"syncs failing —
+   investigate"*, **never "reconnect"**: reconnect sends the user to a door that does nothing.
+
+   Then spot-check with a 1-row query against the data the sweep actually needs.
    - **Latest sync log `in_progress`** → data is still landing; mark affected checks partial.
    - **Nothing relevant enabled, or the spot-check returns zero rows** → call `well_list_connectors()`
      and invite the user to connect the specific providers, with their `install_url`. Stay stopped; do
@@ -204,9 +221,15 @@ merge verdicts across workspaces**. Detail: [`references/sweep-spine.md`](refere
      immediately re-run this check in the same turn and continue** — do not wait to be re-prompted.
 
 4. **Read the iteration protocol** — [`references/iteration-protocol.md`](references/iteration-protocol.md)
-   — before running any control point. Every check pages to exhaustion; every "for every X" check
-   enumerates its parent set first; chained checks converge. Emit the loop ledger per control point.
-   **Four verdicts, never two: `pass` / `fail` / `inconclusive` / `sampled`.**
+   — before running any control point. Emit the loop ledger per control point. **Four verdicts,
+   never two: `pass` / `fail` / `inconclusive` / `sampled`.**
+
+   **Verified against the live API (2026-07-30): there is no pagination.** `nextCursor` is always
+   `null`, `limit` is applied *per workspace* rather than globally, and `totalCount` counts across
+   all workspaces while rows are capped per workspace. So a full-set scan is impossible.
+   **Whenever `returned < totalCount`, the verdict is `SAMPLED` — never `pass`.** Count with
+   `limit: 1` and read `totalCount`; fetch rows only for example ids. The protocol reference carries
+   the measurements and the working idiom.
 
 5. **Schema pass.** `well_get_schema(root)` for each root a selected control point touches. **An
    absent field makes that control point INCONCLUSIVE, never PASS.** This is the most important rule

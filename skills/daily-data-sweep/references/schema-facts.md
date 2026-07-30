@@ -52,7 +52,7 @@ ship as "assumed December — confirm?", never as fact.
 `is_preselected: true`, `is_connected: false`), same shape for Postman and Figma; 183 connectors
 total.
 
-A local-checkout source read reported them absent. **The deployed MCP is ahead of the local checkout:
+A read of the local checkout shows them absent. **The deployed MCP is ahead of the local checkout:
 a repo read is not a substitute for a live probe, and a live probe is not a substitute for a repo
 read.** Where the two disagree, record both observations and state which one was trusted.
 
@@ -81,3 +81,40 @@ unchecked.
 - What the MCP surface cannot express at all (per-sync record counts, OAuth expiry, raw-vs-mapped
   drop rate, soft-delete filtering) — see `mcp-surface-limits.md`.
 - Dated live measurements — see `baseline-2026-07-29.md`.
+
+
+---
+
+## `workspace_connectors.status` — the authoritative vocabulary
+
+`status` is a **stored** value of the PG enum `core_api.status_enum`, fully filterable in a
+`whereClause` (`{"status": {"_in": [...]}}`). It is NOT derived and NOT computed. Eight members:
+
+`enabled | disabled | to_configure | processing | error | need_reconnect | suspended | degraded`
+
+`degraded` was added 2026-07-08 (`Migration20260708120000_workspace_connector_degraded_status.ts`)
+and is deployed. A checkout forked before that date shows only seven members in
+`apps/api/src/constants/workspace-connector-status.const.ts` — read connector constants via
+`git show origin/develop:<path>`, not the working tree, if the branch is behind.
+
+**Bucketing** — mirrors `CONNECTOR_STATUS_BUCKET` in the close flow (exhaustive `Record<StatusEnum,…>`),
+so the sweep and the close cannot disagree:
+
+| bucket | values |
+|---|---|
+| healthy / syncing | `enabled`, `processing` |
+| errored — stopped feeding | `degraded`, `error`, `need_reconnect`, `suspended` |
+| not participating (count in total only) | `to_configure`, `disabled` |
+
+**`degraded` semantics.** The stored grant is still valid; syncs are unhealthy. Distinct from
+`need_reconnect` (dead grant, user must reauthorize): a degraded connector **clears itself back to
+`enabled` on the next successful sync, with no user action**. Detector thresholds: 7 days without a
+SUCCESS sync log, or 3 FAILURE-class diagnostics since the last success; 24h per-connector alert
+cooldown. It keys off sync *failure* only — a successful zero-row sync keeps a connector healthy.
+
+**Two vocabularies — do not mix them.**
+- `well_query_records` on root `workspace_connectors` returns the **raw stored** status. This is
+  what the sweep reads.
+- `well_list_connectors` returns a **resolved display** status, folded server-side to only
+  `enabled | processing | error`. An `error` there may be a resolved `degraded`; an `error` from
+  `well_query_records` is the stored hard fault. Never compare across the two.

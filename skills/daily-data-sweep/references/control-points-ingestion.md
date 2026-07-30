@@ -6,7 +6,7 @@ Gate 2. Connector and sync health, complete and exhaustive. A red here re-labels
 
 ## Control points — INGESTION / SYNC (`ING-`)
 
-Contributed by the ingestion-domain review. These sit *upstream* of the tables above: if an
+These sit *upstream* of the tables above: if an
 `ING-` red fails, treat the corresponding `CMP-`/`EXH-` results as scoped, not clean.
 
 ### `ING-` COMPLETE (depth)

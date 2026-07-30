@@ -51,7 +51,7 @@ the source document blob):
 accounts.{iban, bic, account_number, routing_number, sort_code}`, with card and cheque branches via
 `payment_means.card_pk` / `.check_pk`.
 
-**Prod-wide measurements** (whole DB, not my 3-workspace scope):
+**Prod-wide measurements** (whole DB, not the 3-workspace MCP scope):
 
 | what | measured | verdict |
 |---|---|---|
@@ -125,7 +125,7 @@ lying to the posting path.
 
 - **`invoices.shadow_from_receipt` exists** (bool, default false) — a row synthesized from a payment
   receipt rather than a real bill. **A shadow invoice is not a legal invoice and must never be
-  declared** (`EINV-18`). Cheap and important; I had missed this field entirely.
+  declared** (`EINV-18`). Cheap and important.
 - **`extract.service.ts:1021-1033` silently overwrites `items_total = grand_total − tax_total` on
   mismatch.** The repair **destroys the evidence** the header-arithmetic control needs — so that
   control must record the *pre-repair* delta, or it is permanently green over a self-healed lie.
@@ -174,7 +174,7 @@ buildable (`payment_status`, `paid_amount`, `last_payment_allocation_date`, the
 `invoice_transactions` link), but note `last_payment_allocation_date` is an *allocation* timestamp,
 a proxy for the encaissement date, not the date itself.
 
-**Recommended fix order** (from the reviewer, and I agree): per-rate breakdown table → exemption
+**Recommended fix order:** per-rate breakdown table → exemption
 reason + reverse-charge mention (both cheap columns) → supply date → invoice-number allocator →
 preceding-invoice reference.
 

@@ -141,3 +141,59 @@ depth findings computed under a breadth failure are scoped, not clean.
 Gate 9 last on purpose: it is the gate that audits the other gates. A green sweep with a red gate 9
 means the greens are unverified, not verified.
 
+
+---
+
+## MEASURED REALITY — corrections from the first live execution (2026-07-30)
+
+The loop design above was written against the tool's *documented* contract. Executing it against
+the deployed MCP contradicts that contract in four ways. **These findings override the pseudocode.**
+
+### 1. There is no pagination. `nextCursor` is always `null`.
+
+Measured: `well_query_records` on `transactions` with `whereClause {category_key: {_is_null: true}}`
+returned `totalCount: 793`, `returned: 545`, **`nextCursor: null`** — and at `limit: 5` returned
+`10` rows with `nextCursor: null` again. There is no cursor to follow and no offset parameter.
+
+**Consequence: the L1 page-to-exhaustion loop cannot be implemented.** `examined == total` is
+unreachable for any root holding more rows than one response returns.
+
+**Therefore, the binding rule:** whenever `returned < totalCount`, the control point's verdict is
+**`SAMPLED`** — never `pass`, and never `fail` on absence. Report `returned`/`totalCount` on every
+such line. A control point may only return `pass` when `returned == totalCount` in a single
+response. Do not describe a scan as exhaustive that the API cannot make exhaustive.
+
+### 2. `limit` is applied PER WORKSPACE, not globally.
+
+Measured: `limit: 5` returned 10 rows — five from `c3f54fe3` and five from `1c5c706f`. A request
+for N rows across an authorized set of W workspaces can return up to N×W.
+
+**Consequence:** never treat `returned` as the number you asked for, and never compute a rate from
+`returned / limit`. Any client-side dedup or grouping must first partition by `workspace_id`.
+
+### 3. `totalCount` and `rows` have DIFFERENT scopes in the same response.
+
+`totalCount: 793` is the count across all authorized workspaces, while `rows` is capped per
+workspace. So a single response mixes a global count with a partial, per-workspace row set.
+
+**Consequence:** this is the scope-mixing error the sweep exists to catch, occurring inside the tool
+itself. Never divide a per-workspace row count by `totalCount`. To get a per-workspace count, filter
+the query to one workspace and read `totalCount` from that response.
+
+### 4. Field selection does not control payload size.
+
+Measured: requesting 2 fields returned 9 keys per row (~1,150 bytes/row) — composite columns
+(`composite_logo_name`, `composite_avatar_fullname`, `composite_connector_logo_name`, `workspace_id`)
+are injected automatically and cannot be suppressed.
+
+**Consequence:** a 500-row request produced 627,187 characters and exceeded the response limit
+outright. Budget ~1.2 KB per row. Keep `limit` low and read `totalCount` for counting; fetch rows
+only when you need example ids for a finding.
+
+### The counting idiom that actually works
+
+- **To count:** `limit: 1` + read `totalCount`. Cheap, exact, and the only reliable count.
+- **To get examples:** `limit: 5`, accept up to 5×W rows, partition by `workspace_id`.
+- **To count per workspace:** one query per workspace, each reading its own `totalCount`.
+- **Never** attempt a full-set scan, a client-side sum over all rows, or a cross-root join by paging
+  — none of them terminate.
