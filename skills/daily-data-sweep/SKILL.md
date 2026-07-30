@@ -388,15 +388,18 @@ two verdicts separately with the scope that earned them:
 
 ```
 Maxime · June 2026 · as of 2026-07-29T09:12Z
-COMPLETE: pass (partial — 3 not evaluated) · EXHAUSTIVE: pass (partial — 3 not evaluated)
+COMPLETE: pass (partial — 3 not evaluated) · EXHAUSTIVE: pass (partial — 1 not evaluated)
 0 red, 0 amber · 3 INCONCLUSIVE · 1 SAMPLED
-Scope swept: 1 of 1 workspace · 1 month · control points ran <N>, not evaluated 3
+Scope swept: 1 of 1 workspace · 1 month · control points ran <N>, not evaluated 4
 Loop proof: transactions — counted via totalCount 1,904; rows returned 545 of 1,904 ⇒ SAMPLED
             accounts examined 30 / 30 (single response) · parents unchecked: none
 ```
 
 Note the verdict is **`pass (partial)`**, not `pass` — three checks were never evaluated, so the
-bucket cannot claim a bare pass. `<N>` is **counted at run time from the control points this run
+bucket cannot claim a bare pass. The two suffixes differ because each control point declares one
+bucket, so the buckets **partition** the run — 3 INCONCLUSIVE in COMPLETE and 1 SAMPLED in
+EXHAUSTIVE sum to the 4 on the scope line. Printing the same figure in both would double-count it,
+and dropping the SAMPLED one would hide a truncated scan behind a clean number. `<N>` is **counted at run time from the control points this run
 actually loaded** — never a literal carried in this file, which drifts the moment a family folds a
 duplicate away. Then list those three with the reason each could not run — never folded into the
 pass count — the collapsed "`<N>` passed" line, and the month-chain state. A pass still

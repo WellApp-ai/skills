@@ -55,46 +55,97 @@ response returned, which is exactly why the `SAMPLED` verdict below is not optio
 
 ```
 loop L1(control, root, filter):
-    resp      := well_query_records(root, fields, filter, limit)   # ONE call — no cursor, no pages
-    total     := resp.totalCount        # count across ALL authorized workspaces (MEASURED REALITY §3)
-    examined  := resp.returned          # capped per workspace, so examined <= total, often <<
-    hits      := resp.rows matching the predicate
+    # WHICH SHAPE? This is the first decision, and it decides the verdict.
+    #   SERVER-SIDE  — the defect predicate is expressible in the whereClause.
+    #                  totalCount IS the finding: exact, exhaustive, no scan needed.
+    #   CLIENT-SIDE  — the predicate needs a reduce over returned rows (group-by,
+    #                  cluster, sum). Only these can be truncated.
 
-    if total == 0:                # <- EMPTY POPULATION, NOT A CLEAN ONE
-        verdict := INCONCLUSIVE   # unless the control point sets empty_is_pass: true
-    else if examined < total:     # the API cannot return the rest; this is the NORMAL case
-        verdict := SAMPLED        # <- NEVER "pass", and never "fail on absence"
+    if control.predicate_is_server_side:
+        resp  := well_query_records(root, fields, whereClause=defect_predicate, limit: 1)
+        found := resp.totalCount              # EXACT — this is the whole population of defects
+        if found == 0:
+            verdict := empty_verdict(control)  # see the three declared classes below
+        else:
+            verdict := fail                    # count is exact; fetch rows only for example ids,
+                                               # and label THOSE sampled, never the count
     else:
-        verdict := pass / fail on hits
+        resp     := well_query_records(root, fields, filter, limit)   # ONE call — no cursor, no pages
+        total    := resp.totalCount     # across ALL authorized workspaces (MEASURED REALITY §3)
+        examined := resp.returned       # capped per workspace, so examined <= total, often <<
+        hits     := resp.rows matching the predicate
+        if total == 0:
+            verdict := empty_verdict(control)
+        else if hits is non-empty:
+            verdict := fail             # a hit found in a partial scan is still a real defect
+        else if examined < total:       # scanned everything we could reach, found nothing
+            verdict := SAMPLED          # <- absence over a partial scan proves nothing
+        else:
+            verdict := pass
     record(control, verdict, examined, total, scan_depth)   # scan_depth = the limit this run used
+
+empty_verdict(control):                 # an empty result means three different things
+    if control.empty_is_fail:  return fail          # absence IS the defect
+    if control.empty_is_pass:  return pass          # absence IS the passing state
+    return INCONCLUSIVE                             # nothing was examined
 ```
 
 To **count** a population exactly, do not scan it: issue `limit: 1` and read `totalCount`, one query
 per workspace. Fetch rows only when a finding needs example ids. Full idiom in § MEASURED REALITY.
 
+**Do not then compare that `returned: 1` against `totalCount` and call the result `SAMPLED`.** The
+`limit: 1` idiom is a *counting* call, not a truncated scan — `returned` is 1 by construction. A
+server-side-filtered count is an **exact, exhaustive** answer about the defect population, and it
+routes to `fail`, into the red count, with the count stated. Only the example ids are sampled.
+Conflating the two is how a red becomes a `(partial)`: 793 uncategorized transactions is a `fail`
+with an exact count, never `pass (partial — 1 not evaluated)`.
+
 Three rules that are not optional:
 
-- **An empty population is not a clean one.** `total == 0` means the check had nothing to examine,
-  not that everything examined was fine. A workspace with zero cards must not "pass" the five
-  card checks; a month with no transactions must not "pass" every reconciliation check. `total == 0`
-  is `INCONCLUSIVE` unless the control point explicitly declares `empty_is_pass: true` (only
-  correct where absence IS the passing state — e.g. "no duplicate accounts exist").
-- **`empty_is_pass: true` — the absence-is-pass class.** A control point whose *passing* state IS an
-  empty result set must declare this, or the rule above turns every clean workspace into
-  `INCONCLUSIVE` and a bare `pass` becomes unreachable — the mirror image of the lie the rule fixes.
-  **Every duplicate-, collision-, dangling-, orphan- and leak-detection control point is in this
-  class**, because finding nothing is the correct outcome. Concretely, `empty_is_pass: true` applies
-  to every row whose name or check begins *no duplicate*, *not duplicated*, *dangling*, *orphan*,
-  *island*, *collision*, *cross-workspace*, *tenancy*, *unposted*, *never*, or *no ... exists* —
-  including (non-exhaustively) `RECON-duplicate-account-rows`, `RECON-duplicate-payment-candidates`,
-  `GRAPH-duplicate-invoice-identity`, `GRAPH-company-identity-fragmentation`,
+- **An empty result means three different things, and the control point must say which.** `total == 0`
+  is not self-interpreting: for a duplicate check it is the passing state, for a
+  "connector has never synced" check it *is* the defect, and for a card check in a workspace with no
+  cards it means nothing was examined. Every control point therefore belongs to exactly one of the
+  three classes below. **Membership is a closed enumerated set, never inferred from the id or the
+  name.** An earlier revision matched on words in the name (*never*, *unposted*, *orphan*…); that
+  matched `ING-connector-never-synced`, whose fail signal is literally `totalCount = 0`, and declaring
+  it absence-is-pass made its pass condition identical to its fail condition — a bank connector that
+  has never once synced would have reported `pass` while `cash-position` totalled a confident zero.
+  Substring matching on names is also forbidden by the repo standard. **Unlisted ⇒ INCONCLUSIVE.**
+
+- **`empty_is_fail: true` — absence IS the defect.** The empty result is the finding, so it must reach
+  the red count and never be intercepted as INCONCLUSIVE:
+  `ING-connector-never-synced`, `ING-sync-stale-no-recent-success`, `ING-bank-connector-zero-accounts`,
+  `ING-account-zero-balance-rows`, `ING-fx-rate-missing-for-live-currency`,
+  `ING-no-banking-source-installed`, `ING-no-invoicing-source-installed`,
+  `ING-connector-produced-no-records`, `ING-ledger-graph-absent` (amber),
+  `GRAPH-entity-class-silently-empty`, `GRAPH-account-open-balance-row-invalid` (zero-open-rows arm),
+  `RECON-unposted-period` (zero-entries arm).
+
+- **`empty_is_pass: true` — absence IS the passing state.** Finding nothing is the correct outcome, so
+  without this declaration every clean workspace returns INCONCLUSIVE and a bare `pass` becomes
+  unreachable — the mirror image of the always-green lie:
+  `RECON-duplicate-account-rows`, `RECON-duplicate-payment-candidates`,
   `GRAPH-orphan-media`, `GRAPH-payment-means-island`,
-  `ING-duplicate-transaction-external-id`, `ING-duplicate-invoice-number`,
+  `GRAPH-journal-entry-unposted-or-dangling`, `GRAPH-ledger-account-tree-broken`,
+  `ING-duplicate-transaction-external-id`,
   `ING-duplicate-account-cross-connector`, `BANK-txn-no-cross-connector-dup`,
-  `BOOK-edge-dangling`, `DOC-02`, `DOC-07`, `DOC-08`, `IPAY-16`, `EINV-02`, `EINV-11`.
-  **The inverse class must NOT declare it**: a check asserting something *should exist* — a balance,
-  a category, a payment means, a document — is INCONCLUSIVE on an empty population, never a pass,
-  because it had nothing to examine.
+  `BANK-card-pan-never-raw`, `BOOK-edge-dangling`, `DOC-02`, `DOC-07`, `DOC-08`, `DOC-10`,
+  `IPAY-04`, `IPAY-05`, `IPAY-11`, `IPAY-14`, `IPAY-16`, `EINV-02`, `EINV-11`, `EINV-18`, `EINV-19`.
+
+  **`GRAPH-company-identity-fragmentation` is deliberately NOT in this list**, though its collision
+  arm looks like it belongs. Its second arm reports the *null rate* of the two strong keys — a
+  presence assertion, whose row ends "report the covered share, never a bare green". Declaring it
+  absence-is-pass produces exactly the bare green it forbids.
+
+- **Everything else is INCONCLUSIVE on an empty population.** A check asserting something *should
+  exist* — a balance, a category, a payment means, a document — had nothing to examine, and that is
+  not a pass.
+
+- **Any rename or new control point must sweep these two lists.** They are the only place outside the
+  family files that names control points individually, and a stale entry here is silent: it produces
+  a plausible verdict, not an error.
+
 - **`SAMPLED` is not `pass`.** A truncated scan reports `SAMPLED` with the scan depth reached. An
   unqualified green over a truncated scan is the sweep lying in exactly the way the 12 skills do.
 - **`examined < total` means `SAMPLED`, not pass — and it is the normal case, not an anomaly.**

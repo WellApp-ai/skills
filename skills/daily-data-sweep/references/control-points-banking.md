@@ -6,7 +6,9 @@ Gate 3. Chart-readiness: transactions, counterparty, cards, FX, source-side defe
 
 ## PRIORITY FAMILY — banking data must be chart-ready (`BANK-`)
 
-This family runs at **gate 3**, behind the `ING-` ingestion family at gate 2 — sync freshness and
+This family's **complete** rows run at **gate 3**, behind the `ING-` ingestion family at gate 2; its
+**exhaustive** rows run at gate 2 with the breadth sweep, which is where the gate table places
+`BANK-` breadth. Both statements are true of different halves of the family — sync freshness and
 connector coverage must be established before a banking count means anything. It is the **priority
 family** and the reason the skill exists: before any chart
 renders (cash position, cash trend, burn/runway, expense breakdown, FX exposure), the banking
