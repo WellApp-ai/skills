@@ -43,6 +43,7 @@ This repo packages that judgment as **Agent Skills** — playbooks any AI assist
 
 | Skill | Description | Details |
 |---|---|---|
+| `daily-data-sweep` | "Can I trust these numbers today?" — a data-health pre-flight (complete + exhaustive) before you quote any figure from the skills below. | [View details →](docs/daily-data-sweep.md) |
 | `expense-breakdown` | "Where does our money go?" — top expense categories and the biggest outstanding bills, from the ledger and invoices. | [View details →](docs/expense-breakdown.md) |
 | `runway-calculator` | "What's our runway?" — real cash on hand vs. trailing burn, stated in months and days, with the full formula shown. | [View details →](docs/runway-calculator.md) |
 | `cash-position` | "How much cash do we have right now?" — a point-in-time snapshot across every connected account. | [View details →](docs/cash-position.md) |
@@ -83,6 +84,7 @@ Install the following official skills from Well. Instructions:
     j. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/payment-invoice-lookup/SKILL.md
     k. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/missing-receipts/SKILL.md
     l. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/draft-invoice/SKILL.md
+    m. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/daily-data-sweep/SKILL.md
 2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
 3. Create a summary table with skill names and descriptions extracted from the frontmatter
 4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
@@ -164,6 +166,7 @@ Download the `.skill` file and double-click it to install — Claude Desktop ins
 | `payment-invoice-lookup` | Match a payment to its invoice, or list every unreconciled one. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/payment-invoice-lookup.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/payment-invoice-lookup.zip) |
 | `missing-receipts` | Invoices with no source document attached, for compliance. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/missing-receipts.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/missing-receipts.zip) |
 | `draft-invoice` | Create a real invoice record in Well from a chat description. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/draft-invoice.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/draft-invoice.zip) |
+| `daily-data-sweep` | Data-health pre-flight — is today's data COMPLETE and EXHAUSTIVE enough to trust a number from it. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/daily-data-sweep.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/daily-data-sweep.zip) |
 
 ##### For Advanced Users
 
@@ -184,6 +187,7 @@ npx skills add wellapp/company-profile
 npx skills add wellapp/payment-invoice-lookup
 npx skills add wellapp/missing-receipts
 npx skills add wellapp/draft-invoice
+npx skills add wellapp/daily-data-sweep
 ```
 
 ---
