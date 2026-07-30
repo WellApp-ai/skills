@@ -49,7 +49,7 @@ expressed must not be silently dropped, or the sweep implies coverage it does no
   (jsonb, not queryable by nested key). The only observable is the derived
   `status _eq need_reconnect`, so the sweep detects an expired credential **after** refresh has
   terminal-failed, never in the warning window before it.
-- **Own-company resolution — NO grounded field exists, and the data is currently wrong.**
+- **Own-company resolution — a READ-SURFACE gap, not a schema gap.**
   `workspaces` has no `own_company` (verified: 14 fields, none of them it). The nearest
   candidates are `companies.entity_kind` and `companies.company_origin` — but live values are
   only `unknown` and `counterparty`, with **no value marking "self"**, and in workspace
@@ -58,7 +58,7 @@ expressed must not be silently dropped, or the sweep implies coverage it does no
   as a third party. Until a self-marker exists, the payable/receivable split that
   `bills-due`, `accounts-receivable-aging`, `rank-clients-by-ltv` and `company-profile` depend
   on **cannot be verified by this sweep**, and `ING-invoice-direction-coverage` inherits that
-  limitation. This is a red-severity gap in the data model, not just in the sweep.
+  limitation. See `schema-facts.md`, which is authoritative here: `workspaces.own_company_pk` **does exist** and is stripped by the API formatter, so this is a read-surface gap. A company row carrying `company_origin: counterparty` is therefore **not** a defect on its own — do not emit a red on it.
 - **Expected connector set — unknowable in-graph.** The sweep can prove *some* source of a
   domain exists, never that *every* source the business uses is connected — there is no
   per-workspace declared connector manifest. Detecting a wholly absent second bank needs an

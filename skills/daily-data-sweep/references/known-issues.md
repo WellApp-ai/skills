@@ -61,3 +61,42 @@ reason on every run.
   `fail`; else any amber ⇒ `pass (with findings)`; else `pass`; plus `(partial — N not evaluated)`
   whenever the bucket holds any INCONCLUSIVE or SAMPLED. The severity floor is a reporting filter
   and never changes a verdict.
+
+---
+
+## Re-audit 2026-07-30 (post-fix adversarial pass) — 2 blockers fixed, 9 open
+
+An independent pass re-verified every claimed closure rather than trusting the strikethroughs. Two
+closures were **false or inert** and are now fixed; nine further defects remain open.
+
+**Fixed immediately (both would have made a live run lie):**
+
+- **`empty_is_pass` was declared by no control point.** The "an empty population is never a pass"
+  fix landed in the L1 primitive and never landed in the ~30 rows whose *passing* state is an empty
+  result set. Every clean workspace therefore returned INCONCLUSIVE on all of them and the bucket
+  rule stamped `(partial — N not evaluated)` on **every run forever**, making a bare `pass`
+  unreachable — the mirror image of the always-pass lie it replaced. The class is now declared in
+  `iteration-protocol.md` B.1, together with the inverse class that must **not** declare it.
+- **The own-company fact contradicted itself across four files.** `schema-facts.md` (authoritative)
+  says `own_company_pk` exists and is stripped by the formatter — a read-surface gap — and that a
+  `company_origin: counterparty` row is *not* a defect. `mcp-surface-limits.md` and
+  `latent-assumptions.md` said the field does not exist and the data is wrong. An agent firing
+  `ASSUME-own-company-correct` would have emitted a **red against its own reference file.** Both are
+  reframed to schema-facts' wording.
+
+**Open after this pass:**
+
+| # | severity | issue |
+|---|---|---|
+| R3 | high | A fourth uncategorized control point survived dedup: `BANK-txn-categorized` (gate 3, "any row → red") contradicts tolerance 9's per-cause ladder, on the largest population in the sweep. Both dedup notes claim `RECON-txn-uncategorized` is the only canonical. |
+| R4 | high | Six more undeclared cross-file duplicates, none in #4's list — incl. three **threshold twins** changed in one file and not the other: `BOOK-invoice-has-document` (red) vs `RECON-invoice-missing-document` (amber); `BOOK-document-right-kind` (amber) vs `DOC-04` (red); `BANK-txn-ledger-mapped` (any row) vs `RECON-txn-no-ledger-account` (only past the close cutoff). |
+| R5 | medium | Gate 1 is labelled `SPINE-02..06` — a range including the deleted `SPINE-05` and excluding `SPINE-07`, which is defined but runs in no gate. Should read `SPINE-02, -03, -04, -06, -07`. |
+| R6 | medium | Two rows are column-misaligned and will parse wrong: `BANK-account-has-currency` and `BOOK-invoice-core-fields` have 7 cells for 6 columns, so `name` reads "complete". Both were introduced by the bucket-column pass. |
+| R7 | medium | `records_url` has a "never fabricate one" rule at `SKILL.md:302`, but the worked example at `:407` still lists it unconditionally — the example teaches the opposite of the rule, which is exactly the #2 failure mode. |
+| R8 | low | The "No cross-root join in one query" bullet is unedited while the CORRECTION below it calls it wrong. Strike it in place, as the soft-delete bullet was. |
+| R9 | low | The #12 dated-measurement class survives in two files the fixing agent did not own: `control-points-graph-recon.md` and `latent-assumptions.md`. |
+| R10 | low | `control-points-banking.md` says `BANK-` is "the first family the sweep runs" while the gate table puts it at gate 3, behind `ING-`. |
+| R11 | low | The L1 pseudocode and `PAGE_BUDGET` are dead — overridden 160 lines later by MEASURED REALITY. An agent reading B.1 first implements a cursor loop against `nextCursor: null`. |
+
+**Verified clean:** the two gate moves from dedup (open-balance 2→4, sync-coverage 5→2) cross-
+reference correctly, and every `ING-` id named in the fold-in notes exists. No dangling ids.

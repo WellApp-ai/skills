@@ -25,15 +25,39 @@ does not see a soft-deleted target at all. Confirmed live — `mcp-surface-limit
 | `GRAPH-journal-entry-unbalanced` | Debits ≠ credits | group `journal_entries` by parent journal; sum debit vs credit side. **Resolve the parent FK and amount fields via `well_get_schema` — no skill exposes them; do not hardcode** | sides differ by > 0.01; or a group with exactly one line (half-posted) | red | complete | expense-breakdown and runway prefer the ledger *because it's authoritative*. An unbalanced entry makes the preferred path **less** trustworthy than the fallback it overrides, and neither skill can detect the inversion |
 | `GRAPH-journal-entry-unposted-or-dangling` | Entry not posted to a journal/ledger account | `journal_entries` where the journal or ledger-account FK is null, or points at an absent / soft-deleted row | any row | red | complete | invisible to every ledger aggregation while still existing — ledger spend under-reports against the same period's transactions with no error surfaced |
 | `GRAPH-invoice-items-vs-header-totals` | Line items don't sum to the header | group `invoice_items` by parent invoice; compare line sum vs `items_total`, line tax vs `tax_total`; check the accounting-side triplet independently of the local one | difference > 0.01; non-zero `grand_total` with zero live items; the two triplets diverge | amber | complete | **what a header-internal check cannot see**: the header can balance perfectly while line detail is missing or contradictory. `draft-invoice` accepts `totals` and `line_items` as *independent* inputs, so divergence is structurally possible on every write |
-| `GRAPH-invoice-transaction-currency-mismatch` | Payment match crosses currencies | per `invoice_transactions` edge compare `invoices.local_currency` vs `transactions.instructed_amount.currency`; accept `accounting_currency` only when `exchange_rate_pk` resolves live | neither currency matches; or they differ and `exchange_rate_pk` is null/dangling | red | complete | payment-invoice-lookup asserts settlement of that invoice — a EUR payment bound to a USD invoice makes the assertion false, and fx-exposure counts the same money under two currencies |
-| `GRAPH-invoice-transaction-amount-mismatch` | `full` allocation with unequal amounts | edges where `allocation_type = full` and abs(txn amount − `grand_total`) > tolerance §14 (0.01 same-currency, 0.5% cross-currency). **This row owns the `full`-allocation arm only** — summed edge amounts vs `grand_total` and `paid_amount` vs the edge sum are owned by `RECON-overallocated-invoice`, `RECON-partial-allocation-shortfall` and `RECON-paid-amount-vs-allocation`; do not re-check them here or the same invoice is counted four times | any edge in the `full` set | red | complete | the invoice reads as settled while a residual exists, so it **drops out of AR-aging and bills-due entirely**. A header-only `paid_amount`/`balance_due` check can't catch it — those fields were written from the same bad edge |
-| `GRAPH-invoice-transaction-dangling-side` | Edge points at an absent/deleted row | per edge, confirm both the `invoices` and `transactions` sides resolve live | either side unresolvable | red | complete | payment-invoice-lookup handles a *missing* edge ("no match on file") but has **no branch** for an edge that exists and resolves to nothing — it reports a match it cannot display, or errors mid-answer |
-| `GRAPH-invoice-document-pk-dangling` | `document_pk` resolves to nothing | `invoices` where `document_pk` is non-null but the `documents` row is absent / soft-deleted | any row | amber | complete | missing-receipts tests the relation for **null** — a populated pointer to a deleted document **passes**. The invoice reads as documented, compliance reports zero gaps, the receipt does not exist. **A false green is worse than the gap the skill was written to find** |
 | `GRAPH-account-ownership-unresolvable` | Account provenance unestablished | `accounts` where `workspace_connector_pk _is_null` (**currently all 30 live rows**) cross-checked against `ownership`; flag rows where `ownership` is also null/unknown | both null | red | complete | cash-position and cash-balance-trend must count only workspace-owned accounts. With the connector FK null across the board, **`ownership` is the only discriminator left** — if it's unset too, a counterparty account can be summed into cash and runway inherits the inflated numerator |
 | `GRAPH-account-open-balance-row-invalid` | Missing, duplicated or stale current snapshot | count live `account_balances` per account where `balance_at_to _is_null true`; `orderBy balance_at_from desc` and age the newest one against tolerance 6a | zero open rows, **or two or more**, **or** an open row whose `balance_at_from` is older than 48h | red | complete | zero → the account contributes nothing to cash; duplicate open rows → **the same balance counted twice**; stale → cash-position reads a closed period as "current". All three produce a plausible number with no error raised. **This is the canonical open-balance control point** — `ING-account-no-open-balance-row` and `RECON-account-current-balance-missing` checked the same population and were folded in here |
 | `GRAPH-transaction-counterparty-unresolved` | No resolvable counterparty | `transactions` where both `debtor_payment_means` and `creditor_payment_means` are null, plus means resolving to no live company/person/account | any row | amber | complete | payment-invoice-lookup must list unmatched payments "with counterparty if resolvable", and company-profile reaches transaction history *only* through this chain — a broken link hides a vendor's payment history while the 360 view still renders complete |
 | `GRAPH-person-not-linked-to-company` | Unaffiliated people | `people` with a null company FK or one pointing at an absent/deleted company | any row, reported as a share | amber | complete | an unreachable island: the row exists, no skill can route to it, and the profile it should enrich reports no contacts |
 | `GRAPH-company-no-contact-channel` | No contact channel on file | `companies` with zero live `emails`, `phones` and `web_links` | any company that was an `issuer_pk`/`receiver_pk` in the last 12 months; amber for dormant | amber | complete | company-profile must return channels as a first-class section, and any follow-up on AR/AP output has no address to send to |
+
+**Invoice↔transaction edge mechanics are not checked here.** Currency, `full`-allocation amount and
+dangling sides are properties of the edge, so the proof chain owns them; the gate-4 copies counted
+the same edge a second time under a second id. Canonical ids, carrying every threshold and arm the
+deleted rows held:
+
+- `GRAPH-invoice-transaction-currency-mismatch` → **`BOOK-edge-currency-consistent`**, which now
+  carries the transaction-side comparison against `transactions.instructed_amount.currency`, the
+  rule that `accounting_currency` is accepted only when `exchange_rate_pk` resolves **live**, and the
+  **dangling** (not merely null) rate arm.
+- `GRAPH-invoice-transaction-amount-mismatch`, the `full`-allocation arm → **`BOOK-edge-amount-agrees`**,
+  which now carries tolerance §14 spelled out (0.01 same-currency, **0.5% cross-currency**) and the
+  transaction-amount arm alongside the edge-`amount` arm. Its warning survives there: the summed-edge
+  and `paid_amount` directions belong to `RECON-partial-allocation-shortfall`,
+  `RECON-paid-amount-vs-allocation` and `BOOK-edge-overallocated` — checking them together on one row
+  counts the same invoice four times.
+- `GRAPH-invoice-transaction-dangling-side` → **`BOOK-edge-dangling`**.
+- `GRAPH-invoice-document-pk-dangling` → **`DOC-02`**, the definitional row: it holds the live Hasura
+  predicate and is the `B` term of the two-direction bound. `BOOK-document-resolves` was a third copy
+  of the same population and is removed with it.
+
+The stakes survive on the canonical rows: a EUR payment bound to a USD invoice makes
+payment-invoice-lookup's settlement assertion false while fx-exposure counts the same money under two
+currencies; a `full` edge hiding a residual **drops the invoice out of AR-aging and bills-due
+entirely**, which a header-only `paid_amount`/`balance_due` check cannot catch because those fields
+were written from the same bad edge; an edge that exists and resolves to nothing has **no branch** in
+payment-invoice-lookup, so it reports a match it cannot display; and a populated pointer to a deleted
+document is a **false green — worse than the gap missing-receipts was written to find**.
 
 **Uncategorized transactions are not checked here.** The canonical control point is
 `RECON-txn-uncategorized` and its tolerance 9 per-cause ladder. The former
@@ -52,7 +76,7 @@ via `well_get_schema` (the `categories` root exists, and no skill verifies the F
 | `GRAPH-duplicate-invoice-identity` | Same invoice ingested twice | collisions on (`issuer_pk`, `invoice_number`, `document_type_code`) and (`issuer_pk`, `reference_number`, `grand_total`, `issue_date`); **segment by `source_workspace_connector_pk`** | more than one live row per group | red | exhaustive | distinct from duplicate *company* identity — counterparty clean, invoice doubled. The connector segmentation is what tells you whether one connector re-ingested or two connectors reported the same document |
 | `GRAPH-ledger-coverage-vs-source` | Ledger coverage vs invoices/transactions | counts of `ledger_accounts`, `journals`, `journal_entries` vs `invoices`/`transactions` over the window | ledger roots at zero while sources are populated; or a populated window with no entries posting from it | red | exhaustive | the output says "ledger-based" while half the period is unposted — the skill flags an approximation **it cannot know it is making** |
 | `GRAPH-ledger-account-tree-broken` | Chart of accounts orphaned | `ledger_accounts` whose parent FK is absent/deleted; plus accounts with zero posting entries | any orphan subtree | amber | exhaustive | children's totals never roll up into any reported parent, so **the presented categories sum to less than total spend with no residual line to show it** |
-| `GRAPH-orphan-documents-and-media` | Files attached to nothing | live `documents` / `media` with no live parent | any orphan — most sharply when missing-receipts *simultaneously* reports invoices with no document | amber | exhaustive | an orphan file is a receipt Well **already holds and reports as missing**: a false compliance gap. Paired with `GRAPH-invoice-document-pk-dangling`, the two directions bound the real attachment error rate — **neither alone does** |
+| `GRAPH-orphan-documents-and-media` | Files attached to nothing | live `documents` / `media` with no live parent | any orphan — most sharply when missing-receipts *simultaneously* reports invoices with no document | amber | exhaustive | an orphan file is a receipt Well **already holds and reports as missing**: a false compliance gap. Paired with `DOC-02` (the canonical dangling-attachment row), the two directions bound the real attachment error rate — **neither alone does** |
 | `GRAPH-payment-means-island` | Instruments linked to nothing | `payment_means`, `invoice_payment_means`, `cards`, `checks` with no live owner | any island row | amber | exhaustive | the upstream cause of `GRAPH-transaction-counterparty-unresolved`. Companies have no direct FK to transactions — the only route is through `payment_means`, so **one island instrument hides many payments at once** |
 
 **Sync freshness and log coverage are not checked here.** The canonical control points are the
@@ -102,15 +126,12 @@ to be defective, so the sweep's blind spot becomes its clean bill of health.
 | `RECON-invoice-no-txn-link` | Invoice settled outside the graph | in-window `invoices` with no edge | `payment_status` paid/partial or `paid_amount > 0` with zero edges | red | complete |
 | `RECON-paid-invoice-no-payment` | Paid with no cash movement | `payment_status: paid`, no edge; `last_payment_allocation_date` populated with no edge is the stronger signal | any row | red | complete |
 | `RECON-paid-amount-vs-allocation` | `paid_amount` ≠ matched cash `[EXPENSIVE]` | sum matched txn amounts per invoice vs `paid_amount` | gap > tolerance §14 | red | complete |
-| `RECON-partial-allocation-shortfall` | Allocations short of total `[EXPENSIVE]` | allocation sum vs `grand_total`, gated on `paid` | sum < total beyond tolerance §14 | red | complete |
-| `RECON-overallocated-invoice` | Allocations exceed total `[EXPENSIVE]` | same sum, opposite direction | sum > total + tolerance §14 | red | complete |
+| `RECON-partial-allocation-shortfall` | Allocations short of total `[EXPENSIVE]` | allocation sum vs `grand_total`, **gated on `payment_status: paid`** — the gate is what keeps it here rather than in the proof chain. The ungated opposite direction is `BOOK-edge-overallocated` | sum < total beyond tolerance §14 | red | complete |
 | `RECON-invoice-totals-drift` | `items_total + tax_total` ≠ `grand_total` `[EXPENSIVE]` | compare per invoice; **compare on absolute value per `document_type_code`** — 381/383 may carry opposite signs. Header-internal only; line-items-vs-header is `GRAPH-invoice-items-vs-header-totals` | gap > 0.01 in `local_currency` | red | complete |
 | `RECON-balance-due-status-drift` | `balance_due` contradicts `payment_status` `[EXPENSIVE]` | `balance_due = 0` with unpaid/partial; `> 0` with paid; or `paid_amount + balance_due ≠ grand_total` | any row | red | complete |
-| `RECON-provisional-match-backlog` | Unconfirmed LLM matches | `invoice_transactions` with `edge_status: provisional` or `confidence < 0.85` (tolerance 10's match floor) | older than 10 business days | amber | complete |
-| `RECON-invoice-missing-document` | No receipt attached | `invoices.document_pk _is_null` in-window. A **populated but dangling** pointer is `GRAPH-invoice-document-pk-dangling`, a different defect | past the 5-business-day receipt grace | amber | complete |
 | `RECON-txn-missing-document` | Transaction with no receipt | many-to-many — **resolve the relation name via `well_get_schema`, do not hardcode** | past the 5-business-day grace | amber | complete |
 | `RECON-txn-uncategorized` | No category — **the one canonical uncategorized control point** | `category_key _is_null`, **split by `category_status` and `category_source`**; resolve the category FK via `well_get_schema` rather than assuming `category_key` is the only link | per-cause ladder §9 | §9 | complete |
-| `RECON-low-confidence-category` | Below the trust floor | `category_key` non-null, `category_confidence < 0.70` (tolerance 10), `category_source` = classifier not human | older than 10 business days, or > 5% of period spend by value | amber | complete |
+| `RECON-low-confidence-category` | Below the **category** trust floor — **transactions, not edges** | `category_key` non-null, `category_confidence < 0.70` (tolerance 10), `category_source` = classifier not human. **Not a duplicate of `BOOK-edge-confidence-floor`**: this is the classifier's confidence in a category on `transactions`; that one is the matcher's confidence on an `invoice_transactions` edge, floor 0.85. Tolerance 10 governs both floors, which makes them *read* alike — they watch different populations and different fields, so do not merge them | older than 10 business days, or > 5% of period spend by value | amber | complete |
 | `RECON-duplicate-payment-candidates` | Same amount, counterparty, near dates `[EXPENSIVE]` | cluster on amount+currency+counterparty means within 3 calendar days | ≥2 in cluster **plus a corroborator** §4 | red | complete |
 | `RECON-balance-verification-failure` | Balance self-verification failing | `verification_error _eq true`, read `calculated_` vs `expected_balance_diff` | dual threshold §6b | red | complete |
 | `RECON-fx-rate-missing-or-stale` | Conversion on a stale/absent rate | cross-currency invoices: `exchange_rate_pk` populated and its `rate_date` inside the window | null rate, or `rate_date` more than tolerance 5's 4 calendar days before the txn date | red | complete |
@@ -118,6 +139,24 @@ to be defective, so the sweep's blind spot becomes its clean bill of health.
 
 `RECON-failed-automation-run` is the worst case *for the sweep itself*: every downstream skill
 reads a partially-written period as a complete one, with no signal that it is short.
+
+**Allocation over-run, edge-match confidence and the missing-document gap are not checked here.**
+All three are properties of the proof chain, and each was carried by a second id in this family at a
+different severity or grace:
+
+- `RECON-overallocated-invoice` → **`BOOK-edge-overallocated`** — the same sum over the same edge
+  population in the same direction. The `[EXPENSIVE]` client-side paging marker moves with it: budget
+  it as a paged job with checkpoint/resume, not a `totalCount` probe.
+- `RECON-provisional-match-backlog` → **`BOOK-edge-confidence-floor`**, which now carries the
+  `edge_status: provisional` arm, tolerance 10's 0.85 match floor and the 10-business-day age gate.
+  Read it with the `confirmed` trap documented alongside it: `edge_status` defaults to `confirmed`,
+  so an empty provisional backlog can mean the review tier is unused rather than clear.
+- `RECON-invoice-missing-document` → **`BOOK-invoice-has-document`**, which now carries the in-window
+  scoping. Its grace is the differentiated `DOC-` ladder, which supersedes the flat 5-business-day
+  receipt grace and the flat amber this row carried: 3 business days after `issue_date` by default;
+  **5 calendar days and red from the first occurrence** for card/expense receipts above the €25 FR
+  simplified-invoice VAT threshold; 10 days and **amber** for transfer-settled supplier invoices. The
+  transaction side stays here as `RECON-txn-missing-document` — a different population.
 
 **Journal balance is not checked here.** The canonical control point is
 `GRAPH-journal-entry-unbalanced`, which runs the same debit-vs-credit comparison at the same 0.01

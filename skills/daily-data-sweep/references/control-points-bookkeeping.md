@@ -28,7 +28,7 @@ No figure in that file is a standing fact; the numbers move day over day.
 `edge_status` defaults to `confirmed`, and `match_method` can be `llm_matched` **or**
 `human_approved`. So an edge that is `confirmed` **and** `llm_matched` **and** carries no human actor
 means *the model was confident* — **not** *a human verified it*. Any control point that treats
-`confirmed` as reviewed — including the `RECON-provisional-match-backlog` check — reads **green while
+`confirmed` as reviewed — including the `BOOK-edge-confidence-floor` backlog check — reads **green while
 reconciliation rests on unreviewed model output.** The sweep must therefore report
 `confirmed AND llm_matched AND no human actor` as its own amber class, and the model needs a distinct
 human-confirmation marker (see § Known limits — there is no audit-trail root).

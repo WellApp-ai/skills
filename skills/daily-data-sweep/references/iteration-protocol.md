@@ -75,6 +75,24 @@ Three rules that are not optional:
   card checks; a month with no transactions must not "pass" every reconciliation check. `total == 0`
   is `INCONCLUSIVE` unless the control point explicitly declares `empty_is_pass: true` (only
   correct where absence IS the passing state — e.g. "no duplicate accounts exist").
+- **`empty_is_pass: true` — the absence-is-pass class.** A control point whose *passing* state IS an
+  empty result set must declare this, or the rule above turns every clean workspace into
+  `INCONCLUSIVE` and a bare `pass` becomes unreachable — the mirror image of the lie the rule fixes.
+  **Every duplicate-, collision-, dangling-, orphan- and leak-detection control point is in this
+  class**, because finding nothing is the correct outcome. Concretely, `empty_is_pass: true` applies
+  to every row whose name or check begins *no duplicate*, *not duplicated*, *dangling*, *orphan*,
+  *island*, *collision*, *cross-workspace*, *tenancy*, *unposted*, *never*, or *no ... exists* —
+  including (non-exhaustively) `RECON-duplicate-account-rows`, `RECON-duplicate-payment-candidates`,
+  `GRAPH-duplicate-invoice-identity`, `GRAPH-company-identity-fragmentation`,
+  `GRAPH-orphan-documents-and-media`, `GRAPH-payment-means-island`,
+  `GRAPH-invoice-transaction-dangling-side`, `GRAPH-invoice-document-pk-dangling`,
+  `ING-duplicate-transaction-external-id`, `ING-duplicate-invoice-number`,
+  `ING-duplicate-account-cross-connector`, `BANK-txn-no-external-id-dup`,
+  `BANK-txn-no-cross-connector-dup`, `BOOK-edge-dangling`, `BOOK-document-tenancy`, `DOC-02`,
+  `DOC-07`, `DOC-08`, `IPAY-16`, `EINV-02`, `EINV-11`.
+  **The inverse class must NOT declare it**: a check asserting something *should exist* — a balance,
+  a category, a payment means, a document — is INCONCLUSIVE on an empty population, never a pass,
+  because it had nothing to examine.
 - **`SAMPLED` is not `pass`.** A truncated scan reports `SAMPLED` with the page depth reached. An
   unqualified green over a truncated scan is the sweep lying in exactly the way the 12 skills do.
 - **`examined < total` means INCONCLUSIVE, not pass.** The two reads are not a consistent snapshot;
