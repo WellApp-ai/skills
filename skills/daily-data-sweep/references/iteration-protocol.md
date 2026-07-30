@@ -84,7 +84,12 @@ loop L1(control, root, filter):
             verdict := pass
     record(control, verdict, examined, total, scan_depth)   # scan_depth = the limit this run used
 
-empty_verdict(control):                 # an empty result means three different things
+empty_verdict(control):                 # an empty result means FOUR different things
+    if not fields_validated_against_schema(control.root):
+        return INCONCLUSIVE                         # <- the query may never have run:
+                                                    #    an invalid field returns success+0 in the
+                                                    #    fan-out path (mcp-surface-limits.md).
+                                                    #    This outranks empty_is_pass.
     if control.empty_is_fail:  return fail          # absence IS the defect
     if control.empty_is_pass:  return pass          # absence IS the passing state
     return INCONCLUSIVE                             # nothing was examined

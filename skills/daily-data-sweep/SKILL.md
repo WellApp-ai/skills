@@ -286,12 +286,12 @@ Return:
   severity floor is a *reporting* filter and never changes a verdict.
 - **A table of failing control points only** (passing ones collapse to a count), each with: id,
   bucket, severity, count of offending records, up to 5 example ids, and `records_url` when
-  available. **`records_url` has no confirmed construction rule** — there is no verified deep-link
-  pattern from a root + example ids to a filtered view in the Well app, the same gap that leaves
-  `<well-app-base-url>` in step 10 unresolved to a real domain. So `records_url` follows the same
-  discipline as that link: **never fabricate one.** Emit it only when a specific, previously
-  confirmed URL pattern for that root is known; otherwise omit the field for that row rather than
-  guess a route — an unverified link that 404s is worse than a row with one fewer column.
+  available. **`well_query_records` returns `records_url` in its own response** (measured
+  2026-07-30) — pass it through **verbatim** when present. **Never construct one.** There is no
+  verified rule for building a deep link from a root plus example ids, and the response's URL points
+  at the root's records view, not at a filtered set — so do not append filters or ids to it. When the
+  response carries no `records_url`, omit the field for that row rather than guess a route: an
+  unverified link that 404s is worse than a row with one fewer column.
 - **The single highest-value action per red** — reconnect this connector, re-run this sync, categorize
   these N transactions. Name the surface, not a vague "investigate".
 - **An explicit INCONCLUSIVE and SAMPLED list.** Control points that could not be evaluated, or whose
@@ -411,7 +411,7 @@ so whole accounts never synced; and the same movement ingested by two connectors
 Then every COMPLETE finding beneath, explicitly **"scoped to the sources that were connected"**, not
 clean: 788 of 1,904 transactions uncategorized (41.4%), all 1,904 with no ledger account, 155 (8.1%)
 with no payment means, 6 balances failing verification, ~24 duplicate rows of one account so cash is
-summed ~24×. Each carries id, bucket, severity, count and example ids — plus `records_url` only where a confirmed URL pattern exists for that root; today none does, so the field is omitted rather than guessed. Close with the
+summed ~24×. Each carries id, bucket, severity, count and example ids — plus `records_url` passed through verbatim from the query response that found the rows, never constructed. Close with the
 consequence and the chain: "Charts must not render. Fix January first — March cannot close behind it."
 Report only; fix nothing.
 

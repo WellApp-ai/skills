@@ -8,6 +8,39 @@ Verified schema facts live in [`schema-facts.md`](schema-facts.md); dated measur
 
 ---
 
+## MEASURED 2026-07-30 — an invalid field name returns a SILENT EMPTY, not an error
+
+This is the single most dangerous surface behaviour for this skill, because it is indistinguishable
+from a clean workspace.
+
+Probed twice against the same root with the same non-existent field `transactions.id`:
+
+| call | result |
+|---|---|
+| **no `workspace_id`** (the fan-out path this skill uses) | `{"totalCount": 0, "returned": 0, "success": true}` |
+| **with `workspace_id`** | hard `400` — `field 'id' not found in type: 'core_api_transactions'` |
+
+So in the fan-out path a **typo, a renamed column, or a field this connector does not populate
+returns a successful empty response.** The control point then reads `total == 0` and routes through
+`empty_verdict()` — `pass` if it declared `empty_is_pass`, otherwise INCONCLUSIVE. Either way the
+sweep reports a plausible verdict for **a query that never ran**, and the `empty_is_pass` class makes
+it a *green*. A whole family can go green because one field was renamed upstream.
+
+**Binding rule — an empty result is only trustworthy if the fields were validated first.**
+
+1. `well_get_schema(root)` before the first query of that root in a session is **not optional**; it
+   is what makes an empty result mean anything. This is why it is step 3 and repeated gate by gate.
+2. Every field path in a query must appear in that root's schema response. A path that does not is a
+   **skill defect**, reported as such — never passed to the API to see what happens.
+3. If a control point returns `total == 0` on a root where the sweep has *not* validated the field
+   paths this session, the verdict is **INCONCLUSIVE — unvalidated fields**, never `pass`, even when
+   the control point declares `empty_is_pass`. Absence proves nothing when the query may not have
+   run.
+4. When cheap, corroborate a zero: re-run without the `whereClause`. A root that returns `0` both
+   filtered and unfiltered is either genuinely empty or broken — and `SPINE-04` already owns the
+   distinction between an empty month and a false quiet.
+
+
 ## SCOPE WARNING — two sets of numbers in this file, both correct
 
 Every count measured over the **MCP is scoped to the 3 workspaces the caller can access**. SQL run
