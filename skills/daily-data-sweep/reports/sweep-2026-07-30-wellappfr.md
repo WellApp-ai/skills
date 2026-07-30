@@ -12,9 +12,26 @@
 - **COMPLETE (are the numbers right?): `fail` — 1 red, 2 amber**
 - **EXHAUSTIVE (is anything missing?): `pass (with findings)` — 3 amber (partial — several checks not evaluated)**
 
-**This workspace is materially healthier than WELL APP INC.** — and the differences are the most
-informative thing in this report, because the two workspaces run the same code against different
-connectors. Where FR is clean and US is broken, the connector is the variable.
+> ## ⚠️ CORRECTED 2026-07-30 — this report's headline was wrong
+>
+> The root-cause pass (`root-cause-wellappfr-2026-07-30.md`) refuted the claim below. **FR is not
+> healthier; it is differently broken, and this sweep could not see it.**
+>
+> - The **314 transactions are 157 real transactions ingested twice** — Qonto MCP + `plaid_qonto_fr`.
+>   Every per-transaction percentage in the table below has a doubled denominator.
+> - **120 of the 671 invoices are cross-source duplicates** (Pennylane ↔ Qonto on the same supplier
+>   bill). True ratio is 551:157, not 671:314.
+> - **460 of 500 sampled invoices sit at `payment_status = 'unknown'` with NULL `balance_due`**, and
+>   `bills-due` reports that as "no bills currently due" — a false all-clear against ~434 real
+>   payables. This sweep never checked `payment_status`, so it reported EXHAUSTIVE on a workspace
+>   that is double-counting cash and hiding its entire payables book.
+>
+> The FR-vs-US contrast below still holds on **accounts and currency** (verified: Qonto pins
+> `account.currency`, the US rail does not). It does **not** hold as a general "FR is clean" claim.
+
+The two workspaces run the same code against different connectors, so where one is clean and the
+other is not, the connector is the variable. That comparison is informative on accounts and
+currency — and misleading everywhere else, per the correction above.
 
 ---
 
