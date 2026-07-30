@@ -221,15 +221,17 @@ chain, so a defect in an older month blocks every month after it. Loop workspace
    — before running any control point. Emit the loop ledger per control point. **Four verdicts,
    never two: `pass` / `fail` / `inconclusive` / `sampled`.**
 
-   **There is no pagination, so a full-set scan is impossible.** Issue a **single request** per
-   control point — never a cursor loop. Then branch on the query shape, because it decides the
-   verdict: if the defect predicate fits in the `whereClause`, count it with `limit: 1` and read
-   `totalCount` — that count is **exact and exhaustive**, so a non-zero one is a `fail` with the
-   number stated, and only the example ids you fetch afterwards are sampled. `SAMPLED` is for
-   predicates needing a client-side reduce over returned rows, and then only when the scan found
-   **nothing** — a hit in a partial scan is still a real defect. Do not compare the `limit: 1`
-   response's `returned: 1` against `totalCount` and call it truncated; that is what made `pass` and
-   `fail` unreachable. Full primitive and the three empty-result classes:
+   **Always scope every query to one workspace.** Enumerate with `well_list_workspaces` and pass
+   `workspace_id` on every call. This is not tidiness — the fan-out path issues **no cursor**, so it
+   can never be paged to exhaustion and can only ever yield `SAMPLED`. A workspace-scoped query
+   **does** paginate: a full page returns a `nextCursor` you pass back until it comes back null.
+   Then branch on the query shape, because it decides the verdict: if the defect predicate fits in
+   the `whereClause`, count it with `limit: 1` and read `totalCount` — that count is **exact**, so a
+   non-zero one is a `fail` with the number stated, and only the example ids you fetch afterwards are
+   sampled. If the predicate needs a client-side reduce, page to exhaustion; a hit is a `fail`
+   however far you got, and only *absence* over a scan the page budget cut short is `SAMPLED`. Do not
+   compare a `limit: 1` response's `returned: 1` against `totalCount` and call it truncated. Full
+   primitive and the three empty-result classes:
    [`iteration-protocol.md`](references/iteration-protocol.md) B.1.
 
 6. **Run the gates in order.** Before the first query against a root not already covered by step
@@ -356,8 +358,8 @@ Before finishing, verify:
   is its own amber class —
   [`references/control-points-bookkeeping.md`](references/control-points-bookkeeping.md).
 - **A concurrent sync moves the set under the loop.** On a client-side predicate that found nothing,
-  `returned < totalCount` is `SAMPLED` — the normal case, since there is no pagination to fetch the
-  rest with. It does **not** apply to a server-side `totalCount`, which is exact. A client-side
+  `returned < totalCount` is `SAMPLED` only when the page budget stopped the scan, or when the query
+  was run in the fan-out path, which issues no cursor. A workspace-scoped query pages to exhaustion. It does **not** apply to a server-side `totalCount`, which is exact. A client-side
   cross-root comparison is also not atomic, so re-verify a red before reporting it.
 
 ## Examples

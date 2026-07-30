@@ -112,7 +112,7 @@ support an "every X" claim — see the L2 loop in `iteration-protocol.md`.
 ### Counting primitive — see the protocol
 
 Counts come from `totalCount`, extrema from `orderBy` + `limit 1`, and there is **no pagination**
-(`nextCursor` is always null), so `returned < totalCount` means `SAMPLED`, never `pass`. The full
+in the fan-out path (which issues no cursor), so scope to one workspace and page; `SAMPLED` is for a scan the page budget cut short. The full
 measured contract — including that `limit` is applied per workspace and that `totalCount` and `rows`
 carry different scopes in one response — is in
 [`iteration-protocol.md`](iteration-protocol.md) § MEASURED REALITY. **That file is the single

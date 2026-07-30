@@ -20,10 +20,10 @@ The binding consequences, which the rest of this file and the control-point fami
   7 days" is legitimate: the 7 days are rows in the data this run reads. "Down to under 100 within
   30 days" is not: it names a future run.
 - **Every threshold is a single-run threshold** — see `tolerances.md`.
-- **Scan depth is reported, not resumed.** The `limit` used and the `returned`/`totalCount` pair
+- **Scan depth is reported, not resumed across runs.** The `limit` used and the `returned`/`totalCount` pair
   document how much of the population this run saw. The next run restarts from the beginning — it has
-  no way to learn where this one stopped, and there is no cursor to stop at (`nextCursor` is always
-  null; see B.1).
+  no way to learn where this one stopped. Within a single run, a cursor does page a workspace-scoped
+  query to exhaustion (B.1); it is simply not carried between runs.
 - **No month can be labelled from history.** A month is described by what this run found in it, never
   by whether it was swept before — see `sweep-spine.md` A.2.
 
@@ -41,13 +41,26 @@ an explicit termination condition and a completeness proof.
 
 ### B.1 Loop L1 — one request, honestly bounded (per control point)
 
-**READ THIS BEFORE THE LOOP — measured 2026-07-30: there is no pagination.** `well_query_records`
-returns **`nextCursor: null` on every response**, at every `limit`, and there is no offset parameter
-(the measurement is in § MEASURED REALITY below). There is nothing to page through, so **do not write
-a cursor loop and do not implement a page budget** — a cursor loop against a null cursor terminates
-after one iteration and then silently reports that one response as an exhaustive scan. `L1` is
-therefore a **single request**, and its whole job is deciding honestly whether that one response saw
-the population or only part of it.
+**READ THIS BEFORE THE LOOP — corrected 2026-07-30 (a previous revision of this file said the
+opposite and was WRONG).** `well_query_records` **does paginate — but only when you scope the query
+to one workspace.**
+
+| call shape | `nextCursor` | consequence |
+|---|---|---|
+| `workspace_id` passed explicitly | **issued** whenever the page fills (`returned == limit`) | page to exhaustion; a real `pass`/`fail` is reachable |
+| `workspace_id` omitted (the fan-out) | **always null**, even at `returned: 545` of `totalCount: 793` | cannot be completed; `SAMPLED` by construction |
+
+Verified end to end: `limit: 500` scoped to one workspace returned `returned: 500` of
+`totalCount: 1597` with a non-null cursor; passing that cursor back advanced the window and issued
+another. The earlier "there is no pagination" claim came from probing **only the fan-out path with
+small limits**, where `returned` never reaches `limit`, so no cursor is ever issued — a property of
+that one call shape, mistaken for a property of the API.
+
+**Binding consequence — always iterate workspaces explicitly.** Enumerate with
+`well_list_workspaces` and pass `workspace_id` on every query. Never rely on the fan-out: it caps
+rows per workspace, reports a `totalCount` scoped differently from its `rows`, and cannot be paged,
+so it can only ever produce `SAMPLED`. Scoping per workspace is what makes an exhaustive scan — and
+therefore an honest `pass` — possible at all.
 
 `well_query_records` also has **no aggregation** and caps rows per response (and per workspace — see
 MEASURED REALITY §2). So every count, group-by and set-difference is client-side over what one
@@ -70,19 +83,32 @@ loop L1(control, root, filter):
             verdict := fail                    # count is exact; fetch rows only for example ids,
                                                # and label THOSE sampled, never the count
     else:
-        resp     := well_query_records(root, fields, filter, limit)   # ONE call — no cursor, no pages
-        total    := resp.totalCount     # across ALL authorized workspaces (MEASURED REALITY §3)
-        examined := resp.returned       # capped per workspace, so examined <= total, often <<
-        hits     := resp.rows matching the predicate
+        # CLIENT-SIDE predicate: page to exhaustion, one workspace at a time.
+        examined := 0; hits := []; cursor := null; pages := 0
+        repeat:
+            resp   := well_query_records(root, fields, filter, limit: 500,
+                                         workspace_id: ws,        # <- REQUIRED, or no cursor is issued
+                                         cursor: cursor)
+            total  := resp.totalCount
+            examined += resp.returned
+            hits   += resp.rows matching the predicate
+            cursor := resp.nextCursor
+            pages  += 1
+        until cursor == null or pages >= PAGE_BUDGET   # budget only bounds a runaway, not the norm
+
         if total == 0:
             verdict := empty_verdict(control)
         else if hits is non-empty:
-            verdict := fail             # a hit found in a partial scan is still a real defect
-        else if examined < total:       # scanned everything we could reach, found nothing
+            verdict := fail             # a hit is a real defect however far the scan got
+        else if cursor != null:         # budget stopped us before the data did
             verdict := SAMPLED          # <- absence over a partial scan proves nothing
         else:
-            verdict := pass
+            verdict := pass             # scanned to exhaustion, found nothing — a genuine pass
     record(control, verdict, examined, total, scan_depth)   # scan_depth = the limit this run used
+
+PAGE_BUDGET := 20                       # 20 x 500 = 10,000 rows per control point per workspace.
+                                        # A backstop against a runaway loop, NOT the expected stop:
+                                        # hitting it is a SAMPLED verdict and must be reported.
 
 empty_verdict(control):                 # an empty result means FOUR different things
     if not fields_validated_against_schema(control.root):

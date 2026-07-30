@@ -120,7 +120,7 @@ expressed must not be silently dropped, or the sweep implies coverage it does no
   for reasons that are not defects. Sequence against a quiet window, and **re-verify a red before
   reporting it.**
 - **Zero violations vs. violations past the row cap.** Without aggregation the sweep cannot
-  distinguish the two, and it cannot page to exhaustion either — `nextCursor` is always null
+  distinguish the two. Scope to one workspace and page to exhaustion (B.1); the fan-out issues no cursor
   (`iteration-protocol.md` B.1). So whenever `returned < totalCount` the verdict is `SAMPLED`.
   **Record the `returned`/`totalCount` pair alongside every green** — an unqualified green over a
   truncated scan is the sweep lying in the same way the skills do.
