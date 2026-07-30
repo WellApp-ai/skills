@@ -75,12 +75,12 @@ receipt". `C` alone overstates it (a workspace can hold 500 orphan PDFs and have
 the same workspace is *positive proof of a linker defect* — which neither number establishes alone.
 
 **Tolerances:** 3 business days grace after `issue_date` before an unattached invoice counts
-(suppress `DOC-01/05/08` inside it; **never** suppress `DOC-02/03/04/07` — those are structural and
+(suppress `BOOK-invoice-has-document` — which carries the former `DOC-01` — and `DOC-05/08` inside it; **never** suppress `DOC-02/03/04/07` — those are structural and
 time-independent). **Card/expense receipts: 5 calendar days and HIGH from the first occurrence above
 the FR simplified-invoice VAT threshold (€25)** — stricter because on card spend the receipt is the
 *only* evidence and without it the VAT is not deductible. Supplier invoices settled by transfer: 10
 days, amber (the document normally arrives *before* payment, and the transfer leaves an independent
-trail). Period share: amber above **2%**, red above **10%**, computed on **`(A+B)/N`, never `A/N`` —
+trail). Period share: amber above **2%**, red above **10%**, computed on **`(A+B)/N`**, never **`A/N`** —
 an auditor pulling a 25-item sample hits a defect with ~40% probability at 2% and ~93% at 10%.
 
 **Do NOT count orphan `media` in the attachment error rate** — `media_type` is `avatar|logo|banner`,

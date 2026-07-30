@@ -127,7 +127,7 @@ checks ARE expressible.
 | `BOOK-edge-currency-consistent` | Cross-currency edge has a live rate | complete | compare edge `currency` and `invoices.local_currency` against `transactions.instructed_amount.currency`; accept `accounting_currency` **only when `exchange_rate_pk` resolves live** | neither currency matches; or they differ and `exchange_rate_pk` is null **or dangling** | red |
 | `BOOK-edge-dangling` | Edge points at a dead row | complete | `invoice_pk` or `transaction_pk` resolving to absent/soft-deleted. Write the predicate against the **relation** (`_not: {invoice: {}}`), never a bare `_is_null` on the FK column — only the relation traversal sees a soft-deleted target | any | red |
 
-**Four edge rows above are the canonical form of a check that a second family also carried.**
+**Five edge rows above are the canonical form of a check that a second family also carried.**
 `GRAPH-invoice-transaction-currency-mismatch`, `GRAPH-invoice-transaction-amount-mismatch` (its
 `full` arm), `GRAPH-invoice-transaction-dangling-side`, `RECON-overallocated-invoice` and
 `RECON-provisional-match-backlog` are removed in favour of `BOOK-edge-currency-consistent`,

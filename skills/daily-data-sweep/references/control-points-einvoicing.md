@@ -61,7 +61,12 @@ the source document blob):
 accounts.{iban, bic, account_number, routing_number, sort_code}`, with card and cheque branches via
 `payment_means.card_pk` / `.check_pk`.
 
-**Prod-wide measurements** (whole DB, not the 3-workspace MCP scope):
+### Measured baseline
+
+**Prod-wide measurements** (whole DB, not the 3-workspace MCP scope), **measured 2026-07-29** —
+see `baseline-2026-07-29.md`, which carries its own day-over-day proof that these figures decay.
+Re-measure rather than quoting them. They establish the *shape* of the defect, which is what the
+control points below are written against; the counts themselves are evidence, never a fail signal.
 
 | what | measured | verdict |
 |---|---|---|
