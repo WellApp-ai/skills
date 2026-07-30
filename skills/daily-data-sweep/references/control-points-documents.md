@@ -25,16 +25,22 @@ cross-workspace attachment does not merely mislabel evidence — **it widens the
 makes the cross-workspace-attachment check a security control that must run in *every* workspace,
 not only the one under audit.
 
-| id | name | check | sev |
-|---|---|---|---|
-| `DOC-02` | **False green** — `document_pk` resolves to nothing | `{"_and":[{"document_pk":{"_is_null":false}},{"_not":{"document":{}}}]}` — the relation inherits the `deleted_at IS NULL` + workspace filter, so a soft-deleted or out-of-scope document returns `document: null` while the FK stays populated | red |
-| `DOC-03` | No recorded content | `size < 1024` red; `1024–5120` amber; `content_checksum IS NULL` while `processing_status = extracted` red (the hasher only writes after reading bytes) | red |
-| `DOC-04` | MIME cannot be evidence | `type _nin` the typed allow-list, derived from the **existing** `ACCEPTED_DOCUMENT_FORMATS` const — do not invent a second list. `application/octet-stream` is its own finding (the magic-byte middleware should have rewritten it). **Never `_like` on `filename`** — filename is user-updatable, `type` is not | red |
-| `DOC-05` | Attached but invoice not extracted from it | `document.processing_status _in [pending, extracting, failed, rejected, skipped]` — split the report: `failed`/`rejected` = unreadable file, the invoice data came from elsewhere (a decorative attachment) | red |
-| `DOC-06` | Document type contradicts invoice type | `invoices.document_type_code` ≠ `invoices.document.document_type`, both non-null | amber |
-| `DOC-07` | **Cross-workspace attachment** | `{"_not":{"document":{"workspace":{"workspace_id":{"_eq":"<ws>"}}}}}` with `document_pk` non-null | **red — security** |
-| `DOC-08` | **Orphan document** — a receipt Well holds, linked to nothing | `_not: {invoices:{}}` AND `_not: {transaction_documents:{}}` AND receipt-capable MIME AND `size > 1024`. Partition by `processing_status`: **`extracted` is the worst** — the pipeline read it and still linked nothing (linker defect) | red |
-| `DOC-10` | One document, many invoices | fan-out read off row shape. **Legitimate**: one issuer, one period, distinct numbers (a consolidated statement). **Suspicious**: 2+ distinct issuers (a document cannot evidence two suppliers), or two children sharing issuer+date+total (a duplicate invoice the dedup missed) | red when suspicious |
+| id | name | bucket | check | sev |
+|---|---|---|---|---|
+| `DOC-02` | **False green** — `document_pk` resolves to nothing | complete | `{"_and":[{"document_pk":{"_is_null":false}},{"_not":{"document":{}}}]}` — the relation inherits the `deleted_at IS NULL` + workspace filter, so a soft-deleted or out-of-scope document returns `document: null` while the FK stays populated | red |
+| `DOC-03` | No recorded content | complete | `size < 1024` red; `1024–5120` amber; `content_checksum IS NULL` while `processing_status = extracted` red (the hasher only writes after reading bytes) | red |
+| `DOC-04` | MIME cannot be evidence | complete | `type _nin` the typed allow-list, derived from the **existing** `ACCEPTED_DOCUMENT_FORMATS` const — do not invent a second list. `application/octet-stream` is its own finding (the magic-byte middleware should have rewritten it). **Never `_like` on `filename`** — filename is user-updatable, `type` is not | red |
+| `DOC-05` | Attached but invoice not extracted from it | complete | `document.processing_status _in [pending, extracting, failed, rejected, skipped]` — split the report: `failed`/`rejected` = unreadable file, the invoice data came from elsewhere (a decorative attachment) | red |
+| `DOC-06` | Document type contradicts invoice type | complete | `invoices.document_type_code` ≠ `invoices.document.document_type`, both non-null | amber |
+| `DOC-07` | **Cross-workspace attachment** | exhaustive | `{"_not":{"document":{"workspace":{"workspace_id":{"_eq":"<ws>"}}}}}` with `document_pk` non-null | **red — security** |
+| `DOC-08` | **Orphan document** — a receipt Well holds, linked to nothing | exhaustive | `_not: {invoices:{}}` AND `_not: {transaction_documents:{}}` AND receipt-capable MIME AND `size > 1024`. Partition by `processing_status`: **`extracted` is the worst** — the pipeline read it and still linked nothing (linker defect) | red |
+| `DOC-10` | One document, many invoices | complete | fan-out read off row shape. **Legitimate**: one issuer, one period, distinct numbers (a consolidated statement). **Suspicious**: 2+ distinct issuers (a document cannot evidence two suppliers), or two children sharing issuer+date+total (a duplicate invoice the dedup missed) | red when suspicious |
+
+**Two ids referenced but not defined here.** The tolerance paragraph below suppresses `DOC-01` and
+the bound formula does not use `DOC-09`; neither id has a row in the table above. Until each is
+written, treat any rule naming `DOC-01` as applying to `BOOK-invoice-has-document` (the "no document
+attached" check it evidently means), and treat `DOC-09` as vacant — **do not invent a definition to
+close the numbering.**
 
 **The two-direction bound — the formula, and the reporting rule.** Over one period and workspace:
 

@@ -113,3 +113,36 @@ expressed must not be silently dropped, or the sweep implies coverage it does no
   `domain_normalized` are frequently null (populated mainly on Qonto-sourced rows), so
   name-based fallback is unavoidable and will produce false pairs. Report duplicate clusters as
   candidates for review, never as confirmed duplicates.
+
+
+---
+
+## CORRECTION (measured 2026-07-30): relation predicates DO work
+
+The "no cross-root join in one query" limit stated elsewhere in this file is **over-conservative and
+wrong as written**. Measured against the deployed MCP:
+
+- **Positive control:** `well_query_records(root: "invoices", whereClause: {"document": {"size": {"_gt": 1024}}})`
+  → `totalCount: 213`. It traversed `invoices` → `documents` and filtered on a field of the *related*
+  root. 213 is exactly 1,517 − 1,304, i.e. precisely the invoices that have a document — so the
+  predicate filtered correctly rather than returning an arbitrary set.
+- **Existence negation works too:** `{"_and": [{"document_pk": {"_is_null": false}}, {"_not": {"document": {}}}]}`
+  was accepted (`success: true`) and returned `totalCount: 0` — a real finding: no invoice has a
+  `document_pk` pointing at an absent or soft-deleted document.
+
+**Consequences:**
+
+1. **The `DOC-` family IS executable as written**, including `DOC-07`, the cross-workspace
+   attachment check — which is a *security* control. It was at risk of being dropped as
+   unexecutable, or worse, reported as having run when it had not.
+2. `_not: {relation: {}}` is the correct idiom for "the relation resolves to no visible row", and it
+   respects the `deleted_at IS NULL` + workspace filter that the related root carries. That makes the
+   dangling-reference class checkable in one query.
+3. Several `[EXPENSIVE]` client-side-paging caveats on the `RECON-` family are therefore
+   over-conservative. Re-test each before budgeting it as a paged job.
+
+**What genuinely does NOT work — the real limit, stated precisely:** there is no **aggregation**.
+You cannot sum, count-distinct, group by, or compare an aggregate of a child set inside a query. So
+"do this invoice's allocations sum to its total" still requires fetching both sides and reducing
+client-side. **Filtering on a related field is supported; aggregating over a related set is not.**
+Those are different operations and the earlier text conflated them.

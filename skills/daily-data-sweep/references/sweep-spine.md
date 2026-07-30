@@ -1,6 +1,6 @@
 # The monthly sweep spine
 
-Full detail behind PART A of SKILL.md: month-picker reuse, the four sweep states, month ordering, multi-workspace rules and the SPINE- control points. Open when enumerating months or rendering the picker.
+Full detail behind PART A of SKILL.md: the sweep window and its cap, the four single-run month verdicts, month ordering, multi-workspace rules and the SPINE- control points. Open when enumerating months.
 
 ---
 
@@ -10,95 +10,96 @@ Full detail behind PART A of SKILL.md: month-picker reuse, the four sweep states
 month, because that is the unit the business actually closes and the unit the product already
 exposes.
 
-### A.1 Reuse the month-picker component — as a SWEEP picker, not a close picker
+### A.1 The month picker, when one is present
 
-The sweep's entry surface is the existing month-grid picker
-(`apps/web/src/features/chat/components/ai-elements/custom-tags/ai-close-month-picker-tag.tsx`): a
-desk-calendar year view, twelve mini month-panels, each day a dot, year navigation, one selectable
-month. **That geometry is exactly right for a monthly sweep.** What is wrong for a sweep is its
-*content* — it currently says "Close your books".
+A month-grid picker exists in the product — a desk-calendar year view of twelve mini month-panels with
+per-day dots, year navigation and one selectable month (`apps/web/src/features/chat/components/ai-elements/custom-tags/ai-close-month-picker-tag.tsx`,
+accepting `year`, `min-year`, `max-year`, `workspace-id`); it is rendered by the close flow, carries
+close-flow copy, and fetches its own month state rather than taking state from the LLM.
 
-**So the skill re-labels the card.** The component supplies the shape; the sweep supplies the
-meaning. It is a month picker that happens to be used by the close flow today, not a close artefact
-the sweep is borrowing.
+**The sweep does not require it.** The sweep unit is `(workspace × month)` regardless of what surface
+selected the month, and a CLI or headless run has no picker at all. Where a picker *is* rendered for a
+sweep, the copy it shows is checked by `SPINE-07`; where none is rendered, that check is not applicable.
 
-### What the skill must override
-
-| what | today (hardcoded) | the sweep needs |
-|---|---|---|
-| Title | `chat.bookkeeping.closeMonthPicker.title` → *"Close your books"* | *"Sweep a month"* |
-| Subtitle | `.subtitle` → *"For which month do you want to close your books?"* | *"Which month should I check for complete and exhaustive data?"* |
-| Context label | `.context` → *"Closing books for"* | *"Sweeping"* |
-| Disabled-month copy | `.monthClosed` → *"{month} is already closed"* · `.monthLocked` → *"{month} can't be closed yet"* | *"{month} was swept and is clean"* · *"{month} has no data to sweep"* |
-| Dot grammar | close-readiness (posted / progress / neutral) | **sweep findings per day** — see A.2 |
-
-**Required component change, stated plainly:** `title` and `subtitle` are read from fixed i18n keys
-(`ai-close-month-picker-tag.tsx:118, 265-266`) and there are **no props to override them** — the tag
-accepts only `year`, `min-year`, `max-year`, `workspace-id`. So the sweep cannot re-label it today.
-The change is small and belongs in the component, not in a fork:
-
-- add an optional **`mode`** prop (`"close" | "sweep"`, default `"close"`) that selects the i18n
-  namespace — `chat.bookkeeping.closeMonthPicker.*` vs a new `chat.bookkeeping.monthSweepPicker.*`
-  block — so copy stays in i18n and is translatable, rather than being passed as raw strings through
-  a tag attribute;
-- have `mode` also select the state vocabulary and dot semantics (A.2);
-- keep everything else — grid, year nav, keyboard, loading-as-locked behaviour — untouched.
-
-**Do not fork the component into `<ai-sweep-month-picker />`.** One logical object, one
-implementation, varied by a prop — the density/variant rule. A fork would drift the two calendars
-apart within a release.
-
-**Keep the one behaviour that matters most:** the card **does not trust LLM-emitted state.** The LLM
-emits only the year bounds; the card fetches its own authoritative snapshot and renders every month
-as LOCKED while in flight, so it never shows a spurious selectable state. The sweep variant must
-fetch its own month verdicts the same way — the AI writes the *copy*, never the *state*.
-
-### A.2 The sweep's month state — its own vocabulary
+### A.2 The sweep's month verdict — four values, all determinable by one run
 
 Close-readiness is **one input among many**, not the driver. A month can be perfectly closeable and
 still fail this sweep (uncategorized spend, no receipts, unlinked IBANs), and a month can be
-`not_ready` for reasons the sweep does not own. So the sweep needs its own four states:
+`not_ready` for reasons the sweep does not own. So the sweep states its own verdict per month.
 
-| sweep state | meaning | selectable? | what runs |
-|---|---|---|---|
-| `HAS_FINDINGS` | swept, reds or ambers open | **yes** — the primary target | full sweep; output is the remediation list |
-| `UNSWEPT` | never swept, or stale beyond the sweep interval | **yes** | full sweep |
-| `CLEAN` | swept, no findings above the reporting floor | yes (re-sweep) | regression subset only — structural checks that must hold forever (tenancy, dangling refs, duplicate identity). **Do not** re-run grace-window or freshness checks on a settled month; they fire on history. A new red here is a **regression alarm**. |
-| `EMPTY` | genuinely no data in the period | no | **emptiness sweep only** — assert the month is empty *because nothing happened*, not because a connector never synced. That false-quiet is the most dangerous state in this skill (`SPINE-04`). |
+**Every value below describes what THIS run found.** None of them describes sweep history, because
+there is none — every run is cold (`iteration-protocol.md`). "Never swept before" and "swept
+previously and was clean" are both unknowable and are not states here.
 
-**Day dots carry sweep findings, not posting status.** A day with a red finding, a day with only
-ambers, and a clean day are three different dots — which turns the calendar into a heat map of *where
-in the month* the data breaks. That is strictly more useful than a close-progress dot, and it is the
-same rendering primitive.
+| month verdict | meaning — as determined by this run | how it is reached |
+|---|---|---|
+| `HAS_FINDINGS` | swept this run; at least one red or amber above the reporting floor | full control-point set ran; output is the remediation list |
+| `NO_FINDINGS` | swept this run; the control points that ran found nothing above the floor. **Not** a claim that the month is clean forever, and **not** a claim it was clean before | full control-point set ran. Carries `(partial — N not evaluated)` whenever any control point was INCONCLUSIVE or SAMPLED |
+| `EMPTY` | swept this run; genuinely no data in the period | emptiness sweep only — assert the month is empty *because nothing happened*, not because a connector never synced. That false-quiet is the most dangerous state in this skill (`SPINE-04`) |
+| `UNSWEPT` | **outside this run's window** — older than the 6-month cap in A.3, or a later month not reached before the budget ran out. Never "not swept in the past" | nothing ran; report as `UNSWEPT — outside budget` and never as clean |
 
-**Where close-readiness still belongs:** as a cross-check. If the sweep says a month is `CLEAN` while
+**Day dots carry this run's findings, not posting status.** A day with a red finding, a day with only
+ambers, and a day with none are three different dots — which turns a calendar into a heat map of *where
+in the month* the data breaks, and it is the same rendering primitive a close-progress dot uses.
+
+**Where close-readiness still belongs:** as a cross-check. If the sweep says `NO_FINDINGS` while
 close-readiness says `not_ready`, one of the two is wrong — that contradiction is a finding
 (`SPINE-03`), not something to reconcile silently.
 
-### A.3 Month ordering — oldest open first
+**What this deletes, and why.** The old model had `UNSWEPT` meaning "never swept, or stale beyond the
+sweep interval" and `CLEAN` meaning "swept, no findings" with a *reduced* regression-only subset of
+checks and a "new red here is a regression alarm" rule. Both needed a record of previous sweeps.
+Without one, every month is `UNSWEPT` on every run forever, and the reduced subset would silently
+under-check a month on the strength of a prior sweep that cannot be shown to exist. So: `UNSWEPT` now
+means only "outside this run's window", `NO_FINDINGS` replaces `CLEAN` and gets the **full** set of
+checks like any other month, and the regression alarm (`SPINE-05`) is gone.
 
-Sweep months in **ascending** order from the oldest non-`closed` month. Rationale: close is a chain.
-A defect in an older open month blocks every month after it, so reporting the newest month first
-sends the user to fix a symptom. State the chain explicitly in the output: *"March is closeable;
-January is `not_ready` — fix January first or the chain stalls."*
+### A.3 The window — oldest open month first, capped at 6 months
+
+**One window, one cap, no second definition anywhere:**
+
+- **Start** at the **oldest non-`closed` month**, and sweep **ascending** from there.
+- **Cap at 6 months.** A run sweeps at most 6 months per workspace.
+- **Anything older than the cap is reported `UNSWEPT — outside budget`**, named explicitly, never
+  omitted and never implied clean.
+
+Ascending order because close is a chain: a defect in an older open month blocks every month after it,
+so reporting the newest month first sends the user to fix a symptom. State the chain explicitly in the
+output: *"March is closeable; January is `not_ready` — fix January first or the chain stalls."*
+
+The cap exists because the start rule is otherwise unbounded. A workspace whose oldest open month is
+two years back yields ~30 months × ~180 control points — a run that cannot finish, and whose failure
+mode is a truncated sweep reported as a complete one. Six months covers the trailing quarter that is
+actually being closed plus the run-up to it, and it makes the worst-case cost of a run knowable before
+it starts. An older month that genuinely needs attention is swept by pointing the run at it directly,
+not by letting every run walk the whole history.
 
 ### A.4 Multi-workspace
 
-The picker already carries a `workspace-id` prop, stamped by the deterministic close runner for the
-**multi-workspace close loop**. The sweep mirrors that exactly: loop workspaces from
-`well_list_workspaces`, run the month spine per workspace, and **never merge verdicts across
-workspaces** (§ SCOPE WARNING). A parent workspace's consolidated verdict is the *intersection* of
-its own and its children's — one child's `not_ready` January makes the parent's January `not_ready`.
+Loop workspaces from `well_list_workspaces`, run the month spine per workspace, and **never merge
+verdicts across workspaces** (§ SCOPE WARNING). Every verdict is reported against its own
+`workspace_id`; a workspace with a finding is named, never folded into a group figure.
+
+**There is no parent/child consolidation.** An earlier version of this section had a parent's verdict
+be the *intersection* of its own and its children's, which is a merge across workspaces and so
+contradicts the rule in the sentence above it. It is also not implementable: `workspaces` exposes no
+field identifying a parent, so the hierarchy the rule needs cannot be read. Report per workspace. If a
+parent field is ever identified, a consolidation rule has to be argued against the no-merge rule
+first, not assumed.
 
 ### A.5 Spine control points
 
 | id | name | check | sev |
 |---|---|---|---|
-| `SPINE-01` | Every workspace enumerated and swept | workspaces from `well_list_workspaces` vs workspaces with results | red — a skipped workspace must never read as clean |
+| `SPINE-01a` | **Workspace enumeration succeeded** (gate 0, **halting**) | `well_list_workspaces` returned a workspace set | red — with no subject list there is nothing to sweep and nothing to scope a verdict to |
+| `SPINE-01b` | **Every enumerated workspace produced results** (gate 9, **non-halting**) | the set from `SPINE-01a` vs workspaces with results; name the missing ones | red — a skipped workspace must never read as clean, but a gap found after the run is a scope finding, not a reason to discard the run |
 | `SPINE-02` | Every month in range enumerated | months from close-readiness for each year in range vs months with results | red |
-| `SPINE-03` | **Sweep verdict agrees with close-readiness** | sweep state per month vs `CloseReadinessStatus` | red — `CLEAN` on a `not_ready` month (or findings on a month reported closeable) means one of the two is lying |
+| `SPINE-03` | **Sweep verdict agrees with close-readiness** | month verdict per A.2 vs `CloseReadinessStatus` | red — `NO_FINDINGS` on a `not_ready` month (or findings on a month reported closeable) means one of the two is lying |
 | `SPINE-04` | **`EMPTY` is genuine, not false quiet** | month `EMPTY` **and** an enabled connector covering that period exists **and** zero rows ingested | red — the most dangerous state in this skill |
-| `SPINE-05` | No regression on a settled month | new red on a `CLEAN` month vs the prior sweep | red |
 | `SPINE-06` | Coverage contiguous within the month | a run of no-data days inside an otherwise populated month | amber — coverage gap, distinct from a posting gap |
-| `SPINE-07` | Card copy matches the mode it is rendering | picker rendered for a sweep while showing close copy (i.e. `mode` unset/unsupported) | amber — a sweep that asks "close your books?" will be answered as a close, and the user's intent is lost |
+| `SPINE-07` | Rendered picker copy matches the sweep it is driving | **applicable only when a month picker was actually rendered for this run.** If it was, and it shows close-flow copy, the check fires. **Not applicable** — never amber — for a CLI or headless run, which has no picker | amber — a card that asks "close your books?" will be answered as a close, and the sweep intent is lost |
 
+**Deleted from this table:** `SPINE-05` ("no regression on a settled month"). It compared this run's
+reds against a prior sweep's, and there is no prior sweep to compare against — so it could never fire,
+in either direction. Recorded here rather than dropped silently, per the skill's own rule that a check
+it cannot make is named.

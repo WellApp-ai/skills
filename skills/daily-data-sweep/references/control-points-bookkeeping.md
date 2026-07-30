@@ -18,26 +18,23 @@ Today they do — and that is the single most important gap in this family. A `n
 `lost` disposition belongs **on the transaction**, so that a swept, decided transaction is
 distinguishable from an unswept one. See § the disposition gap below.
 
-### Live audit — all 3 workspaces, probed 2026-07-29
+### Measured baseline
 
-| what | measured | verdict |
-|---|---|---|
-| invoices, total | **1,517** | baseline |
-| invoices with **no document attached** (`document_pk IS NULL`) | **1,304 = 86.0%** | 🔴 the audit-evidence leg is essentially absent |
-| `invoice_transactions` proof links, total | **252** | — |
-| transactions with a proof link | **252 of 1,904 ≈ 13.2%** | 🔴 87% of cash movement has no proof and no disposition |
-| edges by `match_method` | **100% `llm_matched`** | 🔴 no human-confirmed match exists |
-| edges by `edge_status` | **100% `confirmed`** | 🔴 see below — `confirmed` does not mean reviewed |
-| edges by `allocation_type` / `is_partial` | **100% `full` / `false`** | 🟡 partial payments either don't occur or aren't modelled in practice |
-| edge `confidence` range | **0.85 – 1.0** | 🟡 nothing below 0.85 is being written |
+Measured baseline (dated, re-probe before citing): [`baseline-2026-07-29.md`](baseline-2026-07-29.md).
+No figure in that file is a standing fact; the numbers move day over day.
 
-**The `confirmed` trap.** Every one of the 252 edges is `edge_status: confirmed` **and**
-`match_method: llm_matched`. So `confirmed` here means *the LLM was confident*, **not** *a human
-verified it*. Any control point that treats `confirmed` as reviewed — including the
-`RECON-provisional-match-backlog` check earlier in this file — reads **green while 100% of
+### The `confirmed` trap
+
+`edge_status` defaults to `confirmed`, and `match_method` can be `llm_matched` **or**
+`human_approved`. So an edge that is `confirmed` **and** `llm_matched` **and** carries no human actor
+means *the model was confident* — **not** *a human verified it*. Any control point that treats
+`confirmed` as reviewed — including the `RECON-provisional-match-backlog` check — reads **green while
 reconciliation rests on unreviewed model output.** The sweep must therefore report
-`confirmed AND llm_matched AND no human actor` as its own amber class, and the model needs a
-distinct human-confirmation marker (see § Known limits — there is no audit-trail root).
+`confirmed AND llm_matched AND no human actor` as its own amber class, and the model needs a distinct
+human-confirmation marker (see § Known limits — there is no audit-trail root).
+
+Whether that condition currently holds for all, some, or none of the edges is a **measurement** —
+read it from the baseline file, or re-probe. It is not a property of the schema.
 
 ### Schema constraints that shape this family
 
@@ -71,11 +68,12 @@ whose single slot holds a bank-statement PDF **cannot also hold the supplier inv
 
 **The `confirmed` trap, precisely.** `edge_status` is `confirmed | provisional` and **defaults to
 `confirmed`** — and `provisional` is documented as the 0.55–0.85 review tier that is *"filtered
-out of downstream pipes until a human confirms"*. All 252 edges carry `confirmed`, so the review
-tier **is never being used**. Likewise `match_method` includes
-**`human_approved`** as a value, and **zero rows carry it**. Proof-of-payment is a downstream
-pipe, so the correct floor is not a new confidence number — it is honouring the existing contract:
-only `edge_status = 'confirmed'` counts as proof, and a `provisional` edge must never satisfy it.
+out of downstream pipes until a human confirms"*. Because `confirmed` is the default, a workspace in
+which no edge carries `provisional` and none carries `match_method: human_approved` is a workspace
+where **the review tier is not being used at all** — and that is what the baseline recorded. Measure
+it, do not assume it. Proof-of-payment is a downstream pipe, so the correct floor is not a new
+confidence number — it is honouring the existing contract: only `edge_status = 'confirmed'` counts as
+proof, and a `provisional` edge must never satisfy it.
 
 **A blocker on the duplicate-payment check.** `allocation_type` (`full | partial | overpayment |
 fee_deduction`, default `full`) coexists with a **legacy `is_partial` boolean carrying a TODO to
@@ -115,33 +113,43 @@ checks ARE expressible.
 
 #### Proof of payment
 
-| id | name | check | fail signal | sev |
-|---|---|---|---|---|
-| `BOOK-txn-has-proof` | Categorized transaction has a proof link | `transactions` with `category_key` non-null and no `invoice_transactions` row | any past the grace window; **live ≈87% of transactions** | red |
-| `BOOK-txn-proof-decided` | Undecided vs decided-no-invoice | disposition enum ≠ null | **UNBUILDABLE today — no field** | red (blocked) |
-| `BOOK-proof-not-required-misuse` | `not_required` on a row that needs one | disposition `not_required` where `flow_kind`/`category_key` implies a supplier invoice | any | amber |
-| `BOOK-proof-lost-trend` | `lost` share rising | disposition `lost` count, sweep over sweep | rising 3 sweeps running | amber |
-| `BOOK-edge-not-human-confirmed` | Reconciliation is all model output | `edge_status: confirmed` **and** `match_method: llm_matched` with no human actor | **live 252/252** | amber |
-| `BOOK-edge-confidence-floor` | Low-confidence matches surfaced | `confidence < 0.85` | any unreviewed | amber |
-| `BOOK-edge-amount-agrees` | Edge amount matches the invoice | `allocation_type: full` and abs(`amount` − invoice `grand_total`) > tolerance §14 | any | red |
-| `BOOK-edge-overallocated` | Allocations exceed the invoice | sum of live edge `amount` per `invoice_pk` > `grand_total` + tolerance | any | red |
-| `BOOK-edge-currency-consistent` | Cross-currency edge has a rate | edge `currency` ≠ invoice `local_currency` and `exchange_rate_pk IS NULL` | any | red |
-| `BOOK-edge-dangling` | Edge points at a dead row | `invoice_pk` or `transaction_pk` resolving to absent/soft-deleted | any | red |
+| id | name | bucket | check | fail signal | sev |
+|---|---|---|---|---|---|
+| `BOOK-txn-has-proof` | Categorized transaction has a proof link | complete | `transactions` with `category_key` non-null and no `invoice_transactions` row | any row past the grace window | red |
+| `BOOK-txn-proof-decided` | Undecided vs decided-no-invoice | complete | **INCONCLUSIVE — no disposition field exists.** As specified: disposition enum ≠ null. Neither `transactions` nor `invoice_transactions` carries one (§ the disposition gap) | not evaluable — emit `INCONCLUSIVE`, never a colour | blocked |
+| `BOOK-proof-not-required-misuse` | `not_required` on a row that needs one | complete | **INCONCLUSIVE — depends on the missing disposition field.** As specified: disposition `not_required` where `flow_kind`/`category_key` implies a supplier invoice | not evaluable — emit `INCONCLUSIVE`, never a colour | blocked |
+| `BOOK-edge-not-human-confirmed` | Reconciliation is all model output | complete | `edge_status: confirmed` **and** `match_method: llm_matched` with no human actor | any edge | amber |
+| `BOOK-edge-confidence-floor` | Low-confidence matches surfaced | complete | `confidence < 0.85` | any unreviewed | amber |
+| `BOOK-edge-amount-agrees` | Edge amount matches the invoice | complete | `allocation_type: full` and abs(`amount` − invoice `grand_total`) > tolerance §14 | any | red |
+| `BOOK-edge-overallocated` | Allocations exceed the invoice | complete | sum of live edge `amount` per `invoice_pk` > `grand_total` + tolerance | any | red |
+| `BOOK-edge-currency-consistent` | Cross-currency edge has a rate | complete | edge `currency` ≠ invoice `local_currency` and `exchange_rate_pk IS NULL` | any | red |
+| `BOOK-edge-dangling` | Edge points at a dead row | complete | `invoice_pk` or `transaction_pk` resolving to absent/soft-deleted | any | red |
+
+**Removed: `BOOK-proof-lost-trend`** (`lost` share rising, sweep over sweep). Deleted rather than
+marked blocked. **Every sweep run is cold** — the MCP is read-only and exposes no output root, so no
+prior-sweep state exists or can be written, and a cross-run comparison can never fire. Holding it as
+a permanent `INCONCLUSIVE` would be worse than removing it: a check that returns the same
+INCONCLUSIVE forever is indistinguishable from a disabled one, and it inflates the not-evaluated
+count that stamps `(partial — N not evaluated)` on a bucket verdict — making a fully-checked month
+read as degraded. It is named here because this skill's rule is that a check it cannot make is
+declared, never silently dropped. A trend on `lost` becomes buildable only once both a disposition
+field (§ the disposition gap) and a sweep-result store exist.
 
 #### Company identity across the proof
 
-| id | name | check | fail signal | sev |
-|---|---|---|---|---|
-| `BOOK-invoice-both-parties` | Issuer and receiver both identified | `invoices.issuer_pk` or `receiver_pk` null | any; **live: issuer null observed on a Pennylane invoice** | red |
-| `BOOK-party-matches-txn-counterparty` | One invoice side IS the transaction's counterparty | resolve txn counterparty via `debtor_/creditor_payment_means` → `payment_means.company_pk`; assert it equals `issuer_pk` **or** `receiver_pk` | neither side matches | red |
-| `BOOK-party-match-unverifiable` | Counterparty unresolvable, so the above can't run | txn counterparty null → check is INCONCLUSIVE, never pass | any | red |
+| id | name | bucket | check | fail signal | sev |
+|---|---|---|---|---|---|
+| `BOOK-invoice-both-parties` | Issuer and receiver both identified | complete | `invoices.issuer_pk` or `receiver_pk` null | any row | red |
+| `BOOK-invoice-core-fields` | complete | Invoices carry the fields the skills read | `invoices` where any of `grand_total` / `local_currency` / `issue_date` / `due_date` `_is_null` | any row | red | accounts-receivable-aging, bills-due, rank-clients-by-ltv |
+| `BOOK-party-matches-txn-counterparty` | One invoice side IS the transaction's counterparty | complete | resolve txn counterparty via `debtor_/creditor_payment_means` → `payment_means.company_pk`; assert it equals `issuer_pk` **or** `receiver_pk`. **Rows whose counterparty does not resolve are excluded and returned as `INCONCLUSIVE`, never as pass** — they are counted by `BOOK-party-match-unverifiable` | neither side matches, on a row where the counterparty *did* resolve | red |
+| `BOOK-party-match-unverifiable` | Size of the population the above cannot judge | complete | txn counterparty null. This control point **is** evaluable — it counts the unevaluable rows; it is the check above that returns `INCONCLUSIVE` for them | any row | red |
 
 #### Document attachment
 
-| id | name | check | fail signal | sev |
-|---|---|---|---|---|
-| `BOOK-invoice-has-document` | Document attached | `invoices.document_pk IS NULL` | **live 1,304/1,517 = 86%** | red |
-| `BOOK-document-resolves` | Not a phantom attachment | `document_pk` non-null resolving to absent/soft-deleted | any | red |
-| `BOOK-document-has-content` | File is real, not a 0-byte placeholder | `documents.size < 1024` or `content_checksum IS NULL` | any row | red |
-| `BOOK-document-right-kind` | Mime is a document kind that can be a receipt | **typed exact-match allow-list of mime types — never a substring test on a filename** | any outside the list | amber |
-| `BOOK-document-tenancy` | Document belongs to this workspace | document's workspace ≠ invoice's workspace | any | red |
+| id | name | bucket | check | fail signal | sev |
+|---|---|---|---|---|---|
+| `BOOK-invoice-has-document` | Document attached | complete | `invoices.document_pk IS NULL` | any row past the grace window (`DOC-` tolerances) | red |
+| `BOOK-document-resolves` | Not a phantom attachment | complete | `document_pk` non-null resolving to absent/soft-deleted | any | red |
+| `BOOK-document-has-content` | File is **recorded**, not a 0-byte placeholder | complete | `documents.size < 1024` or `content_checksum IS NULL`. A green here means "content recorded", **never** "file retrievable" — `bucket`/`path` are unvalidated strings (see `control-points-documents.md`) | any row | red |
+| `BOOK-document-right-kind` | Mime is a document kind that can be a receipt | complete | **typed exact-match allow-list of mime types — never a substring test on a filename**; reuse the existing `ACCEPTED_DOCUMENT_FORMATS` const rather than inventing a second list | any outside the list | amber |
+| `BOOK-document-tenancy` | Document belongs to this workspace | exhaustive | document's workspace ≠ invoice's workspace | any | red |

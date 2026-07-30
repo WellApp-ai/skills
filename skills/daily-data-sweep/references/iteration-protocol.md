@@ -4,6 +4,33 @@ The L1/L2/L3 loops, the counting primitive, the loop ledger, and the full gate t
 
 ---
 
+## Every run is cold. No state carries between runs.
+
+**There is no prior-sweep store, and there will not be one until someone builds it.** This skill is
+read-only over an MCP with no output root: it has nowhere to write a result, so it has nothing to read
+on the next run. A sweep run therefore begins with zero knowledge of any earlier run.
+
+The binding consequences, which the rest of this file and the control-point families are written to:
+
+- **No check may compare against a previous sweep.** Day-over-day diffs, "new red since last time",
+  regression alarms on a settled month, and "rising across sweeps" are not deferred features — they are
+  unevaluable, and a control point that needs one is not a control point. Anything of that shape has
+  been deleted rather than left to fire vacuously.
+- **A trend must live inside the swept window.** "More than 25 `classifier_failed` in the trailing
+  7 days" is legitimate: the 7 days are rows in the data this run reads. "Down to under 100 within
+  30 days" is not: it names a future run.
+- **Every threshold is a single-run threshold** — see `tolerances.md`.
+- **`cursor_at_stop` is reported, not resumed.** It documents how deep this run scanned. The next run
+  restarts from the beginning, because it has no way to learn where this one stopped.
+- **No month can be labelled from history.** A month is described by what this run found in it, never
+  by whether it was swept before — see `sweep-spine.md` A.2.
+
+This is a property of the deployment, not a design preference. If a store is ever added, these rules
+are what would need revisiting; until then, treating the sweep as stateful is the single fastest way
+to make it lie.
+
+---
+
 # PART B — THE ITERATION PROTOCOL: how a check proves it was complete AND exhaustive
 
 This is the part that makes the skill's own promise honest. **A control point that cannot prove it
@@ -52,9 +79,10 @@ Three rules that are not optional:
   unqualified green over a truncated scan is the sweep lying in exactly the way the 12 skills do.
 - **`examined < total` means INCONCLUSIVE, not pass.** The two reads are not a consistent snapshot;
   a concurrent sync makes the set move under the loop. Do not paper over it.
-- **Record `cursor_at_stop`** so the next run resumes instead of restarting. At the current scale
-  (1,904 transactions ≈ 4 pages) exhaustion is cheap; at 24,925 prod-wide it is 50 pages per control
-  and resumability stops being optional.
+- **Record `cursor_at_stop` as scan-depth evidence, not as a resume point.** It states where this
+  run's scan ended, which is what makes a `SAMPLED` verdict auditable — a reader can see whether the
+  loop stopped 2 pages in or 20. It does not carry to the next run (every run is cold), so a
+  truncated scan is truncated again next time; the honest fix is a narrower filter, not a resume.
 
 ### B.2 Loop L2 — fan out per object (the completeness loop)
 
@@ -92,25 +120,44 @@ a label resolves a counterparty, which creates a company that then needs FR tax 
 accounts changes what "duplicate" means for the next pass. A single pass under-reports.
 
 ```
-loop L3(sweep, max_rounds = 3):
+loop L3(month_chain_sweep, max_rounds = 3):
     round := 0
     prev  := null
     repeat:
-        result := sweep()
+        result := month_chain_sweep()      # the month chain ONLY — never the full control-point set
         round  += 1
         if result.findings == prev.findings:   break     # converged: dry
         if round >= max_rounds:                break     # budget
         prev := result
     if round >= max_rounds and not converged:
-        flag NOT_CONVERGED                                # the sweep is chasing its own tail
+        flag CHAIN_UNSTABLE(rounds, delta)                # see below — read as concurrency, not defect
 ```
 
-Use L3 for: the month chain (fixing January changes February's verdict), extraction→resolution→
-identity, and dedup→re-count. **Do not** use L3 for anything that writes — this skill is detect-only,
-so convergence here means *the finding set stabilised*, never *the data got fixed*.
+**L3 has exactly one applicable use: the month chain.** January's verdict changes February's, so the
+chain has to be re-walked until the verdicts stop moving. That re-walk is genuine and cheap — it
+re-derives per-month verdicts from findings already collected, in memory.
 
-`NOT_CONVERGED` is itself a finding: it means a defect regenerates as fast as it is measured, which
-points at a writer, not at rows.
+The two other uses this loop was originally written for are **non-applicable in a read-only sweep**:
+
+| former use | why it cannot apply |
+|---|---|
+| extraction → resolution → identity | the sweep never extracts an IBAN or resolves a counterparty, so no new company appears between rounds and no round-2 identity check exists |
+| dedup → re-count | the sweep never dedupes, so "duplicate" means the same thing in round 2 as in round 1 |
+
+Both are write-path behaviours. **This skill is detect-only**, so nothing changes *because of* the
+sweep, and re-running either simply re-reads the same rows for the same answer.
+
+**Cost rule — not optional.** L3 must never re-run the full control-point set. A round is a re-derivation
+of the month chain from findings already in hand; at ~180 control points per month, a naive third round
+would triple the entire sweep's query cost to restate verdicts it could have recomputed for free.
+
+**An inter-round delta means the workspace is syncing, not that a defect is regenerating.** In a
+detect-only sweep the only thing that can change a count between two rounds is a concurrent write from
+outside — a sync landing rows mid-sweep, which `mcp-surface-limits.md` says to expect. So a non-convergent
+chain is reported as `CHAIN_UNSTABLE`, meaning *the data moved under the sweep, verdicts are a moving
+snapshot* — the same condition L1 already reports as `examined < total`. It is a scope caveat on the
+run, **not** a finding about a writer, and it must never be phrased as "a defect regenerates as fast as
+it is measured": nothing in a read-only sweep can regenerate anything.
 
 ### B.4 The loop ledger — what every control point must emit
 
@@ -120,10 +167,10 @@ Non-negotiable, because it is what distinguishes this sweep from an impression:
 |---|---|
 | `verdict` | `pass` / `fail` / `inconclusive` / `sampled` — four values, never two |
 | `examined` / `total` | the completeness proof; equal means exhaustive |
-| `pages`, `cursor_at_stop` | resumability, and proof of scan depth |
+| `pages`, `cursor_at_stop` | proof of scan depth — how deep this run got, so a `SAMPLED` is auditable. Not a resume point (every run is cold) |
 | `scope` | workspace id + month + the family — never a bare number (§ SCOPE WARNING) |
 | `parents_unchecked` | for L2: the named objects the loop never reached |
-| `rounds`, `converged` | for L3 |
+| `rounds`, `converged` | for L3 (month chain only); `CHAIN_UNSTABLE` when it did not converge |
 
 ---
 
@@ -134,7 +181,7 @@ depth findings computed under a breadth failure are scoped, not clean.
 
 | gate | family | if red → |
 |---|---|---|
-| 0 | **Scope** — workspaces enumerated (`SPINE-01`), MCP reachable | **HALT.** A sweep that could not run is a FAILED sweep, never a passing one. |
+| 0 | **Scope** — workspace enumeration succeeded (`SPINE-01a`), MCP reachable | **HALT.** A sweep that could not even list its subjects never ran, and a sweep that could not run is a FAILED sweep, never a passing one. |
 | 1 | **Spine** — months enumerated, picker agreement (`SPINE-02..06`) | month set is untrusted → every later gate reports "scope uncertain" |
 | 2 | **Ingestion / connectors** (`ING-`, `BANK-` exhaustive) | every later gate is labelled *"scoped to the sources that were connected"* |
 | 3 | **Banking data** (`BANK-` complete) | **charts must not render** — cash/trend/burn/breakdown/FX all blocked |
@@ -143,10 +190,22 @@ depth findings computed under a breadth failure are scoped, not clean.
 | 6 | **Bookkeeping proof** (`BOOK-`, `DOC-`) | audit evidence incomplete; a compliant-looking invoice may have no receipt |
 | 7 | **Invoice banking linkage** (`IPAY-`) | payments must be keyed by hand; reconciliation stays manual |
 | 8 | **E-invoicing** (`EINV-`) | the month cannot be **declared**, even if it can be closed |
-| 9 | **Latent assumptions** (`ASSUME-`) | the other gates may be green *vacuously* — run this to find out |
+| 9 | **Latent assumptions** (`ASSUME-`), **completion** (`SPINE-01b`) | the other gates may be green *vacuously* — run this to find out. `SPINE-01b` red does **not** halt: the sweep has already finished, so the correct action is to name the workspaces that produced no results and scope the verdict to the rest |
 
 Gate 9 last on purpose: it is the gate that audits the other gates. A green sweep with a red gate 9
 means the greens are unverified, not verified.
+
+**Why enumeration and completion are two different gates.** Gate 0 can only halt on something it can
+actually evaluate at gate 0. Whether every workspace was *swept* is knowable only after gate 9 has
+run, so a single control point covering both would ask gate 0 to evaluate the outcome of the whole
+sweep and halt on it — a condition that is always unknown when it is tested, which is why the worked
+example that does not halt on an unreachable workspace is right and the old wording was wrong. So:
+
+- `SPINE-01a` — **enumeration succeeded**: `well_list_workspaces` returned a workspace set. Gate 0,
+  **halting**. Without a subject list there is no sweep to scope.
+- `SPINE-01b` — **every enumerated workspace produced results**: the set from gate 0 vs the set with
+  results. Gate 9, **non-halting, red**, naming the missing workspaces. A skipped workspace must never
+  read as clean, but discovering one at the end is a scope finding, not a reason to discard the run.
 
 
 ---
