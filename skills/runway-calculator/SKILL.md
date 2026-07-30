@@ -50,11 +50,11 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 1. **Confirm the MCP server is configured.** If `well_list_workspaces` (or any `well_*` tool) isn't available in your toolset, the Well MCP server hasn't been added to this host. Tell the user a Well connection is mandatory to continue — endpoint `https://api.wellapp.ai/v1/mcp` — because Well is where their financial data is aggregated securely to compute a real runway number; without it there's nothing to calculate from. Stop until it's there; don't estimate from assumptions.
 
 2. **Confirm the account.** Call `well_list_workspaces()`.
-   - Auth error → no Well MCP connection yet; trigger the Well connector's OAuth/DCR handshake, then retry.
-   - Zero or one workspace → use it, or say none exist. Multiple → ask the user which one — unless the question plausibly spans more than one related entity (e.g. sibling legal entities), in which case ask whether they want a combined view, and if so call `well_get_runway` per workspace and present both/merge rather than silently picking one.
+   - Auth error → no Well MCP connection yet; trigger the Well connector's OAuth/DCR handshake. The moment it returns, immediately retry `well_list_workspaces()` yourself in the same turn and continue — don't stop to ask the user to confirm login or wait for a new message.
+   - Zero or one workspace → use it, or say none exist. If more than one workspace exists, ask the user which one to use, and use that single workspace for the rest of this skill. Never query or merge data across multiple workspaces in one run.
 
 3. **Verify enough connections exist.** Query `workspace_connectors` for `status: enabled` entries.
-   - If nothing looks connected yet, call `well_list_connectors()`, hand the user the top install links (bank connectors first — runway needs a real cash balance), and stop before calling `well_get_runway` at all.
+   - If nothing looks connected yet, call `well_list_connectors()`, hand the user the top install links (bank connectors first — runway needs a real cash balance), and stop before calling `well_get_runway` at all. Once a connector shows as connected, immediately re-run this check yourself and continue through the rest of the workflow — don't wait to be re-prompted or ask the user to restate the request.
    - Note the most recent sync status/`completed_at` from `workspace_connector_sync_logs` so stale data can be flagged later.
 
 4. **Get the runway.** Call `well_get_runway()`. It returns `cash` (amount + currency), `avg_burn` (amount + currency + trailing window), `months`, and a `status`:

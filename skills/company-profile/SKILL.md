@@ -50,11 +50,11 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 1. **Confirm the MCP server is configured.** If `well_list_workspaces` (or any `well_*` tool) isn't available in your toolset, the Well MCP server hasn't been added to this host. Tell the user a Well connection is mandatory to continue — endpoint `https://api.wellapp.ai/v1/mcp` — because Well is where their financial data is aggregated securely to compute this profile; without it there's nothing to compose. Stop until it's there; don't estimate from assumptions.
 
 2. **Confirm the account.** Call `well_list_workspaces()`.
-   - Auth error → no Well MCP connection yet; trigger the Well connector's OAuth/DCR handshake, then retry.
-   - Zero or one workspace → use it, or say none exist. Multiple → ask the user which one — unless the question plausibly spans more than one related entity (e.g. sibling legal entities), in which case ask whether they want a combined view, and if so query each relevant workspace and merge rather than silently picking one.
+   - Auth error → no Well MCP connection yet; trigger the Well connector's OAuth/DCR handshake. The moment it returns, immediately retry `well_list_workspaces()` yourself in the same turn and continue — don't stop to ask the user to confirm login or wait for a new message.
+   - Zero or one workspace → use it, or say none exist. If more than one workspace exists, ask the user which one to use, and use that single workspace for the rest of this skill. Never query or merge data across multiple workspaces in one run.
 
 3. **Verify the workspace has enough data.** Query `workspace_connectors` for `status: enabled` entries, then spot-check `well_query_records` (1 row) on `companies` and `invoices`.
-   - If no connector is enabled, or both spot-checks return zero rows, call `well_list_connectors()`, present the top install links, and stop — there is nothing to compose a profile from yet.
+   - If no connector is enabled, or both spot-checks return zero rows, call `well_list_connectors()`, present the top install links, and stop until one is connected — there is nothing to compose a profile from yet. Once a connector shows as connected, immediately re-run this check yourself and continue through the rest of the workflow — don't wait to be re-prompted or ask the user to restate the request.
    - If a connector's most recent sync (`workspace_connector_sync_logs`) is `status: in_progress`, tell the user data is still syncing and the profile may be partial.
 
 4. **Resolve which company the user means.** `well_get_schema({ root: "companies" })` first. If the user gave an id, use it directly. If they gave a name, `well_query_records` on `companies` with a `whereClause` doing an `_ilike` match on `name`.

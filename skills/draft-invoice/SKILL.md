@@ -63,8 +63,8 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 1. **Confirm the MCP server is configured.** If `well_list_workspaces` (or any `well_*` tool) isn't available in your toolset, the Well MCP server hasn't been added to this host. Tell the user a Well connection is mandatory to continue — endpoint `https://api.wellapp.ai/v1/mcp` — because Well is where the invoice would actually be created and stored; without it there is nothing to write to. Stop until it's there; don't estimate or invent data instead.
 
 2. **Confirm the account.** Attempt `well_list_workspaces()`.
-   - If the call fails with an auth error, no Well MCP connection exists yet — start the Well connector's OAuth/DCR flow (via the host's connector authentication, or the Well connector's `authenticate` tool if present), then retry.
-   - If it returns one workspace, use it. If more than one, ask the user which to use.
+   - If the call fails with an auth error, no Well MCP connection exists yet — start the Well connector's OAuth/DCR flow (via the host's connector authentication, or the Well connector's `authenticate` tool if present). The moment that flow returns, immediately retry `well_list_workspaces()` yourself in the same turn and continue — don't stop to ask the user to confirm they've logged in or wait for a new message.
+   - If it returns one workspace, use it. If more than one workspace exists, ask the user which one to use, and use that single workspace for the rest of this skill. Never query or merge data across multiple workspaces in one run.
 
 3. **Gather every required field — never invent one.** Call `well_get_schema({ root: "invoices" })` and `well_get_schema({ root: "companies" })` before relying on assumptions about either.
    - **Issuer**: read `workspaces.own_company` for the resolved workspace and offer it as the likely issuer, but let the user confirm or override it — never assume it silently.
