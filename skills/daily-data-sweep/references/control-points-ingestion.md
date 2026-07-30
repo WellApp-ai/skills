@@ -89,23 +89,11 @@ support an "every X" claim — see the L2 loop in `iteration-protocol.md`.
 
 ---
 
-## Counting primitive — read this before implementing any control point
+### Counting primitive — see the protocol
 
-Applies to **every** family, not only `ING-`; it is stated here because the paging checks above are
-the first to hit it.
-
-`well_query_records` has **no aggregation** — no `group by`, `count(distinct)`, `min`, `max`.
-Therefore:
-
-- **A "count"** means `well_query_records({ root, fields:[…], limit:1, whereClause })` and
-  reading the returned **`totalCount`**.
-- **An extremum** means `orderBy <field> <dir>, limit 1`.
-- **Every duplicate, continuity, and share check** requires paging the full set client-side via
-  `nextCursor` against a **500-row page cap**. These are the expensive checks — scope them to
-  a trailing window, and `log` what was skipped rather than silently truncating.
-- The sweep **cannot distinguish "fetched every page" from "stopped early"** — pagination state
-  is not persisted to any queryable root. State the pages actually read.
-
-Status vocabularies for `workspace_connectors.status` and `workspace_connector_sync_logs.status`,
-and the authoritative status buckets, live in `schema-facts.md`. Read them there; do not restate
-them per family.
+Counts come from `totalCount`, extrema from `orderBy` + `limit 1`, and there is **no pagination**
+(`nextCursor` is always null), so `returned < totalCount` means `SAMPLED`, never `pass`. The full
+measured contract — including that `limit` is applied per workspace and that `totalCount` and `rows`
+carry different scopes in one response — is in
+[`iteration-protocol.md`](iteration-protocol.md) § MEASURED REALITY. **That file is the single
+source; do not restate the rules here or the two will drift.**
