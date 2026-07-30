@@ -256,7 +256,7 @@ chain, so a defect in an older month blocks every month after it. Loop workspace
    | gate | family |
    |---|---|
    | 0 | Scope — MCP reachable and workspace **enumeration succeeded** (`SPINE-01a`) — **HALT on red** |
-   | 1 | Spine — months enumerated |
+   | 1 | Spine — months enumerated, picker agreement — `SPINE-02`, `-03`, `-04`, `-06`, `-07` (an explicit list, not a range: `SPINE-05` is deleted and a range kept it alive) |
    | 2 | Ingestion / connectors — `ING-`, `BANK-` breadth |
    | 3 | Banking depth — `BANK-`; **a red blocks every chart** |
    | 4 | Entity graph — `GRAPH-` |
@@ -356,8 +356,9 @@ Before finishing, verify:
 - **`confirmed` does not mean human-reviewed.** A match auto-confirmed by a model with no human actor
   is its own amber class —
   [`references/control-points-bookkeeping.md`](references/control-points-bookkeeping.md).
-- **A concurrent sync moves the set under the loop.** `examined < total` is INCONCLUSIVE, and a
-  cross-root comparison is not atomic — re-verify a red before reporting it.
+- **A concurrent sync moves the set under the loop.** `returned < totalCount` is `SAMPLED` — which
+  is also the normal case, since there is no pagination to fetch the rest with — and a client-side
+  cross-root comparison is not atomic. Re-verify a red before reporting it.
 
 ## Examples
 
@@ -373,16 +374,19 @@ two verdicts separately with the scope that earned them:
 ```
 Maxime · June 2026 · as of 2026-07-29T09:12Z
 COMPLETE: pass (partial — 3 not evaluated) · EXHAUSTIVE: pass (partial — 3 not evaluated)
-0 red, 0 amber · 3 INCONCLUSIVE
-Scope swept: 1 of 1 workspace · 1 month · control points ran 87, not evaluated 3
-Loop proof: transactions examined 1,904 / 1,904 (4 pages, cursor null)
-            accounts examined 30 / 30 · parents unchecked: none
+0 red, 0 amber · 3 INCONCLUSIVE · 1 SAMPLED
+Scope swept: 1 of 1 workspace · 1 month · control points ran <N>, not evaluated 3
+Loop proof: transactions — counted via totalCount 1,904; rows returned 545 of 1,904 ⇒ SAMPLED
+            accounts examined 30 / 30 (single response) · parents unchecked: none
 ```
 
 Note the verdict is **`pass (partial)`**, not `pass` — three checks were never evaluated, so the
-bucket cannot claim a bare pass. Then list those three with the reason each could not run — never
-folded into the pass count — the collapsed "87 passed" line, and the month-chain state. A pass still states its
-scope: had the loop stopped at the page budget with a cursor outstanding, the verdict is `SAMPLED`,
+bucket cannot claim a bare pass. `<N>` is **counted at run time from the control points this run
+actually loaded** — never a literal carried in this file, which drifts the moment a family folds a
+duplicate away. Then list those three with the reason each could not run — never folded into the
+pass count — the collapsed "`<N>` passed" line, and the month-chain state. A pass still
+states its scope: `accounts` earns one because its 30 rows came back in a single response, while
+`transactions` cannot — 545 of 1,904 returned and no cursor to fetch the rest, so it is `SAMPLED`,
 not `pass`. Volunteer no cash figure.
 
 ### Example request
@@ -404,7 +408,7 @@ so whole accounts never synced; and the same movement ingested by two connectors
 Then every COMPLETE finding beneath, explicitly **"scoped to the sources that were connected"**, not
 clean: 788 of 1,904 transactions uncategorized (41.4%), all 1,904 with no ledger account, 155 (8.1%)
 with no payment means, 6 balances failing verification, ~24 duplicate rows of one account so cash is
-summed ~24×. Each carries id, bucket, severity, count, example ids and `records_url`. Close with the
+summed ~24×. Each carries id, bucket, severity, count and example ids — plus `records_url` only where a confirmed URL pattern exists for that root; today none does, so the field is omitted rather than guessed. Close with the
 consequence and the chain: "Charts must not render. Fix January first — March cannot close behind it."
 Report only; fix nothing.
 

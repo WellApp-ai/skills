@@ -76,15 +76,21 @@ expressed must not be silently dropped, or the sweep implies coverage it does no
   workspace scope server-side. So the five `GRAPH-` checks are executable as written **when
   written against the relation, not a bare FK `_is_null` check** — use `_not: {relation: {}}`,
   not a raw `_is_null` on the id column, for every one of them.
-- **No cross-root join in one query.** Any comparison spanning two roots (currency/amount
-  mismatch, items-vs-header, ledger-vs-source) requires fetching both sides and joining
-  client-side. Correct but **not atomic** — a mid-sweep sync can make the two sides disagree for
-  reasons that are not defects. Sequence against a quiet window, and **re-verify a red before
+- **No cross-root join in one query — WRONG AS WRITTEN, see § CORRECTION below.** Relation
+  predicates *are* supported: a live probe filtering `invoices` on `document.size` returned
+  `totalCount: 213`, and `_not: {relation: {}}` was accepted. The real limit is **no aggregation
+  over a related set** — you cannot sum, count-distinct or group by a child collection inside a
+  query. So a comparison that only needs to *filter* on a related field is one query; one that needs
+  an **aggregate** of the child set (allocations summing to an invoice total, items-vs-header,
+  ledger-vs-source totals) still requires fetching both sides and joining client-side. That
+  client-side form is correct but **not atomic** — a mid-sweep sync can make the two sides disagree
+  for reasons that are not defects. Sequence against a quiet window, and **re-verify a red before
   reporting it.**
-- **Zero violations vs. violations past the page cap.** Without aggregation the sweep cannot
-  distinguish the two unless it pages to exhaustion. **Record the page depth reached alongside
-  every green** — an unqualified green over a truncated scan is the sweep lying in the same way
-  the skills do.
+- **Zero violations vs. violations past the row cap.** Without aggregation the sweep cannot
+  distinguish the two, and it cannot page to exhaustion either — `nextCursor` is always null
+  (`iteration-protocol.md` B.1). So whenever `returned < totalCount` the verdict is `SAMPLED`.
+  **Record the `returned`/`totalCount` pair alongside every green** — an unqualified green over a
+  truncated scan is the sweep lying in the same way the skills do.
 - **Credit-note sign convention is unspecified anywhere.** `document_type_code` exists with UBL
   `380`/`381`/`383` and no skill reads it. `GRAPH-credit-note-sign-unresolved` can detect an
   *inconsistent* convention but cannot tell you which is *correct* — that needs a recorded

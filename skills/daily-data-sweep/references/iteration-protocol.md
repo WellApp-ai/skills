@@ -20,8 +20,10 @@ The binding consequences, which the rest of this file and the control-point fami
   7 days" is legitimate: the 7 days are rows in the data this run reads. "Down to under 100 within
   30 days" is not: it names a future run.
 - **Every threshold is a single-run threshold** — see `tolerances.md`.
-- **`cursor_at_stop` is reported, not resumed.** It documents how deep this run scanned. The next run
-  restarts from the beginning, because it has no way to learn where this one stopped.
+- **Scan depth is reported, not resumed.** The `limit` used and the `returned`/`totalCount` pair
+  document how much of the population this run saw. The next run restarts from the beginning — it has
+  no way to learn where this one stopped, and there is no cursor to stop at (`nextCursor` is always
+  null; see B.1).
 - **No month can be labelled from history.** A month is described by what this run found in it, never
   by whether it was swept before — see `sweep-spine.md` A.2.
 
@@ -37,36 +39,38 @@ This is the part that makes the skill's own promise honest. **A control point th
 examined every object is not a passing control point — it is a sample.** Three loop kinds, each with
 an explicit termination condition and a completeness proof.
 
-### B.1 Loop L1 — page to exhaustion (per control point)
+### B.1 Loop L1 — one request, honestly bounded (per control point)
 
-`well_query_records` has **no aggregation** and a **500-row page cap**, and pagination state is not
-persisted anywhere. So every count, every group-by, every set-difference is client-side paging.
+**READ THIS BEFORE THE LOOP — measured 2026-07-30: there is no pagination.** `well_query_records`
+returns **`nextCursor: null` on every response**, at every `limit`, and there is no offset parameter
+(the measurement is in § MEASURED REALITY below). There is nothing to page through, so **do not write
+a cursor loop and do not implement a page budget** — a cursor loop against a null cursor terminates
+after one iteration and then silently reports that one response as an exhaustive scan. `L1` is
+therefore a **single request**, and its whole job is deciding honestly whether that one response saw
+the population or only part of it.
+
+`well_query_records` also has **no aggregation** and caps rows per response (and per workspace — see
+MEASURED REALITY §2). So every count, group-by and set-difference is client-side over what one
+response returned, which is exactly why the `SAMPLED` verdict below is not optional.
 
 ```
 loop L1(control, root, filter):
-    cursor    := null
-    pages     := 0
-    examined  := 0
-    hits      := []
-    total     := first_response.totalCount     # captured once, on page 1
-    repeat:
-        page      := well_query_records(root, fields, filter, limit=500, cursor)
-        hits      += page.rows matching the predicate
-        examined  += page.rows.length
-        pages     += 1
-        cursor    := page.nextCursor
-    until cursor == null OR pages >= PAGE_BUDGET   # PAGE_BUDGET = 20 (~10k rows), per control point
+    resp      := well_query_records(root, fields, filter, limit)   # ONE call — no cursor, no pages
+    total     := resp.totalCount        # count across ALL authorized workspaces (MEASURED REALITY §3)
+    examined  := resp.returned          # capped per workspace, so examined <= total, often <<
+    hits      := resp.rows matching the predicate
 
     if total == 0:                # <- EMPTY POPULATION, NOT A CLEAN ONE
         verdict := INCONCLUSIVE   # unless the control point sets empty_is_pass: true
-    else if cursor != null:       # budget exhausted before the data did
-        verdict := SAMPLED        # <- NEVER "pass"
-    else if examined < total:
-        verdict := INCONCLUSIVE   # rows vanished mid-loop; a sync wrote during the sweep
+    else if examined < total:     # the API cannot return the rest; this is the NORMAL case
+        verdict := SAMPLED        # <- NEVER "pass", and never "fail on absence"
     else:
         verdict := pass / fail on hits
-    record(control, verdict, examined, total, pages, cursor_at_stop)
+    record(control, verdict, examined, total, scan_depth)   # scan_depth = the limit this run used
 ```
+
+To **count** a population exactly, do not scan it: issue `limit: 1` and read `totalCount`, one query
+per workspace. Fetch rows only when a finding needs example ids. Full idiom in § MEASURED REALITY.
 
 Three rules that are not optional:
 
@@ -84,22 +88,23 @@ Three rules that are not optional:
   *island*, *collision*, *cross-workspace*, *tenancy*, *unposted*, *never*, or *no ... exists* —
   including (non-exhaustively) `RECON-duplicate-account-rows`, `RECON-duplicate-payment-candidates`,
   `GRAPH-duplicate-invoice-identity`, `GRAPH-company-identity-fragmentation`,
-  `GRAPH-orphan-documents-and-media`, `GRAPH-payment-means-island`,
+  `GRAPH-orphan-media`, `GRAPH-payment-means-island`,
   `ING-duplicate-transaction-external-id`, `ING-duplicate-invoice-number`,
-  `ING-duplicate-account-cross-connector`, `BANK-txn-no-external-id-dup`,
-  `BANK-txn-no-cross-connector-dup`, `BOOK-edge-dangling`, `BOOK-document-tenancy`, `DOC-02`,
-  `DOC-07`, `DOC-08`, `IPAY-16`, `EINV-02`, `EINV-11`.
+  `ING-duplicate-account-cross-connector`, `BANK-txn-no-cross-connector-dup`,
+  `BOOK-edge-dangling`, `DOC-02`, `DOC-07`, `DOC-08`, `IPAY-16`, `EINV-02`, `EINV-11`.
   **The inverse class must NOT declare it**: a check asserting something *should exist* — a balance,
   a category, a payment means, a document — is INCONCLUSIVE on an empty population, never a pass,
   because it had nothing to examine.
-- **`SAMPLED` is not `pass`.** A truncated scan reports `SAMPLED` with the page depth reached. An
+- **`SAMPLED` is not `pass`.** A truncated scan reports `SAMPLED` with the scan depth reached. An
   unqualified green over a truncated scan is the sweep lying in exactly the way the 12 skills do.
-- **`examined < total` means INCONCLUSIVE, not pass.** The two reads are not a consistent snapshot;
-  a concurrent sync makes the set move under the loop. Do not paper over it.
-- **Record `cursor_at_stop` as scan-depth evidence, not as a resume point.** It states where this
-  run's scan ended, which is what makes a `SAMPLED` verdict auditable — a reader can see whether the
-  loop stopped 2 pages in or 20. It does not carry to the next run (every run is cold), so a
-  truncated scan is truncated again next time; the honest fix is a narrower filter, not a resume.
+- **`examined < total` means `SAMPLED`, not pass — and it is the normal case, not an anomaly.**
+  With no pagination the API simply cannot return the rest, so any root larger than one response is
+  `SAMPLED` by construction. (It also covers the older reading — a concurrent sync moving the set
+  under the read — which is equally not a pass. Either way, do not paper over it.)
+- **Record the scan depth as evidence, not as a resume point.** State the `limit` used and the
+  `returned`/`totalCount` pair, which is what makes a `SAMPLED` verdict auditable. Nothing carries to
+  the next run (every run is cold) and there is no cursor to carry anyway, so a truncated scan is
+  truncated again next time; the honest fix is a narrower filter, not a resume.
 
 ### B.2 Loop L2 — fan out per object (the completeness loop)
 
@@ -184,7 +189,7 @@ Non-negotiable, because it is what distinguishes this sweep from an impression:
 |---|---|
 | `verdict` | `pass` / `fail` / `inconclusive` / `sampled` — four values, never two |
 | `examined` / `total` | the completeness proof; equal means exhaustive |
-| `pages`, `cursor_at_stop` | proof of scan depth — how deep this run got, so a `SAMPLED` is auditable. Not a resume point (every run is cold) |
+| `scan_depth` (the `limit` used) | proof of how much this run saw, so a `SAMPLED` is auditable. Not a resume point — every run is cold, and `nextCursor` is always null, so there is no cursor or page count to record |
 | `scope` | workspace id + month + the family — never a bare number (§ SCOPE WARNING) |
 | `parents_unchecked` | for L2: the named objects the loop never reached |
 | `rounds`, `converged` | for L3 (month chain only); `CHAIN_UNSTABLE` when it did not converge |
@@ -199,7 +204,7 @@ depth findings computed under a breadth failure are scoped, not clean.
 | gate | family | if red → |
 |---|---|---|
 | 0 | **Scope** — workspace enumeration succeeded (`SPINE-01a`), MCP reachable | **HALT.** A sweep that could not even list its subjects never ran, and a sweep that could not run is a FAILED sweep, never a passing one. |
-| 1 | **Spine** — months enumerated, picker agreement (`SPINE-02..06`) | month set is untrusted → every later gate reports "scope uncertain" |
+| 1 | **Spine** — months enumerated, picker agreement (`SPINE-02`, `-03`, `-04`, `-06`, `-07`) | month set is untrusted → every later gate reports "scope uncertain" |
 | 2 | **Ingestion / connectors** (`ING-`, `BANK-` exhaustive) | every later gate is labelled *"scoped to the sources that were connected"* |
 | 3 | **Banking data** (`BANK-` complete) | **charts must not render** — cash/trend/burn/breakdown/FX all blocked |
 | 4 | **Entity graph** (`GRAPH-`) | counterparty and logo layers untrusted; category/vendor charts degraded |
@@ -238,8 +243,9 @@ Measured: `well_query_records` on `transactions` with `whereClause {category_key
 returned `totalCount: 793`, `returned: 545`, **`nextCursor: null`** — and at `limit: 5` returned
 `10` rows with `nextCursor: null` again. There is no cursor to follow and no offset parameter.
 
-**Consequence: the L1 page-to-exhaustion loop cannot be implemented.** `examined == total` is
-unreachable for any root holding more rows than one response returns.
+**Consequence: a page-to-exhaustion loop cannot be implemented** — which is why B.1 above is a
+single request, not a loop. `examined == total` is unreachable for any root holding more rows than
+one response returns.
 
 **Therefore, the binding rule:** whenever `returned < totalCount`, the control point's verdict is
 **`SAMPLED`** — never `pass`, and never `fail` on absence. Report `returned`/`totalCount` on every

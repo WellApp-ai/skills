@@ -25,7 +25,7 @@ does not see a soft-deleted target at all. Confirmed live — `mcp-surface-limit
 | `GRAPH-journal-entry-unbalanced` | Debits ≠ credits | group `journal_entries` by parent journal; sum debit vs credit side. **Resolve the parent FK and amount fields via `well_get_schema` — no skill exposes them; do not hardcode** | sides differ by > 0.01; or a group with exactly one line (half-posted) | red | complete | expense-breakdown and runway prefer the ledger *because it's authoritative*. An unbalanced entry makes the preferred path **less** trustworthy than the fallback it overrides, and neither skill can detect the inversion |
 | `GRAPH-journal-entry-unposted-or-dangling` | Entry not posted to a journal/ledger account | `journal_entries` where the journal or ledger-account FK is null, or points at an absent / soft-deleted row | any row | red | complete | invisible to every ledger aggregation while still existing — ledger spend under-reports against the same period's transactions with no error surfaced |
 | `GRAPH-invoice-items-vs-header-totals` | Line items don't sum to the header | group `invoice_items` by parent invoice; compare line sum vs `items_total`, line tax vs `tax_total`; check the accounting-side triplet independently of the local one | difference > 0.01; non-zero `grand_total` with zero live items; the two triplets diverge | amber | complete | **what a header-internal check cannot see**: the header can balance perfectly while line detail is missing or contradictory. `draft-invoice` accepts `totals` and `line_items` as *independent* inputs, so divergence is structurally possible on every write |
-| `GRAPH-account-ownership-unresolvable` | Account provenance unestablished | `accounts` where `workspace_connector_pk _is_null` (**currently all 30 live rows**) cross-checked against `ownership`; flag rows where `ownership` is also null/unknown | both null | red | complete | cash-position and cash-balance-trend must count only workspace-owned accounts. With the connector FK null across the board, **`ownership` is the only discriminator left** — if it's unset too, a counterparty account can be summed into cash and runway inherits the inflated numerator |
+| `GRAPH-account-ownership-unresolvable` | Account provenance unestablished | `accounts` where `workspace_connector_pk _is_null`, cross-checked against `ownership`; flag rows where `ownership` is also null/unknown | both null | red | complete | cash-position and cash-balance-trend must count only workspace-owned accounts. Where the connector FK is null, **`ownership` is the only discriminator left** — if it's unset too, a counterparty account can be summed into cash and runway inherits the inflated numerator |
 | `GRAPH-account-open-balance-row-invalid` | Missing, duplicated or stale current snapshot | count live `account_balances` per account where `balance_at_to _is_null true`; `orderBy balance_at_from desc` and age the newest one against tolerance 6a | zero open rows, **or two or more**, **or** an open row whose `balance_at_from` is older than 48h | red | complete | zero → the account contributes nothing to cash; duplicate open rows → **the same balance counted twice**; stale → cash-position reads a closed period as "current". All three produce a plausible number with no error raised. **This is the canonical open-balance control point** — `ING-account-no-open-balance-row` and `RECON-account-current-balance-missing` checked the same population and were folded in here |
 | `GRAPH-transaction-counterparty-unresolved` | No resolvable counterparty | `transactions` where both `debtor_payment_means` and `creditor_payment_means` are null, plus means resolving to no live company/person/account | any row | amber | complete | payment-invoice-lookup must list unmatched payments "with counterparty if resolvable", and company-profile reaches transaction history *only* through this chain — a broken link hides a vendor's payment history while the 360 view still renders complete |
 | `GRAPH-person-not-linked-to-company` | Unaffiliated people | `people` with a null company FK or one pointing at an absent/deleted company | any row, reported as a share | amber | complete | an unreachable island: the row exists, no skill can route to it, and the profile it should enrich reports no contacts |
@@ -76,8 +76,18 @@ via `well_get_schema` (the `categories` root exists, and no skill verifies the F
 | `GRAPH-duplicate-invoice-identity` | Same invoice ingested twice | collisions on (`issuer_pk`, `invoice_number`, `document_type_code`) and (`issuer_pk`, `reference_number`, `grand_total`, `issue_date`); **segment by `source_workspace_connector_pk`** | more than one live row per group | red | exhaustive | distinct from duplicate *company* identity — counterparty clean, invoice doubled. The connector segmentation is what tells you whether one connector re-ingested or two connectors reported the same document |
 | `GRAPH-ledger-coverage-vs-source` | Ledger coverage vs invoices/transactions | counts of `ledger_accounts`, `journals`, `journal_entries` vs `invoices`/`transactions` over the window | ledger roots at zero while sources are populated; or a populated window with no entries posting from it | red | exhaustive | the output says "ledger-based" while half the period is unposted — the skill flags an approximation **it cannot know it is making** |
 | `GRAPH-ledger-account-tree-broken` | Chart of accounts orphaned | `ledger_accounts` whose parent FK is absent/deleted; plus accounts with zero posting entries | any orphan subtree | amber | exhaustive | children's totals never roll up into any reported parent, so **the presented categories sum to less than total spend with no residual line to show it** |
-| `GRAPH-orphan-documents-and-media` | Files attached to nothing | live `documents` / `media` with no live parent | any orphan — most sharply when missing-receipts *simultaneously* reports invoices with no document | amber | exhaustive | an orphan file is a receipt Well **already holds and reports as missing**: a false compliance gap. Paired with `DOC-02` (the canonical dangling-attachment row), the two directions bound the real attachment error rate — **neither alone does** |
+| `GRAPH-orphan-media` | Branding assets attached to nothing | live `media` with no live parent. **`media` only** — orphan `documents` are `DOC-08`, which owns both arms of that predicate; see the note below the table | any orphan medium | amber | exhaustive | `media_type` is `avatar`, `logo` or `banner` only, so an orphan medium is stale branding debt, not a lost receipt. It is amber for that reason, and it **must never enter the attachment error rate** — including it inflates the bookkeeping defect count |
 | `GRAPH-payment-means-island` | Instruments linked to nothing | `payment_means`, `invoice_payment_means`, `cards`, `checks` with no live owner | any island row | amber | exhaustive | the upstream cause of `GRAPH-transaction-counterparty-unresolved`. Companies have no direct FK to transactions — the only route is through `payment_means`, so **one island instrument hides many payments at once** |
+
+**Orphan *documents* are not checked here.** The canonical control point is `DOC-08`, which owns the
+whole orphan-`documents` predicate in two arms — (a) receipt-capable MIME and `size > 1024`, red, and
+the `C` term of the two-direction attachment bound; (b) every other orphan document, amber, storage
+debt. The former `GRAPH-orphan-documents-and-media` bundled `documents` and `media` into one amber
+with no MIME or size filter, which both under-graded the receipt case and let branding assets into an
+attachment error rate they have no business in. The split is by root: `documents` → `DOC-08`, `media`
+→ `GRAPH-orphan-media` above, so the narrowing costs no coverage. The stake survives on `DOC-08`: an
+orphan receipt is a file Well **already holds and reports as missing** — a false compliance gap — and
+paired with `DOC-02` the two directions bound the real attachment error rate, which neither alone does.
 
 **Sync freshness and log coverage are not checked here.** The canonical control points are the
 `ING-` gate-2 set, which owns each arm separately at the tolerance 7b thresholds:
@@ -109,9 +119,16 @@ added later.
 
 ## Control points — RECONCILIATION & CLOSE (`RECON-`)
 
-`[EXPENSIVE]` = requires client-side paging at the
-500-row cap; budget as a paged job with checkpoint/resume, on a slower cadence than the cheap
-`totalCount` checks.
+`[EXPENSIVE]` = the check needs a **client-side reduce** — a sum, a group-by or a cluster — over a
+row set larger than one response can return. **There is no pagination**: `nextCursor` is `null` on
+every response at every `limit`, and there is no offset parameter (`iteration-protocol.md` B.1 and
+§ MEASURED REALITY 1). So there is nothing to page through and nothing to resume: an `[EXPENSIVE]`
+control point is **`SAMPLED` by construction whenever `returned < totalCount`**, and that is the
+normal case, not an anomaly. Two honest options, in order: **narrow the filter** — by month, by
+connector, by `document_type_code` — until one response covers the population and the reduce is
+complete; or report **`SAMPLED` with the `returned`/`totalCount` pair**, which is what makes the
+verdict auditable. Never a bare `pass`. These still belong on a **slower cadence** than the cheap
+`totalCount` probes, because each one costs a full row fetch rather than a count.
 
 **Windowing rule for every check below:** window on
 `COALESCE(booking_date, value_date, executed_at)` — **never on `booking_date` alone.** It is
@@ -145,8 +162,9 @@ All three are properties of the proof chain, and each was carried by a second id
 different severity or grace:
 
 - `RECON-overallocated-invoice` → **`BOOK-edge-overallocated`** — the same sum over the same edge
-  population in the same direction. The `[EXPENSIVE]` client-side paging marker moves with it: budget
-  it as a paged job with checkpoint/resume, not a `totalCount` probe.
+  population in the same direction. The `[EXPENSIVE]` marker moves with it: the sum is a client-side
+  reduce, not a `totalCount` probe, so it is `SAMPLED` by construction unless the filter is narrowed
+  until one response covers the edge population.
 - `RECON-provisional-match-backlog` → **`BOOK-edge-confidence-floor`**, which now carries the
   `edge_status: provisional` arm, tolerance 10's 0.85 match floor and the 10-business-day age gate.
   Read it with the `confirmed` trap documented alongside it: `edge_status` defaults to `confirmed`,
@@ -169,9 +187,9 @@ hardcoded.
 
 | id | name | check | fail signal | sev | bucket |
 |---|---|---|---|---|---|
-| `RECON-duplicate-account-rows` | Sync inserting instead of upserting **within one connector** | cluster `accounts` on `account_name` + `currency` + owning connector; compare provider id and the `created_at` cadence. The **cross-connector** pair is `ING-duplicate-account-cross-connector`, which this clustering structurally cannot see | §8 — the live 24× "Compte principal" case | red | exhaustive |
+| `RECON-duplicate-account-rows` | Sync inserting instead of upserting **within one connector** | cluster `accounts` on `account_name` + `currency` + owning connector; compare provider id and the `created_at` cadence. The **cross-connector** pair is `ING-duplicate-account-cross-connector`, which this clustering structurally cannot see | tolerance §8: ≥2 rows share the triple **and** (identical provider `account_id` **or** `account_id` null on ≥2); or the cadence corroborator alone — ≥3 rows for one triple created within 24h at a constant interval ±10 min | red | exhaustive |
 | `RECON-unposted-period` | Period has transactions, no entries — **the one canonical posting-continuity control point** | per month: `transactions` count vs `journal_entries` count | txns > 0 and entries = 0 for a period ending before the close cutoff §13 | red | exhaustive |
-| `RECON-txn-no-ledger-account` | Transaction cannot post | `transactions.ledger_account_pk _is_null` past the close cutoff §13 | any row | red | exhaustive |
+| `RECON-txn-no-ledger-account` | Transaction cannot post — **the one canonical ledger-mapping control point** | `transactions.ledger_account_pk _is_null` past the close cutoff §13; **plus `ledger_account_role` consistency on the rows that do carry a ledger account** (the arm carried over from `BANK-txn-ledger-mapped`, folded in here) | any row | red | exhaustive |
 | `RECON-account-never-reconciled` | An account excluded entirely | per workspace-owned account, in-window txn count vs how many carry an edge | **0% match rate across the whole window** | red | exhaustive |
 | `RECON-ledger-account-period-coverage` | Expense account with no period balance | expense `ledger_accounts` joined to `account_balances` | no row in a period that has transactions | amber | exhaustive |
 | `RECON-backlog-age-tail` | Unswept tail beyond the window | oldest item per queue, `orderBy` asc `limit 1` — a single-run extremum, no prior sweep required | oldest > 30 days | amber | exhaustive |
@@ -183,6 +201,12 @@ population — one red per connector instead of three, counted once at gate 2.
 `RECON-account-current-balance-missing` is folded into
 `GRAPH-account-open-balance-row-invalid`, which now carries its 48h tolerance 6a staleness arm
 alongside the zero and duplicate directions.
+
+**Ledger mapping is not checked at gate 3.** `BANK-txn-ledger-mapped` applied the same
+`ledger_account_pk _is_null` predicate to the same population **ungated**, firing red on any row —
+so it went red on the open period by construction, which tolerance 13 exists to prevent. It is
+removed in favour of `RECON-txn-no-ledger-account` above, which carries its `ledger_account_role`
+consistency arm.
 
 `RECON-txn-no-ledger-account` is the subtle one: a transaction with no ledger account cannot
 post, so `RECON-unposted-period` reads **green** while the period is structurally incomplete —

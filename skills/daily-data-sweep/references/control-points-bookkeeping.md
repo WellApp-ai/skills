@@ -4,9 +4,11 @@ Gate 6. Proof-of-payment, the disposition gap, company identity across the proof
 
 ---
 
-## SECOND FAMILY — bookkeeping proof-of-payment chain (`BOOK-`)
+## Bookkeeping proof-of-payment chain (`BOOK-`)
 
-Runs after `BANK-`. Once a transaction is categorized it must carry a **proof of payment** —
+Runs at **gate 6**, behind `ING-` (2), `BANK-` (3), `GRAPH-` (4) and `RECON-` (5) — the proof chain
+presumes the transactions and the edges beneath it have already been checked. Once a transaction is
+categorized it must carry a **proof of payment** —
 normally an invoice — with the document attached, both counterparties identified, at least one of
 them matching the transaction's own counterparty, e-invoicing-valid line items with VAT and FX,
 and any banking details on the invoice linked to a real account or payment means.
@@ -121,7 +123,7 @@ checks ARE expressible.
 | `BOOK-edge-not-human-confirmed` | Reconciliation is all model output | complete | `edge_status: confirmed` **and** `match_method: llm_matched` with no human actor | any edge | amber |
 | `BOOK-edge-confidence-floor` | Unconfirmed and low-confidence matches — **edges, not categories** | complete | `invoice_transactions` with `edge_status: provisional` **or** `confidence < 0.85` (tolerance 10's match floor). **Not a duplicate of `RECON-low-confidence-category`**: that one is the classifier's `category_confidence` on `transactions` at a 0.70 floor. Tolerance 10 governs both floors, which makes them read alike; the populations and the fields differ, so do not merge them | any unreviewed; the backlog arm past 10 business days | amber |
 | `BOOK-edge-amount-agrees` | Edge amount matches the invoice | complete | `allocation_type: full` and abs(`amount` − invoice `grand_total`) > tolerance §14 (**0.01 same-currency, 0.5% cross-currency**); run the same comparison against the **transaction's own amount**, which can diverge from the edge `amount` on a `full` allocation. **This row owns the `full`-allocation arm only** — the summed-edge and `paid_amount` directions belong to `BOOK-edge-overallocated`, `RECON-partial-allocation-shortfall` and `RECON-paid-amount-vs-allocation`; re-checking them here counts the same invoice four times | any edge in the `full` set | red |
-| `BOOK-edge-overallocated` | Allocations exceed the invoice `[EXPENSIVE]` | complete | sum of live edge `amount` per `invoice_pk` > `grand_total` + tolerance §14. Requires client-side paging at the 500-row cap — budget as a paged job with checkpoint/resume. The opposite direction, gated on `payment_status: paid`, is `RECON-partial-allocation-shortfall` | any | red |
+| `BOOK-edge-overallocated` | Allocations exceed the invoice `[EXPENSIVE]` | complete | sum of live edge `amount` per `invoice_pk` > `grand_total` + tolerance §14. A client-side reduce over the edge set — **there is no pagination**, so this is `SAMPLED` by construction whenever `returned < totalCount`; narrow the filter until one response covers the edge population, else report `SAMPLED` with the `returned`/`totalCount` pair, never a bare pass (`[EXPENSIVE]`, see `control-points-graph-recon.md`). The opposite direction, gated on `payment_status: paid`, is `RECON-partial-allocation-shortfall` | any | red |
 | `BOOK-edge-currency-consistent` | Cross-currency edge has a live rate | complete | compare edge `currency` and `invoices.local_currency` against `transactions.instructed_amount.currency`; accept `accounting_currency` **only when `exchange_rate_pk` resolves live** | neither currency matches; or they differ and `exchange_rate_pk` is null **or dangling** | red |
 | `BOOK-edge-dangling` | Edge points at a dead row | complete | `invoice_pk` or `transaction_pk` resolving to absent/soft-deleted. Write the predicate against the **relation** (`_not: {invoice: {}}`), never a bare `_is_null` on the FK column — only the relation traversal sees a soft-deleted target | any | red |
 
@@ -164,8 +166,6 @@ field (§ the disposition gap) and a sweep-result store exist.
 |---|---|---|---|---|---|
 | `BOOK-invoice-has-document` | Document attached | complete | `invoices.document_pk IS NULL`, in-window. A **populated but dangling** pointer is `DOC-02`, a different defect | past the grace window on the differentiated `DOC-` ladder: 3 business days after `issue_date` by default; **5 calendar days and red from the first occurrence** for card/expense receipts above the €25 FR simplified-invoice VAT threshold; 10 days for transfer-settled supplier invoices | red; **amber** for the transfer-settled class |
 | `BOOK-document-has-content` | File is **recorded**, not a 0-byte placeholder | complete | `documents.size < 1024` or `content_checksum IS NULL`. A green here means "content recorded", **never** "file retrievable" — `bucket`/`path` are unvalidated strings (see `control-points-documents.md`) | any row | red |
-| `BOOK-document-right-kind` | Mime is a document kind that can be a receipt | complete | **typed exact-match allow-list of mime types — never a substring test on a filename**; reuse the existing `ACCEPTED_DOCUMENT_FORMATS` const rather than inventing a second list | any outside the list | amber |
-| `BOOK-document-tenancy` | Document belongs to this workspace | exhaustive | document's workspace ≠ invoice's workspace | any | red |
 
 **`BOOK-document-resolves` is removed; the canonical is `DOC-02`.** The same population — an invoice
 whose `document_pk` is populated while the `documents` row is absent or soft-deleted — was carried by
@@ -174,5 +174,23 @@ three ids across three gates (`BOOK-document-resolves`, `GRAPH-invoice-document-
 `B` term of the two-direction bound in `control-points-documents.md`, which nothing else can supply.
 Severity is red, as `BOOK-document-resolves` had it — the amber the `GRAPH-` copy carried is
 superseded. `BOOK-invoice-has-document` above is the *null* direction and stays here; `DOC-02` is the
-*dangling* direction. `BOOK-document-tenancy` overlaps `DOC-07` in intent but is stated against the
-invoice-side workspace, so both stand until that pair is adjudicated.
+*dangling* direction.
+
+**Two more document rows are removed; the canonicals are `DOC-04` and `DOC-07`.** Attachment
+integrity is owned by the `DOC-` family, and both rows here restated a `DOC-` predicate over the
+same population at a severity `DOC-` had already superseded.
+
+- **`BOOK-document-right-kind` → `DOC-04`.** The same typed exact-match MIME allow-list, derived
+  from the same `ACCEPTED_DOCUMENT_FORMATS` const, over the same attached-document population. The
+  **amber this row carried is superseded by `DOC-04`'s red** — a MIME that cannot be evidence is a
+  structural defect, not a hygiene note, and it is a `B` term of the two-direction bound in
+  `control-points-documents.md`, which an amber would not justify. `DOC-04` already carries the
+  never-`_like`-on-`filename` rule (filename is user-updatable, `type` is not) and the separate
+  `application/octet-stream` finding, so nothing is lost.
+- **`BOOK-document-tenancy` → `DOC-07`.** The same cross-workspace attachment, both red, differing
+  only in which side's workspace was named — this row said "document's workspace ≠ invoice's
+  workspace", `DOC-07` writes the live Hasura predicate against the workspace under audit. The
+  invoice-side wording is carried onto `DOC-07`. This is a **security** control, not a bookkeeping
+  one: because the `invoices` RLS filter is an `_or` over the invoice's workspace and the
+  *document's* workspace, a cross-workspace attachment widens the read surface, which is why the
+  canonical is `exhaustive` and must run in every workspace rather than only the one under audit.

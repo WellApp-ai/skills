@@ -6,7 +6,9 @@ Gate 3. Chart-readiness: transactions, counterparty, cards, FX, source-side defe
 
 ## PRIORITY FAMILY — banking data must be chart-ready (`BANK-`)
 
-This is the **first family the sweep runs**, and the reason the skill exists: before any chart
+This family runs at **gate 3**, behind the `ING-` ingestion family at gate 2 — sync freshness and
+connector coverage must be established before a banking count means anything. It is the **priority
+family** and the reason the skill exists: before any chart
 renders (cash position, cash trend, burn/runway, expense breakdown, FX exposure), the banking
 data behind it must be complete AND exhaustive. Scope is **every workspace the caller can
 access**, reported per workspace, never merged.
@@ -14,8 +16,8 @@ access**, reported per workspace, never merged.
 ### Measured baseline
 
 Measured baseline (dated, re-probe before citing): [`baseline-2026-07-29.md`](baseline-2026-07-29.md).
-No figure below is a standing fact. Evidence that these numbers move: uncategorized transactions
-were **788** on 2026-07-29 and **793** on 2026-07-30 — one day, and the count changed.
+No figure in that file is a standing fact, and it carries its own day-over-day proof of decay — read
+it there rather than citing a count from this file.
 
 ### Two structural findings — structural, not counted
 
@@ -64,15 +66,39 @@ currency_rate_at}]`. `payment_means` = 14 fields (`account_pk`, `card_pk`, `chec
 
 | id | name | bucket | check | fail signal | sev |
 |---|---|---|---|---|---|
-| `BANK-txn-categorized` | Every transaction categorized | complete | `transactions.category_key _is_null`, split by `category_status` | any row | red |
 | `BANK-txn-category-resolves` | Category is a live catalogue entry | complete | `category_key` is a **member of the 47 shipped keys** in `transaction-category.const.ts` — set membership, **not** a join, because `categories` has no `key` column (see § source-side defects); also check `category_taxonomy_version` is uniform | key outside the shipped set, or mixed taxonomy versions in one chart window | red |
 | `BANK-txn-amount-nonzero` | Amount is real | complete | `instructed_amount.amount` null **or `= 0`** | any row | red |
 | `BANK-txn-amount-currency` | Amount carries a currency | complete | `instructed_amount.currency` null | any | red |
 | `BANK-account-has-currency` | Every account states its currency | complete | `accounts` where `currency _is_null` | any row | red |
 | `BANK-txn-date-present` | Datable | complete | `booking_date IS NULL` **and** `value_date IS NULL` **and** `executed_at IS NULL`; window on `COALESCE` of the three | any | red |
-| `BANK-txn-ledger-mapped` | Mapped to a ledger account | complete | `ledger_account_pk _is_null`, and `ledger_account_role` consistency | any row | red |
 | `BANK-txn-no-cross-connector-dup` | Same movement not ingested twice | complete | group by (abs(`instructed_amount.amount`), currency, date, normalized `remittance.unstructured`) across **different** `source_workspace_connector_pk` on the same account | any group ≥2 | red |
-| `BANK-txn-no-external-id-dup` | No re-ingestion within a connector | complete | (`source_workspace_connector_pk`, `transaction_external_id`) collisions | any | red |
+
+**Three transaction rows are checked elsewhere and were removed from the table above.** Each was a
+second id over the same predicate and the same population as a canonical row in another family, at a
+severity the canonical had already superseded — the shape that makes one defect count three times.
+
+- **Uncategorized transactions → `RECON-txn-uncategorized`** (`control-points-graph-recon.md`), the
+  one canonical uncategorized control point, which splits by `category_status` **and**
+  `category_source` and grades on tolerance 9's per-cause ladder (`classifier_failed` red,
+  `classifier_abstained` amber, `category_status` null / never attempted red; aggregate amber above
+  5% of period spend by value or 100 rows, red above 15% or 500, or above 25 `classifier_failed` in
+  the trailing 7 days). The former `BANK-txn-categorized` fired **red on any row**, which on the
+  largest population in the sweep is permanently red — and a permanently red control point is a
+  disabled one. That flat rule is **superseded; do not re-add it.** The canonical carries every arm
+  `BANK-txn-categorized` had.
+- **Unmapped ledger account → `RECON-txn-no-ledger-account`** (`control-points-graph-recon.md`),
+  which owns the same `ledger_account_pk _is_null` predicate gated on the tolerance 13 close cutoff
+  (5th business day of M+1). The gate is the point: the open period is *expected* unposted, so the
+  former `BANK-txn-ledger-mapped`'s ungated "any row → red" cried wolf for the first week of every
+  month. Its one extra arm — **`ledger_account_role` consistency on rows that do carry a ledger
+  account** — is carried on the canonical row.
+- **Re-ingestion within one connector → `ING-duplicate-transaction-external-id`**
+  (`control-points-ingestion.md`, gate 2), the same (connector, `transaction_external_id`) grouping.
+  Ingestion owns re-ingestion, and the `ING-` row already states why a hit is significant (a partial
+  unique index exists, so a collision means it was bypassed or the id is null). The former
+  `BANK-txn-no-external-id-dup` added nothing the canonical lacks except the reporting rule in
+  § Where duplicates actually live below, which now attaches to the canonical. **Cross-connector**
+  duplication is a different population and stays here as `BANK-txn-no-cross-connector-dup`.
 
 #### Counterparty, bank and logos
 
@@ -128,8 +154,10 @@ source_workspace_connector_pk IS NOT NULL`.
 So a collision **within** those predicates is structurally impossible — if the sweep finds one,
 the index is missing. **The duplicate risk surface is the rows the index does not reach:** null or
 blank `transaction_external_id`, or null `source_workspace_connector_pk`. Report *that* count, not
-the structurally-zero collision count. And cross-connector id reuse is classified `review`, not
-`duplicate` — never auto-merge it.
+the structurally-zero collision count. This reporting rule governs
+`ING-duplicate-transaction-external-id`, the canonical within-connector duplicate row. And
+cross-connector id reuse is classified `review`, not `duplicate` — never auto-merge it; that
+direction is `BANK-txn-no-cross-connector-dup` above.
 
 #### The hard blocker for burn and runway
 
