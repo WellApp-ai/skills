@@ -295,8 +295,11 @@ Return:
   any red ⇒ **`fail`**; else any amber ⇒ **`pass (with findings)`**; else **`pass`**. Then, if the
   bucket contains **any** `INCONCLUSIVE` or `SAMPLED` control point, append **`(partial — N not
   evaluated)`**. A bare `pass` is only legal when every control point in that bucket returned `pass`
-  over a fully examined population. The severity floor is a *reporting* filter and never changes a
-  verdict.
+  over a fully examined population. **On a large root that is now unreachable, and saying so is the
+  point:** with no pagination, any control point over a population bigger than one response returns
+  `SAMPLED`, so a bucket covering `transactions` or `invoices` reports `pass (partial)` at best. Do
+  not hunt for a bare `pass` there — its absence is the honest result, not a defect in the sweep. The
+  severity floor is a *reporting* filter and never changes a verdict.
 - **A table of failing control points only** (passing ones collapse to a count), each with: id,
   bucket, severity, count of offending records, up to 5 example ids, and `records_url` when
   available. **`records_url` has no confirmed construction rule** — there is no verified deep-link

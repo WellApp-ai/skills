@@ -109,8 +109,11 @@ closures were **false or inert** (`R1`, `R2`, below) and were fixed immediately;
 
 **Verified clean:** the two gate moves from dedup (open-balance 2→4, sync-coverage 5→2) cross-
 reference correctly, and every `ING-` id named in the fold-in notes exists. **No dangling ids** —
-re-verified 2026-07-30 after the `R4` renames: `iteration-protocol.md` B.1's `empty_is_pass`
-enumeration named `GRAPH-orphan-documents-and-media` and `BOOK-document-tenancy`, both of which `R4`
-deleted, and both are corrected. Mentions of a deleted id inside a *fold-in note* ("the former `X`
+re-verified 2026-07-30 after the `R4` renames. That verification is not free: `R4` renamed or deleted
+three ids that `iteration-protocol.md` B.1's `empty_is_pass` enumeration named as live instructions
+(`GRAPH-orphan-documents-and-media` → `GRAPH-orphan-media`, `BOOK-document-tenancy` → `DOC-07`,
+`BANK-txn-no-external-id-dup` → `ING-duplicate-transaction-external-id`). All three are corrected
+there. **Any future rename must sweep that enumeration** — it is the one place outside the family
+files that names control points individually. Mentions of a deleted id inside a *fold-in note* ("the former `X`
 …") are deliberate history and are not dangling; the test is whether a **live instruction** names an
 id that no longer resolves.

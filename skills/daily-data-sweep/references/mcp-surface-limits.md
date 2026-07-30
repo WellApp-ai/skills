@@ -151,7 +151,10 @@ wrong as written**. Measured against the deployed MCP:
    respects the `deleted_at IS NULL` + workspace filter that the related root carries. That makes the
    dangling-reference class checkable in one query.
 3. Several `[EXPENSIVE]` client-side-paging caveats on the `RECON-` family are therefore
-   over-conservative. Re-test each before budgeting it as a paged job.
+   over-conservative — and there is no paging to budget for in any case (`nextCursor` is always
+   null; `iteration-protocol.md` B.1). Re-test each: an `[EXPENSIVE]` check a relation predicate can
+   express is one query, and one that genuinely needs an aggregate over a child set is `SAMPLED`
+   whenever `returned < totalCount` — never a paged job with a resume point.
 
 **What genuinely does NOT work — the real limit, stated precisely:** there is no **aggregation**.
 You cannot sum, count-distinct, group by, or compare an aggregate of a child set inside a query. So
