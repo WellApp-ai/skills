@@ -46,6 +46,8 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 - `well_list_connectors` — surface install links when the workspace lacks data.
 - Well's OAuth / Dynamic Client Registration (DCR) flow — if no Well MCP connection exists yet, most hosts trigger this automatically when the Well MCP server is added (it exposes standard OAuth discovery + DCR, no manual client secret needed). If your host exposes a dedicated `authenticate` tool for the Well connector, call that instead.
 
+**Never fetch the underlying financial data from a third-party provider directly.** Every number in this skill's answer comes from `well_get_cost_structure` and `well_query_records` — Well's own synced, normalized financial graph. Do not call `well_invoke_connector_tool`, and do not call any provider-specific tool (Pennylane, Qonto, QuickBooks, Xero, …) to pull ledger lines, transactions, or invoices yourself, even when such a tool is listed as available. Well has already synced and normalized this data; bypassing it produces figures that disagree with what the Well app itself shows the user.
+
 ## Workflow
 
 1. **Confirm the MCP server is configured.** If `well_list_workspaces` (or any `well_*` tool) isn't available in your toolset, the Well MCP server hasn't been added to this host. Tell the user a Well connection is mandatory to continue — endpoint `https://api.wellapp.ai/v1/mcp` — because Well is where their financial data is aggregated securely to compute a real spend breakdown; without it there's nothing to break down. Stop until it's there; don't estimate from assumptions.
@@ -76,7 +78,8 @@ Return:
 - Which month the category breakdown covers (the latest closed month — say so explicitly if the user asked for a different window) and which connector(s)/sync the accounts-payable numbers came from.
 - Top expense categories with amount, currency, and share of total spend (`entries[].pct` from `well_get_cost_structure`, straight from the tool — not recomputed). If the user didn't already say whether they want a table or a chart, ask their preference rather than silently picking one — this is a comparison across categories, so a bar chart is the natural fit if they want one.
 - Top accounts payable: vendor, amount, currency, due date.
-- A one-line note that the category breakdown is the same computation the Well app itself renders, not a skill-side estimate, plus any coverage `hints` `well_get_cost_structure` returned (e.g. uncategorized spend).
+- A one-line note that the category breakdown is the same computation the Well app itself renders, not a skill-side estimate, plus any coverage `hints` `well_get_cost_structure` returned (e.g. uncategorized spend). State the categorization ladder plainly too: spend is grouped by the first rung that qualifies — (1) ledger account name, (2) transaction category, (3) transaction type, (4) "Uncategorised". The tool does not report which rung was actually elected, so never state or imply that a particular one was used.
+- Whether the picture is complete: which relevant connector categories (banking, accounting) are connected versus still missing, so the user knows whether this reflects their full spend or a partial view gated by what's connected today.
 - A one-line pointer to `bills-due` for a date-ordered view of when the biggest payables come due.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 7's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
@@ -90,6 +93,9 @@ Before finishing, verify:
 - Data presence was checked, not just connector "enabled" status.
 - `well_get_schema` was called before querying `invoices`/`workspaces` for the first time.
 - Category totals came straight from `well_get_cost_structure`, not re-derived from raw `account_balances`/`ledger_accounts`/`transactions` reads.
+- No figure came from `well_invoke_connector_tool` or any provider-specific tool (Pennylane, Qonto, QuickBooks, Xero, …) — all numbers trace back to `well_get_cost_structure` / `well_query_records`.
+- The categorization ladder was stated, and no specific rung was claimed as the one that produced the shown categories.
+- Which connector categories (banking, accounting) are connected versus missing was stated, so the user knows whether the picture is complete or partial.
 - If the user asked for a window other than the latest closed month, that limitation was stated plainly rather than silently substituted.
 - Any `hints` `well_get_cost_structure` returned (e.g. uncategorized-spend coverage) were disclosed, not presented as if the category ranking were unconditionally complete.
 - Accounts payable only includes invoices where the workspace is the receiver, not the issuer.
