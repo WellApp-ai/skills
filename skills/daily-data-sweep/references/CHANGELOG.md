@@ -1,4 +1,8 @@
-# Known issues — audit findings not yet resolved
+# Changelog — audit findings and the fixes that closed them
+
+This is a **historical record**, not an instruction list and not a list of open issues. Read it when
+you want to know why a rule, threshold, or control point is shaped the way it is. Nothing here is a
+step in a sweep; no gate depends on it.
 
 A dry-run executability audit (2026-07-30) walked this skill gate 0→9 as the executing agent and
 raised 23 findings; two later adversarial re-audits raised 11 more (`R1`-`R11`). **All 34 are now
@@ -113,7 +117,7 @@ re-verified 2026-07-30 after the `R4` renames. That verification is not free: `R
 three ids that `iteration-protocol.md` B.1's `empty_is_pass` enumeration named as live instructions
 (`GRAPH-orphan-documents-and-media` → `GRAPH-orphan-media`, `BOOK-document-tenancy` → `DOC-07`,
 `BANK-txn-no-external-id-dup` → `ING-duplicate-transaction-external-id`). All three are corrected
-there. **Any future rename must sweep that enumeration** — it is the one place outside the family
-files that names control points individually. Mentions of a deleted id inside a *fold-in note* ("the former `X`
+there. That is why the sweep-on-rename rule now lives as a standing instruction in
+`iteration-protocol.md` B.1 itself, next to the two lists it protects, rather than here. Mentions of a deleted id inside a *fold-in note* ("the former `X`
 …") are deliberate history and are not dangling; the test is whether a **live instruction** names an
 id that no longer resolves.

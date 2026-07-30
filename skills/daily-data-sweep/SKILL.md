@@ -19,36 +19,17 @@ separates them and never conflates them.
 > covered, each record is fully populated, internally consistent, verified, fresh, and reconciled.
 > Nothing is half-written, unverified, stale, unlinked, or uncategorized.
 
-Completeness is about **the quality of what we have**. It fails silently, and it is the dangerous
-one: the answer looks confident and is wrong by a specific amount. A balance snapshot that exists
-but whose transactions don't sum to it produces a cash figure that is precisely, quietly incorrect.
-
-Test: *if I answer from this data, is the number I state the right number?*
-
 ### "Data EXHAUSTIVE" — breadth
 
 > **Nothing is missing.** Every source that SHOULD be connected is connected and syncing; every
 > entity class the skills read is populated; the time series has no holes; no account, currency,
 > counterparty, or period is silently excluded from the surface being reported on.
 
-Exhaustiveness is about **the coverage of what we have**. It fails visibly-in-hindsight: the answer
-is correct for the subset it saw and wrong for the business. A runway computed from one of three
-bank accounts is arithmetically perfect and materially false.
-
-Test: *is the population I answered over the whole population the user meant?*
-
-### Why both, and why the distinction is load-bearing
-
-| | COMPLETE fails | EXHAUSTIVE fails |
-|---|---|---|
-| Symptom | Right scope, wrong number | Right number, wrong scope |
-| Detectability | Silent — needs a cross-check | Silent — needs a census |
-| Example | a balance flagged `verification_error` → cash off by a known amount | a second bank connected but never configured → whole account absent |
-| Remedy shape | Repair / re-verify / re-classify the record | Connect / backfill / widen the window |
-
-A sweep that checks only one of the two gives false confidence. **Every control point declares which
-bucket it belongs to** — that declaration is what makes the report actionable, because the two
-buckets route to different fixes.
+The two route to different fixes — COMPLETE to *repair / re-verify / re-classify the record*,
+EXHAUSTIVE to *connect / backfill / widen the window* — so **every control point declares which
+bucket it belongs to**, and a sweep that checks only one gives false confidence. The bucketing test,
+symptoms, and worked examples:
+[`references/complete-vs-exhaustive.md`](references/complete-vs-exhaustive.md).
 
 **This skill is detect-only.** Every MCP root it reads is query-only, so no control point can
 auto-remediate. The output is an exception queue a human works in the Well app.
@@ -145,6 +126,7 @@ Open a reference only when a workflow step sends you there. Do not preload them.
 
 | reference | open it when |
 |---|---|
+| [`references/complete-vs-exhaustive.md`](references/complete-vs-exhaustive.md) | assigning a control point to its bucket, or explaining why a verdict is split in two |
 | [`references/iteration-protocol.md`](references/iteration-protocol.md) | **before running any control point** — the loops, the counting primitive, the loop ledger, the full gate table |
 | [`references/sweep-spine.md`](references/sweep-spine.md) | enumerating months, rendering the picker, `SPINE-` checks |
 | [`references/control-points-ingestion.md`](references/control-points-ingestion.md) | gate 2 — `ING-` |
@@ -155,7 +137,7 @@ Open a reference only when a workflow step sends you there. Do not preload them.
 | [`references/control-points-einvoicing.md`](references/control-points-einvoicing.md) | gates 7–8 — `IPAY-`, `EINV-` |
 | [`references/latent-assumptions.md`](references/latent-assumptions.md) | gate 9 — `ASSUME-` |
 | [`references/tolerances.md`](references/tolerances.md) | **before declaring any failure** |
-| [`references/known-issues.md`](references/known-issues.md) | **before trusting any verdict** — no open findings; all ten gates (0–9) are runnable. A record of what was wrong and why, not an instruction list |
+| [`references/CHANGELOG.md`](references/CHANGELOG.md) | **you want to know why something is shaped the way it is** — the fix history. No open findings; all ten gates (0–9) are runnable. History, not instruction: nothing here needs reading before a run |
 | [`references/mcp-surface-limits.md`](references/mcp-surface-limits.md) | a check looks unexpressible, or a green needs qualifying |
 | [`references/schema-facts.md`](references/schema-facts.md) | a field name, enum value, or status vocabulary is in doubt |
 | [`references/baseline-2026-07-29.md`](references/baseline-2026-07-29.md) | comparing against the last recorded baseline — **dated; re-probe before citing** |
@@ -212,8 +194,9 @@ chain, so a defect in an older month blocks every month after it. Loop workspace
    which is why this step runs before any query, not after.
 
 4. **Verify connector sufficiency.** Query `workspace_connectors` for the connector types the
-   selected families need. `status` is a stored, filterable enum with **eight** values (seven native, plus `degraded`, added 2026-07-08 and observed live — see `schema-facts.md`) — bucket them
-   exactly, never by "not `enabled`":
+   selected families need. `status` is a stored, filterable enum with **eight** values (vocabulary
+   and provenance: [`schema-facts.md`](references/schema-facts.md)) — bucket them exactly, never by
+   "not `enabled`":
 
    | bucket | values | sweep behaviour |
    |---|---|---|
@@ -222,13 +205,10 @@ chain, so a defect in an older month blocks every month after it. Loop workspace
    | not set up yet | `to_configure` | count in total only; not participating in sync |
    | deliberately off | `disabled` | count in total only; not a defect |
 
-   This mirrors `CONNECTOR_STATUS_BUCKET` in the close flow, so the sweep and the close agree.
-   A "not `enabled`" filter is wrong in both directions: it cries wolf on `to_configure`/`disabled`
-   and treats `processing` as broken.
-
-   **`degraded` needs no user action** — the grant is still valid, syncs are failing, and it clears
-   itself back to `enabled` on the next successful sync. Word its remediation as *"syncs failing —
-   investigate"*, **never "reconnect"**: reconnect sends the user to a door that does nothing.
+   The buckets mirror `CONNECTOR_STATUS_BUCKET` in the close flow, so the sweep and the close agree.
+   **`degraded` needs no user action** — it clears itself back to `enabled` on the next successful
+   sync — so word its remediation *"syncs failing — investigate"*, **never "reconnect"**: reconnect
+   sends the user to a door that does nothing.
 
    Then spot-check with a 1-row query against the data the sweep actually needs.
    - **Latest sync log `in_progress`** → data is still landing; mark affected checks partial.
@@ -241,12 +221,16 @@ chain, so a defect in an older month blocks every month after it. Loop workspace
    — before running any control point. Emit the loop ledger per control point. **Four verdicts,
    never two: `pass` / `fail` / `inconclusive` / `sampled`.**
 
-   **Verified against the live API (2026-07-30): there is no pagination.** `nextCursor` is always
-   `null`, `limit` is applied *per workspace* rather than globally, and `totalCount` counts across
-   all workspaces while rows are capped per workspace. So a full-set scan is impossible.
-   **Whenever `returned < totalCount`, the verdict is `SAMPLED` — never `pass`.** Count with
-   `limit: 1` and read `totalCount`; fetch rows only for example ids. The protocol reference carries
-   the measurements and the working idiom.
+   **There is no pagination, so a full-set scan is impossible.** Issue a **single request** per
+   control point — never a cursor loop. Then branch on the query shape, because it decides the
+   verdict: if the defect predicate fits in the `whereClause`, count it with `limit: 1` and read
+   `totalCount` — that count is **exact and exhaustive**, so a non-zero one is a `fail` with the
+   number stated, and only the example ids you fetch afterwards are sampled. `SAMPLED` is for
+   predicates needing a client-side reduce over returned rows, and then only when the scan found
+   **nothing** — a hit in a partial scan is still a real defect. Do not compare the `limit: 1`
+   response's `returned: 1` against `totalCount` and call it truncated; that is what made `pass` and
+   `fail` unreachable. Full primitive and the three empty-result classes:
+   [`iteration-protocol.md`](references/iteration-protocol.md) B.1.
 
 6. **Run the gates in order.** Before the first query against a root not already covered by step
    3's schema pass, call `well_get_schema(root)` for it too — the same rule applies gate by gate,
@@ -371,9 +355,10 @@ Before finishing, verify:
 - **`confirmed` does not mean human-reviewed.** A match auto-confirmed by a model with no human actor
   is its own amber class —
   [`references/control-points-bookkeeping.md`](references/control-points-bookkeeping.md).
-- **A concurrent sync moves the set under the loop.** `returned < totalCount` is `SAMPLED` — which
-  is also the normal case, since there is no pagination to fetch the rest with — and a client-side
-  cross-root comparison is not atomic. Re-verify a red before reporting it.
+- **A concurrent sync moves the set under the loop.** On a client-side predicate that found nothing,
+  `returned < totalCount` is `SAMPLED` — the normal case, since there is no pagination to fetch the
+  rest with. It does **not** apply to a server-side `totalCount`, which is exact. A client-side
+  cross-root comparison is also not atomic, so re-verify a red before reporting it.
 
 ## Examples
 
