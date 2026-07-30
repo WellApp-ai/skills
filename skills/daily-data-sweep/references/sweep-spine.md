@@ -63,6 +63,22 @@ checks like any other month, and the regression alarm (`SPINE-05`) is gone.
 - **Anything older than the cap is reported `UNSWEPT — outside budget`**, named explicitly, never
   omitted and never implied clean.
 
+**"Non-`closed`" cannot be read from the MCP surface, and the sweep must not pretend otherwise.**
+There is no `CloseReadinessStatus` root and no other queryable close-state field — confirmed
+against the 33 live roots (`schema-facts.md`, `mcp-surface-limits.md`). So the start month is
+resolved this way, in order:
+
+1. **The user names a month or workspace explicitly** — use it. This is the common case for a
+   targeted re-check and needs no close-state lookup at all.
+2. **Otherwise, default the start month to the oldest month with any data** (a row in
+   `transactions`, `account_balances`, or `invoices`) inside a trailing 6-month lookback from
+   today, ascending from there. This is a **data-presence** default, not a close-state judgement —
+   it never claims to know which of those months is actually closed in the accounting sense.
+
+State which of the two resolved the start month in the output. A sweep must never assert a month
+is "closed" or "open" on its own authority; that claim belongs to the close flow, which has the
+field this skill does not.
+
 Ascending order because close is a chain: a defect in an older open month blocks every month after it,
 so reporting the newest month first sends the user to fix a symptom. State the chain explicitly in the
 output: *"March is closeable; January is `not_ready` — fix January first or the chain stalls."*
@@ -89,15 +105,15 @@ first, not assumed.
 
 ### A.5 Spine control points
 
-| id | name | check | sev |
-|---|---|---|---|
-| `SPINE-01a` | **Workspace enumeration succeeded** (gate 0, **halting**) | `well_list_workspaces` returned a workspace set | red — with no subject list there is nothing to sweep and nothing to scope a verdict to |
-| `SPINE-01b` | **Every enumerated workspace produced results** (gate 9, **non-halting**) | the set from `SPINE-01a` vs workspaces with results; name the missing ones | red — a skipped workspace must never read as clean, but a gap found after the run is a scope finding, not a reason to discard the run |
-| `SPINE-02` | Every month in range enumerated | months from close-readiness for each year in range vs months with results | red |
-| `SPINE-03` | **Sweep verdict agrees with close-readiness** | month verdict per A.2 vs `CloseReadinessStatus` | red — `NO_FINDINGS` on a `not_ready` month (or findings on a month reported closeable) means one of the two is lying |
-| `SPINE-04` | **`EMPTY` is genuine, not false quiet** | month `EMPTY` **and** an enabled connector covering that period exists **and** zero rows ingested | red — the most dangerous state in this skill |
-| `SPINE-06` | Coverage contiguous within the month | a run of no-data days inside an otherwise populated month | amber — coverage gap, distinct from a posting gap |
-| `SPINE-07` | Rendered picker copy matches the sweep it is driving | **applicable only when a month picker was actually rendered for this run.** If it was, and it shows close-flow copy, the check fires. **Not applicable** — never amber — for a CLI or headless run, which has no picker | amber — a card that asks "close your books?" will be answered as a close, and the sweep intent is lost |
+| id | name | bucket | check | sev |
+|---|---|---|---|---|
+| `SPINE-01a` | **Workspace enumeration succeeded** (gate 0, **halting**) | exhaustive | `well_list_workspaces` returned a workspace set | red — with no subject list there is nothing to sweep and nothing to scope a verdict to |
+| `SPINE-01b` | **Every enumerated workspace produced results** (gate 9, **non-halting**) | exhaustive | the set from `SPINE-01a` vs workspaces with results; name the missing ones | red — a skipped workspace must never read as clean, but a gap found after the run is a scope finding, not a reason to discard the run |
+| `SPINE-02` | Every month the run declared in-scope has a result | exhaustive | **self-consistency, not an external lookup.** The window rule (A.3) fixes the declared month range before any control point runs; compare that declared set against the months this run actually produced a verdict for. No MCP root is read — there is no `CloseReadinessStatus` root or equivalent (`schema-facts.md`), so this can never be checked against an external "months that exist" source, only against the sweep's own declared scope | red — a month the run itself committed to sweeping but silently skipped |
+| `SPINE-03` | Sweep verdict agrees with close-readiness | complete | **INCONCLUSIVE — no close-state field exists on the MCP surface.** As specified: month verdict per A.2 vs `CloseReadinessStatus`. That root does not exist and appears in no root list; emit INCONCLUSIVE, never a colour, until a close-state root is added to the MCP surface | not evaluable — blocked |
+| `SPINE-04` | **`EMPTY` is genuine, not false quiet** | exhaustive | month `EMPTY` **and** an enabled connector covering that period exists **and** zero rows ingested | red — the most dangerous state in this skill |
+| `SPINE-06` | Coverage contiguous within the month | exhaustive | a run of no-data days inside an otherwise populated month | amber — coverage gap, distinct from a posting gap |
+| `SPINE-07` | Rendered picker copy matches the sweep it is driving | complete | **applicable only when a month picker was actually rendered for this run.** If it was, and it shows close-flow copy, the check fires. **Not applicable** — never amber — for a CLI or headless run, which has no picker | amber — a card that asks "close your books?" will be answered as a close, and the sweep intent is lost |
 
 **Deleted from this table:** `SPINE-05` ("no regression on a settled month"). It compared this run's
 reds against a prior sweep's, and there is no prior sweep to compare against — so it could never fire,

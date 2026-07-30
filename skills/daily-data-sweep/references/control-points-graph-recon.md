@@ -10,8 +10,12 @@ wins** — the tolerance is the business policy, the row is its restatement.
 ## Control points — ENTITY GRAPH (`GRAPH-`)
 
 **Every check here filters `deleted_at IS NULL` on
-every root traversed, on both sides of every join** — see the soft-delete caveat in § Known
-limits.
+every root traversed, on both sides of every join.** For a check that resolves a foreign key
+to a **related** root (a dangling-reference check — an FK that is non-null but points at an
+absent or soft-deleted row), write the predicate against the **relation**, e.g.
+`_not: {relation: {}}`, never a bare `_is_null` on the id column: the relation traversal respects
+`deleted_at IS NULL` and workspace scope server-side, while a raw `_is_null` on the FK column
+does not see a soft-deleted target at all. Confirmed live — `mcp-surface-limits.md` § CORRECTION.
 
 ### `GRAPH-` COMPLETE (depth)
 

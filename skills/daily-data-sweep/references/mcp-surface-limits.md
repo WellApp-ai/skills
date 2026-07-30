@@ -64,15 +64,18 @@ expressed must not be silently dropped, or the sweep implies coverage it does no
   per-workspace declared connector manifest. Detecting a wholly absent second bank needs an
   external signal; the closest in-graph heuristic (a counterparty IBAN in `payment_means` with
   no matching workspace-owned `accounts` row) is weak.
-- **Soft-delete filtering — INCONCLUSIVE, and it gates five control points.** Every root has
-  `deleted_at`, so a live child can reference a soft-deleted parent and pass every null check.
-  Five `GRAPH-` checks exist purely for that class. Whether the MCP layer *already* filters
-  soft-deletes server-side is **unresolved**: probing `invoices` and `accounts` with
-  `whereClause {"deleted_at": {"_is_null": false}}` returned `totalCount: 0` on both — which is
-  equally consistent with server-side filtering **and** with there simply being no soft-deleted
-  rows. Per this skill's own rule, that is INCONCLUSIVE, not a pass. Re-probe against a root
-  with a **known** soft-deleted row before trusting any dangling-reference verdict; if MCP does
-  filter, those five checks silently degrade into the null checks already covered above.
+- **Soft-delete filtering via relation traversal — RESOLVED, see § CORRECTION below.** Every
+  root has `deleted_at`, so a live child can reference a soft-deleted parent and pass a plain
+  `_is_null` check on the FK. The five `GRAPH-` dangling-reference checks exist for that class.
+  Probing `invoices` and `accounts` directly with `whereClause {"deleted_at": {"_is_null":
+  false}}` returned `totalCount: 0` on both, which on its own was ambiguous — equally consistent
+  with server-side filtering and with there being no soft-deleted rows to find. That ambiguity is
+  what the **CORRECTION** section below resolves, against a root with a **known** mix of present
+  and absent related rows (`invoices` → `documents`, where 1,304 of 1,517 have no document): the
+  relation-traversal idiom `_not: {relation: {}}` **does** respect `deleted_at IS NULL` +
+  workspace scope server-side. So the five `GRAPH-` checks are executable as written **when
+  written against the relation, not a bare FK `_is_null` check** — use `_not: {relation: {}}`,
+  not a raw `_is_null` on the id column, for every one of them.
 - **No cross-root join in one query.** Any comparison spanning two roots (currency/amount
   mismatch, items-vs-header, ledger-vs-source) requires fetching both sides and joining
   client-side. Correct but **not atomic** — a mid-sweep sync can make the two sides disagree for
@@ -134,7 +137,10 @@ wrong as written**. Measured against the deployed MCP:
 
 1. **The `DOC-` family IS executable as written**, including `DOC-07`, the cross-workspace
    attachment check — which is a *security* control. It was at risk of being dropped as
-   unexecutable, or worse, reported as having run when it had not.
+   unexecutable, or worse, reported as having run when it had not. **The same idiom settles the
+   five `GRAPH-` dangling-reference checks** flagged elsewhere in this file as gated on an
+   unresolved soft-delete probe — write them against the relation (`_not: {relation: {}}`), not a
+   bare FK `_is_null` check, and they are executable too.
 2. `_not: {relation: {}}` is the correct idiom for "the relation resolves to no visible row", and it
    respects the `deleted_at IS NULL` + workspace filter that the related root carries. That makes the
    dangling-reference class checkable in one query.

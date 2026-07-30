@@ -96,9 +96,11 @@ The user may provide:
 
 - **Workspace scope** — default: every authorized workspace, reported separately. Never silently
   merge workspaces into one verdict.
-- **Month or window** — default: the oldest non-closed month first, ascending, **capped at 6
-  months**; months older than the cap are reported `UNSWEPT — outside budget`, never implied clean.
-  A 24h freshness window applies to sync checks. Single definition:
+- **Month or window** — default: the oldest month with data in a trailing 6-month lookback,
+  ascending; months older than the cap are reported `UNSWEPT — outside budget`, never implied
+  clean. **Close status is not readable over MCP**, so "non-closed" is a data-presence default,
+  never a claim about actual close state — name a month explicitly to sweep a specific one. A 24h
+  freshness window applies to sync checks. Single definition:
   [`references/sweep-spine.md`](references/sweep-spine.md) A.3.
 - **Severity floor** — report everything (default), or red-only for a terse daily ping.
 - **Control-point subset** — e.g. only the banking family, for a targeted re-check.
@@ -153,7 +155,7 @@ Open a reference only when a workflow step sends you there. Do not preload them.
 | [`references/control-points-einvoicing.md`](references/control-points-einvoicing.md) | gates 7–8 — `IPAY-`, `EINV-` |
 | [`references/latent-assumptions.md`](references/latent-assumptions.md) | gate 9 — `ASSUME-` |
 | [`references/tolerances.md`](references/tolerances.md) | **before declaring any failure** |
-| [`references/known-issues.md`](references/known-issues.md) | **before trusting any verdict** — 19 open audit findings; gates 1, 6, 7 and 8 are not fully runnable |
+| [`references/known-issues.md`](references/known-issues.md) | **before trusting any verdict** — one open audit finding (cross-file control-point duplication, reduced not closed); all nine gates are runnable |
 | [`references/mcp-surface-limits.md`](references/mcp-surface-limits.md) | a check looks unexpressible, or a green needs qualifying |
 | [`references/schema-facts.md`](references/schema-facts.md) | a field name, enum value, or status vocabulary is in doubt |
 | [`references/baseline-2026-07-29.md`](references/baseline-2026-07-29.md) | comparing against the last recorded baseline — **dated; re-probe before citing** |
@@ -178,9 +180,11 @@ there is nowhere to persist a result. A month is therefore labelled from *this* 
 means "clean since last time". See the cold-run section of
 [`references/iteration-protocol.md`](references/iteration-protocol.md), which binds every family.
 
-Sweep months **ascending from the oldest non-closed month** — close is a chain, so a defect in an
-older month blocks every month after it. Loop workspaces from `well_list_workspaces` and **never
-merge verdicts across workspaces**. Detail: [`references/sweep-spine.md`](references/sweep-spine.md).
+Sweep months **ascending from the oldest month in scope** (named by the user, or defaulted from
+data presence — close status is not readable over MCP, see `sweep-spine.md` A.3) — close is a
+chain, so a defect in an older month blocks every month after it. Loop workspaces from
+`well_list_workspaces` and **never merge verdicts across workspaces**. Detail:
+[`references/sweep-spine.md`](references/sweep-spine.md).
 
 ### Steps
 
@@ -201,7 +205,13 @@ merge verdicts across workspaces**. Detail: [`references/sweep-spine.md`](refere
      only on explicit request. This confirmation gate stands; the retry-immediately rule above applies
      to the login and connector steps only and never overrides it.
 
-3. **Verify connector sufficiency.** Query `workspace_connectors` for the connector types the
+3. **Schema pass.** `well_get_schema(root)` for `workspace_connectors` and every other root the
+   selected control-point families touch — **before the first query against any of them**, starting
+   with step 4's own connector spot-check. **An absent field makes that control point INCONCLUSIVE,
+   never PASS.** This is the most important rule in this skill: *absence of a check is not a pass* —
+   which is why this step runs before any query, not after.
+
+4. **Verify connector sufficiency.** Query `workspace_connectors` for the connector types the
    selected families need. `status` is a stored, filterable enum with **eight** values — bucket them
    exactly, never by "not `enabled`":
 
@@ -227,7 +237,7 @@ merge verdicts across workspaces**. Detail: [`references/sweep-spine.md`](refere
      not sweep absent data and do not report an empty surface as clean. **Once one shows connected,
      immediately re-run this check in the same turn and continue** — do not wait to be re-prompted.
 
-4. **Read the iteration protocol** — [`references/iteration-protocol.md`](references/iteration-protocol.md)
+5. **Read the iteration protocol** — [`references/iteration-protocol.md`](references/iteration-protocol.md)
    — before running any control point. Emit the loop ledger per control point. **Four verdicts,
    never two: `pass` / `fail` / `inconclusive` / `sampled`.**
 
@@ -238,11 +248,9 @@ merge verdicts across workspaces**. Detail: [`references/sweep-spine.md`](refere
    `limit: 1` and read `totalCount`; fetch rows only for example ids. The protocol reference carries
    the measurements and the working idiom.
 
-5. **Schema pass.** `well_get_schema(root)` for each root a selected control point touches. **An
-   absent field makes that control point INCONCLUSIVE, never PASS.** This is the most important rule
-   in this skill: *absence of a check is not a pass.*
-
-6. **Run the gates in order.** A red at gate N does not stop the sweep — it **re-labels every later
+6. **Run the gates in order.** Before the first query against a root not already covered by step
+   3's schema pass, call `well_get_schema(root)` for it too — the same rule applies gate by gate,
+   not just at the start. A red at gate N does not stop the sweep — it **re-labels every later
    gate**, because depth findings computed under a breadth failure are scoped, not clean.
 
    | gate | family |
@@ -290,8 +298,13 @@ Return:
   over a fully examined population. The severity floor is a *reporting* filter and never changes a
   verdict.
 - **A table of failing control points only** (passing ones collapse to a count), each with: id,
-  bucket, severity, count of offending records, up to 5 example ids, and the `records_url` when
-  available.
+  bucket, severity, count of offending records, up to 5 example ids, and `records_url` when
+  available. **`records_url` has no confirmed construction rule** — there is no verified deep-link
+  pattern from a root + example ids to a filtered view in the Well app, the same gap that leaves
+  `<well-app-base-url>` in step 10 unresolved to a real domain. So `records_url` follows the same
+  discipline as that link: **never fabricate one.** Emit it only when a specific, previously
+  confirmed URL pattern for that root is known; otherwise omit the field for that row rather than
+  guess a route — an unverified link that 404s is worse than a row with one fewer column.
 - **The single highest-value action per red** — reconnect this connector, re-run this sync, categorize
   these N transactions. Name the surface, not a vague "investigate".
 - **An explicit INCONCLUSIVE and SAMPLED list.** Control points that could not be evaluated, or whose
