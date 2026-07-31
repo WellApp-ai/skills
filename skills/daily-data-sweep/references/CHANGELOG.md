@@ -17,6 +17,16 @@ gate 1's month-enumeration and close-agreement checks (`SPINE-02`/`SPINE-03`) no
 self-consistency check and an INCONCLUSIVE respectively, rather than firing red for a tooling
 reason on every run.
 
+## 2026-07-31 — invoice document control-point segmentation
+
+`BOOK-invoice-has-document` no longer divides every null `document_pk` by the global invoice count.
+It partitions through `source_workspace_connector.connector.data_domains`, gives the
+document-producing arm its own denominator, and permits only that arm to turn red. Accounting and
+bank-only sources are informational; absent, unresolved, empty, or unsupported domain evidence is
+inconclusive. The sibling `missing-receipts` skill uses the same partition. This removes the
+permanent false red on accounting-ledger rows without declaring their missing PDFs harmless: the
+Xero/Pennylane VAT-evidence gap remains separate capability debt.
+
 ---
 
 ## Blockers — a gate cannot execute as specified

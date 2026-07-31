@@ -44,8 +44,10 @@ attached" check it evidently means, and the canonical null-`document_pk` row now
 definition to close the numbering.**
 
 **What the missing-receipt gap is checked by, once each.** Null `document_pk` →
-`BOOK-invoice-has-document`. Populated but dangling → `DOC-02`. The orphan direction → `DOC-08`, whose
-red arm (a) is the `C` term.
+`BOOK-invoice-has-document`, after its required three-bucket source-domain split. Only its
+document-producing arm enters the error rate; non-document-producing is informational and unknown
+is inconclusive. Populated but dangling → `DOC-02`. The orphan direction → `DOC-08`, whose red arm
+(a) is the `C` term.
 
 **The orphan overlap is adjudicated: `DOC-08` is canonical for orphan *documents*, in both arms.** It
 previously shared its predicate with `GRAPH-orphan-documents-and-media`, which stated a broader
@@ -59,20 +61,26 @@ terms each resolve to exactly one control point and one arm, so no term double-c
 **The two-direction bound — the formula, and the reporting rule.** Over one period and workspace:
 
 ```
-A  = invoices with document_pk IS NULL                    (what we report today)
-B  = DOC-02 + DOC-03 + DOC-04, deduped by invoice         (the FALSE GREENS)
-C  = orphan receipt-capable documents  ·  C* = subset with processing_status = extracted
+A_doc = document-producing invoices with document_pk IS NULL
+B_doc = DOC-02 + DOC-03 + DOC-04 on document-producing invoices, deduped by invoice
+C_doc = orphan receipt-capable documents whose source connector is document-producing
+        C*_doc = subset with processing_status = extracted
+N_doc = all document-producing invoices in the same period and workspace
 
-true_missing_evidence = A + B                    ← not A
-recoverable_in_house  = min(A + B, C*)           ← fix the linker
-genuinely_absent      = (A + B) − recoverable    ← chase the supplier
+true_missing_evidence = A_doc + B_doc
+recoverable_in_house  = min(A_doc + B_doc, C*_doc)
+genuinely_absent      = (A_doc + B_doc) − recoverable
+error_rate            = (A_doc + B_doc) / N_doc
 ```
 
-`A` alone **undercounts by B and mis-attributes blame**: a gap whose file is already in the bucket
-is a Well linking defect, yet `A` reports it to the customer as "your supplier never sent a
-receipt". `C` alone overstates it (a workspace can hold 500 orphan PDFs and have zero real gaps).
-**Reporting rule: never publish `A` without `B` and `C` alongside.** And `C* > 0` while `A > 0` in
-the same workspace is *positive proof of a linker defect* — which neither number establishes alone.
+`A_doc` alone **undercounts by `B_doc` and mis-attributes blame**: a gap whose file is already in the
+bucket is a Well linking defect, yet `A_doc` reports it to the customer as "your supplier never sent
+a receipt". `C_doc` alone overstates it (a workspace can hold 500 orphan PDFs and have zero real
+gaps). **Reporting rule: never publish `A_doc` without `B_doc` and `C_doc` alongside, and never use
+the global invoice count as `N_doc`.** `C*_doc > 0` while `A_doc > 0` in the same workspace is
+*positive proof of a linker defect* — which neither number establishes alone. If the connector
+domain for a `B` or `C` row cannot be resolved, report it in the unknown bucket and keep it out of
+the red rate.
 
 **Tolerances:** 3 business days grace after `issue_date` before an unattached invoice counts
 (suppress `BOOK-invoice-has-document` — which carries the former `DOC-01` — and `DOC-05/08` inside it; **never** suppress `DOC-02/03/04/07` — those are structural and
@@ -80,8 +88,10 @@ time-independent). **Card/expense receipts: 5 calendar days and HIGH from the fi
 the FR simplified-invoice VAT threshold (€25)** — stricter because on card spend the receipt is the
 *only* evidence and without it the VAT is not deductible. Supplier invoices settled by transfer: 10
 days, amber (the document normally arrives *before* payment, and the transfer leaves an independent
-trail). Period share: amber above **2%**, red above **10%**, computed on **`(A+B)/N`**, never **`A/N`** —
-an auditor pulling a 25-item sample hits a defect with ~40% probability at 2% and ~93% at 10%.
+trail). Period share: amber above **2%**, red above **10%**, computed on
+**`(A_doc+B_doc)/N_doc`**, never against all invoices. `N_doc = 0` is `INCONCLUSIVE`; it does not
+prove that documents are healthy. An auditor pulling a 25-item sample hits a defect with ~40%
+probability at 2% and ~93% at 10%.
 
 **Do NOT count orphan `media` in the attachment error rate** — `media_type` is `avatar|logo|banner`,
 so an orphan medium is stale branding debt, not a lost receipt. Including it inflates the

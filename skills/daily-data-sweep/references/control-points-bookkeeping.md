@@ -164,8 +164,14 @@ field (§ the disposition gap) and a sweep-result store exist.
 
 | id | name | bucket | check | fail signal | sev |
 |---|---|---|---|---|---|
-| `BOOK-invoice-has-document` | Document attached | complete | `invoices.document_pk IS NULL`, in-window. A **populated but dangling** pointer is `DOC-02`, a different defect | past the grace window on the differentiated `DOC-` ladder: 3 business days after `issue_date` by default; **5 calendar days and red from the first occurrence** for card/expense receipts above the €25 FR simplified-invoice VAT threshold; 10 days for transfer-settled supplier invoices | red; **amber** for the transfer-settled class |
+| `BOOK-invoice-has-document` | Document attached, segmented by source domain | complete | Enumerate every in-window invoice with `source_workspace_connector.connector.data_domains`, then apply the exact three-bucket precedence in `schema-facts.md`: **document-producing**, **non-document-producing**, **unknown**. Within each bucket count all invoices (`N_bucket`) and rows where `document_pk IS NULL` (`A_bucket`). A **populated but dangling** pointer is `DOC-02`, a different defect. Never match a connector name, slug, or category to guess document capability | only `A_document-producing`, past the grace window on the differentiated `DOC-` ladder: 3 business days after `issue_date` by default; **5 calendar days and red from the first occurrence** for card/expense receipts above the €25 FR simplified-invoice VAT threshold; 10 days for transfer-settled supplier invoices. Compute severity share against `N_document-producing`, never all invoices. `N_document-producing = 0` is `INCONCLUSIVE`, not pass. Non-document-producing is INFO; unknown is INCONCLUSIVE; neither may turn red | red / amber only inside document-producing; INFO non-document-producing; INCONCLUSIVE unknown |
 | `BOOK-document-has-content` | File is **recorded**, not a 0-byte placeholder | complete | `documents.size < 1024` or `content_checksum IS NULL`. A green here means "content recorded", **never** "file retrievable" — `bucket`/`path` are unvalidated strings (see `control-points-documents.md`) | any row | red |
+
+The report always prints all three `{ missing, denominator }` pairs. A global
+`document_pk IS NULL / all invoices` percentage is forbidden: accounting-ledger rows can dominate
+that denominator and manufacture a permanent red. “Expected” non-document-producing rows still
+carry the explicit PDF/VAT-evidence capability caveat from `schema-facts.md`; they are not a clean
+bill of health.
 
 **`BOOK-document-resolves` is removed; the canonical is `DOC-02`.** The same population — an invoice
 whose `document_pk` is populated while the `documents` row is absent or soft-deleted — was carried by

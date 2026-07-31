@@ -56,6 +56,32 @@ A read of the local checkout shows them absent. **The deployed MCP is ahead of t
 a repo read is not a substitute for a live probe, and a live probe is not a substitute for a repo
 read.** Where the two disagree, record both observations and state which one was trusted.
 
+## Invoice-source document buckets — `connectors.data_domains`
+
+`connectors.data_domains` is a nullable array with three current values: `bank`, `accounting`, and
+`invoicing`. It classifies financial data supplied by a connector; it does not prove that the
+connector supplied downloadable bytes. Apply this precedence when a document control point follows
+`invoices.source_workspace_connector_pk → workspace_connectors → connectors.data_domains`:
+
+| bucket | exact rule | document verdict |
+|---|---|---|
+| document-producing | contains `invoicing` and does **not** contain `accounting` | eligible for the document-miss threshold |
+| non-document-producing | contains `accounting`; or contains `bank` without `invoicing` | informational only |
+| unknown | source connector absent/unresolved; `data_domains` null/empty; or no rule above matches | `INCONCLUSIVE`, never red |
+
+`accounting` wins for a mixed-domain connector. Xero, Pennylane, and similar accounting sources
+produce structured invoice rows while Well does not currently ingest their PDF evidence; an
+`invoicing` membership on the same connector must not turn that known capability gap into a data
+regression. Conversely, do not promote Gmail, Drive, upload, or any other connector from `unknown`
+by matching its name, slug, or category. The current domain vocabulary has no `document` member.
+Until the catalog carries an explicit structured document-producing signal, unknown is the honest
+bucket.
+
+Only the document-producing bucket may contribute a red numerator or denominator. Report the other
+two bucket counts alongside it. “Expected shape” means “not a regression in a shipped document
+path,” not “no evidence problem”: the Xero/Pennylane PDF and VAT-deductibility gap remains a separate
+missing capability.
+
 ## Connector status vocabularies — and the `degraded` rule
 
 Never treat "not enabled" as a binary — both intermediate states are live in production.
