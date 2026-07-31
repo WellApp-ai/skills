@@ -50,11 +50,11 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 1. **Confirm the MCP server is configured.** If `well_list_workspaces` (or any `well_*` tool) isn't available in your toolset, the Well MCP server hasn't been added to this host. Tell the user a Well connection is mandatory to continue — endpoint `https://api.wellapp.ai/v1/mcp` — because Well is where their financial data is aggregated securely to compute this profile; without it there's nothing to compose. Stop until it's there; don't estimate from assumptions.
 
 2. **Confirm the account.** Call `well_list_workspaces()`.
-   - Auth error → no Well MCP connection yet; trigger the Well connector's OAuth/DCR handshake, then retry.
-   - Zero or one workspace → use it, or say none exist. Multiple → ask the user which one.
+   - Auth error → no Well MCP connection yet; trigger the Well connector's OAuth/DCR handshake. The moment it returns, immediately retry `well_list_workspaces()` yourself in the same turn and continue — don't stop to ask the user to confirm login or wait for a new message.
+   - Zero or one workspace → use it, or say none exist. If more than one workspace exists, ask the user which one to use, and use that single workspace for the rest of this skill. Never query or merge data across multiple workspaces in one run.
 
 3. **Verify the workspace has enough data.** Query `workspace_connectors` for `status: enabled` entries, then spot-check `well_query_records` (1 row) on `companies` and `invoices`.
-   - If no connector is enabled, or both spot-checks return zero rows, call `well_list_connectors()`, present the top install links, and stop — there is nothing to compose a profile from yet.
+   - If no connector is enabled, or both spot-checks return zero rows, call `well_list_connectors()`, present the top install links, and stop until one is connected — there is nothing to compose a profile from yet. Once a connector shows as connected, immediately re-run this check yourself and continue through the rest of the workflow — don't wait to be re-prompted or ask the user to restate the request.
    - If a connector's most recent sync (`workspace_connector_sync_logs`) is `status: in_progress`, tell the user data is still syncing and the profile may be partial.
 
 4. **Resolve which company the user means.** `well_get_schema({ root: "companies" })` first. If the user gave an id, use it directly. If they gave a name, `well_query_records` on `companies` with a `whereClause` doing an `_ilike` match on `name`.
@@ -71,7 +71,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 7. **Normalize currency.** If invoice totals span more than one `local_currency`, either convert to one base currency via `exchange_rates` and note the rate/date used, or report totals per currency — never blend currencies silently.
 
-8. **If any required step errors or returns unusable data**, do not guess. The fallback is: (a) state the fallback question plainly in your reply (e.g. "give me a 360 view of [company]"), (b) answer it yourself using whatever partial Well MCP data you already have, clearly caveated, and (c) give the user a direct link to ask that question in Well (`<well-app-base-url>/workspaces/<workspace_id>?q=give%20me%20a%20360%20view%20of%20...`) so they can get a second opinion from their own AI assistant there.
+8. **If any required step errors or returns unusable data**, do not guess. If the failure is transient (a network/timeout error on the MCP call itself), retry once before falling back — don't dead-end on a blip. If it errors again or the data stays unusable, the fallback is: (a) state the fallback question plainly in your reply (e.g. "give me a 360 view of [company]"), (b) answer it yourself using whatever partial Well MCP data you already have, clearly caveated, and (c) give the user a direct link to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can ask it there directly and get a second opinion from their own AI assistant.
 
 ## Output requirements
 
@@ -81,6 +81,8 @@ Return:
 - Contact channels found: emails, phones, locations, web links — or a note that none are on file.
 - Invoice relationship summary: as issuer (count, total, currency, as-of date) and as receiver (count, total, currency, as-of date), each stated separately.
 - A one-line note on how the relationship was framed (issuer/receiver vs. `own_company`, or that framing wasn't possible because `own_company` is unset).
+- Whether the picture is complete: which relevant connector categories (invoicing/bills, and any connector syncing company contact details) are connected versus still missing, so the user knows whether this profile reflects the full relationship or a partial one gated by what's connected today.
+- A one-line pointer to `accounts-receivable-aging` for the aging view across every customer, when this company turns out to owe the workspace money.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 8's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
 
@@ -97,6 +99,7 @@ Before finishing, verify:
 - Transaction-level history was never queried against a fabricated direct company FK — it was treated as a secondary lookup through `debtor_payment_means`/`creditor_payment_means` → `PaymentMeans`, with the invoice relation used as the primary answer.
 - Multi-currency invoice totals were converted (with rate/date noted) or clearly kept separate, never blended.
 - Every number carries a currency and an as-of date.
+- Which connector categories (invoicing/bills, company contact details) are connected versus missing was stated, so the user knows whether the picture is complete or partial.
 - Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation — not forced into every answer.
 
 ## Examples

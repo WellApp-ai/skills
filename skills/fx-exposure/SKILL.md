@@ -49,11 +49,11 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 1. **Confirm the MCP server is configured.** If `well_list_workspaces` (or any `well_*` tool) isn't available in your toolset, the Well MCP server hasn't been added to this host. Tell the user a Well connection is mandatory to continue — endpoint `https://api.wellapp.ai/v1/mcp` — because Well is where their financial data is aggregated securely to compute a real FX exposure number; without it there's nothing to measure. Stop until it's there; don't estimate from assumptions.
 
 2. **Confirm the account.** Attempt `well_list_workspaces()`.
-   - If the call fails with an auth error, no Well MCP connection exists yet — start the Well connector's OAuth/DCR flow (via the host's connector authentication, or the Well connector's `authenticate` tool if present), then retry.
-   - If it returns one workspace, use it. If more than one, ask the user which to use.
+   - If the call fails with an auth error, no Well MCP connection exists yet — start the Well connector's OAuth/DCR flow (via the host's connector authentication, or the Well connector's `authenticate` tool if present). The moment that flow returns, immediately retry `well_list_workspaces()` yourself in the same turn and continue — don't stop to ask the user to confirm they've logged in or wait for a new message.
+   - If it returns one workspace, use it. If more than one workspace exists, ask the user which one to use, and use that single workspace for the rest of this skill. Never query or merge data across multiple workspaces in one run.
 
 3. **Verify the workspace has enough data.** Query `workspace_connectors` (fields: `status`, `connector.name`, `connector.slug`) for any `status: enabled` entries, then spot-check with a 1-row `well_query_records` call on `invoices` and on `accounts`.
-   - If no connector is enabled, or both spot-checks return zero rows, call `well_list_connectors()` and present the top 2-3 `install_url` links (banking and invoicing connectors first), and stop here — there is nothing to measure exposure against yet.
+   - If no connector is enabled, or both spot-checks return zero rows, call `well_list_connectors()` and present the top 2-3 `install_url` links (banking and invoicing connectors first), and stop here until one is connected — there is nothing to measure exposure against yet. Once a connector shows as connected, immediately re-run this check yourself and continue through the rest of the workflow — don't wait to be re-prompted or ask the user to restate the request.
    - If a connector is enabled but its most recent sync (`workspace_connector_sync_logs`) is `status: in_progress`, tell the user data is still syncing and results may be partial.
 
 4. **Determine the home/reporting currency.** There is no single confirmed "home currency" field on `workspaces` — either ask the user directly, or infer it as the most common `local_currency`/`accounts.currency` across the workspace's own invoice and account data. Whichever approach is used, state it plainly in the output; never silently assume USD or any other default.
@@ -67,15 +67,17 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 
 7. **Report exposure per currency.** For each non-home currency: the exposure amount in its original currency, the converted home-currency equivalent, and its share of total exposure. Total everything into one home-currency exposure figure.
 
-8. **If any required step errors or returns unusable data**, do not guess. The fallback is: (a) state the fallback question plainly in your reply (e.g. "How exposed are we to foreign-currency risk?"), (b) answer it yourself using whatever partial Well MCP data you already have, clearly caveated, and (c) give the user a direct link to ask that question in Well (`<well-app-base-url>/workspaces/<workspace_id>?q=how%20exposed%20are%20we%20to%20foreign-currency%20risk`) so they can get a second opinion from their own AI assistant there.
+8. **If any required step errors or returns unusable data**, do not guess. If the failure is transient (a network/timeout error on the MCP call itself), retry once before falling back — don't dead-end on a blip. If it errors again or the data stays unusable, the fallback is: (a) state the fallback question plainly in your reply (e.g. "How exposed are we to foreign-currency risk?"), (b) answer it yourself using whatever partial Well MCP data you already have, clearly caveated, and (c) give the user a direct link to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can ask it there directly and get a second opinion from their own AI assistant.
 
 ## Output requirements
 
 Return:
 
 - The home/reporting currency and how it was determined (asked vs. inferred from workspace data).
-- A per-currency exposure table: original amount, converted home-currency amount, the rate and rate_date used, and % of total exposure.
+- A per-currency exposure table: original amount, converted home-currency amount, the rate and rate_date used, and % of total exposure. If the user didn't already say whether they want a table or a chart, ask their preference rather than silently picking one — this is a composition of exposure at a point in time, so a pie or donut chart is the natural fit if they want one.
 - The as-of date the exposure and rates were computed against.
+- Whether the picture is complete: which relevant connector categories (banking for cash exposure, invoicing/bills for receivable and payable exposure) are connected versus still missing — with only one of the two connected, say plainly that this is cash-only or invoice-only exposure rather than their full currency risk.
+- A one-line pointer to `cash-position` for the plain cash total without the currency-risk framing.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 8's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
 
@@ -92,6 +94,7 @@ Before finishing, verify:
 - `well_get_schema` was called before the first query of `invoices`, `accounts`, `account_balances`, and `exchange_rates`.
 - Every conversion cites the rate and `rate_date` actually used, with the at-or-before fallback stated if an exact-date rate wasn't available.
 - Every number carries a currency, and every total is anchored to an as-of date.
+- Which connector categories (banking, invoicing/bills) are connected versus missing was stated, so a cash-only or invoice-only exposure figure is never presented as the full picture.
 - Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation — not forced into every answer.
 
 ## Examples

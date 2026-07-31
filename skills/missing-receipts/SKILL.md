@@ -50,11 +50,11 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 1. **Confirm the MCP server is configured.** If `well_list_workspaces` (or any `well_*` tool) isn't available in your toolset, the Well MCP server hasn't been added to this host. Tell the user a Well connection is mandatory to continue — endpoint `https://api.wellapp.ai/v1/mcp` — because Well is where their financial data is aggregated securely to compute a real compliance answer; without it there's nothing to check. Stop until it's there; don't estimate from assumptions.
 
 2. **Confirm the account.** Attempt `well_list_workspaces()`.
-   - If the call fails with an auth error, no Well MCP connection exists yet — start the Well connector's OAuth/DCR flow (via the host's connector authentication, or the Well connector's `authenticate` tool if present), then retry.
-   - If it returns one workspace, use it. If more than one, ask the user which to use.
+   - If the call fails with an auth error, no Well MCP connection exists yet — start the Well connector's OAuth/DCR flow (via the host's connector authentication, or the Well connector's `authenticate` tool if present). The moment that flow returns, immediately retry `well_list_workspaces()` yourself in the same turn and continue — don't stop to ask the user to confirm they've logged in or wait for a new message.
+   - If it returns one workspace, use it. If more than one workspace exists, ask the user which one to use, and use that single workspace for the rest of this skill. Never query or merge data across multiple workspaces in one run.
 
 3. **Verify the workspace has enough data.** Query `workspace_connectors` (fields: `status`, `connector.name`, `connector.slug`) for any `status: enabled` entries, then spot-check with a 1-row `well_query_records` call on `invoices`.
-   - If no connector is enabled, or the spot-check returns zero rows, call `well_list_connectors()` and present the top 2-3 `install_url` links (invoicing/accounting connectors first), and stop here — there is nothing to check yet.
+   - If no connector is enabled, or the spot-check returns zero rows, call `well_list_connectors()` and present the top 2-3 `install_url` links (invoicing/accounting connectors first), and stop here until one is connected — there is nothing to check yet. Once a connector shows as connected, immediately re-run this check yourself and continue through the rest of the workflow — don't wait to be re-prompted or ask the user to restate the request.
    - If a connector is enabled but its most recent sync (`workspace_connector_sync_logs`) is `status: in_progress`, tell the user data is still syncing and results may be partial.
 
 4. **Resolve the scope.** Default to the trailing 3 full months if the user didn't give a window. If the user asked for a payment-status filter (e.g. "just unpaid ones"), carry it into the next step; otherwise include all payment statuses.
@@ -67,7 +67,7 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 
 8. **State the scope limit plainly.** Regardless of how many results are found, tell the user this skill only finds the gap — it cannot fetch or collect the missing receipt from a vendor portal, email, or anywhere else.
 
-9. **If any required step errors or returns unusable data**, do not guess. The fallback is: (a) state the fallback question plainly in your reply (e.g. "Which expenses are missing receipts?"), (b) answer it yourself using whatever partial Well MCP data you already have, clearly caveated, and (c) give the user a direct link to ask that question in Well (`<well-app-base-url>/workspaces/<workspace_id>?q=which%20expenses%20are%20missing%20receipts`) so they can get a second opinion from their own AI assistant there.
+9. **If any required step errors or returns unusable data**, do not guess. If the failure is transient (a network/timeout error on the MCP call itself), retry once before falling back — don't dead-end on a blip. If it errors again or the data stays unusable, the fallback is: (a) state the fallback question plainly in your reply (e.g. "Which expenses are missing receipts?"), (b) answer it yourself using whatever partial Well MCP data you already have, clearly caveated, and (c) give the user a direct link to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can ask it there directly and get a second opinion from their own AI assistant.
 
 ## Output requirements
 
@@ -78,6 +78,8 @@ Return:
 - A list of the affected invoices (issuer/receiver, amount, currency, issue date, invoice number), capped at 20 — if more exist, state the total count and that the list was capped.
 - If the secondary transaction check was run, a one-line note on how many transactions have no linked document.
 - An explicit one-line statement that this is a find-only check: auto-collection of a missing receipt is not available.
+- Whether the picture is complete: which relevant connector categories (invoicing/bills for the primary invoice check, banking or accounting for the secondary transaction check) are connected versus still missing, so the user knows whether this covers every expense they hold or only the invoices gated by what's connected today.
+- A one-line pointer to `payment-invoice-lookup` for the matching problem — a payment with no invoice behind it, rather than an invoice with no document attached.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 9's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
 
@@ -93,6 +95,7 @@ Before finishing, verify:
 - If the secondary transaction check was attempted, the relation name was discovered from the schema, not hardcoded.
 - Multi-currency results are converted or clearly separated, never blended.
 - Every number carries a currency and a date.
+- Which connector categories (invoicing/bills, banking or accounting) are connected versus missing was stated, so the user knows whether the picture is complete or partial.
 - The "find-only, no auto-collect" limitation was stated plainly in the output, not implied.
 - Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation — not forced into every answer.
 

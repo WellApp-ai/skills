@@ -49,11 +49,11 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 1. **Confirm the MCP server is configured.** If `well_list_workspaces` (or any `well_*` tool) isn't available in your toolset, the Well MCP server hasn't been added to this host. Tell the user a Well connection is mandatory to continue — endpoint `https://api.wellapp.ai/v1/mcp` — because Well is where their financial data is aggregated securely to compute a real reconciliation match; without it there's nothing to look up. Stop until it's there; don't estimate from assumptions.
 
 2. **Confirm the account.** Attempt `well_list_workspaces()`.
-   - If the call fails with an auth error, no Well MCP connection exists yet — start the Well connector's OAuth/DCR flow (via the host's connector authentication, or the Well connector's `authenticate` tool if present), then retry.
-   - If it returns one workspace, use it. If more than one, ask the user which to use.
+   - If the call fails with an auth error, no Well MCP connection exists yet — start the Well connector's OAuth/DCR flow (via the host's connector authentication, or the Well connector's `authenticate` tool if present). The moment that flow returns, immediately retry `well_list_workspaces()` yourself in the same turn and continue — don't stop to ask the user to confirm they've logged in or wait for a new message.
+   - If it returns one workspace, use it. If more than one workspace exists, ask the user which one to use, and use that single workspace for the rest of this skill. Never query or merge data across multiple workspaces in one run.
 
 3. **Verify the workspace has enough data.** Query `workspace_connectors` (fields: `status`, `connector.name`, `connector.slug`) for any `status: enabled` entries, then spot-check with a 1-row `well_query_records` call on `invoices` and on `transactions`.
-   - If no connector is enabled, or both spot-checks return zero rows, call `well_list_connectors()` and present the top 2-3 `install_url` links (banking and invoicing connectors first), and stop here — there is nothing to reconcile yet.
+   - If no connector is enabled, or both spot-checks return zero rows, call `well_list_connectors()` and present the top 2-3 `install_url` links (banking and invoicing connectors first), and stop here until one is connected — there is nothing to reconcile yet. Once a connector shows as connected, immediately re-run this check yourself and continue through the rest of the workflow — don't wait to be re-prompted or ask the user to restate the request.
    - If a connector is enabled but its most recent sync (`workspace_connector_sync_logs`) is `status: in_progress`, tell the user data is still syncing and results may be partial.
 
 4. **Determine which workflow the user wants.** (A) a specific invoice/transaction/vendor/amount lookup, or (B) a list of unmatched exceptions across a window. If the request doesn't clearly say which, ask before proceeding — don't guess.
@@ -65,18 +65,21 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
    - If no `invoice_transactions` row exists for the record, that absence **is** the answer — report plainly that this invoice/payment has no reconciliation match on file, rather than treating it as an error.
 
 5B. **For workflow (B), resolve the requested window** (default: trailing 3 full months). Query the relevant root (`transactions` or `invoices`, whichever the user's phrasing points to, or both) for that window, then identify entries with no corresponding `invoice_transactions` row — call `well_get_schema` on `transactions` first to find the exact relation/composite field name that exposes this join rather than hardcoding a guessed field name, then either filter for its absence directly, or query `invoice_transactions` for the window and diff against the full `transactions`/`invoices` set to find what's missing. List each unmatched item with enough detail to act on: date, amount, currency, and counterparty if resolvable via the payment-means relation.
+   - Spot-check the unmatched list for counterparties that resolve to the workspace's own company — that pattern typically signals an unconnected sibling account or an internal transfer, not a genuine reconciliation gap. Call those items out separately in the output rather than folding them into the unmatched count.
 
 6. **Normalize currency.** If results span more than one currency, either convert to one base currency via the `exchange_rates` root or report totals per currency — never blend currencies silently.
 
-7. **If any required step errors or returns unusable data**, do not guess. The fallback is: (a) state the fallback question plainly in your reply (e.g. "What payment settled this invoice?" or "Which payments have no invoice?"), (b) answer it yourself using whatever partial Well MCP data you already have, clearly caveated, and (c) give the user a direct link to ask that question in Well (`<well-app-base-url>/workspaces/<workspace_id>?q=<url-encoded question>`) so they can get a second opinion from their own AI assistant there.
+7. **If any required step errors or returns unusable data**, do not guess. If the failure is transient (a network/timeout error on the MCP call itself), retry once before falling back — don't dead-end on a blip. If it errors again or the data stays unusable, the fallback is: (a) state the fallback question plainly in your reply (e.g. "What payment settled this invoice?" or "Which payments have no invoice?"), (b) answer it yourself using whatever partial Well MCP data you already have, clearly caveated, and (c) give the user a direct link to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can ask it there directly and get a second opinion from their own AI assistant.
 
 ## Output requirements
 
 Return:
 
 - For workflow (A): the matched (or explicitly unmatched) result, with `match_method`, `confidence`, `edge_status`, and `allocation_type` clearly labeled — and currency + date on every amount. Include `reasoning` when present so the user can judge the match themselves.
-- For workflow (B): a list of unmatched items, each with date, amount, currency, and counterparty (if resolvable), plus a total count and total value of the gap.
+- For workflow (B): a list of unmatched items, each with date, amount, currency, and counterparty (if resolvable), plus a total count and total value of the gap. Items whose counterparty matches the workspace's own company flagged separately as likely unconnected-sibling-account/internal-transfer noise, not genuine reconciliation gaps.
 - Any match with `edge_status: provisional` or low `confidence` labeled as such, not presented as certain.
+- Whether the picture is complete: reconciliation needs both sides, so state which relevant connector categories (invoicing/bills for invoices, banking or accounting for transactions) are connected versus still missing — with only one side connected, an "unmatched" result may just mean the other side was never synced.
+- A one-line pointer to `missing-receipts` for the documentation gap — an invoice with no receipt or PDF attached, rather than a payment with no invoice matched to it.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 7's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
 
@@ -91,9 +94,11 @@ Before finishing, verify:
 - In workflow (A), the specific record was resolved unambiguously — zero matches were reported as "no match," multiple candidates were surfaced for the user to pick, never guessed.
 - `well_get_schema` was called before the first query against each root, especially before assuming any transaction ↔ counterparty or transaction ↔ invoice_transactions field path.
 - A missing `invoice_transactions` row was reported as the answer itself ("no match on file"), not treated as a failure.
+- In workflow (B), unmatched items with a same-company counterparty were flagged separately as likely unconnected-sibling-account noise, not silently counted as genuine gaps.
 - Low-confidence or `provisional` matches are labeled as such rather than presented as certain.
 - Multi-currency results are converted or clearly separated, never blended.
 - Every number carries a currency and a date.
+- Which connector categories (invoicing/bills, banking or accounting) are connected versus missing was stated — an unmatched result was never presented as a genuine gap when the other side of the reconciliation was never synced.
 - Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation — not forced into every answer.
 
 ## Examples

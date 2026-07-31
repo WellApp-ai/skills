@@ -50,11 +50,11 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 1. **Confirm the MCP server is configured.** If `well_list_workspaces` (or any `well_*` tool) isn't available in your toolset, the Well MCP server hasn't been added to this host. Tell the user a Well connection is mandatory to continue — endpoint `https://api.wellapp.ai/v1/mcp` — because Well is where their financial data is aggregated securely to compute a real bills-due calendar; without it there's nothing to plan from. Stop until it's there; don't estimate from assumptions.
 
 2. **Confirm the account.** Attempt `well_list_workspaces()`.
-   - If the call fails with an auth error, no Well MCP connection exists yet — start the Well connector's OAuth/DCR flow (via the host's connector authentication, or the Well connector's `authenticate` tool if present), then retry.
-   - If it returns one workspace, use it. If more than one, ask the user which to use.
+   - If the call fails with an auth error, no Well MCP connection exists yet — start the Well connector's OAuth/DCR flow (via the host's connector authentication, or the Well connector's `authenticate` tool if present). The moment that flow returns, immediately retry `well_list_workspaces()` yourself in the same turn and continue — don't stop to ask the user to confirm they've logged in or wait for a new message.
+   - If it returns one workspace, use it. If more than one workspace exists, ask the user which one to use, and use that single workspace for the rest of this skill. Never query or merge data across multiple workspaces in one run.
 
 3. **Verify the workspace has enough data.** Query `workspace_connectors` (fields: `status`, `connector.name`, `connector.slug`) for any `status: enabled` entries, then spot-check with a 1-row `well_query_records` call on `invoices`.
-   - If no connector is enabled, or the spot-check returns zero rows, call `well_list_connectors()` and present the top 2-3 `install_url` links (invoicing/accounting connectors first), and stop here — there is nothing to plan yet.
+   - If no connector is enabled, or the spot-check returns zero rows, call `well_list_connectors()` and present the top 2-3 `install_url` links (invoicing/accounting connectors first), and stop here until one is connected — there is nothing to plan yet. Once a connector shows as connected, immediately re-run this check yourself and continue through the rest of the workflow — don't wait to be re-prompted or ask the user to restate the request.
    - If a connector is enabled but its most recent sync (`workspace_connector_sync_logs`) is `status: in_progress`, tell the user data is still syncing and results may be partial.
 
 4. **Resolve the workspace's own company.** Call `well_get_schema({ root: "workspaces" })`, then read `workspaces.own_company` on the resolved workspace — nullable, so if it isn't set yet, ask the user to confirm which counterparty company is theirs before splitting payables from receivables, rather than guessing.
@@ -65,7 +65,7 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 
 7. **Normalize currency.** If results span more than one `local_currency`, either convert to one base currency via the `exchange_rates` root or report totals per currency — never blend currencies silently.
 
-8. **If any required step errors or returns unusable data**, do not guess. The fallback is: (a) state the fallback question plainly in your reply (e.g. "What bills are due?"), (b) answer it yourself using whatever partial Well MCP data you already have, clearly caveated, and (c) give the user a direct link to ask that question in Well (`<well-app-base-url>/workspaces/<workspace_id>?q=what%20bills%20are%20due`) so they can get a second opinion from their own AI assistant there.
+8. **If any required step errors or returns unusable data**, do not guess. If the failure is transient (a network/timeout error on the MCP call itself), retry once before falling back — don't dead-end on a blip. If it errors again or the data stays unusable, the fallback is: (a) state the fallback question plainly in your reply (e.g. "What bills are due?"), (b) answer it yourself using whatever partial Well MCP data you already have, clearly caveated, and (c) give the user a direct link to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can ask it there directly and get a second opinion from their own AI assistant.
 
 ## Output requirements
 
@@ -74,7 +74,8 @@ Return:
 - The as-of date the calendar was generated for.
 - Bills grouped into overdue / due this week / due this month / due later, each bill showing vendor name, amount, currency, and due date.
 - A running cumulative total per bucket (and, if useful, at key dates within a bucket), so the user can see cash outflow building up over time.
-- A one-line note that this is date-ordered cash-planning (not amount-ranked) — pointing to `expense-breakdown` for the biggest-bills framing.
+- Whether the picture is complete: which relevant connector categories (invoicing/bills, and banking or accounting to confirm what's actually been paid) are connected versus still missing, so the user knows whether this calendar reflects every bill they owe or a partial view gated by what's connected today.
+- A one-line pointer to `expense-breakdown` for the biggest-bills (amount-ranked) framing, noting that this skill is date-ordered cash-planning rather than amount-ranked.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 8's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
 
@@ -92,6 +93,7 @@ Before finishing, verify:
 - The running cumulative total was computed correctly while walking the sorted list.
 - Multi-currency results are converted or clearly separated, never blended.
 - Every number carries a currency and an as-of date.
+- Which connector categories (invoicing/bills, banking or accounting) are connected versus missing was stated, so the user knows whether the picture is complete or partial.
 - Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation — not forced into every answer.
 
 ## Examples
