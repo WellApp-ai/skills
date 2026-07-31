@@ -1,0 +1,196 @@
+# MCP surface limits and the scope rule
+
+What this sweep CANNOT check, and the rule that stops two different scopes being reported as one
+number. Open when a check looks unexpressible or a green needs qualifying.
+
+Verified schema facts live in [`schema-facts.md`](schema-facts.md); dated measurements live in
+[`baseline-2026-07-29.md`](baseline-2026-07-29.md). Neither is duplicated here.
+
+---
+
+## MEASURED 2026-07-30 — an invalid field name returns a SILENT EMPTY, not an error
+
+This is the single most dangerous surface behaviour for this skill, because it is indistinguishable
+from a clean workspace.
+
+Probed twice against the same root with the same non-existent field `transactions.id`:
+
+| call | result |
+|---|---|
+| **no `workspace_id`** (the fan-out path this skill uses) | `{"totalCount": 0, "returned": 0, "success": true}` |
+| **with `workspace_id`** | hard `400` — `field 'id' not found in type: 'core_api_transactions'` |
+
+So in the fan-out path a **typo, a renamed column, or a field this connector does not populate
+returns a successful empty response.** The control point then reads `total == 0` and routes through
+`empty_verdict()` — `pass` if it declared `empty_is_pass`, otherwise INCONCLUSIVE. Either way the
+sweep reports a plausible verdict for **a query that never ran**, and the `empty_is_pass` class makes
+it a *green*. A whole family can go green because one field was renamed upstream.
+
+**Binding rule — an empty result is only trustworthy if the fields were validated first.**
+
+1. `well_get_schema(root)` before the first query of that root in a session is **not optional**; it
+   is what makes an empty result mean anything. This is why it is step 3 and repeated gate by gate.
+2. Every field path in a query must appear in that root's schema response. A path that does not is a
+   **skill defect**, reported as such — never passed to the API to see what happens.
+3. If a control point returns `total == 0` on a root where the sweep has *not* validated the field
+   paths this session, the verdict is **INCONCLUSIVE — unvalidated fields**, never `pass`, even when
+   the control point declares `empty_is_pass`. Absence proves nothing when the query may not have
+   run.
+4. When cheap, corroborate a zero: re-run without the `whereClause`. A root that returns `0` both
+   filtered and unfiltered is either genuinely empty or broken — and `SPINE-04` already owns the
+   distinction between an empty month and a false quiet.
+
+
+## SCOPE WARNING — two sets of numbers in this file, both correct
+
+Every count measured over the **MCP is scoped to the 3 workspaces the caller can access**. SQL run
+against the **whole production DB** covers a different population. They differ by ~16×:
+
+| metric | MCP scope (3 workspaces) | prod-wide SQL |
+|---|---|---|
+| invoices | 1,517 | **33,753** |
+| transactions | 1,904 | **24,925** |
+| accounts | 30 | **403** |
+
+**Neither is wrong.** But a sweep must never mix them, and a "verdict" computed at one scope must
+never be reported at the other. Every output line must state the scope it was computed over. The
+`accounts` gap in particular means the "~24 duplicates of one account" figure is a finding about
+*one workspace*, not a platform-wide rate — and prod-wide, `accounts.ownership` splits
+**284 workspace / 61 counterparty / 58 unknown**, so the ownership picture is far better populated
+than the 3-workspace sample suggests.
+
+## Known limits of the MCP surface — what this sweep CANNOT check
+
+Recording these is part of the skill's honesty contract: a control point that cannot be
+expressed must not be silently dropped, or the sweep implies coverage it does not have.
+
+- **Per-sync record counts and truncation flags — not expressible.**
+  `workspace_connector_sync_logs` has no `records_ingested`, `pages_fetched`, or `truncated`
+  scalar, and no queryable `metadata` column. So *"partial sync / truncated pagination"*
+  cannot be checked directly. Only weak proxies exist: `ING-connector-produced-no-records`,
+  or a root's `totalCount` sitting exactly at the ingestion ceiling (5000) or an exact
+  page-size multiple. **Recommended schema change — highest value for making this sweep
+  honest: promote `records_ingested` and `truncated` to scalar columns on the sync log.**
+- **Raw-vs-mapped drop rate — not expressible.** `ConnectorSyncDiagnostic` and
+  `ConnectorRawObservation` exist in the backend but are **not among the 33 MCP roots**. The
+  most direct measure of a partial sync — provider objects returned vs entities persisted — is
+  invisible.
+- **Account stated opening date — not expressible.** `accounts` has no `opened_at`. Coverage
+  is anchored instead on the earliest `balance_at_from`, a weaker floor: a truncated balance
+  series moves the floor along with it.
+- **OAuth token expiry — not expressible.** Expiry lives in `workspace_connectors.config`
+  (jsonb, not queryable by nested key). The only observable is the derived
+  `status _eq need_reconnect`, so the sweep detects an expired credential **after** refresh has
+  terminal-failed, never in the warning window before it.
+- **Own-company resolution — a READ-SURFACE gap, not a schema gap.**
+  `workspaces` has no `own_company` (verified: 14 fields, none of them it). The nearest
+  candidates are `companies.entity_kind` and `companies.company_origin` — but live values are
+  only `unknown` and `counterparty`, with **no value marking "self"**, and in workspace
+  WellappFR the row `"WELL APP INC"` (`canonical_tax_id: FR932035157`, `wellapp.ai`) is
+  literally classified **`company_origin: counterparty`** — the workspace's own company tagged
+  as a third party. Until a self-marker exists, the payable/receivable split that
+  `bills-due`, `accounts-receivable-aging`, `rank-clients-by-ltv` and `company-profile` depend
+  on **cannot be verified by this sweep**, and `ING-invoice-direction-coverage` inherits that
+  limitation. See `schema-facts.md`, which is authoritative here: `workspaces.own_company_pk` **does exist** and is stripped by the API formatter, so this is a read-surface gap. A company row carrying `company_origin: counterparty` is therefore **not** a defect on its own — do not emit a red on it.
+- **Expected connector set — unknowable in-graph.** The sweep can prove *some* source of a
+  domain exists, never that *every* source the business uses is connected — there is no
+  per-workspace declared connector manifest. Detecting a wholly absent second bank needs an
+  external signal; the closest in-graph heuristic (a counterparty IBAN in `payment_means` with
+  no matching workspace-owned `accounts` row) is weak.
+- **Soft-delete filtering via relation traversal — RESOLVED, see § CORRECTION below.** Every
+  root has `deleted_at`, so a live child can reference a soft-deleted parent and pass a plain
+  `_is_null` check on the FK. The five `GRAPH-` dangling-reference checks exist for that class.
+  Probing `invoices` and `accounts` directly with `whereClause {"deleted_at": {"_is_null":
+  false}}` returned `totalCount: 0` on both, which on its own was ambiguous — equally consistent
+  with server-side filtering and with there being no soft-deleted rows to find. That ambiguity is
+  what the **CORRECTION** section below resolves, against a root with a **known** mix of present
+  and absent related rows (`invoices` → `documents`, where 1,304 of 1,517 have no document): the
+  relation-traversal idiom `_not: {relation: {}}` **does** respect `deleted_at IS NULL` +
+  workspace scope server-side. So the five `GRAPH-` checks are executable as written **when
+  written against the relation, not a bare FK `_is_null` check** — use `_not: {relation: {}}`,
+  not a raw `_is_null` on the id column, for every one of them.
+- **No cross-root join in one query — WRONG AS WRITTEN, see § CORRECTION below.** Relation
+  predicates *are* supported: a live probe filtering `invoices` on `document.size` returned
+  `totalCount: 213`, and `_not: {relation: {}}` was accepted. The real limit is **no aggregation
+  over a related set** — you cannot sum, count-distinct or group by a child collection inside a
+  query. So a comparison that only needs to *filter* on a related field is one query; one that needs
+  an **aggregate** of the child set (allocations summing to an invoice total, items-vs-header,
+  ledger-vs-source totals) still requires fetching both sides and joining client-side. That
+  client-side form is correct but **not atomic** — a mid-sweep sync can make the two sides disagree
+  for reasons that are not defects. Sequence against a quiet window, and **re-verify a red before
+  reporting it.**
+- **Zero violations vs. violations past the row cap.** Without aggregation the sweep cannot
+  distinguish the two. Scope to one workspace and page to exhaustion (B.1); the fan-out issues no cursor
+  (`iteration-protocol.md` B.1). So whenever `returned < totalCount` the verdict is `SAMPLED`.
+  **Record the `returned`/`totalCount` pair alongside every green** — an unqualified green over a
+  truncated scan is the sweep lying in the same way the skills do.
+- **Credit-note sign convention is unspecified anywhere.** `document_type_code` exists with UBL
+  `380`/`381`/`383` and no skill reads it. `GRAPH-credit-note-sign-unresolved` can detect an
+  *inconsistent* convention but cannot tell you which is *correct* — that needs a recorded
+  data-model decision (a CHECK constraint on sign per code, or a documented invariant), then the
+  four aggregating skills must filter or negate. **A sweep reporting "convention consistent"
+  while all four skills ignore the code entirely is a green on a broken aggregation.**
+- **No `paid_date` on invoices.** `last_payment_allocation_date` is an allocation timestamp, not
+  a settlement date. A "payment recorded before the invoice was issued" check is expressible
+  only for invoices that already carry an edge — i.e. the ones least likely to be broken.
+- **No home/reporting currency on `workspaces`** (confirmed across its 14 fields).
+  `invoices.accounting_currency` is per-invoice, so FX-coverage cannot know which pairs are
+  *required* without inferring a home currency. **Record which inference was used**, or the same
+  graph passes one day and fails the next.
+- **Unverified field paths — resolve at runtime, never hardcode.** The 12 skills state field
+  paths only for `invoices`, `companies`, `workspaces`, `transactions`, `invoice_transactions`,
+  `accounts`, `account_balances`, `exchange_rates`, `workspace_connectors`,
+  `workspace_connector_sync_logs`. For `invoice_items`, `journal_entries`, `journals`,
+  `ledger_accounts`, `people`, `media`, `documents`, `categories`, `tax_rates`, `payment_means`,
+  `invoice_payment_means`, `cards`, `checks` **no skill names a single field.** The `*_pk`
+  convention suggests the names, but each must come from `well_get_schema(root)` at sweep time —
+  **a hardcoded guess emits a false red the day a connector changes shape, which is worse than
+  not running the check.**
+- **`journal_entries` may carry no source FK at all.** If `well_get_schema` shows none, the
+  ledger↔source reconciliation collapses to a population-count comparison, which detects
+  *absence* but never *mis-posting*. State which of the two you ran.
+- **Duplicate-identity keys are thin.** Dedup should key on `canonical_tax_id`,
+  `domain_normalized`, `canonical_legal_name`, and `registry_name` + `establishment_no` rather
+  than display name — but across 1,281 live companies `canonical_tax_id` and
+  `domain_normalized` are frequently null (populated mainly on Qonto-sourced rows), so
+  name-based fallback is unavoidable and will produce false pairs. Report duplicate clusters as
+  candidates for review, never as confirmed duplicates.
+
+
+---
+
+## CORRECTION (measured 2026-07-30): relation predicates DO work
+
+The "no cross-root join in one query" limit stated elsewhere in this file is **over-conservative and
+wrong as written**. Measured against the deployed MCP:
+
+- **Positive control:** `well_query_records(root: "invoices", whereClause: {"document": {"size": {"_gt": 1024}}})`
+  → `totalCount: 213`. It traversed `invoices` → `documents` and filtered on a field of the *related*
+  root. 213 is exactly 1,517 − 1,304, i.e. precisely the invoices that have a document — so the
+  predicate filtered correctly rather than returning an arbitrary set.
+- **Existence negation works too:** `{"_and": [{"document_pk": {"_is_null": false}}, {"_not": {"document": {}}}]}`
+  was accepted (`success: true`) and returned `totalCount: 0` — a real finding: no invoice has a
+  `document_pk` pointing at an absent or soft-deleted document.
+
+**Consequences:**
+
+1. **The `DOC-` family IS executable as written**, including `DOC-07`, the cross-workspace
+   attachment check — which is a *security* control. It was at risk of being dropped as
+   unexecutable, or worse, reported as having run when it had not. **The same idiom settles the
+   five `GRAPH-` dangling-reference checks** flagged elsewhere in this file as gated on an
+   unresolved soft-delete probe — write them against the relation (`_not: {relation: {}}`), not a
+   bare FK `_is_null` check, and they are executable too.
+2. `_not: {relation: {}}` is the correct idiom for "the relation resolves to no visible row", and it
+   respects the `deleted_at IS NULL` + workspace filter that the related root carries. That makes the
+   dangling-reference class checkable in one query.
+3. Several `[EXPENSIVE]` client-side-paging caveats on the `RECON-` family are therefore
+   over-conservative — and there is no paging to budget for in any case (`nextCursor` is always
+   null; `iteration-protocol.md` B.1). Re-test each: an `[EXPENSIVE]` check a relation predicate can
+   express is one query, and one that genuinely needs an aggregate over a child set is `SAMPLED`
+   whenever `returned < totalCount` — never a paged job with a resume point.
+
+**What genuinely does NOT work — the real limit, stated precisely:** there is no **aggregation**.
+You cannot sum, count-distinct, group by, or compare an aggregate of a child set inside a query. So
+"do this invoice's allocations sum to its total" still requires fetching both sides and reducing
+client-side. **Filtering on a related field is supported; aggregating over a related set is not.**
+Those are different operations and the earlier text conflated them.

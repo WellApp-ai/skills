@@ -43,6 +43,7 @@ This repo packages that judgment as **Agent Skills** — playbooks any AI assist
 
 | Skill | Description | Details |
 |---|---|---|
+| `daily-data-sweep` | "Can I trust these numbers today?" — a data-health pre-flight (complete + exhaustive) before you quote any figure from the skills below. | [View details →](docs/daily-data-sweep.md) |
 | `expense-breakdown` | "Where does our money go?" — top expense categories and the biggest outstanding bills, from the ledger and invoices. | [View details →](docs/expense-breakdown.md) |
 | `runway-calculator` | "What's our runway?" — real cash on hand vs. trailing burn, stated in months and days, with the full formula shown. | [View details →](docs/runway-calculator.md) |
 | `cash-position` | "How much cash do we have right now?" — a point-in-time snapshot across every connected account. | [View details →](docs/cash-position.md) |
@@ -70,7 +71,9 @@ Paste this into any AI agent — Claude, Codex, Cursor, OpenCode, and others —
 ```
 Install the following official skills from Well. Instructions:
 
-1. Fetch these files:
+1. Twelve of these skills are a single file. Fetch each one and save it as
+   <skill-name>/SKILL.md — one directory per skill, the file named exactly
+   "SKILL.md", no prefix, no suffix:
     a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/expense-breakdown/SKILL.md
     b. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/runway-calculator/SKILL.md
     c. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cash-position/SKILL.md
@@ -83,12 +86,39 @@ Install the following official skills from Well. Instructions:
     j. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/payment-invoice-lookup/SKILL.md
     k. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/missing-receipts/SKILL.md
     l. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/draft-invoice/SKILL.md
-2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
-3. Create a summary table with skill names and descriptions extracted from the frontmatter
-4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
+
+2. The thirteenth, "daily-data-sweep", is NOT a single file. It is a directory:
+   a SKILL.md plus a references/ folder that SKILL.md reads at runtime. Copying
+   only its SKILL.md produces a skill that points at files which do not exist,
+   and it fails silently mid-run. Install it like this, or not at all:
+    a. Fetch https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/daily-data-sweep/SKILL.md
+       and save it as daily-data-sweep/SKILL.md
+    b. Fetch the directory listing
+       https://api.github.com/repos/WellApp-ai/skills/contents/skills/daily-data-sweep/references?ref=main
+       It returns a JSON array. For every entry, fetch its "download_url" and save
+       it as daily-data-sweep/references/<its "name">. Do not skip any entry, and
+       do not substitute a list you remember — the listing is the source of truth.
+    c. Confirm daily-data-sweep/references/ is non-empty before reporting success.
+       If it is empty, the install FAILED — say so, and point the user at the
+       .skill download instead. Do not report a partial install as done.
+
+3. If your environment cannot write a nested directory, or cannot fetch the
+   listing in step 2b, then say so plainly and stop installing daily-data-sweep.
+   Tell the user to install that one manually instead:
+   https://github.com/WellApp-ai/skills/raw/main/dist/daily-data-sweep.skill
+   (double-click to install in Claude Desktop). The other twelve are unaffected.
+
+4. Create a summary table with skill names and descriptions extracted from the frontmatter.
 5. If you can, install these skills yourself.
 6. If the MCP https://api.wellapp.ai/v1/mcp is not installed: suggest it to the user and explain them how to add a new MCP.
 ```
+
+> [!IMPORTANT]
+> `daily-data-sweep` ships as a directory — `SKILL.md` plus a `references/`
+> folder it reads at runtime. Any install method that copies a lone `SKILL.md` installs it
+> broken. The plugin marketplace, the Codex plugin, and the `.skill` / `.zip`
+> downloads all carry the full directory; only a hand-rolled single-file copy
+> does not.
 
 ### Claude Code Plugin Marketplace
 
@@ -164,6 +194,7 @@ Download the `.skill` file and double-click it to install — Claude Desktop ins
 | `payment-invoice-lookup` | Match a payment to its invoice, or list every unreconciled one. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/payment-invoice-lookup.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/payment-invoice-lookup.zip) |
 | `missing-receipts` | Invoices with no source document attached, for compliance. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/missing-receipts.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/missing-receipts.zip) |
 | `draft-invoice` | Create a real invoice record in Well from a chat description. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/draft-invoice.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/draft-invoice.zip) |
+| `daily-data-sweep` | Data-health pre-flight — is today's data COMPLETE and EXHAUSTIVE enough to trust a number from it. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/daily-data-sweep.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/daily-data-sweep.zip) |
 
 ##### For Advanced Users
 
@@ -184,6 +215,7 @@ npx skills add wellapp/company-profile
 npx skills add wellapp/payment-invoice-lookup
 npx skills add wellapp/missing-receipts
 npx skills add wellapp/draft-invoice
+npx skills add wellapp/daily-data-sweep
 ```
 
 ---
