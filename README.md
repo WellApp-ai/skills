@@ -67,9 +67,6 @@ Paste this into any AI agent — Claude, Codex, Cursor, OpenCode, and others —
 > [!NOTE]
 > We suggest using **Claude Chat** rather than Claude Cowork for this step — Cowork's approach is noticeably slower and pricier for a quick install like this. Any Claude model works fine.
 
-<!-- NOTE: repo is currently private, so these raw links 404 until WellApp-ai/skills
-     goes public. Links are permanent (no tokens) and will work as-is once it does. -->
-
 ```
 Install the following official skills from Well. Instructions:
 
@@ -97,9 +94,6 @@ Install the following official skills from Well. Instructions:
 
 If you use Claude Code, this repo is also a plugin marketplace — one install wires up every skill and the Well connection:
 
-<!-- NOTE: repo is currently private, so this clones over git and 404s until
-     WellApp-ai/skills goes public — same caveat as the AI-assisted prompt above. -->
-
 ```
 /plugin marketplace add WellApp-ai/skills
 /plugin install well-skills@wellapp
@@ -110,9 +104,6 @@ You'll be asked to sign in to Well the first time a skill needs your data.
 ### Codex CLI Plugin
 
 If you use Codex CLI, this repo is also a Codex plugin — one install wires up every skill and the Well connection:
-
-<!-- NOTE: repo is currently private, so this clones over git and 404s until
-     WellApp-ai/skills goes public — same caveat as the AI-assisted prompt above. -->
 
 ```bash
 codex plugin marketplace add WellApp-ai/skills
