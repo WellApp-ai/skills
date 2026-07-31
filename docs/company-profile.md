@@ -56,7 +56,7 @@ Download the `.skill` file and double-click it — Claude Desktop installs it im
 Install directly from **[skills.sh/wellapp-ai](https://www.skills.sh/wellapp-ai)**:
 
 ```bash
-npx skills add wellapp-ai/company-profile
+npx skills add wellapp-ai/skills --skill company-profile
 ```
 
 ---

@@ -164,18 +164,7 @@ Download the `.skill` file and double-click it to install — Claude Desktop ins
 Install directly from **[skills.sh/wellapp-ai](https://www.skills.sh/wellapp-ai)**:
 
 ```bash
-npx skills add wellapp-ai/expense-breakdown
-npx skills add wellapp-ai/runway-calculator
-npx skills add wellapp-ai/cash-position
-npx skills add wellapp-ai/cash-balance-trend
-npx skills add wellapp-ai/accounts-receivable-aging
-npx skills add wellapp-ai/bills-due
-npx skills add wellapp-ai/rank-clients-by-ltv
-npx skills add wellapp-ai/fx-exposure
-npx skills add wellapp-ai/company-profile
-npx skills add wellapp-ai/payment-invoice-lookup
-npx skills add wellapp-ai/missing-receipts
-npx skills add wellapp-ai/draft-invoice
+npx skills add wellapp-ai/skills
 ```
 
 ---

@@ -55,7 +55,7 @@ Download the `.skill` file and double-click it — Claude Desktop installs it im
 Install directly from **[skills.sh/wellapp-ai](https://www.skills.sh/wellapp-ai)**:
 
 ```bash
-npx skills add wellapp-ai/accounts-receivable-aging
+npx skills add wellapp-ai/skills --skill accounts-receivable-aging
 ```
 
 ---
