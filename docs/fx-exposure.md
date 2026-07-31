@@ -27,6 +27,9 @@ If you hold invoices or bank balances in more than one currency, "how exposed ar
 
 Paste this into any AI agent — Claude, Codex, Cursor, OpenCode, and others:
 
+> [!NOTE]
+> We suggest using **Claude Chat** rather than Claude Cowork for this step — Cowork's approach is noticeably slower and pricier for a quick install like this. Any Claude model works fine.
+
 <!-- NOTE: repo is currently private, so this raw link 404s until WellApp-ai/skills
      goes public. Link is permanent (no token) and will work as-is once it does. -->
 
@@ -53,12 +56,10 @@ Download the `.skill` file and double-click it — Claude Desktop installs it im
 
 #### Advanced
 
-<!-- placeholder: swap for the real skills.sh org/listing once this skill is actually published there -->
-
-Install directly from **[skills.sh/wellapp](https://skills.sh/wellapp)**:
+Install directly from **[skills.sh/wellapp-ai](https://www.skills.sh/wellapp-ai)**:
 
 ```bash
-npx skills add wellapp/fx-exposure
+npx skills add wellapp-ai/fx-exposure
 ```
 
 ---

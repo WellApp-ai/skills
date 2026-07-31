@@ -8,7 +8,7 @@
 <p align="center"><strong>Grounded financial answers, delivered to you by your favorite agent.</strong></p>
 
 <p align="center">
-  <a href="https://skills.sh/wellapp"><img src="https://img.shields.io/badge/skills.sh-Browse%20Well%20skills-6b5b95" alt="Browse on skills.sh"></a>
+  <a href="https://www.skills.sh/wellapp-ai"><img src="https://img.shields.io/badge/skills.sh-Browse%20Well%20skills-6b5b95" alt="Browse on skills.sh"></a>
   <a href="#installation"><img src="https://img.shields.io/badge/Claude%20Desktop-Ready-d97757" alt="Claude Desktop double click install"></a>
 </p>
 
@@ -63,6 +63,9 @@ This repo packages that judgment as **Agent Skills** — playbooks any AI assist
 ### Assisted by AI (Recommended)
 
 Paste this into any AI agent — Claude, Codex, Cursor, OpenCode, and others — to install all the skills:
+
+> [!NOTE]
+> We suggest using **Claude Chat** rather than Claude Cowork for this step — Cowork's approach is noticeably slower and pricier for a quick install like this. Any Claude model works fine.
 
 <!-- NOTE: repo is currently private, so these raw links 404 until WellApp-ai/skills
      goes public. Links are permanent (no tokens) and will work as-is once it does. -->
@@ -167,23 +170,21 @@ Download the `.skill` file and double-click it to install — Claude Desktop ins
 
 ##### For Advanced Users
 
-<!-- placeholder: swap for the real skills.sh org/listing once these skills are actually published there -->
-
-Install directly from **[skills.sh/wellapp](https://skills.sh/wellapp)**:
+Install directly from **[skills.sh/wellapp-ai](https://www.skills.sh/wellapp-ai)**:
 
 ```bash
-npx skills add wellapp/expense-breakdown
-npx skills add wellapp/runway-calculator
-npx skills add wellapp/cash-position
-npx skills add wellapp/cash-balance-trend
-npx skills add wellapp/accounts-receivable-aging
-npx skills add wellapp/bills-due
-npx skills add wellapp/rank-clients-by-ltv
-npx skills add wellapp/fx-exposure
-npx skills add wellapp/company-profile
-npx skills add wellapp/payment-invoice-lookup
-npx skills add wellapp/missing-receipts
-npx skills add wellapp/draft-invoice
+npx skills add wellapp-ai/expense-breakdown
+npx skills add wellapp-ai/runway-calculator
+npx skills add wellapp-ai/cash-position
+npx skills add wellapp-ai/cash-balance-trend
+npx skills add wellapp-ai/accounts-receivable-aging
+npx skills add wellapp-ai/bills-due
+npx skills add wellapp-ai/rank-clients-by-ltv
+npx skills add wellapp-ai/fx-exposure
+npx skills add wellapp-ai/company-profile
+npx skills add wellapp-ai/payment-invoice-lookup
+npx skills add wellapp-ai/missing-receipts
+npx skills add wellapp-ai/draft-invoice
 ```
 
 ---
