@@ -30,9 +30,6 @@ Paste this into any AI agent — Claude, Codex, Cursor, OpenCode, and others:
 > [!NOTE]
 > We suggest using **Claude Chat** rather than Claude Cowork for this step — Cowork's approach is noticeably slower and pricier for a quick install like this. Any Claude model works fine.
 
-<!-- NOTE: repo is currently private, so this raw link 404s until WellApp-ai/skills
-     goes public. Link is permanent (no token) and will work as-is once it does. -->
-
 ```
 Install the following official skill from Well.
 
