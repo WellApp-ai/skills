@@ -52,6 +52,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 2. **Confirm the account.** Call `well_list_workspaces()`. Run this even when the user never named a company — this step and step 3 are independent of which company is being profiled, and they are what makes the eventual question answerable in one turn.
    - Auth error → no Well MCP connection yet; trigger the Well connector's OAuth/DCR handshake. The moment it returns, immediately retry `well_list_workspaces()` yourself in the same turn and continue — don't stop to ask the user to confirm login or wait for a new message.
    - Zero or one workspace → use it, or say none exist. If more than one workspace exists, ask the user which one to use, and use that single workspace for the rest of this skill. Never query or merge data across multiple workspaces in one run.
+   - **Pass the resolved `workspace_id` explicitly on every subsequent `well_*` call.** Choosing a workspace pins nothing server-side — there is no set-workspace tool, so the choice lives only in your arguments. Omit it and the token's whole grant set answers instead: read tools that fan out return every workspace's rows merged together, and the ones that don't fan out silently run in the token's default workspace, which need not be the one that was chosen. Both look like a normal answer.
 
 3. **Verify the workspace has enough data.** Query `workspace_connectors` for `status: enabled` entries, then spot-check `well_query_records` (1 row) on `companies` and `invoices`.
    - If no connector is enabled, or both spot-checks return zero rows, call `well_list_connectors()`, present the top install links, and stop until one is connected — there is nothing to compose a profile from yet. Once a connector shows as connected, immediately re-run this check yourself and continue through the rest of the workflow — don't wait to be re-prompted or ask the user to restate the request.
@@ -64,6 +65,10 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
    - Exactly one match → proceed with that company's id.
 
    **The browse query.** `well_query_records({ root: "companies", orderBy: { field: "updated_at", direction: "desc" }, limit: 50 })`. Pass **no `fields`** — omitting it is what makes the host render the root's standard companies table, logo and identity column included. If `updated_at` isn't in the schema from step 4's `well_get_schema` call, drop `orderBy` rather than guessing another field.
+
+   **When the user answers, the browse list is not your search index.** It returned one page, not the workspace's whole company set — a name absent from those rows says nothing about whether it exists.
+   - The name matches a row you got back → you already hold its id; go straight to step 5, no second query.
+   - Anything else → run the `_ilike` search. Never answer "no such company" off the browse page. The only case where absence is real is `totalCount` equal to the number of rows returned, which means the page WAS the whole set; otherwise a missing name means unqueried, not nonexistent.
 
    **Don't narrate the table.** Every `well_query_records` result renders as a table in MCP-Apps hosts, so restating those same rows as markdown gives the user the card and a duplicate list under it. Ask the question and stop. Two things the table cannot say for itself, and that belong in your text: `totalCount` when it exceeds what's displayed ("showing the 50 most recently updated of 214 — name one, or narrow it down"), and a pointer to open the full table in Well for anything the card truncates.
 
@@ -99,6 +104,8 @@ Before finishing, verify:
 - The workspace was resolved unambiguously.
 - No turn ended on a bare "which company?" with zero tool calls behind it — steps 1–3 ran, and a company list was on screen, before the question was asked.
 - No list of records was restated in prose under the table that already rendered it; where the table was truncated, the total was stated instead.
+- Every `well_*` call after step 2 carried the resolved `workspace_id`.
+- "No such company" was never concluded from the browse page — only from an `_ilike` search, or from a browse whose `totalCount` proved it was the whole set.
 - The company was resolved unambiguously — not guessed on an ambiguous or zero-match name search.
 - `well_get_schema` was called before querying `companies` (and any other root) for the first time.
 - No `industry` field or customer/vendor boolean was fabricated — the relationship is framed only from issuer/receiver invoice data against `own_company`.
