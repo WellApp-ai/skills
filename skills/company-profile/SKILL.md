@@ -30,7 +30,7 @@ Do not use this skill when:
 
 The user may provide:
 
-- The company name or an existing `companies` id — required in some form. If neither is given, do **not** open with a bare question: run workflow steps 1–3 first (workspace and connector resolution do not depend on which company it is), then ask for the name as part of step 4. Asking first wastes the turn and leaves the session no readier than before; asking after means the answer lands somewhere already able to query.
+- The company name or an existing `companies` id — required in some form. If neither is given, do **not** open with a bare question: run workflow steps 1–3 first (workspace and connector resolution do not depend on which company it is), then ask for the name as part of step 4, with a table of the workspace's companies already on screen. Asking first wastes the turn and leaves the session no readier than before; asking after means the user picks a name off a list rather than recalling one, and the answer lands somewhere already able to query it.
 - Which workspace to use, if they manage more than one.
 - Whether they want full invoice/transaction history beyond a quick summary — default to a summary view (depth-2 `well_get_entity`), and only page through the full history if asked or if the summary hits its row cap.
 
@@ -39,7 +39,7 @@ The user may provide:
 Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). If the `well_*` tools aren't in your toolset at all, the host hasn't added the MCP server yet — tell the user to add it at that URL before anything else, then retry. Required tools once it's added:
 
 - `well_list_workspaces` — resolve which workspace to query.
-- `well_query_records` — search `companies` by name, and page `invoices`/other roots past the entity-depth row cap.
+- `well_query_records` — browse `companies` when the user named none, search `companies` by name, and page `invoices`/other roots past the entity-depth row cap.
 - `well_get_entity` — read one `companies` row plus its direct sub-resources (contacts, invoice relations) at a configurable depth.
 - `well_get_schema` — call this before querying any root for the first time in a session; field/relation names (especially the issuer/receiver invoice relations on `companies`) are workspace/connector-dependent, never assume them.
 - `well_list_connectors` — surface install links when the workspace has no usable company/invoice data.
@@ -58,10 +58,14 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
    - If a connector's most recent sync (`workspace_connector_sync_logs`) is `status: in_progress`, tell the user data is still syncing and the profile may be partial.
 
 4. **Resolve which company the user means.** `well_get_schema({ root: "companies" })` first. If the user gave an id, use it directly. If they gave a name, `well_query_records` on `companies` with a `whereClause` doing an `_ilike` match on `name`.
-   - No name or id given → ask for one now. Steps 1–3 have already run, so this is the only thing still missing. If step 2 also left the workspace unresolved, ask both in the same message rather than over two consecutive turns.
-   - Zero matches → say so, ask the user to confirm the name/spelling, and offer to search `invoices`/`transactions` by counterparty name instead.
-   - Multiple matches → list them (name, domain, trade name) and ask the user to disambiguate. Do not guess.
+   - No name or id given → **show, then ask**. Run the browse query below so the user picks from something on screen instead of recalling a name from memory, then ask which one. If step 2 also left the workspace unresolved, ask both in the same message rather than over two consecutive turns.
+   - Zero matches → run the browse query too, so a misspelling lands on a list rather than a dead end. Say the search found nothing, ask the user to confirm the name/spelling against what's shown, and offer to search `invoices`/`transactions` by counterparty name instead.
+   - Multiple matches → ask which one they mean. Do not guess.
    - Exactly one match → proceed with that company's id.
+
+   **The browse query.** `well_query_records({ root: "companies", orderBy: { field: "updated_at", direction: "desc" }, limit: 50 })`. Pass **no `fields`** — omitting it is what makes the host render the root's standard companies table, logo and identity column included. If `updated_at` isn't in the schema from step 4's `well_get_schema` call, drop `orderBy` rather than guessing another field.
+
+   **Don't narrate the table.** Every `well_query_records` result renders as a table in MCP-Apps hosts, so restating those same rows as markdown gives the user the card and a duplicate list under it. Ask the question and stop. Two things the table cannot say for itself, and that belong in your text: `totalCount` when it exceeds what's displayed ("showing the 50 most recently updated of 214 — name one, or narrow it down"), and a pointer to open the full table in Well for anything the card truncates.
 
 5. **Compose the profile.** Call `well_get_entity({ root: "companies", id, depth: 2 })` to pull scalars (`name`, `description`, `domain`, `locale`, `tax_id_value`/`tax_id_type`, `trade_name`, `registered_name`, `business_type`, `employee_count`, `founded_year`), contact sub-resources (`emails`, `phones`, `locations`, `web_links`), and the direct invoice relation(s).
    - `business_type` is the legal entity form (Inc/LLC/GmbH), not an industry — there is no `industry` field on `companies`; never fabricate one.
@@ -93,7 +97,8 @@ Before finishing, verify:
 
 - If `well_*` tools weren't available at all, the user was pointed at the MCP endpoint (`https://api.wellapp.ai/v1/mcp`) instead of erroring silently.
 - The workspace was resolved unambiguously.
-- No turn ended on a bare "which company?" with zero tool calls behind it — steps 1–3 ran before the question was asked.
+- No turn ended on a bare "which company?" with zero tool calls behind it — steps 1–3 ran, and a company list was on screen, before the question was asked.
+- No list of records was restated in prose under the table that already rendered it; where the table was truncated, the total was stated instead.
 - The company was resolved unambiguously — not guessed on an ambiguous or zero-match name search.
 - `well_get_schema` was called before querying `companies` (and any other root) for the first time.
 - No `industry` field or customer/vendor boolean was fabricated — the relationship is framed only from issuer/receiver invoice data against `own_company`.
