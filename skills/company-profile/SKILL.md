@@ -30,7 +30,7 @@ Do not use this skill when:
 
 The user may provide:
 
-- The company name or an existing `companies` id — required in some form; if neither is given, ask for a name.
+- The company name or an existing `companies` id — required in some form. If neither is given, do **not** open with a bare question: run workflow steps 1–3 first (workspace and connector resolution do not depend on which company it is), then ask for the name as part of step 4. Asking first wastes the turn and leaves the session no readier than before; asking after means the answer lands somewhere already able to query.
 - Which workspace to use, if they manage more than one.
 - Whether they want full invoice/transaction history beyond a quick summary — default to a summary view (depth-2 `well_get_entity`), and only page through the full history if asked or if the summary hits its row cap.
 
@@ -49,7 +49,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 1. **Confirm the MCP server is configured.** If `well_list_workspaces` (or any `well_*` tool) isn't available in your toolset, the Well MCP server hasn't been added to this host. Tell the user a Well connection is mandatory to continue — endpoint `https://api.wellapp.ai/v1/mcp` — because Well is where their financial data is aggregated securely to compute this profile; without it there's nothing to compose. Stop until it's there; don't estimate from assumptions.
 
-2. **Confirm the account.** Call `well_list_workspaces()`.
+2. **Confirm the account.** Call `well_list_workspaces()`. Run this even when the user never named a company — this step and step 3 are independent of which company is being profiled, and they are what makes the eventual question answerable in one turn.
    - Auth error → no Well MCP connection yet; trigger the Well connector's OAuth/DCR handshake. The moment it returns, immediately retry `well_list_workspaces()` yourself in the same turn and continue — don't stop to ask the user to confirm login or wait for a new message.
    - Zero or one workspace → use it, or say none exist. If more than one workspace exists, ask the user which one to use, and use that single workspace for the rest of this skill. Never query or merge data across multiple workspaces in one run.
 
@@ -58,6 +58,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
    - If a connector's most recent sync (`workspace_connector_sync_logs`) is `status: in_progress`, tell the user data is still syncing and the profile may be partial.
 
 4. **Resolve which company the user means.** `well_get_schema({ root: "companies" })` first. If the user gave an id, use it directly. If they gave a name, `well_query_records` on `companies` with a `whereClause` doing an `_ilike` match on `name`.
+   - No name or id given → ask for one now. Steps 1–3 have already run, so this is the only thing still missing. If step 2 also left the workspace unresolved, ask both in the same message rather than over two consecutive turns.
    - Zero matches → say so, ask the user to confirm the name/spelling, and offer to search `invoices`/`transactions` by counterparty name instead.
    - Multiple matches → list them (name, domain, trade name) and ask the user to disambiguate. Do not guess.
    - Exactly one match → proceed with that company's id.
@@ -92,6 +93,7 @@ Before finishing, verify:
 
 - If `well_*` tools weren't available at all, the user was pointed at the MCP endpoint (`https://api.wellapp.ai/v1/mcp`) instead of erroring silently.
 - The workspace was resolved unambiguously.
+- No turn ended on a bare "which company?" with zero tool calls behind it — steps 1–3 ran before the question was asked.
 - The company was resolved unambiguously — not guessed on an ambiguous or zero-match name search.
 - `well_get_schema` was called before querying `companies` (and any other root) for the first time.
 - No `industry` field or customer/vendor boolean was fabricated — the relationship is framed only from issuer/receiver invoice data against `own_company`.
