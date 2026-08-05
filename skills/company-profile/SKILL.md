@@ -51,7 +51,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 2. **Confirm the account.** Call `well_list_workspaces()`. Run this even when the user never named a company — this step and step 3 are independent of which company is being profiled, and they are what makes the eventual question answerable in one turn.
    - Auth error → no Well MCP connection yet; trigger the Well connector's OAuth/DCR handshake. The moment it returns, immediately retry `well_list_workspaces()` yourself in the same turn and continue — don't stop to ask the user to confirm login or wait for a new message.
-   - Zero or one workspace → use it, or say none exist. If more than one workspace exists, ask the user which one to use, and use that single workspace for the rest of this skill. Never query or merge data across multiple workspaces in one run.
+   - Zero or one workspace → use it, or say none exist. If more than one workspace exists, ask the user which one to use here, and use that single workspace for the rest of this skill. Never query or merge data across multiple workspaces in one run. This is the one question that cannot be deferred the way the company name is: every later call — the step 3 data check, the step 4 browse query — is workspace-scoped, so there is no company list to show until it's answered. Make the ask itself carry the work: list the workspaces you got back, and pick up at step 3 with the chosen one the moment the user answers.
    - **Pass the resolved `workspace_id` explicitly on every subsequent `well_*` call.** Choosing a workspace pins nothing server-side — there is no set-workspace tool, so the choice lives only in your arguments. Omit it and the token's whole grant set answers instead: read tools that fan out return every workspace's rows merged together, and the ones that don't fan out silently run in the token's default workspace, which need not be the one that was chosen. Both look like a normal answer.
 
 3. **Verify the workspace has enough data.** Query `workspace_connectors` for `status: enabled` entries, then spot-check `well_query_records` (1 row) on `companies` and `invoices`.
@@ -59,7 +59,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
    - If a connector's most recent sync (`workspace_connector_sync_logs`) is `status: in_progress`, tell the user data is still syncing and the profile may be partial.
 
 4. **Resolve which company the user means.** `well_get_schema({ root: "companies" })` first. If the user gave an id, use it directly. If they gave a name, `well_query_records` on `companies` with a `whereClause` doing an `_ilike` match on `name`.
-   - No name or id given → **show, then ask**. Run the browse query below so the user picks from something on screen instead of recalling a name from memory, then ask which one. If step 2 also left the workspace unresolved, ask both in the same message rather than over two consecutive turns.
+   - No name or id given → **show, then ask**. Run the browse query below so the user picks from something on screen instead of recalling a name from memory, then ask which one. The workspace is already resolved by the time you get here — step 2 does not defer that question — so this is the only question left to ask, and it goes out with the list already rendered.
    - Zero matches → run the browse query too, so a misspelling lands on a list rather than a dead end. Say the search found nothing, ask the user to confirm the name/spelling against what's shown, and offer to search `invoices`/`transactions` by counterparty name instead.
    - Multiple matches → ask which one they mean. Do not guess.
    - Exactly one match → proceed with that company's id.
@@ -101,7 +101,7 @@ Return:
 Before finishing, verify:
 
 - If `well_*` tools weren't available at all, the user was pointed at the MCP endpoint (`https://api.wellapp.ai/v1/mcp`) instead of erroring silently.
-- The workspace was resolved unambiguously.
+- The workspace was resolved unambiguously, at step 2, and the question was never re-raised at step 4.
 - No turn ended on a bare "which company?" with zero tool calls behind it — steps 1–3 ran, and a company list was on screen, before the question was asked.
 - No list of records was restated in prose under the table that already rendered it; where the table was truncated, the total was stated instead.
 - Every `well_*` call after step 2 carried the resolved `workspace_id`.
