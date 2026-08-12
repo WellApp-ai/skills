@@ -54,7 +54,7 @@ This repo packages that judgment as **Agent Skills** — playbooks any AI assist
 | `company-profile` | "Give me a 360 view of this company" — profile, contacts, and the full invoice relationship, customer or vendor. | [View details →](docs/company-profile.md) |
 | `payment-invoice-lookup` | "What happened with this payment?" — match a payment to its invoice, or list every unreconciled one. | [View details →](docs/payment-invoice-lookup.md) |
 | `missing-receipts` | "Which expenses are missing receipts?" — invoices with no source document attached, for compliance. | [View details →](docs/missing-receipts.md) |
-| `draft-invoice` | "Draft an invoice for this client" — creates a real invoice record in Well from a chat description. | [View details →](docs/draft-invoice.md) |
+| `draft-invoice` | "Draft an invoice for this client" — creates a real invoice record in Well, with an attached PDF, from a chat description. | [View details →](docs/draft-invoice.md) |
 
 ---
 
@@ -157,7 +157,7 @@ Download the `.skill` file and double-click it to install — Claude Desktop ins
 | `company-profile` | A 360 view of one company — profile, contacts, and the invoice relationship. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/company-profile.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/company-profile.zip) |
 | `payment-invoice-lookup` | Match a payment to its invoice, or list every unreconciled one. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/payment-invoice-lookup.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/payment-invoice-lookup.zip) |
 | `missing-receipts` | Invoices with no source document attached, for compliance. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/missing-receipts.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/missing-receipts.zip) |
-| `draft-invoice` | Create a real invoice record in Well from a chat description. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/draft-invoice.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/draft-invoice.zip) |
+| `draft-invoice` | Create a real invoice record in Well, with an attached PDF, from a chat description. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/draft-invoice.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/draft-invoice.zip) |
 
 ##### For Advanced Users
 
