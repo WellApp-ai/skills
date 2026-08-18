@@ -41,8 +41,8 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 
 - `well_list_workspaces` — resolve which workspace to query.
 - `well_get_cost_structure` — the category breakdown (which expense categories consume the most cash) for the latest closed month. Same deterministic computation the Well app's canvas cost-structure chart renders — a 4-rung fallback ladder (ledger account → transaction category → transaction type → "Uncategorised"), never LLM-estimated. Call this directly; do not re-derive categories yourself from raw `account_balances`/`ledger_accounts`/`transactions` reads. It has no window parameter — it always answers for the latest closed month, not a user-chosen quarter/range.
-- `well_query_records` — read `workspace_connectors` (data-presence check) and `invoices` (for the accounts-payable half of this skill, which `well_get_cost_structure` does not cover).
-- `well_get_schema` — call this before querying `invoices`/`workspaces` for the first time in a session; field names and semantics are workspace/connector-dependent, never assume them.
+- `well_query_records` — read `workspace_connectors` (data-presence check), `workspaces` (for `own_company`), `companies` (to fold in duplicate records of the own company), `invoices` (for the accounts-payable half of this skill, which `well_get_cost_structure` does not cover), and `exchange_rates`.
+- `well_get_schema` — call this before querying `invoices`/`workspaces`; field names and semantics are workspace/connector-dependent, never assume them. Note that no MCP tool writes to `workspaces` — `own_company` is read-only from this skill, so it can be confirmed for a run but never persisted.
 - `well_list_connectors` — surface install links when the workspace lacks data.
 - Well's OAuth / Dynamic Client Registration (DCR) flow — if no Well MCP connection exists yet, most hosts trigger this automatically when the Well MCP server is added (it exposes standard OAuth discovery + DCR, no manual client secret needed). If your host exposes a dedicated `authenticate` tool for the Well connector, call that instead.
 
@@ -63,26 +63,41 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 4. **Get the category breakdown.** Call `well_get_cost_structure()`. It returns `entries` (`category`, `amount`, `pct`, sorted by amount descending), `currency`, and `rung` (which grouping actually produced these categories — `ledger_account`, `category_normalized`, `transaction_type`, or `uncategorised`) for the latest closed month.
    - If the user asked for a different window ("this quarter", "last 3 months"), say plainly that the category breakdown only covers the latest closed month today, rather than silently substituting or fabricating a wider range.
    - If `hints` are present (e.g. a coverage caveat about uncategorized spend), disclose them alongside the ranking rather than presenting it as unconditionally complete.
-   - If the call errors or returns no entries, treat this the same as step 7's fallback below.
+   - If the call errors or returns no entries, treat this the same as step 9's fallback below.
 
-5. **Get the biggest accounts payable.** Identify the workspace's own company via `well_get_schema({ root: "workspaces" })`, then read `workspaces.own_company` on the resolved workspace (the workspace's `own_company` relation — nullable, so handle the case where it isn't set yet by asking the user to confirm which counterparty company is theirs, or skip the payable/receivable split and report gross unpaid invoices instead). Query `invoices` where `receiver_company_id` matches the own company and `payment_status`/`status` indicates unpaid, `orderBy: { field: "grand_total", direction: "desc" }`, limited to the requested count. Include `issuer.name`, `grand_total`, `local_currency`, `due_date`.
+5. **Resolve `own_company` — never infer it.** Call `well_get_schema({ root: "workspaces" })`, then read `workspaces.own_company` on the resolved workspace. Treat all three of these as **unresolved**, not just the null case:
+   - the relation is `null`;
+   - the field is **absent from the schema entirely** — some workspaces don't expose it, and an absent field is not permission to work around it;
+   - it resolves to more than one plausible company.
 
-6. **Normalize currency.** If results span more than one `local_currency`, either convert to one base currency via the `exchange_rates` root or report totals per currency — never blend currencies silently.
+   When unresolved, ask the user which company in Well is theirs and use their answer **for this run only**. Never infer it from the workspace's name, title, logo, slug, or email domain — a workspace named after its owner is a coincidence, not a record, and a wrong pick silently swaps payables for receivables. No MCP tool can persist `own_company`; if the user wants it set permanently, point them at their workspace in the Well app (`<well-app-base-url>/workspaces/<workspace_id>`), where the own-company picker writes it, and say plainly that until then every run will ask again. If the user declines to confirm, skip the payable/receivable split and report gross unpaid invoices instead, labeled as unsplit.
 
-7. **If any required step errors or returns unusable data**, do not guess. If the failure is transient (a network/timeout error on the MCP call itself), retry once before falling back — don't dead-end on a blip. If it errors again or the data stays unusable, the fallback is: (a) state the fallback question plainly in your reply (e.g. "Where does my money go?"), (b) answer it yourself using whatever partial Well MCP data you already have, clearly caveated, and (c) give the user a direct link to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can ask it there directly and get a second opinion from their own AI assistant.
+6. **Fold in duplicate company records.** One legal entity often has several `companies` rows, differing only by a legal-form prefix or suffix (`EI-`, `SARL`, `SAS`, `SA`, `Ltd`, `GmbH`), punctuation, or accents. Once `own_company` is resolved, query `companies` and compare each name against it after normalizing both sides identically: Unicode NFD, strip combining marks, lowercase, replace every punctuation or separator character (`,` `.` `-` `&` `'` `"` `/`) with a single space, collapse runs of whitespace to one, then trim. The punctuation step is not optional: without it `ACME, LTD` and `ACME LTD` normalize to `acme, ltd` and `acme ltd`, neither contains the other, and the alias is never even proposed. Treat a pair as a candidate alias when **either** normalized name contains the other — containment is directional, so test both ways (`"ei-da silva marly joao"` contains `"da silva marly joao"`, but not the reverse; testing one direction only misses the alias). Candidates are *proposed*, never merged silently: list them, take an explicit yes, then treat the confirmed set as one identity for every `own_company` comparison in this run. Mention the duplicate as a data-quality issue worth fixing in Well — do not call `well_update_company`/`well_delete_company` to merge records yourself.
+
+7. **Get the biggest accounts payable.** Call `well_get_schema({ root: "invoices" })` (always, even if queried earlier in the session for a different purpose — field behavior varies by connector). Query `invoices` where `receiver_company_id` matches the confirmed own-company identity set and `payment_status` is `unpaid` or `partial`, `orderBy: { field: "grand_total", direction: "desc" }`, limited to the requested count. Include `issuer.name`, `grand_total`, `balance_due`, `local_currency`, `due_date`.
+   - **`payment_status` is authoritative** for whether money is still owed. Lifecycle `status` is a separate dimension, and some connectors emit rows carrying `status: paid` alongside `payment_status: unpaid` — that combination is normal for those sources, not a data fault. Filter on `payment_status`; note the mismatch once in a clause if it's widespread, but do not discredit the whole payables section over it.
+   - **Don't let an equality filter hide rows — and don't over-collect either.** A filter on `receiver_company_id` silently drops invoices where it is `null`. Query that bucket separately, then split it on the *issuer* before reporting anything, because a null receiver alone does not make a row a bill:
+     - **Issuer is the own-company identity** → this is an invoice the workspace *issued* that lost its receiver. It is a receivable, not a payable. Leave it out of this skill entirely and point the user at `accounts-receivable-aging`.
+     - **Issuer is an external company** → genuinely unresolved, and a bill on the balance of evidence. Rank it *inside* the main table as a labeled row ("unattributed — receiver not recorded"), not as a footnote: an unattributed bill can easily outrank everything else, and burying the largest item under the table makes the ranking wrong.
+     - **Issuer is null too** → nothing places this row on either side. Report it as a separate unsplit line carrying a count and total, and never fold it into the payable headline.
+   - **Invoices whose issuer and receiver are the same company** are neither a vendor bill nor a cash outflow. Keep them out of the payable total and note them once as a data-quality issue worth fixing in Well.
+
+8. **Normalize currency.** If results span more than one `local_currency`, either convert to one base currency via the `exchange_rates` root or report totals per currency — never blend currencies silently.
+
+9. **If any required step errors or returns unusable data**, do not guess. If the failure is transient (a network/timeout error on the MCP call itself), retry once before falling back — don't dead-end on a blip. If it errors again or the data stays unusable, the fallback is: (a) state the fallback question plainly in your reply (e.g. "Where does my money go?"), (b) answer it yourself using whatever partial Well MCP data you already have, clearly caveated, and (c) give the user a direct link to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can ask it there directly and get a second opinion from their own AI assistant.
 
 ## Output requirements
 
 Return:
 
 - Which month the category breakdown covers (the latest closed month — say so explicitly if the user asked for a different window) and which connector(s)/sync the accounts-payable numbers came from.
-- Top expense categories with amount, currency, and share of total spend (`entries[].pct` from `well_get_cost_structure`, straight from the tool — not recomputed). If the user didn't already say whether they want a table or a chart, ask their preference rather than silently picking one — this is a comparison across categories, so a bar chart is the natural fit if they want one.
-- Top accounts payable: vendor, amount, currency, due date.
+- Top expense categories with amount, currency, and share of total spend (`entries[].pct` from `well_get_cost_structure`, straight from the tool — not recomputed). This is a comparison across categories, so lead with a horizontal bar chart and back it with the exact figures; don't stop to ask table-or-chart first.
+- Top accounts payable: vendor, amount, currency, due date. Any unattributed or self-referencing invoices belong in this ranking as labeled rows, not in a caveat below it.
 - A one-line note that the category breakdown is the same computation the Well app itself renders, not a skill-side estimate, plus any coverage `hints` `well_get_cost_structure` returned (e.g. uncategorized spend). State which grouping actually produced it, straight from `rung`: "by ledger account" (`ledger_account`), "by Well's category" (`category_normalized`), "by transaction type" (`transaction_type`), or "uncategorised" (`uncategorised`) — not the full 4-rung fallback order, just the one the tool reports.
 - Whether the picture is complete: which relevant connector categories (banking, accounting) are connected versus still missing, so the user knows whether this reflects their full spend or a partial view gated by what's connected today.
 - A one-line pointer to `bills-due` for a date-ordered view of when the biggest payables come due.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
-- If step 7's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
+- If step 9's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
 
 ## Quality checks
 
@@ -99,7 +114,11 @@ Before finishing, verify:
 - If the user asked for a window other than the latest closed month, that limitation was stated plainly rather than silently substituted.
 - Any `hints` `well_get_cost_structure` returned (e.g. uncategorized-spend coverage) were disclosed, not presented as if the category ranking were unconditionally complete.
 - Accounts payable only includes invoices where the workspace is the receiver, not the issuer.
-- If `workspaces.own_company` is null, the payable/receivable split was skipped (or confirmed with the user) rather than guessed.
+- `own_company` was read, not inferred. If it was null, absent from the schema, or ambiguous, the user was asked — it was never derived from the workspace's name, logo, slug, or email domain, and an absent field was not treated as license to guess.
+- Duplicate company records (legal-form prefixes/suffixes, punctuation, accents) were checked with two-directional normalized containment and confirmed with the user before being folded into the own-company identity — not merged silently, and not missed by testing containment one way only.
+- Null-`receiver_company_id` invoices were split on the issuer before reporting: own-company issuer routed to receivables and excluded, external issuer ranked in the table as a labeled row, both-null reported as a separate unsplit line. None of them entered the payable headline unexamined.
+- Invoices whose issuer equals their receiver were kept out of the payable total and noted once, not ranked as bills.
+- Unpaid status came from `payment_status`, not lifecycle `status`. A `status: paid` / `payment_status: unpaid` combination was treated as normal connector behavior, not as grounds for discrediting the payables section.
 - Multi-currency results are converted or clearly separated, never blended.
 - Every number carries a currency and an as-of date.
 - Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation — not forced into every answer.
@@ -121,6 +140,14 @@ Resolve the workspace, confirm at least one connector has synced data, call `wel
 ### Expected behavior
 
 Call `well_get_cost_structure()`, then tell the user plainly that the category breakdown covers only the latest closed month today (not a full quarter), present that month's ranking, and offer to run it again for each month in the quarter if they want the fuller picture.
+
+### Example request
+
+"What are the biggest bills I owe?" (asked on a workspace whose schema does not expose `workspaces.own_company` at all, and whose `companies` list holds both "DA SILVA MARLY JOAO" and "EI-DA SILVA MARLY JOAO")
+
+### Expected behavior
+
+Detect in step 5 that the field is absent — not merely null — and ask which company is theirs rather than matching the workspace's name or logo to a `companies` row. Once confirmed, normalize and compare both directions, notice that `"ei-da silva marly joao"` contains `"da silva marly joao"`, and offer the `EI-` record as a candidate alias for confirmation instead of quietly excluding its bills. Query payables against the confirmed pair, then pull the null-`receiver_company_id` invoices and split them on the issuer: an external issuer makes it a bill, so rank it in the table as a labeled row — a €2,680 unattributed bill belongs at the top, not in a caveat under a table whose largest row is €2,647 — while an own-company issuer makes it a stray receivable that must stay out of the payable total entirely. Filter on `payment_status`, and don't hedge the section because rows also carry `status: paid`.
 
 ### Example request
 

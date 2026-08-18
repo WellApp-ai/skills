@@ -11,7 +11,9 @@
 
 ## What it does
 
-Tell your AI assistant who to bill and for what, and it builds a real invoice in Well from the details you give it — client, amount, line items, due date — then shows you the whole thing to check before it actually gets created. It never guesses a price, a tax id, or a due date on your behalf; if something's missing, it asks. This is the one skill in this collection that writes data instead of just reporting on it, so nothing gets created until you say yes. One thing it doesn't do: send the invoice to your client — it creates the record in Well, and you take it from there.
+Tell your AI assistant who to bill and for what, and it builds a real invoice in Well from the details you give it — client, amount, line items, due date — then shows you the whole thing to check before it actually gets created. It never guesses a price, a tax id, or a due date on your behalf; if something's missing, it asks. Once you confirm and the invoice is created, it also renders the invoice into a print-ready PDF on your own letterhead and attaches it to the record — no separate step, no extra confirmation needed. This is the one skill in this collection that writes data instead of just reporting on it, so nothing gets created until you say yes. One thing it doesn't do: send the invoice or the PDF to your client — it creates both in Well, and you take it from there.
+
+The PDF's letterhead carries your logo only if Well already has one on file for your company — a brand-new client relationship usually won't yet, so it prints your company name as text instead. It's also not a legally-numbered sequential invoice: Well doesn't maintain an invoice-numbering sequence, so the reference number on it is exactly the one you supplied.
 
 ## Required data in Well
 
