@@ -6,4 +6,4 @@ install:
 validate:
 	claude plugin validate . --strict
 	claude plugin validate ./skills --strict
-	python3 scripts/check-skill-frontmatter.py
+	node scripts/check-skill-frontmatter.js
