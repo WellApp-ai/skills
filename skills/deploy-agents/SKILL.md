@@ -1,6 +1,6 @@
 ---
 name: deploy-agents
-description: Preview which invoice-fetching agents Well would launch for a period, and for which providers, counterparties, and transactions — then say plainly that nothing was started. This version is a dry run: it launches no agent, opens no browser session, and queues no task. Use when the user asks to fetch, collect, or chase the invoices they are missing, says "launch the agents", "go get those invoices", "deploy the collectors", or when the fetch-missing-invoices flow reaches its last step after the missing rows have been listed. Do not use to actually run a collection, to invoke a connector's own actions, to create or edit an invoice, to connect a provider, or to list which invoices are missing in the first place.
+description: Preview which invoice-fetching agents Well would launch for a period, and for which providers, counterparties, and transactions — then say plainly that nothing was started. This version is a dry run — it launches no agent, opens no browser session, and queues no task. Use when the user asks to fetch, collect, or chase the invoices they are missing, says "launch the agents", "go get those invoices", "deploy the collectors", or when the fetch-missing-invoices flow reaches its last step after the missing rows have been listed. Do not use to actually run a collection, to invoke a connector's own actions, to create or edit an invoice, to connect a provider, or to list which invoices are missing in the first place.
 ---
 
 # Deploy Agents with Well
