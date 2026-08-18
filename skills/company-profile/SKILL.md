@@ -1,6 +1,6 @@
 ---
 name: company-profile
-description: Compose everything Well knows about one named company — customer or vendor — into a single 360 view using Well's MCP financial graph: profile info, contact channels, and the invoice relationship (as issuer, receiver, or both). Use when the user asks "build a customer 360 view", "customer 360", "give me a 360 view of X", "everything about [company name]", "vendor across every rail", "who is this company", "show me our history with X", or "tell me about our relationship with [vendor/customer]". Requires a connected Well workspace with at least one connector that has synced company/invoice data; if none is connected or the company can't be found, this skill says so instead of guessing.
+description: Compose everything Well knows about one named company — customer or vendor — into a single 360 view using Well's MCP financial graph — profile info, contact channels, and the invoice relationship (as issuer, receiver, or both). Use when the user asks "build a customer 360 view", "customer 360", "give me a 360 view of X", "everything about [company name]", "vendor across every rail", "who is this company", "show me our history with X", or "tell me about our relationship with [vendor/customer]". Requires a connected Well workspace with at least one connector that has synced company/invoice data; if none is connected or the company can't be found, this skill says so instead of guessing.
 ---
 
 # Build a Company 360 View with Well
@@ -141,3 +141,11 @@ Resolve the workspace, confirm connector data exists, find exactly one `companie
 ### Expected behavior
 
 Detect the multiple matches during step 4, list them with distinguishing details (domain, trade name), and ask the user which one they mean rather than picking one and risking the wrong company's data.
+
+### Example request
+
+"Tell me about our relationship with Brightwater" (workspace whose schema does not expose `workspaces.own_company`, and where Brightwater has both a "Brightwater" and a "Brightwater S.A.S." record)
+
+### Expected behavior
+
+Treat the absent `own_company` field as unresolved rather than open, and ask which company is theirs — a wrong pick here does not degrade the answer, it inverts customer and vendor, and reads as confident either way. Fold duplicates on both sides: normalize with punctuation folded to spaces and runs collapsed so `"brightwater s a s"` and `"brightwater"` compare as containing one another, and propose the match rather than merging it, because an unmerged alias makes a long relationship look thin and reads as a finding about the vendor rather than about our data. Report invoices missing either counterparty id in a labeled unattributed line kept out of both the vendor and customer totals, and note issuer-equals-receiver rows once as a data-quality issue without letting them imply a relationship.

@@ -83,7 +83,7 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 Return:
 
 - The time window used (all-time by default), stated explicitly.
-- A ranked table: customer name, total paid revenue, currency, and share of total paid revenue across all ranked customers. If the user didn't already say whether they want a table or a chart, ask their preference rather than silently picking one — this is a comparison across customers, so a bar chart is the natural fit if they want one.
+- A ranked table: customer name, total paid revenue, currency, and share of total paid revenue across all ranked customers. This is a comparison across customers, so lead with a horizontal bar chart and back it with the exact figures; don't stop to ask table-or-chart first.
 - The as-of date the ranking was computed against.
 - An explicit one-line caveat: this is realized paid-invoice revenue to date, not a predictive customer-lifetime-value model.
 - Whether the picture is complete: which relevant connector categories (invoicing/accounting) are connected versus still missing, and whether the workspace's own company is set, so the user knows whether this ranking reflects their full revenue history or a partial view gated by what's connected today.
@@ -128,3 +128,11 @@ Resolve the workspace, confirm invoicing data exists, resolve `own_company`, def
 ### Expected behavior
 
 In the multi-currency workspace's run: either convert the EUR customer's total to USD via `exchange_rates` (stating the rate and date used) or report that customer's total separately in EUR rather than adding it directly into a USD-only ranking. In the zero-paid-invoice workspace's run: state plainly that no realized revenue exists yet (all invoices are unpaid/partial), do not fabricate a ranking, and offer the same fallback link so the user can ask in Well directly.
+
+### Example request
+
+"Who are our best customers?" (workspace whose schema does not expose `workspaces.own_company`, and whose `companies` list holds both "Northwind Trading" and "NORTHWIND TRADING, LTD")
+
+### Expected behavior
+
+Detect in step 4 that `own_company` is unresolved because the field is absent from the schema — not merely null — and ask which company is theirs rather than matching the workspace's name or logo to a `companies` row. Once confirmed, normalize both sides (punctuation folded to spaces, runs collapsed) so `"northwind trading ltd"` and `"northwind trading"` compare as containing one another, and offer the `LTD` record as a candidate alias for confirmation — on the customer side as well as the own-company side, since an unmerged customer alias splits one client across two rows and understates their rank. Then split the null-`issuer_company_id` invoices on the receiver before counting anything as revenue: an own-company receiver means a bill the workspace paid, which is excluded outright, while an external receiver is reported as a labeled unattributed row. Say the confirmation holds for this run only, and link to the Well app to set it permanently.
