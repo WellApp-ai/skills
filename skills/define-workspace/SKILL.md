@@ -7,7 +7,7 @@ description: Resolve which Well workspace (legal entity / company account) a con
 
 ## Purpose
 
-Pin exactly one Well workspace for the rest of the conversation. Read the workspaces this connection is authorized on, resolve a single one — automatically when there is one, from the user's hint when it matches, or from the user's pick otherwise — and return a typed hand-off that every later `well_*` call reuses as `workspace_id`. This is the first brick of Well's fetch-missing-invoices and close-books flows and the workspace step every other Well skill relies on.
+Pin exactly one Well workspace for the rest of the conversation. Read the workspaces this connection is authorized on, resolve a single one — automatically when there is one, from the user's hint when it matches, or from the user's pick otherwise — and return a typed hand-off that every later `well_*` call reuses as `workspace_id`. This is the first brick of Well's fetch-missing-invoices and close-books flows: their sub-skills take their `workspace_id` from this hand-off. Well's data skills (`expense-breakdown`, `runway-calculator`, …) still resolve the workspace inline today and can adopt the same hand-off.
 
 ## When to use this skill
 
@@ -22,7 +22,7 @@ Use this skill when:
 
 Do not use this skill when:
 
-- The user wants to connect a bank, accounting tool, or invoicing portal — use the `connect-tools` skill next.
+- The user wants to connect a bank, accounting tool, or invoicing portal — that is the `connect-tools` skill (the next brick of the flow), when it is installed.
 - The user wants a number (runway, cash, expenses) — the data skills (`runway-calculator`, `cash-position`, `expense-breakdown`, …) already run this step internally; use them directly.
 - The user wants to confirm or edit the company behind a workspace (registered name, tax id, child entities) — that happens in the Well app, not here.
 - The user wants to create a workspace — Well's OAuth / sign-in flow creates the first workspace; this skill only reads what already exists.
@@ -85,6 +85,7 @@ Return:
   is_primary: <true|false>
   identity:
     registered_name: <value or null>
+    trade_name: <value or null>
     country: <ISO code or null>
     base_currency: <ISO code or null>
     fiscal_year_start_month: <1-12 or null>
@@ -94,7 +95,7 @@ Return:
   On `unresolved`, every other key is null.
 - The instruction that applies to the rest of the conversation: pass `workspace_id: <uuid>` on every following `well_*` call.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. Skip it rather than force it in.
-- End with a one-line pointer to the next step: `connect-tools` — "Is a bank and an accounting tool connected to this workspace?"
+- End with a one-line pointer to the next step. When the `connect-tools` skill is installed: "Is a bank and an accounting tool connected to this workspace?". Otherwise hand control back to the skill that called this one, or, when the user asked for the workspace on its own, ask what they want to do in it.
 
 Do not return:
 
@@ -115,7 +116,7 @@ Before finishing, verify:
 - The hand-off block carries all keys with `resolution` set.
 - On a transient failure the call was retried once before the fallback link.
 - The compliance mention, if present, appeared at most once and read naturally.
-- The answer ends with the `connect-tools` pointer.
+- The answer ends with the next-step pointer (`connect-tools` when installed, otherwise the caller or a question).
 
 ## Examples
 
