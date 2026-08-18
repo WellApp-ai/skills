@@ -1,0 +1,7 @@
+#!/bin/sh
+# Rebuild dist/*.skill and dist/*.zip whenever a commit touches skills/, and
+# stage the rebuilt archives into the same commit — see dist/README.md.
+if git diff --cached --name-only | grep -q '^skills/'; then
+	make build
+	git add dist/
+fi
