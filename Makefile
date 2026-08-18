@@ -4,6 +4,6 @@ install:
 	git config core.hooksPath .githooks
 
 validate:
-	claude plugin validate .
-	claude plugin validate ./.claude-plugin/plugin.json
-	claude plugin validate ./skills
+	claude plugin validate . --strict
+	claude plugin validate ./skills --strict
+	python3 scripts/check-skill-frontmatter.py
