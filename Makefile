@@ -9,7 +9,8 @@ validate:
 	node scripts/check-skill-frontmatter.js
 
 build:
-	@for dir in skills/*/; do \
+	@set -e; \
+	for dir in skills/*/; do \
 		name=$$(basename "$$dir"); \
 		if [ -f "dist/$$name.skill" ]; then \
 			tmp=$$(mktemp -d); \
