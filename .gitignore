@@ -2,5 +2,3 @@
 telemetry/
 # Skill-building related
 CLAUDE.md
-.githooks
-Makefile
