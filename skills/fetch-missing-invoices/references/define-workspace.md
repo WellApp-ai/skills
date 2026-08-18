@@ -1,0 +1,1 @@
+../../define-workspace/SKILL.md

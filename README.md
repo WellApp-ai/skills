@@ -61,6 +61,7 @@ This repo packages that judgment as **Agent Skills** — playbooks any AI assist
 | `show-missing-invoices` | "What am I missing for March?" — settled spend with no supplier invoice, per supplier, with how each gap can be closed. | [View details →](docs/show-missing-invoices.md) |
 | `categorize-transactions` | "What's still uncategorized?" — the period's unlabelled and low-confidence transactions, relabelled batch by batch, only on your explicit yes. | [View details →](docs/categorize-transactions.md) |
 | `deploy-agents` | "Go get those invoices" — a preview of which invoice-fetching agents would run, for which providers, and what you'd still upload by hand. Launches nothing. | [View details →](docs/deploy-agents.md) |
+| `fetch-missing-invoices` | "Fetch the invoices I'm missing for March" — the whole month-end sweep in one prompt: workspace, connections, month, gaps, coverage, and a preview of the agents. | [View details →](docs/fetch-missing-invoices.md) |
 
 ---
 
@@ -92,9 +93,10 @@ Install the following official skills from Well. Instructions:
     m. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
     n. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
     o. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-period/SKILL.md
-    o. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/show-missing-invoices/SKILL.md
-    o. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/categorize-transactions/SKILL.md
-    o. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/deploy-agents/SKILL.md
+    p. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/show-missing-invoices/SKILL.md
+    q. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/categorize-transactions/SKILL.md
+    r. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/deploy-agents/SKILL.md
+    s. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/fetch-missing-invoices/SKILL.md
 2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
 3. Create a summary table with skill names and descriptions extracted from the frontmatter
 4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
@@ -176,6 +178,7 @@ Download the `.skill` file and double-click it to install — Claude Desktop ins
 | `show-missing-invoices` | List the period's settled spend with no supplier invoice, per supplier, with how each gap can be closed. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/show-missing-invoices.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/show-missing-invoices.zip) |
 | `categorize-transactions` | Review and fix a period's uncategorized and low-confidence transactions, one confirmed batch at a time. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/categorize-transactions.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/categorize-transactions.zip) |
 | `deploy-agents` | Preview which invoice-fetching agents would run for a period — and confirm nothing was launched. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/deploy-agents.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/deploy-agents.zip) |
+| `fetch-missing-invoices` | Walk the whole missing-invoice flow — workspace, connections, month, gaps, coverage — and preview the agents. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/fetch-missing-invoices.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/fetch-missing-invoices.zip) |
 
 ##### For Advanced Users
 

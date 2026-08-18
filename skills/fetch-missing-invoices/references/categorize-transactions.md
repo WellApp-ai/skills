@@ -1,0 +1,1 @@
+../../categorize-transactions/SKILL.md
