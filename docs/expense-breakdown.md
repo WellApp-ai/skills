@@ -15,7 +15,7 @@ If you've ever had to stop and ask "wait, what *are* we spending on this month?"
 
 ## Required data in Well
 
-- **Accounting connector** (e.g. QuickBooks, Xero) — powers the category breakdown from your real ledger. *Recommended, not required:* without it, the skill can't produce the category breakdown and will say so rather than estimate one — it still reports your biggest outstanding bills from invoicing/bills data.
+- **Accounting connector** (e.g. QuickBooks, Xero) — groups the category breakdown by your own chart of accounts. *Recommended, not required:* without it you still get a real category breakdown, grouped by your bank feed's own categories instead of your ledger. The skill always states which grouping produced the numbers, so you know how precise they are.
 - **Invoicing / bills** — needed to show your biggest outstanding bills (accounts payable).
 - **Banking connector** — *optional* for this skill. Either a banking or an accounting connector is enough to get started.
 
