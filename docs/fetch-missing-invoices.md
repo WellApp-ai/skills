@@ -13,7 +13,7 @@
 
 Chasing supplier invoices at month end is six questions, not one: which entity, what is connected, which month, what is actually missing, is the month even labelled well enough to tell, and who can go and get the rest. This skill asks them in that order and routes on each answer instead of guessing. It pins the workspace, checks your bank, accounting, and invoicing connections, fixes the month, lists the settled spend that still has no supplier invoice, raises categorization coverage when the list is too thin to trust, and finishes with a preview of the invoice-fetching agents — which provider, how many invoices, what you would still upload by hand. Every stop is named: no workspace, nothing connected, no month, no gap list, or nothing missing at all. The preview is a dry run: it launches no agent, queues no task, and opens no browser session.
 
-It orchestrates the six Well bricks — `define-workspace`, `connect-tools`, `define-period`, `show-missing-invoices`, `categorize-transactions`, and `deploy-agents` — and bundles them, so installing this one skill brings the whole flow.
+It orchestrates the six Well bricks — `define-workspace`, `connect-tools`, `define-period`, `show-missing-invoices`, `categorize-counterparties`, and `deploy-agents` — and bundles them, so installing this one skill brings the whole flow.
 
 ## Required data in Well
 

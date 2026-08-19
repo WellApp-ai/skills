@@ -1,6 +1,6 @@
 ---
 name: fetch-missing-invoices
-description: Walk Well's whole missing-invoice flow end to end — pin the workspace, check the bank / accounting / invoicing connections, fix the month, list the settled spend that still has no supplier invoice, raise categorization coverage when the list is thin, and preview which invoice-fetching agents would run. The last step is a dry run and launches nothing. Use when the user says "fetch the invoices I'm missing", "what am I missing for March", "chase my missing supplier invoices before I close the books", "run the missing-invoice flow", or "go get those invoices", or when a flow needs the six bricks walked in order rather than one at a time. Orchestrates define-workspace, connect-tools, define-period, show-missing-invoices, categorize-transactions and deploy-agents through their typed hand-offs. Do not use to actually launch a collection, to compute a spend total, to close or post a period, or to run one brick on its own.
+description: Walk Well's whole missing-invoice flow end to end — pin the workspace, check the bank / accounting / invoicing connections, fix the month, list the settled spend that still has no supplier invoice, raise categorization coverage when the list is thin, and preview which invoice-fetching agents would run. The last step is a dry run and launches nothing. Use when the user says "fetch the invoices I'm missing", "what am I missing for March", "chase my missing supplier invoices before I close the books", "run the missing-invoice flow", or "go get those invoices", or when a flow needs the six bricks walked in order rather than one at a time. Orchestrates define-workspace, connect-tools, define-period, show-missing-invoices, categorize-counterparties and deploy-agents through their typed hand-offs. Do not use to actually launch a collection, to compute a spend total, to close or post a period, or to run one brick on its own.
 ---
 
 # Fetch Missing Invoices with Well
@@ -9,7 +9,7 @@ description: Walk Well's whole missing-invoice flow end to end — pin the works
 
 Run the six bricks of Well's missing-invoice flow in one pass, in a fixed order, routing on each
 brick's typed hand-off keys rather than on impressions: `define-workspace` → `connect-tools` →
-`define-period` → `show-missing-invoices` → (`categorize-transactions` → `show-missing-invoices`
+`define-period` → `show-missing-invoices` → (`categorize-counterparties` → `show-missing-invoices`
 again) → `deploy-agents`. Every stop is explicit and named, and the last step previews the
 invoice-fetching agents without launching one.
 
@@ -27,7 +27,7 @@ Use this skill when:
 Do not use this skill when:
 
 - The user wants exactly one brick — `define-workspace`, `connect-tools`, `define-period`,
-  `show-missing-invoices`, `categorize-transactions`, or `deploy-agents` on its own.
+  `show-missing-invoices`, `categorize-counterparties`, or `deploy-agents` on its own.
 - The user wants a collection actually run, a downloaded document, or the status of a running agent.
   No version of this flow launches anything; point them to the Well app.
 - The user wants a figure (`expense-breakdown`, `cash-position`, `bills-due`,
@@ -59,7 +59,7 @@ retry the failed call in the same turn, never waiting for the user to confirm th
 
 Never call `well_invoke_connector_tool`, any `well_create_*` / `well_update_*` / `well_delete_*`, or
 any close, lock, or posting tool. This flow reads, and writes only the transaction categories the
-user confirmed inside `categorize-transactions`.
+user confirmed inside `categorize-counterparties`.
 
 The six bricks are bundled next to this file. At each step, **read `references/<name>.md` and follow
 it** — do not re-derive its checks here.
@@ -89,7 +89,7 @@ After each step, read its hand-off block and route on the routing table's exact 
    categorize, or when the list is **thin**: `transaction_count` is null or 0 while the period's
    `has_activity` is `true`. Never run it silently — say in one line that the gap list rests on
    `transaction_count` categorized transactions while the month has bank activity, ask whether to
-   label the rest first, and run `references/categorize-transactions.md` (with `workspace_id`, the
+   label the rest first, and run `references/categorize-counterparties.md (when that brick is installed; otherwise skip this step and say the categorization brick is not available yet)` (with `workspace_id`, the
    period, `purpose`) only on the user's yes, because it writes.
 
 6. **Re-read the gap list, once** — `references/show-missing-invoices.md` again, same `workspace_id`
@@ -164,7 +164,7 @@ Before finishing, verify:
   inline — and each route was decided on the routing table's key.
 - The flow stopped, with a reason, on `unresolved` at steps 1 and 3, on `coverage: none` until the
   user answered, on `unavailable`, and on a genuinely empty gap list.
-- `categorize-transactions` ran only on a thin list or on request, only after an explicit yes, and
+- `categorize-counterparties` ran only on a thin list or on request, only after an explicit yes, and
   the list was re-read exactly once after `resolution: updated`.
 - `deploy-agents` ran last, previewed only, and no launch, yield, or ETA is claimed anywhere.
 - The recap carries, in order, the workspace, the period, the coverage line, the missing-invoice
@@ -196,4 +196,4 @@ Stop — no categorization, no preview — and recap the workspace, period, and 
 
 **Zero gaps.** "Anything missing for February?" → `empty` with `transaction_count: 41`. Celebrate
 and stop: all 41 categorized expense transactions already have an invoice. Recap without a preview,
-restate the categorized-only coverage, and offer `categorize-transactions` for the rest.
+restate the categorized-only coverage, and offer `categorize-counterparties` for the rest.
