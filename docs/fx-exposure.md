@@ -40,19 +40,18 @@ Paste this into any AI agent — Claude, Codex, Cursor, OpenCode, and others:
 > We suggest using **Claude Chat** rather than Claude Cowork for this step — Cowork's approach is noticeably slower and pricier for a quick install like this. Any Claude model works fine.
 
 ```
-Install the following official skill from Well.
+Install the following official skills from Well.
 
 **Instructions**:
 
-1. Fetch this file: 
-    https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/fx-exposure/SKILL.md
-2. This skill composes onto two atomic Well skills — fetch them as well:
-    a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
-    b. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
-3. Download and display these files to the user. Each file must be named "SKILL.md" — no prefix, no suffix, exact name as specified — and each must land in its own skill folder named after that skill.
-4. Install these skills.
-5. Before replying to the user, ensure every downloaded file is named "SKILL.md". This is crucial for the rest of the steps.
-6. If the MCP https://api.wellapp.ai/v1/mcp is not installed: suggest it to the user and explain how to add a new MCP.
+1. Fetch these files:
+    a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/fx-exposure/SKILL.md
+    b. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
+    c. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
+2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
+3. Install these skills.
+4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
+5. If the MCP https://api.wellapp.ai/v1/mcp is not installed: suggest it to the user and explain how to add a new MCP.
 ```
 
 ### Manual Setup
