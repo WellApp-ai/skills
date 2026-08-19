@@ -47,7 +47,7 @@ The calling skill or the user provides:
 
 Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). If the `well_*` tools are not in your toolset at all, the host has not added the Well MCP server yet — tell the user to add it at that URL, then retry. Required once it is added:
 
-- `well_list_counterparties` — the read. Input: `workspace_id` explicitly, plus **one** scope — either `periods: [{ calendar_year, calendar_month }, …]` (at most 12) or `uncategorized_only: true` (workspace-wide, capped at 50 rows and returning the full `total` alongside them). Output: the rows, each one **one counterparty** already grouped by the server: `company_id`, `name`, `domain`, `tx_count` (settled transactions of theirs in scope), `base_total_amount` (their total in the workspace's base currency, or `null`), `categories` (`[{ category_id, name }]`, empty when uncategorized), `is_categorized`, and `suggested_retrieval` (`agent` · `connect` · `upload`). In MCP-Apps hosts the result renders a counterparties card. Never re-aggregate the rows.
+- `well_list_counterparties` — the read. Input: `workspace_id` explicitly, plus **one** scope — either `periods: [{ calendar_year, calendar_month }, …]` (at most 12) or `uncategorized_only: true` (workspace-wide, capped at 50 rows and returning the full `total` alongside them). Output: the rows, each one **one counterparty** already grouped by the server: `company_id`, `name`, `domain`, `tx_count` (settled transactions of theirs in scope), `base_total_amount` (their total in the workspace's base currency, or `null`), `categories` (`[{ category_id, name }]`, empty when uncategorized), `is_categorized`, and `suggested_retrieval` (`agent` · `connect` · `upload`). In MCP-Apps hosts the result renders a counterparties card — except when the scope holds nothing left to categorize (every row categorized, or no rows): the server attaches no card to that result, and only the data comes back. Never re-aggregate the rows.
 - The category catalog — **already inside the `well_list_counterparties` result.** The result's `meta.categoryCatalog` carries Well's shared company-category list, each entry with its `category_id` and `name`; it is the same list the card's per-row category selects offer. Read it from the result and reuse it for every batch — **never call `well_query_records` for it**: the catalog needs no second read, and a records query renders a redundant records table in the chat where no table belongs. The catalog is Well's own shared list, not per-workspace, so it is the same set for every workspace and it cannot be extended from here.
 - `well_update_company` — the write, one call per company: `workspace_id`, `company_id`, and `relationships: { categories: [<category_id>, …] }`. **The array is a replace-set, not an append** — whatever you send becomes that company's complete category list, so to add a category to a company that already has one you send both ids, and sending one id drops the others. Nothing else on the company is touched.
 - Well's OAuth / DCR flow — only when no Well connection exists yet (auth error on the first call).
@@ -71,7 +71,7 @@ Call each list or read tool once per step. The widget cards refresh themselves �
 
 3. **List the counterparties.** Call `well_list_counterparties` once, with `workspace_id` and the one scope. A transient failure → retry once; a second failure → step 9.
    - On the `uncategorized_only` scope, say the cap out loud: the tool returns at most 50 rows and its `total` is how many uncategorized counterparties the workspace actually holds. When `total` exceeds the rows returned, say so in the same line — "50 of 173 shown" — so nobody reads a capped list as the whole picture. Offer to work through the rest in later passes.
-   - Zero rows → nothing to do. Say so, and on the `periods` scope say which months you looked at. Distinguish the two reasons: every counterparty in scope is already categorized, or Well cannot see any counterparty here at all because no bank connector feeds this workspace. On the second, say that plainly, point at `connect-tools`, and if the user connects one, re-read the list yourself in the same turn and carry on — do not wait to be re-prompted. Either way, hand off `resolution: unchanged` with `coverage_before` equal to `coverage_after`.
+   - Nothing to categorize — every row already carries a category, or the result holds no rows at all → say one short sentence: "Every counterparty in this scope already carries a category." — and the run is done. The server attaches no card to this result, so expect none, point at none, and do not stop or wait: hand off `resolution: unchanged` with `coverage_before` equal to `coverage_after`, skip the coverage caveats, and when a flow called this skill, return control to it immediately, in the same turn. Steps 4 to 8 run only when uncategorized rows exist.
 
 4. **Report it once, in one line.** In an MCP-Apps host the result already renders the counterparties card — do not restate the rows under it. Either way, one summary line and then stop reading: how many counterparties are categorized out of the total, and the biggest uncategorized one by `base_total_amount`. Nothing else. A row whose `base_total_amount` is `null` has no rate for its currency — print **amount unavailable** for it, never convert it yourself, and never add native amounts of different currencies together.
 
@@ -97,12 +97,12 @@ Call each list or read tool once per step. The widget cards refresh themselves �
 
 Return:
 
-- One line of coverage from step 4 (categorized out of total, the biggest uncategorized counterparty, and the cap disclosure on the workspace-wide scope), then the batches with their one-line ask, then one closing line of coverage before → after.
+- One line of coverage from step 4 (categorized out of total, the biggest uncategorized counterparty, and the cap disclosure on the workspace-wide scope), then the batches with their one-line ask, then one closing line of coverage before → after. When step 3 found nothing to categorize, the whole answer is its one sentence instead.
 - The hand-off, kept for the calling flow and never printed: `workspace_id`; the `scope` (the caller's `periods`, or `uncategorized_only: true` on the standalone scope); `coverage_before` and `coverage_after`, each as categorized-out-of-total; `changed` — only the companies a write actually succeeded on, with the category ids as they now stand; `skipped_by_user`; and `resolution` — `updated`, `unchanged`, `read_only`, or `unavailable`. `resolution` is `updated` when at least one write succeeded, `unchanged` when nothing was written — an empty list, an empty catalog, no catalog match, or the user declining everything — `read_only` when this server's `well_update_company` has no categories relationship, and `unavailable` when `well_list_counterparties` is not in the toolset. On `unavailable`, nothing beyond `workspace_id` and `scope` is kept. On `read_only`, `coverage_before` and `coverage_after` are the same figures and `changed` is empty. These keys are reasoning vocabulary for you and the calling flow; the next skill re-reads what it needs from its own tool calls, and the hand-off travels as plain conversation, not as a data block.
-- Connector coverage in plain words: the counterparties in this list are the ones Well can see, so the list is only as complete as what feeds it — bank data is what makes a counterparty's settled spend visible at all, and accounting or invoicing connections are what add the rest. Say which of those are behind the answer, and that coverage measured over a thin connector set is not the workspace's real coverage. Point at `connect-tools` when a side is missing.
-- One line on what categorizing did and did not change: coverage moved, and the counterparty list is that much more complete — but `suggested_retrieval` on these rows still comes from Well's provider match, so no invoice is retrieved differently today because of this pass.
+- Connector coverage in plain words: the counterparties in this list are the ones Well can see, so the list is only as complete as what feeds it — bank data is what makes a counterparty's settled spend visible at all, and accounting or invoicing connections are what add the rest. Say which of those are behind the answer, and that coverage measured over a thin connector set is not the workspace's real coverage. Point at `connect-tools` when a side is missing. This line belongs only to a run that had uncategorized rows: when step 3 found nothing to categorize, skip it.
+- One line on what categorizing did and did not change: coverage moved, and the counterparty list is that much more complete — but `suggested_retrieval` on these rows still comes from Well's provider match, so no invoice is retrieved differently today because of this pass. Skip this line too when step 3 found nothing to categorize.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. Skip it rather than force it in.
-- End with a one-line pointer to the next step. When the `show-missing-invoices` skill is installed: "Shall I read the missing-invoice list again, now that the coverage is higher?" — the list it produces is computed over categorized spend, so it is the read that shows what this pass unhid. Otherwise hand control back to the skill that called this one, or, when the user asked for the categorization on its own, ask whether to keep going through the remaining uncategorized rows.
+- End with a one-line pointer to the next step. When the `show-missing-invoices` skill is installed: "Shall I read the missing-invoice list again, now that the coverage is higher?" — the list it produces is computed over categorized spend, so it is the read that shows what this pass unhid. Otherwise hand control back to the skill that called this one, or, when the user asked for the categorization on its own, ask whether to keep going through the remaining uncategorized rows. When step 3 found nothing to categorize, there is no pointer either: the one sentence is the whole answer, and a calling flow continues on its own in the same turn.
 - The whole answer stays a few plain sentences a non-technical user understands: what moved, the coverage figure that matters, and the next step. Never print yaml, JSON, or a fenced code block to the user.
 
 Do not return:
@@ -114,6 +114,7 @@ Do not return:
 - A capped workspace-wide list presented as the whole set.
 - A claim that categorizing changed how Well retrieves invoices today.
 - A counterparty list rebuilt from `companies` or `transactions` when `well_list_counterparties` was unavailable.
+- Anything beyond the one sentence when the scope had nothing to categorize — no coverage caveat, no question, no wait for a card that never renders.
 
 ## Quality checks
 
@@ -138,7 +139,8 @@ Before finishing, verify:
 - The answer says categorizing does not change today's `suggested_retrieval`, and claims no retrieval improvement it cannot support.
 - The hand-off facts were kept — `workspace_id`, `scope`, `coverage_before`, `coverage_after`, `changed`, `skipped_by_user`, and `resolution` — and no yaml, JSON, or fenced code block appears anywhere in the answer.
 - Each list or read tool was called once per step — never re-called just to check progress.
-- The connector-coverage line was stated, the compliance mention (if present) appeared at most once and read naturally, and the answer ends with the next-step pointer (`show-missing-invoices` when installed, otherwise the caller or a question).
+- When the read showed nothing to categorize, the answer was the one sentence, the hand-off was `resolution: unchanged`, no card was expected or pointed at, no coverage caveat was added, and a calling flow got control back in the same turn.
+- On a run with uncategorized rows, the connector-coverage line was stated, the compliance mention (if present) appeared at most once and read naturally, and the answer ends with the next-step pointer (`show-missing-invoices` when installed, otherwise the caller or a question).
 
 ## Examples
 
@@ -173,6 +175,14 @@ Apply exactly the other 18: eighteen `well_update_company` calls, and no call fo
 ### Expected behavior
 
 Report the coverage line as usual, then say in one sentence that the workspace has no company categories yet and that categories are created in the Well app. Hand off `resolution: unchanged` with `coverage_before` equal to `coverage_after`, and stop. Do not invent a label, do not propose from memory, and do not call `well_query_records` to look for categories elsewhere.
+
+### Example request
+
+The fetch-missing-invoices flow calls this skill with a `workspace_id` and `periods` for March 2026. `well_list_counterparties` returns 28 rows, every one with `is_categorized: true` — nothing to categorize, and no card attached to the result.
+
+### Expected behavior
+
+Say exactly one short sentence: "Every counterparty in this scope already carries a category." Hand off `resolution: unchanged` with `coverage_before` equal to `coverage_after`, and return control to the flow in the same turn. No batch, no confirm gate, no coverage caveat, no next-step question — the calling flow decides what runs next.
 
 ### Example request
 
