@@ -1,6 +1,6 @@
 ---
 name: rank-clients-by-ltv
-requires: [define-workspace, connect-tools, resolve-own-company]
+requires: [define-workspace, connect-tools, resolve-own-company, normalize-currency]
 description: Rank customers by total realized revenue paid to date — sum of paid invoices per customer — using Well's MCP financial graph, backed by real invoice data rather than guesswork. Use when the user asks "rank our clients by lifetime value", "who are our best customers", "rank clients by revenue", "biggest customers", "customer lifetime value", or "which customers have paid us the most". This is a realized-revenue ranking (paid invoices to date), not a predictive churn/retention-based LTV model. Requires a connected Well workspace with invoicing data and a resolvable `own_company`; if either is missing, this skill walks the user through connecting one or confirming their company first.
 ---
 
@@ -47,13 +47,14 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 - `well_list_connectors` — how `connect-tools` surfaces install links. Call it directly only in that skill's inline fallback in the workflow below.
 - Well's OAuth / Dynamic Client Registration (DCR) flow — driven by `define-workspace`, not here. Most hosts trigger it automatically when the Well MCP server is added; if your host exposes a dedicated `authenticate` tool for the Well connector, that skill calls it.
 
-**Composed skills.** Two atomic Well skills own the setup this skill used to inline — invoke them, don't reimplement them:
+**Composed skills.** Four atomic Well skills own the setup this skill used to inline — invoke them, don't reimplement them:
 
 - `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there's no connection yet, and pins exactly one workspace. Supplies the `workspace_id` that every later call carries.
 - `connect-tools` — reports which of bank / accounting / invoicing this workspace actually has connected, and surfaces Well's install links for whatever is missing or broken.
 - `resolve-own-company` — works out which company in the workspace is the user's own legal entity, folds in its duplicate records, and hands back the `identity_set` that decides which side of an invoice is a payable.
+- `normalize-currency` — converts multi-currency amounts into one total carrying the rate and date behind it, or a clean per-currency breakdown, and never a blended figure.
 
-All three ship with the `well-skills` plugin. This skill is also installable on its own, so steps 1 and 2 of the workflow each carry the inline fallback to use when they're absent.
+All four ship with the `well-skills` plugin. This skill is also installable on its own, so steps 1 and 2 of the workflow each carry the inline fallback to use when they're absent.
 
 ## Workflow
 
@@ -83,7 +84,9 @@ All three ship with the `well-skills` plugin. This skill is also installable on 
    - Paid invoices the workspace issued but whose `receiver_company_id` is null are real revenue with an unknown customer: keep them in the revenue total as a single "unattributed customer" row rather than dropping them, and never merge them into a named customer's figure.
    - **Invoices whose issuer and receiver are the same company** are not revenue. Keep them out of the ranking and out of the total, and note them once as a data-quality issue.
 
-7. **Normalize currency.** If results span more than one `local_currency`, either convert to one base currency via the `exchange_rates` root (stating the rate/date used) or report totals per currency — never blend currencies silently.
+7. **Normalize currency — run `normalize-currency`.** If results span more than one currency, invoke the `normalize-currency` skill with the pinned `workspace_id`, the per-currency amounts, `target_currency` (default: the workspace's base currency), and `as_of` (default today). That skill owns the never-blend invariant, the rate read from `exchange_rates`, the most-recent-rate-at-or-before-`as_of` fallback, and the rule that every converted figure carries the rate and date behind it. Report its `converted_total` with those rates, or its `per_currency` breakdown — never a blended total.
+   - `partial: true` means a currency had no rate in Well. Name it and say the total covers the rest, rather than letting a quietly smaller total read as complete.
+   - **If `normalize-currency` isn't installed**, do it inline: group amounts per currency first, then either convert via the `exchange_rates` root — using the most recent rate at or before `as_of`, never a later one, and stating the rate and date used — or report totals per currency. Never blend currencies silently.
 
 8. **Sort and limit.** Sort customers descending by total paid revenue. Return the requested count, default top 10.
 
