@@ -1,0 +1,164 @@
+---
+name: well-design-system
+description: Style any view you compose for Well data — an artifact, an HTML page, a chart, a report — so it looks like Well rather than like a generic page. Use whenever you are about to render Well financial data visually and the host has not already drawn it for you. Supplies the token vocabulary, the card anatomy, and a precompiled stylesheet. Does not fetch data; pair it with whichever skill answers the question.
+---
+
+# Style a Well view
+
+## Purpose
+
+Well's own surfaces — the web app, the browser extension, the MCP widget bundle — all render
+from one design system. A view you compose yourself should be recognisable as the same
+product, not as a page that happens to contain the same numbers.
+
+This skill gives you the vocabulary to do that. It computes nothing and reads no data.
+
+## When to use this skill
+
+Use it when you are about to render Well data visually and nothing else has:
+
+- an artifact, an HTML page, or a standalone report
+- a chart or table you are drawing yourself
+- any view a `well_*` tool answered in prose, where a visual would read better
+
+## When not to use this skill
+
+- **The host already rendered the tool's own card.** Well's MCP tools return a UI resource
+  (`_meta.ui.resourceUri` → `ui://well/widget`), and a host that supports it draws the real
+  component — the same code the product ships. Do not redraw what is already on screen; say
+  what the card cannot, and stop. Composing a second view invites two versions of one number.
+- The answer is one sentence or one figure. A card around "EUR 412,900" helps nobody.
+- The user asked for raw data, a CSV, or a file to paste elsewhere.
+- You are editing Well's own codebase. There the design system is a package, not a
+  stylesheet: see `.claude/standards/design-system-reuse-standard.md` in `WellApp-ai/platform`.
+
+## Inputs
+
+The data you are rendering, from whichever skill produced it. This skill adds no inputs of
+its own.
+
+## Tooling
+
+`assets/well.css`, packaged alongside this file.
+
+**Link or inline the file. Never read it into context** — it is ~116 KB of compiled CSS and
+tells you nothing the vocabulary below does not. In an artifact, inline it in a `<style>`
+block or link it; everything else on this page is what you need to write the markup.
+
+`assets/well-tokens.css` is the same palette as plain custom properties, for
+a surface that cannot use utility classes and must write inline styles.
+
+If the stylesheet is missing — some install paths copy only this file — fetch it from
+`https://raw.githubusercontent.com/WellApp-ai/skills/main/skills/well-design-system/assets/well.css`.
+
+## The vocabulary
+
+The system is **dark**. Surfaces are near-black, text is near-white, and colour carries
+meaning rather than decoration.
+
+**Surfaces** — the page is `bg-surface-level-0`; each nested layer steps up:
+
+| Class | Use |
+|---|---|
+| `bg-surface-level-0` | the page itself |
+| `bg-surface-level-1` | a panel resting on the page |
+| `bg-surface-level-2` | something raised above a panel |
+| `bg-bg-subtle` | a card's translucent wash |
+
+**Text** — contrast descends with importance: `text-text-primary` for the figure that
+matters, `text-text-secondary` for labels, `text-text-tertiary` for captions and units.
+
+**Meaning** — `text-text-success`, `text-text-warning`, `text-text-danger`, `text-text-info`.
+Use them for what a number *means* — a negative runway, a stale sync — never to brighten a
+layout. Each has a matching `bg-bg-*` wash for a chip or a banner.
+
+**Borders** — `border-border-low` separates; `border-border-strong` emphasises. A card
+carries `border` plus `border-border-low`, nothing heavier.
+
+**Categorical** — for series that differ without ranking (spend by category, one colour per
+vendor), use `bg-cat-1` … `bg-cat-8` in order, with `text-cat-N-fg` on top. Never reach for
+a semantic colour to distinguish two neutral categories.
+
+**Type** — `text-xs` `text-sm` `text-md` `text-lg` `text-xl` `text-2xl` `text-3xl`. The
+title tiers carry their own weight; do not add `font-bold` to a heading.
+
+**Do not** write a hex value, a raw Tailwind palette class (`bg-blue-500`), or an inline
+`font-size`. If a token seems missing, the nearest one is almost always right.
+
+## The card anatomy
+
+Well presents a result as a card, and every card has the same three parts:
+
+```html
+<div class="rounded-[14px] border border-border-low bg-bg-subtle overflow-hidden">
+  <div class="flex items-center justify-between px-4 py-3">
+    <div>
+      <div class="text-sm text-text-primary">Runway</div>
+      <div class="text-xs text-text-tertiary">as of 12 Aug 2026</div>
+    </div>
+    <span class="rounded-md bg-bg-warning px-2 py-1 text-xs text-text-warning">Partial</span>
+  </div>
+
+  <div class="px-4 pb-3">
+    <div class="text-3xl text-text-primary">7 months 12 days</div>
+    <div class="text-sm text-text-secondary">EUR 412,900 cash · EUR 55,300/mo burn</div>
+  </div>
+
+  <div class="flex items-center gap-3 px-4 py-3">
+    <span class="text-xs text-text-tertiary">3 accounts</span>
+    <span class="ml-auto text-sm text-text-secondary">View details</span>
+    <span class="rounded-md bg-bg-primary px-3 py-1.5 text-sm text-text-invert">Open in Well</span>
+  </div>
+</div>
+```
+
+Three rules that matter more than the markup:
+
+1. **`rounded-[14px]` is the card radius.** Not `rounded-lg`, not `rounded-xl`.
+2. **The header's trailing slot carries status, never a decision.** A badge belongs there;
+   a button does not.
+3. **The footer reads counter, then secondary, then primary** — left to right, with the
+   primary action hard against the trailing edge.
+
+## Output requirements
+
+The view you compose must:
+
+- state the figure that answers the question as the largest thing on the card
+- keep its provenance — the as-of date, the window, what was excluded — visible rather than
+  dropped for tidiness
+- use a semantic colour only where the data carries that meaning
+- render legibly at ~420px wide, the width a chat surface gives you
+
+## Quality checks
+
+Before returning the view, verify:
+
+- No hex value, no raw Tailwind palette class, no inline `font-size` anywhere in the markup.
+- The stylesheet is linked or inlined, and was not read into context.
+- Cards use `rounded-[14px]`, `bg-bg-subtle`, and a single `border-border-low`.
+- Every caveat the tool surfaced — `partial`, `excluded`, `hints`, staleness — appears in
+  the view. A card that renders a partial number as a clean one is worse than prose.
+- You did not redraw something the host already rendered from the tool's own UI resource.
+
+## Examples
+
+### Example request
+
+"Show me our runway as a card I can drop into the board deck."
+
+### Expected behavior
+
+Get the figures through `runway-calculator`, then compose one card: the months-and-days
+headline in `text-3xl text-text-primary`, cash and burn beneath it in `text-text-secondary`,
+the as-of date as a caption, and a `bg-bg-warning` chip if the tool reported `partial`.
+Inline `assets/well.css`; do not read it.
+
+### Example request
+
+"What's my runway?" — in a host that rendered the tool's own card.
+
+### Expected behavior
+
+Do not compose anything. The card on screen is the product's own component. Add what it
+does not say — which connectors are missing, what the burn window was — in prose, and stop.

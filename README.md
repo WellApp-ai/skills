@@ -58,6 +58,7 @@ This repo packages that judgment as **Agent Skills** — playbooks any AI assist
 | `define-workspace` | "Which entity are we talking about?" — pins the one Well workspace a conversation works in and hands it to every skill that follows. | [View details →](docs/define-workspace.md) |
 | `connect-tools` | "What's connected to Well?" — bank, accounting, and invoicing sources: connected, still syncing, in error, or missing, with one-click connect links. | [View details →](docs/connect-tools.md) |
 | `resolve-own-company` | "Which company here is ours?" — resolves the own-company pointer that decides payable from receivable, and folds in an entity's duplicate records. | [View details →](docs/resolve-own-company.md) |
+| `well-design-system` | Style a view you compose for Well data — tokens, card anatomy, and a precompiled stylesheet — so it looks like Well rather than a generic page. | [View details →](docs/well-design-system.md) |
 
 ---
 
@@ -167,6 +168,7 @@ Download the `.skill` file and double-click it to install — Claude Desktop ins
 | `define-workspace` | Pin the one Well workspace a conversation works in and hand it to every skill that follows. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/define-workspace.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/define-workspace.zip) |
 | `connect-tools` | Check bank, accounting, and invoicing connections and connect the missing ones in one click. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/connect-tools.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/connect-tools.zip) |
 | `resolve-own-company` | Work out which company in the workspace is yours, and fold in its duplicate records. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/resolve-own-company.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/resolve-own-company.zip) |
+| `well-design-system` | Style a composed view with Well tokens and card anatomy. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/well-design-system.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/well-design-system.zip) |
 
 ##### For Advanced Users
 

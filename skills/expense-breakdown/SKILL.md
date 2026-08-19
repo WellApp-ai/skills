@@ -105,6 +105,12 @@ Return:
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 8's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
 
+**How this reaches the user.** Well's MCP tools return a UI resource alongside their data,
+and a host that supports it draws the product's own card. When that happened, do not restate
+the card's figures as prose — add only what it cannot say, such as which connectors are still
+missing. When it did not, prose is the default; reach for `well-design-system` only if a
+visual genuinely reads better, and never for a single figure.
+
 ## Quality checks
 
 Before finishing, verify:

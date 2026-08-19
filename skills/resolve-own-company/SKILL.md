@@ -119,6 +119,12 @@ Do not return:
 - A guess when the user declined to confirm.
 - Any figure computed from invoice data.
 
+**How this reaches the user.** Well's MCP tools return a UI resource alongside their data,
+and a host that supports it draws the product's own card. When that happened, do not restate
+the card's figures as prose — add only what it cannot say, such as which connectors are still
+missing. When it did not, prose is the default; reach for `well-design-system` only if a
+visual genuinely reads better, and never for a single figure.
+
 ## Quality checks
 
 Before finishing, verify:
