@@ -7,7 +7,7 @@ description: Pin the calendar month or months — and the fiscal coordinates beh
 
 ## Purpose
 
-Fix which month or months a job works on, and make that selection live **server-side**, where the period-scoped tools read it. The period picker card's **Validate** click writes the selection itself (it calls `well_switch_workspace` with `periods`); no chat message arrives from the card, and this skill reads the click back with `well_wait_for_selection`. A typed month is written the same way, by calling `well_switch_workspace({ periods })` directly. Once the selection is written, the later reads (`well_list_missing_invoices`, `well_preview_invoice_fetch`) are called **without** a periods argument — the server holds the user's selection. Read only otherwise: derive each month's fiscal coordinate, check for activity, and hand off. Third step of Well's fetch-missing-invoices flow, after `define-workspace` and `connect-tools`.
+Fix which month or months a job works on, and make that selection live **server-side**, where the period-scoped tools read it. The period picker card's **Validate** click writes the selection itself (it calls `well_switch_workspace` with `periods`) and prefills a confirmation — "Work on <Month Year> and <Month Year>" — in the user's composer; the user sends it, and that message is how the skill resumes. A typed month is written the same way the click writes it, by calling `well_switch_workspace({ periods })` directly. Once the selection is written, the later reads (`well_list_missing_invoices`, `well_preview_invoice_fetch`) are called **without** a periods argument — the server holds the user's selection. Read only otherwise: derive each month's fiscal coordinate, check for activity, and hand off. Third step of Well's fetch-missing-invoices flow, after `define-workspace` and `connect-tools`.
 
 ## When to use this skill
 
@@ -44,9 +44,9 @@ The calling skill or the user provides:
 
 Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). If the `well_*` tools are not in your toolset, the host has not added the Well MCP server yet — tell the user to add it at that URL, then retry.
 
-- `well_list_periods` — **only when it is present in your toolset.** It returns the workspace's periods with their fiscal coordinates and state, and in MCP-Apps hosts its result renders the period picker card (months are multi-select); pass `title` / `subtitle` through when the tool accepts them. The card's **Validate** click calls `well_switch_workspace` with the picked `periods` itself — the selection lands server-side, and no chat message arrives. Check for the tool by name before you plan around it.
+- `well_list_periods` — **only when it is present in your toolset.** It returns the workspace's periods with their fiscal coordinates and state, and in MCP-Apps hosts its result renders the period picker card (months are multi-select); pass `title` / `subtitle` through when the tool accepts them. The card's **Validate** click calls `well_switch_workspace` with the picked `periods` itself — the selection lands server-side — and prefills "Work on <Month Year> and <Month Year>" in the user's composer. Check for the tool by name before you plan around it.
 - `well_switch_workspace({ periods: [{ calendar_year, calendar_month }, …] })` — how a period selection is **written**. The card's click calls it; call it yourself when a hint or a typed answer resolves the months, so the selection is just as live as a clicked one. It is the same tool that pins workspaces; passing only `periods` leaves the workspace pin untouched. If the server rejects `periods` (an older server), carry the selection in the conversation instead and pass it explicitly to the later reads — the one case where they still take a periods argument.
-- `well_wait_for_selection({ kind: "periods", timeout_s? })` — the read that pairs with the card. It blocks until the user's click writes the selection and returns `{ status: "selected", selection: { periods } }`, or `{ status: "no_selection_yet" }` when the timeout (about 45 seconds) passes first — a normal result, not an error. If the tool is absent, degrade: end the turn after rendering the card and resync from `well_list_workspaces`' `session.selected_periods` on the user's next message.
+- `well_wait_for_selection({ kind: "periods", timeout_s? })` — a cheap read of the user's click, for when a later message is not the card's prefill. An already-made selection returns instantly as `{ status: "selected", selection: { periods }, already_set: true }`; when nothing is set yet it waits briefly (default 10 seconds) and returns `{ status: "no_selection_yet" }` — a normal result, not an error. Never call it in the turn that renders the picker, and never use it as a long wait. If the tool is absent, resync from `well_list_workspaces`' `session.selected_periods` instead.
 - `well_list_workspaces` — for resync only: its `session.selected_periods` is the selection as the server currently holds it.
 - `well_get_schema` + `well_query_records` on root `transactions` — the activity probe, and the fallback picker when `well_list_periods` is absent. Call `well_get_schema({ root: "transactions" })` once per session and read the date fields from the result rather than assuming them. Range on `executed_at`, and on that field alone: it is the non-null settlement date Well buckets a transaction's month by, and it already falls back through `booking_date` then `value_date` at ingest. `booking_date` is nullable and is *not* the month field — on the rows where the two disagree it belongs to a different month, so widening the probe with it reports activity the selection does not hold. Only when the schema exposes no `executed_at` should you range on `booking_date` instead, and then say the probe is approximate. The probe answers one boolean — does the selection hold any bank activity — never a count and never a figure.
 
@@ -63,7 +63,7 @@ fiscal_year   = calendar_month >= fiscal_year_start_month ? calendar_year : cale
 
 ## Workflow
 
-Call each list or read tool once per step, and render at most one widget card per turn. The cards refresh themselves and print no chat text — a click is read back with `well_wait_for_selection`, never waited for as a message.
+Call each list or read tool once per step, and render at most one widget card per turn. The cards refresh themselves. A card click executes server-side and prefills a message in the user's composer — rendering a card therefore ends the turn, and the sent message is how the skill resumes.
 
 1. **Confirm the MCP server is configured.** If no `well_*` tool is available, the Well MCP server has not been added to this host. Tell the user a Well connection is mandatory — endpoint `https://api.wellapp.ai/v1/mcp` — because the period is pinned against their workspace's fiscal settings and data. Stop until it is there.
 
@@ -77,15 +77,14 @@ Call each list or read tool once per step, and render at most one widget card pe
    - **Several months named** ("March and April", "Q1", "the first quarter") → a legal selection: resolve each month and write them all in one `periods` list, oldest first. `resolution: hint_matched`.
    - A month that has not started yet → refuse it in one line, name the last complete month instead, and let the picker or the user's answer decide. Do not pin a future month.
 
-4. **With no usable hint, render the picker and wait — in the same turn.**
-   - When `well_list_periods` is in your toolset, call it (with `workspace_id`, and `title` / `subtitle` when supported). Its result renders the period picker card — do not restate the periods under it and do not ask "which month?" in text; the card is the question. Call `well_wait_for_selection({ kind: "periods" })` in the same turn:
-     - `{ status: "selected", selection }` → the click already wrote `selection.periods` server-side (never re-write it). Narrate the pick in one short sentence — one month or several — and continue to step 6. `resolution: user_picked`.
-     - `{ status: "no_selection_yet" }` → end the turn with one line: pick the month (or months) on the card, then say continue. Use `purpose` when the caller gave one. Nothing else in the turn.
+4. **With no usable hint, end the turn on the picker.**
+   - When `well_list_periods` is in your toolset, call it (with `workspace_id`, and `title` / `subtitle` when supported). Its result renders the period picker card — do not restate the periods under it and do not ask "which month?" in text; the card is the question. End the turn with one short line: pick the month or months on the card, then send the message it prepares. Use `purpose` when the caller gave one. Nothing else in the turn. The **Validate** click writes the selection server-side and prefills "Work on <Month Year> and <Month Year>" in the composer.
    - When the tool is absent, propose the **last complete month** in one line and ask the user to confirm or name another: "March 2026 is the last complete month — work on that?" Stop and wait. On a confirmation, write it with `well_switch_workspace({ periods: [...] })`, `resolution: single`.
 
-5. **Resync on the user's next message after a stop.** Do not re-ask:
-   - The message names a month or months → treat it as step 3's typed path: resolve, write with `well_switch_workspace({ periods })`, `resolution: user_picked`.
-   - The message says continue, or anything else that needs the period → call `well_list_workspaces()` once and read `session.selected_periods` (or re-call `well_wait_for_selection({ kind: "periods" })` once instead). A selection is there → the click landed; narrate it and continue. Still nothing → give the same click-then-continue line once more.
+5. **Resolve the next message after the card.** In this order, and never by re-asking:
+   - The message is the card's prefill ("Work on <Month Year> …") → the click already wrote the selection server-side. Acknowledge in half a sentence and continue to step 6 — never re-verify with an extra tool call what the prefill already states, and never re-write the selection. `resolution: user_picked`.
+   - The message names a month or months in its own words → step 3's typed path: resolve, write with `well_switch_workspace({ periods })`, `resolution: user_picked`.
+   - Any other message that needs the period → call `well_wait_for_selection({ kind: "periods", timeout_s: 10 })` once. `selected` (fresh or `already_set`) → the click landed; narrate it and continue. `no_selection_yet` → one line asking to click the card, end the turn.
    - A decline ("later") → `resolution: unresolved`. Say nothing was pinned and stop; do not run any period-scoped read.
 
 6. **Compute the coordinates, then check the selection holds anything.** For each selected month:
@@ -125,13 +124,13 @@ Before finishing, verify:
 - `workspace_id` came from `define-workspace` (or the caller) and was passed on every call — the workspace was not resolved or asked for in text here.
 - A `session.selected_periods` already set was reused silently — the picker was not re-asked for a month the user already clicked.
 - Every resolved selection ended up server-side: written by the card's click, or by one `well_switch_workspace({ periods })` call on a hint or typed answer — and a click-written selection was not re-written.
-- With no hint, the picker rendered and `well_wait_for_selection({ kind: "periods" })` was called in the same turn; a `no_selection_yet` ended the turn with one click-then-continue line.
+- With no hint, the picker rendered and the turn ended with one card-pointing line; no wait tool was called in that turn, and no text question replaced the card.
 - `well_start_close` — and every other close, lock, or posting tool — was not called.
 - `fiscal_period` and `fiscal_year` came from the formula for every selected month, with `fiscal_year_start_month` defaulted to 1 and the assumption disclosed when it was null; period 13 was never produced.
 - Each `date_range` runs from the month's first day to its real last day, leap years included; a running month kept `is_complete: false` and was not swapped for the previous one.
 - A future month was refused; several months named resolved to one written selection, oldest first.
 - `has_activity` is `unknown` — not `false` — when the read failed or no bank connector is connected, and the probe ranged `executed_at` alone over the whole selection.
-- After a stop, the next message was resynced from `session.selected_periods` (or one re-called wait), not re-asked.
+- After the card, a prefill message was taken at its word with no extra verification call; any other message got one `well_wait_for_selection({ kind: "periods", timeout_s: 10 })` call; nothing was re-asked in text.
 - On a transient failure the call was retried once before the fallback link.
 - The hand-off facts were kept with `resolution` set, and no yaml, JSON, or fenced code block appears anywhere in the answer.
 - Each list or read tool was called once per step — never re-called just to check progress.
@@ -154,15 +153,15 @@ The fetch-missing-invoices flow calls define-period with the Acme SAS `workspace
 
 ### Expected behavior
 
-Call `well_list_periods({ workspace_id, title, subtitle })` — the picker card renders — then `well_wait_for_selection({ kind: "periods" })` in the same turn. The user clicks **Validate** on February 2026 within the wait: the click wrote the selection, the wait returns it. Narrate "Working on **February 2026** — fiscal year 2026, period 2." and continue with `resolution: user_picked`. Had the wait returned `no_selection_yet`, the turn ends with one line: "Pick the month on the card, then say continue."
+Call `well_list_periods({ workspace_id, title, subtitle })` — the picker card renders. End the turn with one line: "Pick the month on the card, then send the message it prepares." The user clicks **Validate** on February 2026 and sends the prefilled "Work on February 2026": the click already wrote the selection. Narrate "Working on **February 2026** — fiscal year 2026, period 2." and continue with `resolution: user_picked` — no verification read.
 
 ### Example request
 
-The user clicks **Validate** with March and April 2026 both selected.
+The user clicks **Validate** with March and April 2026 both selected and sends the prefilled "Work on March 2026 and April 2026".
 
 ### Expected behavior
 
-The wait returns `selection.periods` with both months. Derive both fiscal coordinates, probe activity once over 2026-03-01 to 2026-04-30, and answer: "Working on **March and April 2026** — fiscal periods 3 and 4. March is complete; April is still running, so anything read for it is partial." Keep `resolution: user_picked` with both entries in `periods`. The later reads cover the whole selection without naming it.
+The click already wrote both months server-side. Derive both fiscal coordinates, probe activity once over 2026-03-01 to 2026-04-30, and answer: "Working on **March and April 2026** — fiscal periods 3 and 4. March is complete; April is still running, so anything read for it is partial." Keep `resolution: user_picked` with both entries in `periods`. The later reads cover the whole selection without naming it.
 
 ### Example request
 

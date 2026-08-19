@@ -7,7 +7,7 @@ description: Get a bank account connected to a Well workspace and confirm the fe
 
 ## Purpose
 
-Get the bank feed in, and say plainly whether it is live. One tool does the whole job: `well_list_connectors` scoped to `kind` `bank` returns Well's bank catalog — Plaid institutions and Well's native bank connectors — with the workspace's own bank connections represented on their catalog rows, and in an MCP-Apps host that result renders as the connect picker card showing banks only. It runs as its own step in Well's fetch-missing-invoices flow, right after `connect-tools`, because settled bank spend is what every missing invoice is measured against, and because a bank connection is the slowest one a user makes. As a flow step this is **always a user stop, connected banks included**: the card renders, and the flow moves on only when the user clicks the card's **Continue** button, which writes an acknowledgment server-side (`well_switch_workspace` with `ack: "bank"`) that this skill reads back with `well_wait_for_selection`. No chat message arrives from the card.
+Get the bank feed in, and say plainly whether it is live. One tool does the whole job: `well_list_connectors` scoped to `kind` `bank` returns Well's bank catalog — Plaid institutions and Well's native bank connectors — with the workspace's own bank connections represented on their catalog rows, and in an MCP-Apps host that result renders as the connect picker card showing banks only. It runs as its own step in Well's fetch-missing-invoices flow, right after `connect-tools`, because settled bank spend is what every missing invoice is measured against, and because a bank connection is the slowest one a user makes. As a flow step this is **always a user stop, connected banks included**: the card renders with a per-row **Connect** button on each bank tile and one **Continue** button. The Continue click writes an acknowledgment server-side (`well_switch_workspace` with `ack: "bank"`) and prefills "Continue" in the user's composer; the user sends it, and that message is how the flow moves on.
 
 ## When to use this skill
 
@@ -49,7 +49,7 @@ The default view is curated and matched-first, so a bank outside it needs `q` �
 
 The click-chain tools:
 
-- `well_wait_for_selection({ kind: "bank_ack", timeout_s? })` — blocks until the user clicks the bank card's **Continue** button (the card calls `well_switch_workspace` with `ack: "bank"` itself). Returns `{ status: "selected", selection: { acknowledged: true } }`, or `{ status: "no_selection_yet" }` when the timeout (about 45 seconds) passes first — a normal result, not an error. If the tool is absent, degrade: end the turn after the bank line and treat the user's next continue-message as the acknowledgment.
+- `well_wait_for_selection({ kind: "bank_ack", timeout_s? })` — a cheap read of the Continue click (the card calls `well_switch_workspace` with `ack: "bank"` itself), for when a later message is not the card's "Continue" prefill. An already-made ack returns instantly as `{ status: "selected", selection: { acknowledged: true }, already_set: true }`; when nothing is set yet it waits briefly (default 10 seconds) and returns `{ status: "no_selection_yet" }` — a normal result, not an error. Never call it in the turn that renders the card, and never use it as a long wait. If the tool is absent, treat the user's next continue-message as the acknowledgment.
 - `well_list_workspaces` — for resync only: its `session` block carries the pinned workspace and queue.
 
 **Never call `well_query_records` on `workspace_connectors` in this skill.** That root is for record-level reads — timestamps, filters, joins — and querying it here renders a records table where the connect picker belongs, which is the wrong surface for a connect step and carries no install link. Everything this skill needs is on the catalog row. Never call `well_invoke_connector_tool` or any provider-specific tool either.
@@ -67,7 +67,7 @@ The click-chain tools:
 
 ## Workflow
 
-Call each list or read tool once per step, and render at most one widget card per turn. The cards refresh themselves and print no chat text — the Continue click is read back with `well_wait_for_selection`, never waited for as a message.
+Call each list or read tool once per step, and render at most one widget card per turn. The cards refresh themselves. The Continue click executes server-side and prefills "Continue" in the user's composer — rendering the card therefore ends the turn, and the sent message is how the flow moves on.
 
 1. **Confirm the MCP server is configured.** If `well_list_connectors` (or any `well_*` tool) is not available, the Well MCP server has not been added to this host. Tell the user a Well connection is mandatory — endpoint `https://api.wellapp.ai/v1/mcp` — because bank connections are made and tracked in Well. Stop until it is there.
 
@@ -80,14 +80,16 @@ Call each list or read tool once per step, and render at most one widget card pe
    - Only **error** rows → **error**. Name the bank and offer its `install_url` as a reconnect, not a first install.
    - No qualifying row → **missing**, including a `to_configure` row the user started but never finished authorizing.
 
-4. **State the bank once, then wait on the card — in the same turn.** One line: the bank's state and why it matters for the job (`purpose`) — for a missing-invoice or close job, that settled bank spend is what the gaps are measured against. Do not restate the banks or re-render them as a list or table: the card carries the tiles and the install links. Even a cleanly connected bank shows its card and stops here, so the user sees and confirms the feed the flow is about to measure against. Then, as a flow step, call `well_wait_for_selection({ kind: "bank_ack" })` in the same turn:
-   - `{ status: "selected" }` → the user clicked **Continue**. Narrate in one short sentence and move on. A bank connected during the stop shows on the refreshed card and lands in the later steps' own reads; the hand-off's `state` describes the read that rendered the card.
-   - `{ status: "no_selection_yet" }` → end the turn with one line: connect the bank from the card if it is missing, then click Continue — or say continue here. Nothing else in the turn.
+4. **State the bank once, then end the turn on the card.** One line: the bank's state and why it matters for the job (`purpose`) — for a missing-invoice or close job, that settled bank spend is what the gaps are measured against — then one closing line: connect the bank from the card if it is missing, then click Continue. Do not restate the banks or re-render them as a list or table: the card carries the tiles and the install links. Even a cleanly connected bank shows its card and stops here, so the user sees and confirms the feed the flow is about to measure against. Nothing else in the turn.
    - When the user asked about the bank standalone (nothing follows), the bank line ends the turn — the card is on screen, and there is nothing to chain.
    - In a text-only host, give the `install_url` for at most three banks — the user's hint first (found with `q` when it is outside the default view), then the `is_preselected` rows — and treat the user's next message as the answer.
    - If the user names a bank that is not in the default view, search it with `q` before saying Well cannot connect it. A row whose `status` is not `available` is not connectable today — say so and offer the nearest available bank connector rather than a dead link.
 
-5. **Resync on the user's next message after a stop.** Do not re-ask: re-call `well_wait_for_selection({ kind: "bank_ack" })` once — the click may have landed before they typed. Ack there, or the message itself says continue / done / connected → that is the acknowledgment; move on. When the user says in text they connected the bank, re-read the state once in that turn (that turn's one card) — a freshly connected bank usually reads **connecting**, which is enough to move the flow on, `resolution: connected_now`. If the user declines ("later", "skip the bank"), set `skipped_by_user: true`, `resolution: skipped`, and continue when `required` is `false`; when `required` is `true`, say plainly that the flow cannot continue without the bank feed and stop, keeping the hand-off so the caller reads `state` and decides.
+5. **Resolve the next message after the card.** In this order, and never by re-asking:
+   - The message is the card's "Continue" prefill, or says continue / done / connected in its own words → that is the acknowledgment; move on in one short sentence. No verification call is needed here — the next step's own read is the verification, and a bank connected during the stop lands in the later steps' own reads while the hand-off's `state` describes the read that rendered the card.
+   - The user says in text they connected the bank → re-read the state once in that turn (that turn's one card) — a freshly connected bank usually reads **connecting**, which is enough to move the flow on, `resolution: connected_now`.
+   - Any other message → call `well_wait_for_selection({ kind: "bank_ack", timeout_s: 10 })` once. `selected` (fresh or `already_set`) → the ack is in; move on. `no_selection_yet` → one line asking to click Continue on the card, end the turn.
+   - The user declines ("later", "skip the bank") → set `skipped_by_user: true`, `resolution: skipped`, and continue when `required` is `false`; when `required` is `true`, say plainly that the flow cannot continue without the bank feed and stop, keeping the hand-off so the caller reads `state` and decides.
 
 6. **On failure, redirect instead of guessing.** A transient error on `well_list_connectors` → retry once. A second failure → do not invent a bank state; hand off `resolution: unavailable` with `state: null`, give the user `<well-app-base-url>/workspaces/<workspace_id>`, and tell them the connections page in Well shows and fixes the same thing. Do not append query parameters you have not confirmed the app reads.
 
@@ -123,8 +125,8 @@ Before finishing, verify:
 - The state came from `direction: input` rows whose `data_domains` contains `bank`, read with the four-line state precedence — not from a name, a `category_id`, or `is_connected` alone.
 - A `need_reconnect` / `degraded` / `suspended` bank was reported as `error` even when it had synced before, and an errored account was named even when another bank was connected.
 - An absent `last_successful_sync_at` was degraded to `connected` on `enabled`, a rejected `kind` fell back to an unscoped read filtered on `data_domains`, and an unrecognized `connection_status` was reported as `error`, never as connected.
-- As a flow step, `well_wait_for_selection({ kind: "bank_ack" })` was called in the same turn as the bank read — a connected bank included — and the flow moved on only on the acknowledgment; a `no_selection_yet` ended the turn with one click-then-continue line.
-- After a stop, the next message re-called the wait once (or was itself read as the acknowledgment) instead of re-asking; a typed "I connected it" got one fresh read in that turn.
+- As a flow step, the turn ended on the card — a connected bank included — and the flow moved on only on the acknowledgment: the "Continue" prefill or a typed continue taken at its word with no extra call, or one `well_wait_for_selection({ kind: "bank_ack", timeout_s: 10 })` call on any other message.
+- A typed "I connected it" got one fresh read in that turn, and nothing was re-asked in text.
 - The gap was stated once; the banks were not narrated or re-tabulated when the card was on screen.
 - A bank the user named was searched with `q` before any "Well cannot connect it" claim.
 - On a transient failure the call was retried once; a second failure returned `resolution: unavailable` with `state: null` and the workspace link, not a guess.
@@ -142,7 +144,7 @@ The fetch-missing-invoices flow calls connect-bank with `workspace_id` of Acme S
 
 ### Expected behavior
 
-One `well_list_connectors({ workspace_id, kind: "bank" })` call renders the bank card. Say "Bank: connected — Qonto. That's the feed the March gaps are measured against — click Continue when you're ready." and call `well_wait_for_selection({ kind: "bank_ack" })` in the same turn. On the click, move on to the period step with `state: connected`, `resolution: already_connected`, `install_url: null`. The connected bank still showed its card and waited — the flow never skips this stop.
+One `well_list_connectors({ workspace_id, kind: "bank" })` call renders the bank card. Say "Bank: connected — Qonto. That's the feed the March gaps are measured against — click Continue when you're ready." and end the turn. The user clicks Continue and sends the prefilled "Continue": move on to the period step with `state: connected`, `resolution: already_connected`, `install_url: null`, and no verification call. The connected bank still showed its card and stopped — the flow never skips this stop.
 
 ### Example request
 
@@ -150,7 +152,7 @@ One `well_list_connectors({ workspace_id, kind: "bank" })` call renders the bank
 
 ### Expected behavior
 
-The scoped call returns no connected bank; the picker card is on screen with Well's recommended banks pre-checked. Say one line — "No bank connected yet, and March spend is what the missing invoices are measured against. Connect yours from the card, then click Continue." — and wait on `bank_ack`. The wait times out; end the turn. The user connects Qonto, clicks Continue, and types "done": re-call the wait once, the ack is there — say the first sync usually finishes in a few minutes and move on with `resolution: connected_now` after the fresh read confirms `connecting`.
+The scoped call returns no connected bank; the picker card is on screen with Well's recommended banks pre-checked. Say one line — "No bank connected yet, and March spend is what the missing invoices are measured against. Connect yours from the card, then click Continue." — and end the turn. The user connects Qonto from the card, then types "done, I connected Qonto": re-read the state once in that turn — it reads `connecting` — say the first sync usually finishes in a few minutes, and move on with `resolution: connected_now`.
 
 ### Example request
 
@@ -162,11 +164,11 @@ Report `state: error`, not connected: "Bank: Qonto is connected but its access e
 
 ### Example request
 
-The card shows the bank missing, the wait times out, and the user's next message is "continue anyway" with `required: false`.
+The card shows the bank missing, the turn ends, and the user's next message is "continue anyway" with `required: false`.
 
 ### Expected behavior
 
-Re-call the wait once; nothing clicked. The message is the answer: treat it as the acknowledgment over a missing bank — `resolution: acknowledged`, `state: missing` — and continue, saying the recap will be labelled as narrowed by the missing bank feed. Had the caller passed `required: true`, say the flow needs settled bank spend to measure anything against and stop.
+The message is a typed continue: treat it as the acknowledgment over a missing bank — `resolution: acknowledged`, `state: missing` — and continue, saying the recap will be labelled as narrowed by the missing bank feed. Had the caller passed `required: true`, say the flow needs settled bank spend to measure anything against and stop.
 
 ### Example request
 

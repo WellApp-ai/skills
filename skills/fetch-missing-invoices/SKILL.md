@@ -7,7 +7,7 @@ description: Walk Well's whole missing-invoice flow end to end — pin the works
 
 ## Purpose
 
-Run every step of Well's missing-invoice flow in one pass, in a fixed order: workspace → connections → bank → period → gap list → (categorization, on a thin list and a yes, → gap list again) → agent preview. The flow is **click-chained**: each picker or connect card the flow renders is answered by the user's click, which writes the choice server-side — no chat message arrives from a card — and the flow reads the click back with `well_wait_for_selection`. Every stop is explicit, the last step previews without launching, and a multi-workspace pick loops the whole walk one entity at a time.
+Run every step of Well's missing-invoice flow, in a fixed order: workspace → connections → bank → period → gap list → (categorization, on a thin list and a yes, → gap list again) → agent preview. The flow is **click-chained**: each picker or connect card the flow renders ends the turn, and the user's click writes the choice server-side AND prefills a message in their composer — "Continue in <name>", "Work on <Month Year> and <Month Year>", or "Continue" — which they send to move the flow on. Every stop is explicit, the last step previews without launching, and a multi-workspace pick loops the whole walk one entity at a time.
 
 This skill is **self-contained**: each step below carries everything the flow needs. Each step also exists as its own skill (`define-workspace`, `connect-tools`, `connect-bank`, `define-period`, `show-missing-invoices`, `categorize-counterparties`, `deploy-agents`) for solo use; this flow does not read them.
 
@@ -38,8 +38,8 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 The flow's tools, each owned by the step that calls it:
 
 - `well_list_workspaces` — the workspace read. Returns `workspaces[]` (`workspace_id`, `workspace_name`, `is_primary`, `identity` with `country`, `base_currency`, `fiscal_year_start_month`) plus `session: { pinned_workspace_id, workspace_queue, selected_periods }` — the server-held context the cards' clicks write. Renders the workspace picker card (multi-select tiles).
-- `well_switch_workspace` — the session write. Accepts `workspace_id`, `workspace_ids` (first = pin, rest = queue), `periods` (`[{ calendar_year, calendar_month }]`), and `ack` (`"connectors"` | `"bank"`). The widget cards call it on their **Use** / **Validate** / **Continue** clicks; the flow calls it itself only for typed answers, matched hints, and the multi-workspace re-pin between passes.
-- `well_wait_for_selection({ kind, timeout_s? })` — the click read. `kind` is `"workspace"`, `"periods"`, `"connect_ack"`, or `"bank_ack"`. Blocks until the matching click lands and returns `{ status: "selected", selection }` — workspace: `{ workspace_id, workspace_queue }`; periods: `{ periods }`; acks: `{ acknowledged: true }` — or `{ status: "no_selection_yet" }` on timeout (about 45 seconds), a normal result, not an error.
+- `well_switch_workspace` — the session write. Accepts `workspace_id`, `workspace_ids` (first = pin, rest = queue), `periods` (`[{ calendar_year, calendar_month }]`), and `ack` (`"connectors"` | `"bank"`). The widget cards call it on their **Use** / **Validate** / **Continue** clicks — and each click also prefills its message in the user's composer; the flow calls the tool itself only for typed answers, matched hints, and the multi-workspace re-pin between passes.
+- `well_wait_for_selection({ kind, timeout_s? })` — the click read, for a later message that is not a card's prefill. `kind` is `"workspace"`, `"periods"`, `"connect_ack"`, or `"bank_ack"`. An already-made selection returns instantly as `{ status: "selected", selection, already_set: true }` — workspace: `{ workspace_id, workspace_queue }`; periods: `{ periods }`; acks: `{ acknowledged: true }`; when nothing is set yet it waits briefly (default 10 seconds) and returns `{ status: "no_selection_yet" }`, a normal result, not an error. Never called in the turn that renders a card, never used as a long wait.
 - `well_list_connectors` — the ONLY tool the two connection steps call (never `well_query_records` on `workspace_connectors` — that renders a records table where the connect card belongs). Unscoped at step 2, `kind: "bank"` at step 3.
 - `well_list_periods` — the period picker read, when present.
 - `well_list_missing_invoices` and `well_preview_invoice_fetch`, when present — both called with `workspace_id` only, **no periods argument**: the server uses the clicked selection, and an error comes back only when no selection exists yet.
@@ -52,10 +52,10 @@ Never call `well_invoke_connector_tool`, any `well_create_*` / `well_delete_*`, 
 ## The click chain — rules that govern every step
 
 1. **One widget card per turn — never two.** Each list tool's result renders its card; a turn renders at most one and never re-calls a tool just to check progress (the cards refresh themselves).
-2. **Wait in the same turn.** After rendering a picker or connect card, call `well_wait_for_selection` with that step's kind in the same turn. On `selected`: narrate the pick or the click in one short sentence and continue immediately. On `no_selection_yet`: end the turn with one line — click the card, then say continue — and nothing else.
-3. **Resync, never re-ask.** On the user's next message after such a stop, re-call the wait once or read `well_list_workspaces`' `session` block; continue on what the click wrote. Never re-ask in text something the user already clicked, and never wait for a card to "send a message" — cards print no chat text, ever.
-4. **Never ask for the workspace in text.** When the workspace is unresolved, call `well_list_workspaces` so the picker renders at the point of need, then wait. When `session.pinned_workspace_id` is already set, use it silently.
-5. **Acks gate the connect steps.** Steps 2 and 3 are always user stops — green included. The card's **Continue** click (or the user's typed continue) is the only way past them.
+2. **A card ends the turn.** After rendering a picker or connect card, end the turn with one short line telling the user what to click (e.g. "Pick your workspace on the card, then send the message it prepares."). The click writes the choice server-side and prefills a message in the composer; the user sends it with Enter.
+3. **Resolve the next message, never re-ask.** In this order: (a) the message is the card's prefill — "Continue in <name>" (multi: "Continue in <first> — then <n2>, <n3>"), "Work on <Month Year> and <Month Year>", or "Continue" — the click already executed server-side; acknowledge in half a sentence and proceed, never re-verifying with an extra tool call what the prefill already states (the one exception is the connect steps' "Continue", where the next step's own read is the verification); (b) any other message — call `well_wait_for_selection` with that step's kind and `timeout_s: 10` once: `selected` (fresh or `already_set`) → proceed; `no_selection_yet` → one line asking to click the card, end the turn. Never re-ask in text something the user already clicked.
+4. **Never ask for the workspace in text.** When the workspace is unresolved, call `well_list_workspaces` so the picker renders at the point of need. When `session.pinned_workspace_id` is already set, use it silently.
+5. **Acks gate the connect steps.** Steps 2 and 3 are always user stops — green included. The card's **Continue** (its sent prefill, or a typed continue) is the only way past them.
 6. **Pass `workspace_id` explicitly on every `well_*` call from step 2 on.** The pin is a convenience, not the contract.
 7. **One list or read call per step.** Each step's facts come from its one read; the next step re-reads what it needs itself.
 
@@ -68,7 +68,7 @@ Call `well_list_workspaces()`. Auth error → OAuth/DCR, then retry in the same 
 - `session.pinned_workspace_id` set → use it silently; a non-empty `session.workspace_queue` beside it means a multi-pick is mid-walk (see **Several workspaces**).
 - Exactly one workspace → use it, no pin call needed.
 - A hint matching exactly one workspace (`workspace_id` exact, or case-insensitive on names / `identity.country`) → `well_switch_workspace({ workspace_id })`. A compound hint whose every fragment matches exactly one workspace → `well_switch_workspace({ workspace_ids: [...] })` in the user's order — first pinned, rest queued. Zero or several matches for any fragment → the picker decides; never pick the closest name and never default to `is_primary`.
-- Otherwise the picker is on screen (the tiles are multi-select): wait on `kind: "workspace"`. `selected` → the click already pinned `selection.workspace_id` (never re-pin it); a non-empty `selection.workspace_queue` makes the run multi-workspace. Timeout → one line, end turn. A typed decline ("later") → stop: no workspace, no flow.
+- Otherwise the picker is on screen (the tiles are multi-select): end the turn with one card-pointing line. The **Use** click pins the choice and prefills "Continue in <name>" (multi form for several tiles); resolve the next message by rule 3 — a non-empty queue makes the run multi-workspace, and the click already pinned, so never re-pin. A typed decline ("later") → stop: no workspace, no flow.
 
 Keep: `workspace_id`, `identity.fiscal_year_start_month`, `base_currency`, and whether a queue exists. Narrate the pinned entity in one line ("Working in **Acme SAS** (FR, EUR).").
 
@@ -76,17 +76,17 @@ Keep: `workspace_id`, `identity.fiscal_year_start_month`, `base_currency`, and w
 
 Call `well_list_connectors({ workspace_id })` once, unscoped — the connect picker card renders with all three kinds. Read each `direction: input` row's kind from `data_domains` (`bank` / `accounting` / `invoicing` — never from `category_id` or a display name) and its state in this precedence: `to_configure` / `disabled` → **missing**; `need_reconnect` / `error` / `degraded` / `suspended` → **error** (a reconnect, even if it synced before); `enabled` with `last_successful_sync_at` → **connected**; otherwise → **connecting** (treat as connected, data partial for a few minutes). Per kind: any connected row wins; name an errored row beside a live one.
 
-Say one line per kind — what is connected, what is missing or in error and why it matters for the job — then wait on `kind: "connect_ack"` in the same turn. **Green or not, this step stops until the card's Continue click (or a typed continue) arrives.** The user connects tools from the card during the stop; whatever they connect shows up in the later steps' own reads. A read that fails twice is a failure (step 9), never `coverage: none`. Keep the per-kind states for the recap; label the recap as narrowed when kinds stayed missing.
+Say one line per kind — what is connected, what is missing or in error and why it matters for the job — then end the turn: connect from the card's per-row Connect buttons if needed, then click Continue. **Green or not, this step stops until the Continue prefill (or a typed continue) arrives**; resolve the next message by rule 3 — the "Continue" prefill needs no verification call, since step 3's own read verifies. The user connects tools from the card during the stop; whatever they connect shows up in the later steps' own reads. A read that fails twice is a failure (step 9), never `coverage: none`. Keep the per-kind states for the recap; label the recap as narrowed when kinds stayed missing.
 
 ### Step 3 — Bank (always a stop)
 
-Call `well_list_connectors({ workspace_id, kind: "bank" })` once — the bank-only card renders (a card showing non-bank tools means the call was unscoped; redo it scoped). Reduce the bank rows with the same state precedence. **This step always runs and always stops, a connected bank included** — settled bank spend is what the gap list is measured against, so the user sees and confirms the feed. Say one line (connected / first sync running / expired, reconnect from the card / missing), then wait on `kind: "bank_ack"` in the same turn. Continue only on the ack or a typed continue; a typed "skip the bank" continues too, with the recap labelled as narrowed by a missing bank feed. Never claim a bank state you did not read.
+Call `well_list_connectors({ workspace_id, kind: "bank" })` once — the bank-only card renders (a card showing non-bank tools means the call was unscoped; redo it scoped). Reduce the bank rows with the same state precedence. **This step always runs and always stops, a connected bank included** — settled bank spend is what the gap list is measured against, so the user sees and confirms the feed. Say one line (connected / first sync running / expired, reconnect from the card / missing), tell the user to click Continue, and end the turn. Resolve the next message by rule 3 — the "Continue" prefill or a typed continue moves the flow on (step 4's own read verifies), and a typed "skip the bank" continues too, with the recap labelled as narrowed by a missing bank feed. Never claim a bank state you did not read.
 
 ### Step 4 — Period
 
 - `session.selected_periods` already set and the user is not changing months → use it silently.
 - A month hint → resolve it (a bare "March" is the most recent March that has ended; "last month" the last complete month; "this month" legal but incomplete; "Q1" / several months = one multi-month selection, oldest first; a future month is refused) and write it: `well_switch_workspace({ periods: [{ calendar_year, calendar_month }, …] })`.
-- No hint → call `well_list_periods({ workspace_id })` (the period picker renders; months multi-select), wait on `kind: "periods"`. `selected` → `selection.periods` is already written server-side. Timeout → one line, end turn. When `well_list_periods` is absent, propose the last complete month in one line, and write the confirmed answer with `well_switch_workspace({ periods })`.
+- No hint → call `well_list_periods({ workspace_id })` (the period picker renders; months multi-select) and end the turn with one card-pointing line. The **Validate** click writes the selection server-side and prefills "Work on <Month Year> and <Month Year>"; resolve the next message by rule 3. When `well_list_periods` is absent, propose the last complete month in one line, and write the confirmed answer with `well_switch_workspace({ periods })`.
 
 For each selected month derive the fiscal coordinate — exactly this, mirroring the Well platform:
 
@@ -132,7 +132,7 @@ Each step retries a transient call once. On a second failure, do not substitute 
 
 ## Several workspaces
 
-Several workspaces picked is **one Use click**: the card pins the first and leaves the rest in the session's `workspace_queue` — there is no chat line announcing the list, and no read ever spans two entities. The loop lives here and only here:
+Several workspaces picked is **one Use click**: the card pins the first, leaves the rest in the session's `workspace_queue`, and prefills "Continue in <first> — then <n2>, <n3>" — the sent prefill names the sequence, and no read ever spans two entities. The loop lives here and only here:
 
 - Run steps 2 → 8 in full on the pinned workspace.
 - Then read the queue from `well_list_workspaces`' `session.workspace_queue`, call `well_switch_workspace({ workspace_id: <next> })`, and run steps 2 → 8 again — every call carrying that pass's own `workspace_id`. Repeat until the queue is walked.
@@ -144,15 +144,15 @@ Several workspaces picked is **one Use click**: the card pins the first and leav
 | after | key | value | action |
 |---|---|---|---|
 | 1 | resolution | unresolved (decline, or no workspace) | **stop** — nothing pinned; offer to resume on a click |
-| 1 | wait | `no_selection_yet` | **end turn** — one line: pick on the card, then say continue; resync on the next message |
+| 1 | card | picker rendered | **end turn** — one line: pick on the card, then send the prepared message |
 | 1 | resolution | resolved, no queue | continue to 2 |
 | 1 | resolution | resolved, queue non-empty | run 2→8 on the pin, then loop the queue — see **Several workspaces** |
-| 2 | ack | `connect_ack` received (or typed continue) | continue to 3 — **always**, whatever the coverage; carry missing kinds as recap caveats |
-| 2 | wait | `no_selection_yet` | **end turn** — one line: connect from the card if needed, click Continue, or say continue |
-| 3 | ack | `bank_ack` received (or typed continue / skip) | continue to 4 — a bank still missing or in error labels the recap as narrowed |
-| 3 | wait | `no_selection_yet` | **end turn** — same one-line pattern |
+| 2 | card | connect card rendered | **end turn** — one line: connect from the card if needed, then click Continue |
+| 2 | ack | "Continue" prefill, typed continue, or a wait-read ack | continue to 3 — **always**, whatever the coverage; carry missing kinds as recap caveats |
+| 3 | card | bank card rendered | **end turn** — same one-line pattern |
+| 3 | ack | "Continue" prefill, typed continue, or skip | continue to 4 — a bank still missing or in error labels the recap as narrowed |
+| 4 | card | period picker rendered | **end turn** — one line: pick the month(s), then send the prepared message |
 | 4 | selection | written (click, hint, or session) | continue to 5 |
-| 4 | wait | `no_selection_yet` | **end turn** — one line: pick the month(s), then say continue |
 | 5 / 7 | resolution | `unavailable` | **stop** — the server does not expose the gap-list tool; no categorization, no preview |
 | 5 / 7 | resolution | `empty`, `transaction_count` > 0 | **stop and celebrate** — every categorized expense transaction has its invoice; recap without a preview |
 | 5 | resolution | `empty` or `listed`, thin, `has_activity: true` | go to 6 (ask first) |
@@ -182,9 +182,9 @@ Before finishing, verify:
 
 - If no `well_*` tool was in the toolset, the user was pointed at `https://api.wellapp.ai/v1/mcp` and the flow stopped there.
 - Every step ran in order; each route came from the routing table's key; no step was skipped — the bank step included, whatever step 2 reported.
-- No turn rendered two widget cards; every picker or connect card was followed by `well_wait_for_selection` with the right kind in the same turn; every `no_selection_yet` ended the turn with one click-then-continue line; every next message resynced (wait re-called once, or the session block) instead of re-asking.
+- No turn rendered two widget cards; every picker or connect card ended its turn with one card-pointing line and no same-turn wait call; every next message was resolved by rule 3 — a prefill taken at its word with no extra verification call, any other message getting one `well_wait_for_selection` call with `timeout_s: 10` — and nothing was re-asked in text.
 - No "which workspace?" or "which month?" question was asked in text where a card renders; a session pin or selection already set was used silently.
-- Steps 2 and 3 each stopped for their ack — green coverage and a connected bank included — and moved on only on the click or a typed continue.
+- Steps 2 and 3 each stopped for their ack — green coverage and a connected bank included — and moved on only on the "Continue" prefill, a typed continue, or a wait-read ack.
 - `well_list_missing_invoices` and `well_preview_invoice_fetch` were called with `workspace_id` only — no periods argument — and a no-selection error went back to step 4, never to a guessed month.
 - Step 6 ran only on a thin list with `has_activity: true` or on request, only after an explicit yes, wrote only user-confirmed batches, and the list was re-read exactly once after `updated`.
 - Step 8 previewed only: demo-mode suffix on every agent line, upload and connect lines even at zero, the no-launch sentence present, no yield or ETA claimed.
@@ -194,9 +194,9 @@ Before finishing, verify:
 
 ## Examples
 
-**Happy path, one turn per click.** "Fetch the invoices I'm missing for March." One workspace; Qonto and Pennylane connected. → Step 1 resolves silently. Step 2 renders the connect card, says coverage in one line, waits on `connect_ack`; the user clicks Continue within the wait — move on in one sentence. Step 3 renders the bank card ("Bank: connected — Qonto"), waits on `bank_ack`; Continue clicked — move on. Step 4 writes March 2026 from the hint via `well_switch_workspace({ periods })`. Step 5 calls `well_list_missing_invoices({ workspace_id })` — 12 counterparties, `transaction_count: 41`, not thin. Step 8 previews, recap, no-launch sentence.
+**Happy path, one turn per card.** "Fetch the invoices I'm missing for March." One workspace; Qonto and Pennylane connected. → Step 1 resolves silently. Step 2 renders the connect card, says coverage in one line, and ends the turn; the user clicks Continue and sends the prefilled "Continue" — acknowledge in half a sentence and move on. Step 3 renders the bank card ("Bank: connected — Qonto") and ends the turn; the "Continue" prefill arrives — move on. Step 4 writes March 2026 from the hint via `well_switch_workspace({ periods })`. Step 5 calls `well_list_missing_invoices({ workspace_id })` — 12 counterparties, `transaction_count: 41`, not thin. Step 8 previews, recap, no-launch sentence.
 
-**Timeout and resync.** Same flow, but the user walks away at the bank card: the wait returns `no_selection_yet`. End the turn: "Connect or confirm your bank on the card, then say continue." Next message "continue": re-call `well_wait_for_selection({ kind: "bank_ack" })` once — the ack is there — and resume at step 4 without re-asking anything.
+**A message that is not the prefill.** Same flow, but at the bank card the user's next message is "keep going" instead of the prefill. Call `well_wait_for_selection({ kind: "bank_ack", timeout_s: 10 })` once — the click landed before they typed, so the ack returns with `already_set: true` — and resume at step 4 without re-asking anything. Had it returned `no_selection_yet`, one line asking to click Continue on the card ends the turn.
 
 **Two entities, one click.** "What am I missing for March across FR and US?" → the compound hint matches both: `well_switch_workspace({ workspace_ids: [fr, us] })` pins Acme SAS and queues Acme Inc. Announce the sequence once. Run 2→8 on Acme SAS (each connect step stopping for its ack), recap it. Then read `session.workspace_queue`, `well_switch_workspace({ workspace_id: us })`, run 2→8 again — March comes back `empty` with `transaction_count: 23`, so that pass celebrates at step 5 and gets its own recap without a preview. Two recaps, nothing added together.
 
