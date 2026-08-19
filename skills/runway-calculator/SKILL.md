@@ -1,5 +1,6 @@
 ---
 name: runway-calculator
+requires: [define-workspace, connect-tools]
 description: Calculate a company's true cash runway — months and days of operating cash left — from Well's MCP financial graph (real cash balances vs. trailing burn rate), showing exactly what went into the number. Use when the user asks "what's my runway", "how much runway do we have", "when do we run out of cash", "what's our burn rate", or "how many months of cash are left". Requires a connected Well workspace with bank or accounting data; if insufficient, this skill guides the user to connect one first.
 ---
 

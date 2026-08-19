@@ -1,5 +1,6 @@
 ---
 name: rank-clients-by-ltv
+requires: [define-workspace, connect-tools]
 description: Rank customers by total realized revenue paid to date — sum of paid invoices per customer — using Well's MCP financial graph, backed by real invoice data rather than guesswork. Use when the user asks "rank our clients by lifetime value", "who are our best customers", "rank clients by revenue", "biggest customers", "customer lifetime value", or "which customers have paid us the most". This is a realized-revenue ranking (paid invoices to date), not a predictive churn/retention-based LTV model. Requires a connected Well workspace with invoicing data and a resolvable `own_company`; if either is missing, this skill walks the user through connecting one or confirming their company first.
 ---
 

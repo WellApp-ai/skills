@@ -1,5 +1,6 @@
 ---
 name: cash-balance-trend
+requires: [define-workspace, connect-tools]
 description: Show how a company's cash balance has changed over time — a historical trend built from Well's MCP financial graph's real balance snapshots, never a forecast. Use when the user asks "cash balance trend", "chart our cash over time", "is our cash going up or down", "cash trajectory", "how has our cash changed", or "cash history". Requires a connected Well workspace with bank data covering more than one historical balance period; if none is connected or history is too thin, this skill walks the user through connecting one or says plainly there's not enough history yet.
 ---
 

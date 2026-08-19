@@ -1,5 +1,6 @@
 ---
 name: accounts-receivable-aging
+requires: [define-workspace, connect-tools]
 description: Answer "who owes us money, and since when?" using Well's MCP financial graph — every outstanding customer invoice bucketed into standard aging bands (current, 1-30, 31-60, 61-90, 90+ days overdue), backed by real invoice data rather than guesswork. Use when the user asks "who owes us money", "accounts receivable aging", "AR aging", "outstanding receivables", "which customers haven't paid", "who's late paying us", or "overdue invoices owed to us". Requires a connected Well workspace with invoicing data and a resolvable `own_company`; if either is missing, this skill walks the user through connecting one or confirming their company first.
 ---
 

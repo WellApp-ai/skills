@@ -1,5 +1,6 @@
 ---
 name: fx-exposure
+requires: [define-workspace, connect-tools]
 description: Measure how exposed a company is to foreign-currency risk using Well's MCP financial graph — outstanding invoice balances and cash balances summed by non-home currency and converted to the workspace's home/reporting currency at real exchange rates. Use when the user asks "measure our FX exposure", "FX exposure", "currency risk", "how much of our cash/receivables is in foreign currency", "what's our exposure to EUR/USD/GBP", or "currency breakdown of our cash and invoices". Requires a connected Well workspace with invoicing and/or banking data plus a resolvable home currency; if either is missing, this skill walks the user through connecting one or confirming the home currency first.
 ---
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Every skills/*/SKILL.md frontmatter block is a flat `key: value` list —
-// no nesting, no lists, no quoting conventions beyond a single-line string.
+// Every skills/*/SKILL.md frontmatter block is a flat `key: value` list — no
+// nesting, and no value beyond a single-line string or a one-line flow list
+// such as `requires: [a, b]` (which this parser reads as an ordinary value).
 // `claude plugin validate` only checks that a frontmatter block exists, never
 // that it actually parses as YAML — so a bare `:` inside an unquoted value
 // (which YAML reads as the start of a nested mapping) passes it clean. That

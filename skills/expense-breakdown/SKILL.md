@@ -1,5 +1,6 @@
 ---
 name: expense-breakdown
+requires: [define-workspace, connect-tools]
 description: Break down where a company's money goes using Well's MCP financial graph — top expense categories and the largest outstanding accounts payable, backed by ledger and invoice data rather than guesswork. Use when the user asks "where does my money go", "what are we spending on", "biggest expenses", "top vendors I owe", "expense category breakdown", or "outstanding bills". Requires a connected Well workspace with at least one banking or accounting connector; if none is connected, this skill walks the user through connecting one first.
 ---
 

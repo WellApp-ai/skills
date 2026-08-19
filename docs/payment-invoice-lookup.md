@@ -18,6 +18,15 @@ Ask your AI assistant about one specific payment or invoice — "what happened w
 - **Invoicing / bills connector** — *required.* This is where invoices come from.
 - **Banking or accounting connector** — *required.* This is where transactions come from, and where reconciliation matches are formed between the two.
 
+## Composes onto
+
+This skill delegates two setup steps to Well's atomic skills rather than repeating them:
+
+- **[`define-workspace`](define-workspace.md)** — pins which Well workspace the answer is for.
+- **[`connect-tools`](connect-tools.md)** — checks which of your bank / accounting / invoicing sources are connected.
+
+Install both alongside this one. The skill still runs without them — each step falls back to resolving things inline — but with them installed you get one consistent workspace and connection flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install all three together; if you download the `.skill` file on its own, grab those two as well.
+
 ---
 
 ## Installation
@@ -36,10 +45,13 @@ Install the following official skill from Well.
 
 1. Fetch this file: 
     https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/payment-invoice-lookup/SKILL.md
-2. Download and display this file to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
-3. Install this skill.
-4. Before replying to the user, ensure you have named the downloaded file "SKILL.md". This is crucial for the rest of the steps.
-5. If the MCP https://api.wellapp.ai/v1/mcp is not installed: suggest it to the user and explain how to add a new MCP.
+2. This skill composes onto two atomic Well skills — fetch them as well:
+    a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
+    b. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
+3. Download and display these files to the user. Each file must be named "SKILL.md" — no prefix, no suffix, exact name as specified — and each must land in its own skill folder named after that skill.
+4. Install these skills.
+5. Before replying to the user, ensure every downloaded file is named "SKILL.md". This is crucial for the rest of the steps.
+6. If the MCP https://api.wellapp.ai/v1/mcp is not installed: suggest it to the user and explain how to add a new MCP.
 ```
 
 ### Manual Setup

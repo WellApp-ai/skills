@@ -1,5 +1,6 @@
 ---
 name: payment-invoice-lookup
+requires: [define-workspace, connect-tools]
 description: Find the reconciliation counterpart for a specific invoice, payment, or transaction ("what payment settled this invoice", "what invoice does this payment belong to"), or list every transaction/invoice with no reconciliation match at all — a compliance/reconciliation gap — using Well's MCP financial graph. Use when the user asks "what happened with this payment", "find the invoice for this transaction", "why is this payment unmatched", "show me unreconciled payments", "find the details behind this invoice/payment", "which payments have no invoice", or "catch payments with no invoice". Requires a connected Well workspace with invoicing and banking/accounting data; if none is connected, this skill walks the user through connecting one first.
 ---
 
