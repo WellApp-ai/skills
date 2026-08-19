@@ -3,9 +3,12 @@
 install:
 	git config core.hooksPath .githooks
 
+# `skills/` is the plugin's skills directory, not a plugin — it carries no
+# .claude-plugin manifest, so validating it as one always failed and, through the
+# pre-push hook, blocked every push. The manifest lives at the repository root; the
+# skills themselves are covered by the frontmatter check below.
 validate:
 	claude plugin validate . --strict
-	claude plugin validate ./skills --strict
 	node scripts/check-skill-frontmatter.js
 
 build:
