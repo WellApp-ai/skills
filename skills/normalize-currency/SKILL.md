@@ -50,7 +50,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 Never fetch a rate from outside Well, and never invent one. A rate that is not in Well is a rate this skill does not have, and the honest output is an exclusion.
 
-**Composed skills.** One atomic Well skill ownss the step before this one — invoke it, don't reimplement it:
+**Composed skills.** One atomic Well skill owns the step before this one — invoke it, don't reimplement it:
 
 - `define-workspace` — pins the workspace and supplies both the `workspace_id` and the `identity.base_currency` that defaults `target_currency`.
 
