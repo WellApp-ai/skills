@@ -9,64 +9,104 @@
  *
  *   node scripts/refresh-design-system.mjs           # refresh from the published package
  *   node scripts/refresh-design-system.mjs --check   # fail if the copy is stale
+ *   node scripts/refresh-design-system.mjs --from <dir>   # copy from a local build instead
  *
- * Reads the registry, so it needs a token for npm.pkg.github.com. Point --from at a local
- * platform checkout to skip that:
+ * The default path reads npm.pkg.github.com and needs a token; it fails closed without one.
  *
- *   node scripts/refresh-design-system.mjs --from ../platform/packages/design-tokens/dist
+ * Everything this writes ends up inside a published archive, so the source is treated as
+ * untrusted: only regular files are copied, symlinks are resolved rather than re-created,
+ * and every extracted path is contained to the extraction root.
  */
 import { execFileSync } from "node:child_process";
-import { cpSync, existsSync, mkdtempSync, readFileSync, readdirSync } from "node:fs";
+import { cpSync, existsSync, lstatSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const PACKAGE = "@wellapp-ai/design-tokens";
-const TARGET = resolve("skills/well-design-system/assets");
+// Resolved against this file, not the shell's cwd: running from scripts/ used to create a
+// shadow assets tree there and report success while the real assets stayed stale.
+const TARGET = resolve(dirname(fileURLToPath(import.meta.url)), "../skills/well-design-system/assets");
 const FILES = ["well.css", "well-tokens.css"];
 
 const args = process.argv.slice(2);
 const check = args.includes("--check");
 const fromIndex = args.indexOf("--from");
-const localDir = fromIndex === -1 ? null : args[fromIndex + 1];
+let localDir = null;
+if (fromIndex !== -1) {
+  const operand = args[fromIndex + 1];
+  if (!operand || operand.startsWith("--")) {
+    console.error("--from needs a directory operand.");
+    process.exit(2);
+  }
+  localDir = operand;
+}
 
-function sourceDir() {
+/** Refuses a path that escapes its root, so a crafted tarball entry cannot reach outside. */
+function contained(root, candidate) {
+  const full = resolve(root, candidate);
+  if (full !== root && !full.startsWith(root + sep)) {
+    throw new Error(`Path escapes the extraction root: ${candidate}`);
+  }
+  return full;
+}
+
+function withSource(use) {
   if (localDir) {
     const dir = resolve(localDir);
     if (!existsSync(dir)) throw new Error(`--from path does not exist: ${dir}`);
-    return dir;
+    return use(dir);
   }
-  // `npm pack` writes a tarball of the published package; its dist/ is what we ship.
   const work = mkdtempSync(join(tmpdir(), "well-ds-"));
-  execFileSync("npm", ["pack", PACKAGE, "--registry=https://npm.pkg.github.com"], {
-    cwd: work,
-    stdio: ["ignore", "pipe", "inherit"],
-  });
-  const tarball = readdirSync(work).find((f) => f.endsWith(".tgz"));
-  if (!tarball) throw new Error(`npm pack produced no tarball for ${PACKAGE}`);
-  execFileSync("tar", ["-xzf", tarball], { cwd: work });
-  return join(work, "package", "dist");
+  try {
+    execFileSync("npm", ["pack", PACKAGE, "--registry=https://npm.pkg.github.com", "--ignore-scripts"], {
+      cwd: work,
+      stdio: ["ignore", "pipe", "inherit"],
+    });
+    const tarball = readdirSync(work).find((f) => f.endsWith(".tgz"));
+    if (!tarball) throw new Error(`npm pack produced no tarball for ${PACKAGE}`);
+    execFileSync("tar", ["-xzf", tarball], { cwd: work });
+    return use(contained(resolve(work), join("package", "dist")));
+  } finally {
+    rmSync(work, { recursive: true, force: true });
+  }
 }
 
-const src = sourceDir();
-let stale = [];
-for (const file of FILES) {
-  const from = join(src, file);
-  if (!existsSync(from)) throw new Error(`${PACKAGE} ships no ${file} — expected at ${from}`);
-  const to = join(TARGET, file);
-  const differs = !existsSync(to) || readFileSync(from, "utf8") !== readFileSync(to, "utf8");
-  if (!differs) continue;
-  if (check) stale.push(file);
-  else cpSync(from, to);
-}
+const result = withSource((src) => {
+  // Validate every file before writing any, so a partial source cannot leave a mismatched pair.
+  const pairs = FILES.map((file) => {
+    const from = join(src, file);
+    if (!existsSync(from)) throw new Error(`${PACKAGE} ships no ${file} — expected at ${from}`);
+    if (!lstatSync(from).isFile()) throw new Error(`${from} is not a regular file`);
+    return { file, from, to: join(TARGET, file) };
+  });
+
+  const stale = pairs.filter(({ from, to }) => {
+    if (!existsSync(to)) return true;
+    if (!lstatSync(to).isFile()) return true;
+    // Byte compare: a utf8 decode maps distinct invalid bytes to the same replacement
+    // character and would report a clean match on files that differ.
+    return Buffer.compare(readFileSync(from), readFileSync(to)) !== 0;
+  });
+
+  if (!check) {
+    // dereference: a symlink copied as a link is stored by zip as its TARGET's content,
+    // which would publish an arbitrary local file inside the archive.
+    for (const { from, to } of stale) cpSync(from, to, { dereference: true });
+  }
+  return { stale: stale.map((p) => p.file), local: Boolean(localDir) };
+});
 
 if (check) {
-  if (stale.length) {
-    console.error(`Design-system kit is stale: ${stale.join(", ")}`);
+  if (result.stale.length) {
+    console.error(`Design-system kit is stale: ${result.stale.join(", ")}`);
     console.error("Run: node scripts/refresh-design-system.mjs && make build");
     process.exit(1);
   }
-  console.log("Design-system kit matches the published package.");
-} else {
-  console.log(stale.length === 0 ? "Refreshed the design-system kit." : "Refreshed.");
+  console.log(`Design-system kit matches the ${result.local ? "local build" : "published package"}.`);
+} else if (result.stale.length) {
+  console.log(`Refreshed: ${result.stale.join(", ")}.`);
   console.log("Now run `make build` so the archives carry the new stylesheet.");
+} else {
+  console.log("Design-system kit was already up to date; nothing copied.");
 }

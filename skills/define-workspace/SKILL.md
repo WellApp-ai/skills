@@ -103,11 +103,11 @@ Do not return:
 - A workspace chosen by similarity or by `is_primary` when the user did not pick it.
 - Data from any workspace other than the pinned one.
 
-**How this reaches the user.** Well's MCP tools return a UI resource alongside their data,
-and a host that supports it draws the product's own card. When that happened, do not restate
-the card's figures as prose — add only what it cannot say, such as which connectors are still
-missing. When it did not, prose is the default; reach for `well-design-system` only if a
-visual genuinely reads better, and never for a single figure.
+**How this reaches the user.** A Well MCP tool that ships a widget attaches
+`_meta.ui.resourceUri` to its result. If the result you received carries that key and your
+host renders it, the product has already drawn this answer — add only what the card cannot
+say, and do not restate what it shows. Otherwise prose is the default; if a visual genuinely
+reads better and the `well-design-system` skill is available, use it.
 
 ## Quality checks
 

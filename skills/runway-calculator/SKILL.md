@@ -101,11 +101,11 @@ Return:
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 7's fallback was used, the fallback answer and link, clearly labeled as a fallback.
 
-**How this reaches the user.** Well's MCP tools return a UI resource alongside their data,
-and a host that supports it draws the product's own card. When that happened, do not restate
-the card's figures as prose — add only what it cannot say, such as which connectors are still
-missing. When it did not, prose is the default; reach for `well-design-system` only if a
-visual genuinely reads better, and never for a single figure.
+**How this reaches the user.** A Well MCP tool that ships a widget attaches
+`_meta.ui.resourceUri` to its result. If the result you received carries that key and your
+host renders it, the product has already drawn this answer — add only what the card cannot
+say, and do not restate what it shows. Otherwise prose is the default; if a visual genuinely
+reads better and the `well-design-system` skill is available, use it.
 
 ## Quality checks
 

@@ -23,10 +23,12 @@ Use it when you are about to render Well data visually and nothing else has:
 
 ## When not to use this skill
 
-- **The host already rendered the tool's own card.** Well's MCP tools return a UI resource
-  (`_meta.ui.resourceUri` → `ui://well/widget`), and a host that supports it draws the real
-  component — the same code the product ships. Do not redraw what is already on screen; say
-  what the card cannot, and stop. Composing a second view invites two versions of one number.
+- **The host already rendered the tool's own card.** A Well MCP tool that ships a widget
+  attaches `_meta.ui.resourceUri` to its result — a versioned `ui://well/widget/<hash>`, so
+  test for the **key being present**, never for a particular value. If it is there, a host
+  that supports it has drawn the real component, the same code the product ships. Do not
+  redraw what is on screen; say what the card cannot, and stop. Composing a second view
+  invites two versions of one number.
 - The answer is one sentence or one figure. A card around "EUR 412,900" helps nobody.
 - The user asked for raw data, a CSV, or a file to paste elsewhere.
 - You are editing Well's own codebase. There the design system is a package, not a
@@ -41,12 +43,31 @@ its own.
 
 `assets/well.css`, packaged alongside this file.
 
-**Link or inline the file. Never read it into context** — it is ~116 KB of compiled CSS and
-tells you nothing the vocabulary below does not. In an artifact, inline it in a `<style>`
-block or link it; everything else on this page is what you need to write the markup.
+**Do not display or summarise the file** — it is ~116 KB of compiled CSS and tells you
+nothing the vocabulary below does not. Move it without reading it: copy the bytes straight
+into a `<style>` block with a file read your tooling performs, or `curl -sSfo <path>` it and
+link it. Everything else you need to write the markup is on this page.
 
-`assets/well-tokens.css` is the same palette as plain custom properties, for
-a surface that cannot use utility classes and must write inline styles.
+`assets/well-tokens.css` is a **smaller** palette as plain custom properties, for a surface
+that cannot use utility classes and must write inline styles. It is the widget bundle's own
+mirror, so the names differ and the coverage is narrower — do not assume a utility class has
+a matching property:
+
+| Utility | Custom property |
+|---|---|
+| `bg-surface-level-0` | `--well-bg` |
+| `bg-surface-level-1` | `--well-bg-subtle` |
+| `bg-surface-level-2` | `--well-bg-raised` |
+| `text-text-primary` / `-secondary` / `-tertiary` | `--well-text` / `--well-text-2` / `--well-text-3` |
+| `border-border-low` | `--well-border` |
+| `text-text-success` / `-warning` / `-danger` / `-info` | `--well-success` / `--well-warning` / `--well-danger` / `--well-info` |
+
+Three gaps to write around on that path: there is **no 14px radius token** (use a literal
+`14px`; `--well-radius` is 12px), the categorical ramp stops at `--well-cat-6` plus
+`--well-cat-other`, and there are **no `-fg` foreground properties** at all.
+
+`well.css` does **not** set `color-scheme`, so put `style="color-scheme: dark"` on your root
+element or the browser paints scrollbars and form controls light on a dark page.
 
 If the stylesheet is missing — some install paths copy only this file — fetch it from
 `https://raw.githubusercontent.com/WellApp-ai/skills/main/skills/well-design-system/assets/well.css`.
@@ -79,8 +100,19 @@ carries `border` plus `border-border-low`, nothing heavier.
 vendor), use `bg-cat-1` … `bg-cat-8` in order, with `text-cat-N-fg` on top. Never reach for
 a semantic colour to distinguish two neutral categories.
 
-**Type** — `text-xs` `text-sm` `text-md` `text-lg` `text-xl` `text-2xl` `text-3xl`. The
-title tiers carry their own weight; do not add `font-bold` to a heading.
+Those `bg-cat-*` values are low-alpha washes, sized for a chip or a table row. The saturated
+hue lives only on `text-cat-N-fg`, and there is no `fill-cat-*`. For SVG geometry — a donut,
+a bar — put `text-cat-N-fg` on the node and draw with `fill="currentColor"`, or the shape
+renders almost invisible.
+
+**Type** — `text-xs` `text-sm` `text-md` `text-lg` `text-xl` `text-2xl` `text-3xl`.
+`text-xl` and above carry their own weight, so do not add `font-bold` to those. Below that
+the tiers set no weight at all — a `text-sm` card title needs an explicit `font-medium`.
+
+**Depth inside a card.** The card itself is recessed — `bg-bg-subtle` is a translucent
+wash. Anything listed inside it sits *lifted*: a row or a tile takes `bg-surface-level-2`
+with `border-border-low/50`. Most of what these skills return is a list, and a flat one
+reads as prose with lines between it rather than as a Well card.
 
 **Do not** write a hex value, a raw Tailwind palette class (`bg-blue-500`), or an inline
 `font-size`. If a token seems missing, the nearest one is almost always right.
@@ -90,24 +122,28 @@ title tiers carry their own weight; do not add `font-bold` to a heading.
 Well presents a result as a card, and every card has the same three parts:
 
 ```html
-<div class="rounded-[14px] border border-border-low bg-bg-subtle overflow-hidden">
-  <div class="flex items-center justify-between px-4 py-3">
-    <div>
-      <div class="text-sm text-text-primary">Runway</div>
-      <div class="text-xs text-text-tertiary">as of 12 Aug 2026</div>
+<!-- The card is a translucent wash, so it needs a dark ancestor and an explicit
+     colour-scheme; on a default white artifact page it renders unreadable. -->
+<div class="bg-surface-level-0 p-4" style="color-scheme: dark">
+  <div class="flex flex-col overflow-hidden rounded-[14px] border border-border-low/50 bg-bg-subtle">
+    <div class="flex items-center justify-between border-b border-border-low/50 px-4 pt-4 pb-3">
+      <div class="flex flex-col gap-0.5">
+        <h3 class="text-sm font-medium text-text-primary">Runway</h3>
+        <div class="text-xs text-text-tertiary">as of 12 Aug 2026</div>
+      </div>
+      <span class="rounded-md bg-bg-warning px-2 py-1 text-xs text-text-warning">Partial</span>
     </div>
-    <span class="rounded-md bg-bg-warning px-2 py-1 text-xs text-text-warning">Partial</span>
-  </div>
 
-  <div class="px-4 pb-3">
-    <div class="text-3xl text-text-primary">7 months 12 days</div>
-    <div class="text-sm text-text-secondary">EUR 412,900 cash · EUR 55,300/mo burn</div>
-  </div>
+    <div class="flex flex-col gap-1 px-4 py-3">
+      <div class="text-3xl text-text-primary">7 months 12 days</div>
+      <div class="text-sm text-text-secondary">EUR 412,900 cash · EUR 55,300/mo burn</div>
+    </div>
 
-  <div class="flex items-center gap-3 px-4 py-3">
-    <span class="text-xs text-text-tertiary">3 accounts</span>
-    <span class="ml-auto text-sm text-text-secondary">View details</span>
-    <span class="rounded-md bg-bg-primary px-3 py-1.5 text-sm text-text-invert">Open in Well</span>
+    <div class="flex items-center gap-3 border-t border-border-low/50 px-4 pt-3 pb-4">
+      <span class="text-xs text-text-tertiary">3 accounts</span>
+      <button class="ml-auto rounded-[10px] bg-bg-highlight px-3 py-1.5 text-sm font-medium text-text-primary">View details</button>
+      <button class="rounded-[10px] bg-bg-primary px-3 py-1.5 text-sm font-medium text-text-invert">Open in Well</button>
+    </div>
   </div>
 </div>
 ```
@@ -116,9 +152,10 @@ Three rules that matter more than the markup:
 
 1. **`rounded-[14px]` is the card radius.** Not `rounded-lg`, not `rounded-xl`.
 2. **The header's trailing slot carries status, never a decision.** A badge belongs there;
-   a button does not.
+   a button does not. The product keeps actions in the footer for the same reason.
 3. **The footer reads counter, then secondary, then primary** — left to right, with the
-   primary action hard against the trailing edge.
+   primary hard against the trailing edge. The product also opens that row with an overflow
+   menu; a static view has no menu to open, so this omits it deliberately.
 
 ## Output requirements
 
@@ -134,8 +171,11 @@ The view you compose must:
 
 Before returning the view, verify:
 
+- The card sits on a `bg-surface-level-0` ancestor and the root carries
+  `color-scheme: dark`. `bg-bg-subtle` is a translucent wash, not an opaque surface — on a
+  light page the headline figure disappears.
 - No hex value, no raw Tailwind palette class, no inline `font-size` anywhere in the markup.
-- The stylesheet is linked or inlined, and was not read into context.
+- The stylesheet was moved without being displayed or summarised.
 - Cards use `rounded-[14px]`, `bg-bg-subtle`, and a single `border-border-low`.
 - Every caveat the tool surfaced — `partial`, `excluded`, `hints`, staleness — appears in
   the view. A card that renders a partial number as a clean one is worse than prose.

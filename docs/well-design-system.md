@@ -45,9 +45,11 @@ Install the following official skill from Well.
 
 **Instructions**:
 
-1. Fetch this file:
+1. Fetch these files:
     a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/well-design-system/SKILL.md
-2. Download and display this file to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
+    b. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/well-design-system/assets/well.css
+    c. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/well-design-system/assets/well-tokens.css
+2. Download these files. Display only SKILL.md — the two stylesheets are large and are assets, not reading material. Keep them at `assets/well.css` and `assets/well-tokens.css` next to SKILL.md. The skill file must be named "SKILL.md". No prefix, no suffix.
 3. Install this skill.
 4. Before replying to the user, ensure you have named the downloaded file "SKILL.md". This is crucial for the rest of the steps.
 5. If the MCP https://api.wellapp.ai/v1/mcp is not installed: suggest it to the user and explain how to add a new MCP.
