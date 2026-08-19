@@ -32,7 +32,7 @@ Use it when you are about to render Well data visually and nothing else has:
 - The answer is one sentence or one figure. A card around "EUR 412,900" helps nobody.
 - The user asked for raw data, a CSV, or a file to paste elsewhere.
 - You are editing Well's own codebase. There the design system is a package, not a
-  stylesheet: see `.claude/standards/design-system-reuse-standard.md` in `WellApp-ai/platform`.
+  stylesheet, and the repository's own standards govern how a surface consumes it.
 
 ## Inputs
 
@@ -69,8 +69,9 @@ Three gaps to write around on that path: there is **no 14px radius token** (use 
 `well.css` does **not** set `color-scheme`, so put `style="color-scheme: dark"` on your root
 element or the browser paints scrollbars and form controls light on a dark page.
 
-If the stylesheet is missing — some install paths copy only this file — fetch it from
-`https://raw.githubusercontent.com/WellApp-ai/skills/main/skills/well-design-system/assets/well.css`.
+If either asset is missing — some install paths copy only this file — fetch it from
+`https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/well-design-system/assets/well.css`, and the custom properties from
+`https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/well-design-system/assets/well-tokens.css`.
 
 ## The vocabulary
 
