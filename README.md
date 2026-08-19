@@ -59,6 +59,7 @@ This repo packages that judgment as **Agent Skills** — playbooks any AI assist
 | `connect-tools` | "What's connected to Well?" — bank, accounting, and invoicing sources: connected, still syncing, in error, or missing, with one-click connect links. | [View details →](docs/connect-tools.md) |
 | `resolve-own-company` | "Which company here is ours?" — resolves the own-company pointer that decides payable from receivable, and folds in an entity's duplicate records. | [View details →](docs/resolve-own-company.md) |
 | `normalize-currency` | "What is this worth in one currency?" — converts multi-currency amounts into one total carrying its rate and date, or a clean per-currency breakdown, never a blended figure. | [View details →](docs/normalize-currency.md) |
+| `well-design-system` | Style a view you compose for Well data — tokens, card anatomy, and a precompiled stylesheet — so it looks like Well rather than a generic page. | [View details →](docs/well-design-system.md) |
 
 ---
 
@@ -91,7 +92,11 @@ Install the following official skills from Well. Instructions:
     n. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
     o. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/resolve-own-company/SKILL.md
     p. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/normalize-currency/SKILL.md
-2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
+    q. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/well-design-system/SKILL.md
+    r. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/well-design-system/assets/well.css
+    s. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/well-design-system/assets/well-tokens.css
+2. Download and display the SKILL.md files to the user. Each must be named "SKILL.md" — no prefix, no suffix, exact name.
+   The two `.css` files are assets, not skills: keep their own names and place them in `assets/` beside the well-design-system SKILL.md, and do not display them.
 3. Create a summary table with skill names and descriptions extracted from the frontmatter
 4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
 5. If you can, install these skills yourself.
@@ -170,6 +175,7 @@ Download the `.skill` file and double-click it to install — Claude Desktop ins
 | `connect-tools` | Check bank, accounting, and invoicing connections and connect the missing ones in one click. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/connect-tools.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/connect-tools.zip) |
 | `resolve-own-company` | Work out which company in the workspace is yours, and fold in its duplicate records. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/resolve-own-company.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/resolve-own-company.zip) |
 | `normalize-currency` | Convert amounts across currencies into one auditable total, or report them per currency. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/normalize-currency.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/normalize-currency.zip) |
+| `well-design-system` | Style a composed view with Well tokens and card anatomy. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/well-design-system.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/well-design-system.zip) |
 
 ##### For Advanced Users
 
