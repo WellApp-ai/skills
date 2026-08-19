@@ -1,1 +1,0 @@
-../../show-missing-invoices/SKILL.md

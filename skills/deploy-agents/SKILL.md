@@ -47,27 +47,30 @@ The calling skill or the user provides:
 - The `show-missing-invoices` hand-off — required in practice. Its rows and its `agent_candidates`
   are what this skill previews. Without it, and without the preview tool below, there is nothing to
   preview: say so and stop.
-- `workspace_id` — required. Comes from `define-workspace`; never resolved here.
-- `period` — required. Comes from `define-period`, as either `{ calendar_year, calendar_month }` or
-  `{ fiscal_year, fiscal_period }`.
+- `workspace_id` — required. Comes from `define-workspace` or the session pin, used silently; never
+  resolved or asked for in text here.
+- A period selection written server-side — required, but **not passed to the tool**: the user's
+  click on the period card (or `define-period`) already wrote it, and the preview tool reads it on
+  its own. The `define-period` hand-off's `period_label` is narration context only.
 - `purpose` — one line from the calling skill, used in the ask when one is needed. Optional.
 
-**Several workspaces.** When the `define-workspace` hand-off carries `workspaces` with more than one
-entry, run this skill once per workspace in that order — announce the sequence ("Acme SAS, then Acme
-Inc."), call `well_switch_workspace({ workspace_id })` at the start of every pass after the first (the
-first entry is already pinned), and pass that pass's `workspace_id` explicitly on every call, which is
-what decides the entity when the pin is absent or fails. Keep one hand-off per workspace, and
-never merge one workspace's rows, states, or figures into another's. A caller that loops for you passes
-one `workspace_id` per pass and no list — then this rule is already satisfied and must not fire again.
+**Several workspaces.** A multi-workspace run is driven by the caller: the pin plus the session's
+`workspace_queue` (read from `well_list_workspaces`' `session` block) name the sequence, and this
+skill always works on the currently pinned workspace only. The caller re-pins with
+`well_switch_workspace({ workspace_id })` between passes; each pass gets its own preview, and
+nothing is merged across two entities.
 
 ## Tooling
 
 Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). Only one tool is
 involved, and it is optional:
 
-- `well_preview_invoice_fetch` — **when it is present in your toolset.** Input: the period, as
-  `{ calendar_year, calendar_month }` or `{ fiscal_year, fiscal_period }`; pass `workspace_id`
-  alongside it, as on every `well_*` call. Output: `period`, `agents` (each with `provider_name`,
+- `well_preview_invoice_fetch` — **when it is present in your toolset.** Input: `workspace_id`
+  explicitly, as on every `well_*` call, and **no periods argument** — omitted, the server uses the
+  period selection the user's click (or `define-period`) already wrote. An error comes back only
+  when no selection exists yet: run `define-period`, then re-call. A period pair is passed
+  explicitly only on an older server that holds no session selection — the degrade path, never the
+  default. Output: `period`, `agents` (each with `provider_name`,
   `provider_id` or null, `counterparties` — each `name`, `tx_count`, `base_total_amount` —
   `tx_count`, and `base_total_amount` or null), `upload_rows`, `connect_rows`, `mode: "preview"`,
   `nothing_launched: true`, and `hints`. It is a read: it computes the plan and returns it. Carry
@@ -101,12 +104,15 @@ Call each list or read tool once per step. The widget cards refresh themselves �
    A run derived entirely from the `show-missing-invoices` hand-off calls nothing, so neither check
    blocks it.
 
-2. **Confirm the workspace and the period.** Require `workspace_id` and `period`. If either is
-   missing, run `define-workspace` / `define-period` and take their hand-offs; never pin either one
-   here. Pass `workspace_id` explicitly on any call you make.
+2. **Confirm the workspace and the selection.** Require `workspace_id` — from the caller or the
+   session pin, used silently. If it is missing, run `define-workspace`; if the preview tool answers
+   that no period selection exists yet, run `define-period` (its picker writes the selection) and
+   re-call — never pin either one here and never guess a month. Pass `workspace_id` explicitly on
+   any call you make.
 
 3. **Build the preview.**
-   - Tool present → call `well_preview_invoice_fetch({ workspace_id, …period })` and use its
+   - Tool present → call `well_preview_invoice_fetch({ workspace_id })` — no periods argument; the
+     server reads the clicked selection — and use its
      `agents`, `upload_rows`, and `connect_rows` as they come, `provider_id` included. Do not
      recompute or re-sort them.
    - Tool absent → reshape the hand-off's `agent_candidates`, which are already grouped by
@@ -222,8 +228,9 @@ Before finishing, verify:
 
 - No write tool was called: no `well_invoke_connector_tool`, no `well_create_*`, no
   `well_update_*`, no `well_delete_*`, no connector action.
-- `workspace_id` and `period` came from `define-workspace` / `define-period` (or the caller) and
-  neither was resolved here.
+- `workspace_id` came from the caller or the session pin, the period came from the server-held
+  selection (the preview call carried no periods argument), and neither was resolved or guessed
+  here.
 - The preview came from `well_preview_invoice_fetch` when it exists, and from the
   `show-missing-invoices` hand-off's `agent_candidates` when it does not — never from a guess about
   which providers a workspace uses.
@@ -253,8 +260,9 @@ Before finishing, verify:
 
 ### Example request
 
-The fetch-missing-invoices flow calls deploy-agents with `workspace_id` of Acme SAS,
-`period: { calendar_year: 2026, calendar_month: 3 }`, and the `show-missing-invoices` hand-off:
+The fetch-missing-invoices flow calls deploy-agents with `workspace_id` of Acme SAS, the March 2026
+selection already written by the user's click on the period card, and the `show-missing-invoices`
+hand-off:
 `agent_candidates` covering Shopify (3 transactions, 1 counterparty), Free Pro (2 transactions),
 plus 4 rows with no provider and 1 row on an unconnected Stripe account. The user writes in French.
 `well_preview_invoice_fetch` is not in the toolset.
@@ -284,7 +292,7 @@ Same flow, in a Claude Desktop session where `well_preview_invoice_fetch` **is**
 
 ### Expected behavior
 
-Call `well_preview_invoice_fetch({ workspace_id, calendar_year: 2026, calendar_month: 3 })`. The
+Call `well_preview_invoice_fetch({ workspace_id })` — the server reads the clicked selection. The
 `AgentLaunchedCard`s render with their Preview badge. Do not restate them. Say one line — "2 agents
 would run, over 5 transactions missing an invoice" — then the upload line, the connect line, the
 coverage line carrying the tool's `hints`, and the plain no-launch sentence. Carry each agent's

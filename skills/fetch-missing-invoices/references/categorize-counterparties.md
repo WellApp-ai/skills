@@ -1,1 +1,0 @@
-../../categorize-counterparties/SKILL.md

@@ -1,1 +1,0 @@
-../../define-period/SKILL.md

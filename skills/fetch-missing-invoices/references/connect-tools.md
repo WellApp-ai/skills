@@ -1,1 +1,0 @@
-../../connect-tools/SKILL.md
