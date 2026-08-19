@@ -1,5 +1,6 @@
 ---
 name: runway-calculator
+requires: [define-workspace, connect-tools]
 description: Calculate a company's true cash runway — months and days of operating cash left — from Well's MCP financial graph (real cash balances vs. trailing burn rate), showing exactly what went into the number. Use when the user asks "what's my runway", "how much runway do we have", "when do we run out of cash", "what's our burn rate", or "how many months of cash are left". Requires a connected Well workspace with bank or accounting data; if insufficient, this skill guides the user to connect one first.
 ---
 
@@ -31,7 +32,7 @@ Do not use this skill when:
 
 The user may provide:
 
-- Which workspace to use, if they manage more than one.
+- A workspace hint — an id, a workspace name, or the company behind it — if they manage more than one. Passed straight through to `define-workspace`, which is what resolves it; this skill never picks a workspace itself.
 - The trailing window to average burn over — default to the last 3 full months.
 - A target currency — default to the workspace's primary currency.
 
@@ -39,24 +40,33 @@ The user may provide:
 
 Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). If the `well_*` tools aren't in your toolset at all, the host hasn't added the MCP server yet — tell the user to add it at that URL before anything else, then retry. Required tools once it's added:
 
-- `well_list_workspaces` — resolve the workspace.
+- `well_list_workspaces` — how `define-workspace` resolves the workspace. Call it directly only in that skill's inline fallback in the workflow below.
 - `well_get_runway` — the authoritative cash-on-hand, trailing-average burn, and computed runway — the exact same deterministic numbers (sign-convention detection, internal-transfer exclusion, FX conversion already applied) the Well app's own canvas KPI card renders. Call this directly; do not re-derive cash or burn yourself from raw `accounts`/`transactions`/`account_balances` reads — that path is more error-prone and can drift from what the app shows.
 - `well_get_cost_structure` — the deterministic category breakdown of the latest closed month's outflow, used here only as a supplementary "what's driving your burn" view alongside the runway headline. Same computation the Well app's canvas cost-structure chart renders; never re-derive categories yourself.
-- `well_query_records` — read `workspace_connectors` to check which connectors are enabled before attempting a computation.
-- `well_list_connectors` — surface install links when cash/accounting data is missing.
-- Well's OAuth/DCR flow (or the Well connector's `authenticate` tool, if the host exposes one) — if no Well MCP connection exists yet.
+- `well_query_records` — used by `connect-tools` for the connection check; called here only for the data-freshness read in step 3.
+- `well_list_connectors` — how `connect-tools` surfaces install links. Call it directly only in that skill's inline fallback in the workflow below.
+- Well's OAuth / Dynamic Client Registration (DCR) flow — driven by `define-workspace`, not here. Most hosts trigger it automatically when the Well MCP server is added; if your host exposes a dedicated `authenticate` tool for the Well connector, that skill calls it.
+
+**Composed skills.** Two atomic Well skills own the setup this skill used to inline — invoke them, don't reimplement them:
+
+- `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there's no connection yet, and pins exactly one workspace. Supplies the `workspace_id` that every later call carries.
+- `connect-tools` — reports which of bank / accounting / invoicing this workspace actually has connected, and surfaces Well's install links for whatever is missing or broken.
+
+Both ship with the `well-skills` plugin. This skill is also installable on its own, so steps 1 and 2 of the workflow each carry the inline fallback to use when they're absent.
 
 ## Workflow
 
-1. **Confirm the MCP server is configured.** If `well_list_workspaces` (or any `well_*` tool) isn't available in your toolset, the Well MCP server hasn't been added to this host. Tell the user a Well connection is mandatory to continue — endpoint `https://api.wellapp.ai/v1/mcp` — because Well is where their financial data is aggregated securely to compute a real runway number; without it there's nothing to calculate from. Stop until it's there; don't estimate from assumptions.
+1. **Pin the workspace — run `define-workspace`.** Invoke the `define-workspace` skill with `purpose: "to compute your cash runway"` and use its typed hand-off. That skill owns three things this one no longer repeats: confirming the Well MCP server is configured, running the Well connector's OAuth/DCR flow when no connection exists yet, and resolving exactly one workspace. Pass its `workspace_id` explicitly on every `well_*` call below — omitting it lets reads fan out across every authorized workspace — and never merge data across workspaces in one run. If it hands back `resolution: unresolved`, stop: runway can't be computed without a pinned workspace.
+   - **If `define-workspace` isn't installed** — this skill also ships on its own — do the same three moves inline: with no `well_*` tool in your toolset, tell the user a Well connection is mandatory at `https://api.wellapp.ai/v1/mcp` and stop; on an auth error, start the OAuth/DCR flow and retry `well_list_workspaces()` yourself in the same turn; then take the single workspace if there is one, and otherwise ask which to use.
 
-2. **Confirm the account.** Call `well_list_workspaces()`.
-   - Auth error → no Well MCP connection yet; trigger the Well connector's OAuth/DCR handshake. The moment it returns, immediately retry `well_list_workspaces()` yourself in the same turn and continue — don't stop to ask the user to confirm login or wait for a new message.
-   - Zero or one workspace → use it, or say none exist. If more than one workspace exists, ask the user which one to use, and use that single workspace for the rest of this skill. Never query or merge data across multiple workspaces in one run.
+2. **Confirm the connections this answer needs — run `connect-tools`.** Invoke the `connect-tools` skill with the pinned `workspace_id`, `kinds: [bank, accounting]`, `required: []`, and the same `purpose`, then read its hand-off instead of querying `workspace_connectors` yourself. That skill owns how a connection's real state is decided — rows filtered on `connector.direction: input` and matched on `connector.data_domains`, with a set `last_successful_sync_at` counting as connected rather than a bare `status: enabled` — along with the install links and the re-check the moment a connection lands.
+   - `coverage: none` → stop; runway can't be computed yet. `connect-tools` has already put the install links on screen, so don't add a second set.
+   - Any kind reported `connecting`, or a connected connector whose latest sync is still running → carry on, and carry "the data may still be partial" into the answer.
+   - `coverage: partial` → carry on with what is connected, and keep the missing kinds for the coverage disclosure the Output requirements ask for.
+   - A kind the user chose to skip comes back under `skipped_by_user` — respect that and don't re-ask for it in this run.
+   - **If `connect-tools` isn't installed**, do the connector half inline: keep `workspace_connectors` rows whose `connector.direction` is `input` and whose `connector.data_domains` covers `bank` or `accounting`, treat a set `last_successful_sync_at` as connected, and on a gap hand the user the top 2-3 `install_url` links from `well_list_connectors()` (bank connectors first), re-running this check yourself the moment one lands rather than waiting to be re-prompted.
 
-3. **Verify enough connections exist.** Query `workspace_connectors` for `status: enabled` entries.
-   - If nothing looks connected yet, call `well_list_connectors()`, hand the user the top install links (bank connectors first — runway needs a real cash balance), and stop before calling `well_get_runway` at all. Once a connector shows as connected, immediately re-run this check yourself and continue through the rest of the workflow — don't wait to be re-prompted or ask the user to restate the request.
-   - Note the most recent sync status/`completed_at` from `workspace_connector_sync_logs` so stale data can be flagged later.
+3. **Verify the data itself has landed.** `connect-tools` reports connections, not rows — a connector can be connected and still have delivered nothing this skill can use. Spot-check what this skill actually reads: for each connected connector, the latest `workspace_connector_sync_logs` row's `status` and `completed_at`. Keep those timestamps: the runway headline has to say how fresh its inputs are, and a connector that hasn't synced in weeks makes the number stale rather than wrong. `well_get_runway` returning `"insufficient_data"` in the next step is the other half of this check.
 
 4. **Get the runway.** Call `well_get_runway()`. It returns `cash` (amount + currency), `avg_burn` (amount + currency + trailing window), `months`, and a `status`:
    - `"ok"` → a real months figure — proceed to step 5.
@@ -86,7 +96,7 @@ Return:
 - The formula used (cash ÷ average monthly burn) so the number is auditable, not a black box — this is the same computation the Well app itself renders, not a skill-side estimate.
 - A freshness/caveat line (sync recency from `as_of`; any `partial`/`excluded`/`hints` the tool surfaced).
 - **What's driving the burn** — the top spend categories from `well_get_cost_structure`, clearly labeled as a supplementary view: it covers the latest closed month, not the trailing burn window, and it is not a decomposition of the burn figure. If that call failed or returned nothing, say the view is unavailable rather than omitting it silently.
-- Whether the picture is complete: which relevant connector categories (bank/cash, accounting) are connected versus still missing, so the user knows whether this runway reflects their full cash position or a partial one gated by what's connected today.
+- Whether the picture is complete: which relevant connector categories (bank/cash, accounting) are connected versus still missing, so the user knows whether this runway reflects their full cash position or a partial one gated by what's connected today. Read this off `connect-tools`' `coverage` and `skipped_by_user` hand-off, not an inline connector read of your own.
 - A one-line pointer to `expense-breakdown` for the full ranked spend breakdown plus the largest outstanding bills.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 7's fallback was used, the fallback answer and link, clearly labeled as a fallback.
@@ -96,7 +106,8 @@ Return:
 Before finishing, verify:
 
 - If `well_*` tools weren't available at all, the user was pointed at the MCP endpoint (`https://api.wellapp.ai/v1/mcp`) instead of erroring silently.
-- The workspace was resolved unambiguously.
+- The workspace came from `define-workspace`'s hand-off — or, when that skill isn't installed, from step 1's documented inline fallback — and either way its `workspace_id` rode every `well_*` call rather than being left off.
+- Connection state came from `connect-tools`' hand-off — or from step 2's inline fallback when that skill isn't installed — and data freshness was read separately in step 3; a connected connector was never assumed to mean usable data had landed.
 - Cash and burn figures came straight from `well_get_runway`'s response, not re-derived from raw record reads.
 - Cash-flow-positive (`"infinite"`) and capped (`"capped"`) workspaces are reported with their dedicated phrasing, not as a division error or a raw number past 36 months.
 - The final answer states runway in **both months and days**, per the user's requirement (except the `"capped"`/`"infinite"` branches, which have no days remainder).
@@ -105,7 +116,7 @@ Before finishing, verify:
 - If `partial: true`, the `excluded` counts and any `hints` were disclosed rather than silently absorbed into the number.
 - The burn-drivers view came from `well_get_cost_structure`, was labeled supplementary, and its window mismatch with the burn window was stated — never presented as a breakdown that sums to the burn figure.
 - A failed or empty `well_get_cost_structure` call was reported as an unavailable supplementary view, not allowed to block or invalidate the runway headline.
-- Which connector categories (bank/cash, accounting) are connected versus missing was stated, so the user knows whether the picture is complete or partial.
+- Which connector categories (bank/cash, accounting) are connected versus missing was stated from `connect-tools`' hand-off, so the user knows whether the picture is complete or partial.
 - Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation — not forced into every answer.
 
 ## Examples
@@ -116,7 +127,7 @@ Before finishing, verify:
 
 ### Expected behavior
 
-Resolve the workspace, confirm a connector is enabled, call `well_get_runway()`, and answer with a headline like "You have approximately 7 months and 12 days of runway," followed by the cash figure, burn figure, window, and as-of date — all read directly from the tool's response. Then call `well_get_cost_structure()` and add the top spend categories as a labeled "what's driving your burn" view, noting it covers the latest closed month rather than the trailing burn window.
+Run `define-workspace`, then `connect-tools`, note how fresh the connected data is, call `well_get_runway()`, and answer with a headline like "You have approximately 7 months and 12 days of runway," followed by the cash figure, burn figure, window, and as-of date — all read directly from the tool's response. Then call `well_get_cost_structure()` and add the top spend categories as a labeled "what's driving your burn" view, noting it covers the latest closed month rather than the trailing burn window.
 
 ### Example request
 
@@ -124,4 +135,4 @@ Resolve the workspace, confirm a connector is enabled, call `well_get_runway()`,
 
 ### Expected behavior
 
-Detect the missing/insufficient connector during step 3, present install links for bank/accounting connectors instead of guessing a number, and stop.
+Detect the missing/insufficient connector during step 2, via `connect-tools`' `coverage`, present install links for bank/accounting connectors instead of guessing a number, and stop.
