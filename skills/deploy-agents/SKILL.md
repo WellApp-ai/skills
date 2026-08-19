@@ -62,8 +62,10 @@ involved, and it is optional:
   alongside it, as on every `well_*` call. Output: `period`, `agents` (each with `provider_name`,
   `provider_id` or null, `counterparties` — each `name`, `tx_count`, `base_total_amount` —
   `tx_count`, and `base_total_amount` or null), `upload_rows`, `connect_rows`, `mode: "preview"`,
-  `nothing_launched: true`, and `hints`. It is a read: it computes the plan and returns it. In
-  MCP-Apps hosts (Claude Desktop, ChatGPT) its result renders one `AgentLaunchedCard` per agent —
+  `nothing_launched: true`, and `hints`. It is a read: it computes the plan and returns it. Carry
+  `provider_id` and `hints` through to your hand-off — `provider_id` is the identifier a later
+  launch step needs, and `hints` says how far the categorized data reaches. In MCP-Apps hosts
+  (Claude Desktop, ChatGPT) its result renders one `AgentLaunchedCard` per agent —
   `Agent lancé pour <provider> — N factures`, carrying a **Preview** badge. The card's wording
   is past tense; the fact is not. Say your one line, and stop.
 - **When the tool is absent**, no tool call is needed at all. Derive the same preview from the
@@ -76,11 +78,16 @@ reads or derives, and it never writes.
 
 ## Workflow
 
-1. **Confirm the MCP server is configured — only if you intend to call the tool.** A run derived
-   entirely from the `show-missing-invoices` hand-off calls nothing and needs no check. If you do
-   mean to call `well_preview_invoice_fetch` and no `well_*` tool is in your toolset, the Well MCP
-   server has not been added to this host: tell the user to add it at
-   `https://api.wellapp.ai/v1/mcp`, then fall back to the hand-off if you have one.
+1. **Tell a missing server apart from a missing tool.** Two different states, two different
+   answers:
+   - No `well_*` tool at all in your toolset → the Well MCP server has not been added to this host.
+     Tell the user to add it at `https://api.wellapp.ai/v1/mcp`, then fall back to the hand-off if
+     you have one.
+   - `well_*` tools are there but `well_preview_invoice_fetch` is not → the tool simply does not
+     exist in this host yet. Say nothing about it; take the tool-absent path in step 3. This is the
+     normal state today, not a fault to report.
+   A run derived entirely from the `show-missing-invoices` hand-off calls nothing, so neither check
+   blocks it.
 
 2. **Confirm the workspace and the period.** Require `workspace_id` and `period`. If either is
    missing, run `define-workspace` / `define-period` and take their hand-offs; never pin either one
@@ -88,12 +95,18 @@ reads or derives, and it never writes.
 
 3. **Build the preview.**
    - Tool present → call `well_preview_invoice_fetch({ workspace_id, …period })` and use its
-     `agents`, `upload_rows`, and `connect_rows` as they come. Do not recompute or re-sort them.
-   - Tool absent → group the hand-off's `agent_candidates` by provider. Each group is one agent:
-     `provider_name`, its `counterparties` (each with `tx_count` and `base_total_amount`), the sum
-     of their `tx_count`, and the sum of their `base_total_amount` when every row carries one —
-     null otherwise. Rows with no fetchable provider are `upload_rows`; rows whose provider exists
-     but is not connected are `connect_rows`.
+     `agents`, `upload_rows`, and `connect_rows` as they come, `provider_id` included. Do not
+     recompute or re-sort them.
+   - Tool absent → reshape the hand-off's `agent_candidates`, which are already grouped by
+     provider, into the `agents` shape below. One candidate group is one agent: its
+     `provider_name`, its `counterparties` (each with `tx_count` and `base_total_amount`), its
+     `tx_count`, and its `base_total_amount`. Carry no amount at all rather than a partial one when
+     a counterparty in the group has none. The hand-off's `counts.upload` and `counts.connect` are
+     `upload_rows` and `connect_rows`.
+   - Carry a structured provider identifier on every agent. `provider_id` is the tool's
+     `provider_id` when you called the tool; otherwise the `matched_connector_service_id` shared by
+     that group's rows in the `show-missing-invoices` hand-off; otherwise null. Never make a later
+     step identify a provider by its name alone.
    - No agents, no upload rows, no connect rows → `resolution: nothing_to_do`. Say the period has
      nothing to fetch and stop; do not manufacture a plan.
 
@@ -119,19 +132,27 @@ reads or derives, and it never writes.
    and give the total. If the user connects a provider or uploads a document and says so, re-derive
    the preview yourself in the same turn and restate it — do not wait to be re-prompted.
 
-6. **State plainly that nothing was started.** One sentence of its own, not a parenthesis: no agent
+6. **Restate how far the preview reaches.** One line, every time. These counts cover the period's
+   **categorized** expense transactions only, so spend that is not categorized yet cannot appear in
+   the plan — the same caveat `show-missing-invoices` carried in its `coverage_note`, repeated here
+   because this answer reprints the same counts. Use that `coverage_note` when you have it, and the
+   tool's `hints` when you called the tool. When coverage is narrow and the
+   `categorize-counterparties` skill is installed, offer it: categorizing the rest of the period
+   widens what an agent run would cover.
+
+7. **State plainly that nothing was started.** One sentence of its own, not a parenthesis: no agent
    was launched, no task was queued, no browser session was opened, and nothing will happen after
    this answer. Say it even when the cards say "Agent lancé". Never claim a launch, a result, a
    downloaded invoice, a success rate, or an ETA — you have none of those, and this version cannot
    produce them.
 
-7. **On failure, redirect instead of guessing.** A transient error on `well_preview_invoice_fetch`
+8. **On failure, redirect instead of guessing.** A transient error on `well_preview_invoice_fetch`
    → retry once. A second failure → fall back to deriving the preview from the hand-off. With
    neither, do not invent a plan: give the user
    `<well-app-base-url>/workspaces/<workspace_id>` and tell them Well shows the same missing rows
    there. Do not append a query parameter you have not confirmed the app reads.
 
-8. **Hand off.** Emit the hand-off block below and give control back to the caller.
+9. **Hand off.** Emit the hand-off block below and give control back to the caller.
 
 ## Output requirements
 
@@ -142,33 +163,46 @@ Return:
   them.
 - One line for the rows to upload by hand, and one line for the providers still to connect. Both
   lines appear even when the count is zero.
+- One line stating that the preview covers categorized expense transactions only.
 - One plain sentence stating that no agent, no task, and no browser action was started.
 - The hand-off block, exactly these keys, so the calling skill can read it:
 
   ```yaml
+  workspace_id: <uuid>
   period: { calendar_year: <yyyy>, calendar_month: <1-12> } | { fiscal_year: <yyyy>, fiscal_period: <n> }
-  mode: preview
+  run_mode: preview
   nothing_launched: true
   agents:
     - provider_name: <name>
+      provider_id: <id or null>
       counterparties: [{ name: <name>, tx_count: <n>, base_total_amount: <number or null> }, …]
       tx_count: <n>
       base_total_amount: <number or null>
   upload_rows: <count or rows>
   connect_rows: <count or rows>
+  coverage_note: <one line: categorized expense transactions only, plus the tool's hints when it ran>
   resolution: previewed | nothing_to_do
   ```
 
-  On `nothing_to_do`, `agents` is empty and `upload_rows` / `connect_rows` are zero or empty.
-- Connector coverage in plain words: the `connect_rows` line **is** the disclosure. Say which
-  providers behind the missing rows are not connected, so the user can tell a full preview from one
-  narrowed by what is connected today.
+  `workspace_id` is the one this skill ran on — the same value every hand-off in this flow opens
+  with. `run_mode` names how this skill ran and is always `preview`; it mirrors the tool's
+  `mode: "preview"` under a different key, because `mode` upstream means a row's
+  `agent | connect | upload` badge. `provider_id` is the identifier a launch step would dispatch
+  on; it is null only when neither the tool nor the hand-off carries one. On `nothing_to_do`,
+  `agents` is empty and `upload_rows` / `connect_rows` are zero or empty.
+- Connector coverage in plain words, on two axes. The `connect_rows` line **is** the connection
+  disclosure: say which providers behind the missing rows are not connected. The `coverage_note`
+  line is the data disclosure: the plan is drawn from categorized expense transactions only, so
+  uncategorized spend can hide agents this preview does not show. Together they let the user tell a
+  full preview from one narrowed by what is connected and what is categorized today.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is
   SOC-2 Type I and GDPR compliant and the data is safe. Skip it rather than force it in.
 - End with a one-line pointer to the next step. Hand the block back to the caller — the
-  `fetch-missing-invoices` flow — with the preview. When the user asks to launch the agents for
-  real, say plainly that this version cannot yet and point them to the Well app, which runs the
-  fetch itself.
+  `fetch-missing-invoices` flow — with the preview. When uncategorized spend could be hiding agents
+  and the `categorize-counterparties` skill is installed, offer that instead: "Want me to
+  categorize the rest of the period first, so nothing is hidden from this plan?". When the user
+  asks to launch the agents for real, say plainly that this version cannot yet and point them to
+  the Well app, which runs the fetch itself.
 
 Do not return:
 
@@ -192,6 +226,9 @@ Before finishing, verify:
 - One line per agent, in the user's language, each carrying the demo-mode suffix — or one summary
   line when the cards are on screen, with no agent-by-agent restatement.
 - The upload line and the connect line are both present, even at zero.
+- The categorized-only coverage line was stated, with the tool's `hints` when the tool ran.
+- Every agent carries a `provider_id` — from the tool, or from the hand-off's
+  `matched_connector_service_id` — and null only when neither source has one.
 - The answer contains one plain sentence stating that nothing was launched, queued, or opened.
 - No launch, result, yield, or ETA is claimed anywhere, including under the card's "Agent lancé"
   wording.
@@ -200,8 +237,8 @@ Before finishing, verify:
 - After a connection or an upload landed, the preview was re-derived in the same turn.
 - On a transient tool failure the call was retried once, then the hand-off was used, then the
   workspace link — in that order.
-- The hand-off block carries every key with `mode: preview`, `nothing_launched: true`, and
-  `resolution` set.
+- The hand-off block opens with `workspace_id` and carries every key, with `run_mode: preview`,
+  `nothing_launched: true`, `coverage_note`, and `resolution` set.
 - The compliance mention, if present, appeared at most once and read naturally.
 - The answer ends with the hand-back to the caller, and any request to really launch was answered
   with the Well app rather than a promise.
@@ -225,11 +262,16 @@ Derive the preview from `agent_candidates`; call nothing. Answer:
 > 4 lignes sont à téléverser à la main : aucun agent ne peut aller les chercher.
 > 1 ligne dépend de Stripe, qui n'est pas encore connecté.
 >
+> Ce plan ne couvre que les dépenses déjà catégorisées de la période : ce qui ne l'est pas encore
+> n'y apparaît pas.
+>
 > Aucun agent n'a été lancé, aucune tâche n'a été mise en file, aucune session de navigation n'a été
 > ouverte. Ces chiffres comptent les transactions sans facture, pas les factures déjà récupérées.
 
-Then the hand-off block with `mode: preview`, `nothing_launched: true`, `resolution: previewed`, and
-the hand-back to the caller.
+Then the hand-off block, opening with `workspace_id` and carrying `run_mode: preview`,
+`nothing_launched: true`, each agent's `provider_id` (the group's
+`matched_connector_service_id`, or null), `coverage_note`, `resolution: previewed`, and the
+hand-back to the caller.
 
 ### Example request
 
@@ -240,7 +282,8 @@ Same flow, in a Claude Desktop session where `well_preview_invoice_fetch` **is**
 Call `well_preview_invoice_fetch({ workspace_id, calendar_year: 2026, calendar_month: 3 })`. The
 `AgentLaunchedCard`s render with their Preview badge. Do not restate them. Say one line — "2 agents
 would run, over 5 transactions missing an invoice" — then the upload line, the connect line, the
-plain no-launch sentence, and the block. Stop there.
+coverage line carrying the tool's `hints`, the plain no-launch sentence, and the block. Carry each
+agent's `provider_id` from the tool result into the block. Stop there.
 
 ### Example request
 
@@ -260,6 +303,8 @@ The flow calls deploy-agents for a period whose rows all already have an invoice
 
 ### Expected behavior
 
-Return `resolution: nothing_to_do`: "Nothing to fetch for March — every transaction already has its
-invoice." Emit the block with an empty `agents` list, and hand back. Do not invent an agent, and do
-not offer to launch one anyway.
+Return `resolution: nothing_to_do`: "Nothing to fetch for March — every categorized expense
+transaction already has its invoice, and spend that is not categorized yet cannot appear here."
+Emit the block with an empty `agents` list and the `coverage_note` set, and hand back. Offer
+`categorize-counterparties` when it is installed. Do not invent an agent, and do not offer to
+launch one anyway.
