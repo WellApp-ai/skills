@@ -30,7 +30,7 @@ Do not use this skill when:
 
 The user may provide:
 
-- Which workspace to use, if they manage more than one.
+- A workspace hint — an id, a workspace name, or the company behind it — if they manage more than one. Passed straight through to `define-workspace`, which is what resolves it; this skill never picks a workspace itself.
 - A specific customer to filter to — default to all customers with an outstanding balance.
 - How the result should be grouped — default to per-invoice within each aging bucket; group by customer (worst bucket per customer) only if the user asks for a customer-level summary.
 
@@ -38,23 +38,32 @@ The user may provide:
 
 This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). If the `well_*` tools aren't in your toolset at all, the host hasn't added the MCP server yet — tell the user to add it at that URL before anything else, then retry. Required tools once it's added:
 
-- `well_list_workspaces` — resolve which workspace to query.
-- `well_query_records` — read `workspace_connectors`, `invoices`, `workspaces` (for `own_company`), `exchange_rates`.
+- `well_list_workspaces` — how `define-workspace` resolves the workspace. Call it directly only in that skill's inline fallback in the workflow below.
+- `well_query_records` — read `invoices`, `workspaces` (for `own_company`), `exchange_rates`.
 - `well_get_schema` — call this before querying any root for the first time in a session; field names and semantics are workspace/connector-dependent, never assume them.
-- `well_list_connectors` — surface install links when the workspace lacks invoicing data.
-- Well's OAuth / Dynamic Client Registration (DCR) flow — if no Well MCP connection exists yet, most hosts trigger this automatically when the Well MCP server is added (it exposes standard OAuth discovery + DCR, no manual client secret needed). If your host exposes a dedicated `authenticate` tool for the Well connector, call that instead.
+- `well_list_connectors` — how `connect-tools` surfaces install links. Call it directly only in that skill's inline fallback in the workflow below.
+- Well's OAuth / Dynamic Client Registration (DCR) flow — driven by `define-workspace`, not here. Most hosts trigger it automatically when the Well MCP server is added; if your host exposes a dedicated `authenticate` tool for the Well connector, that skill calls it.
+
+**Composed skills.** Two atomic Well skills own the setup this skill used to inline — invoke them, don't reimplement them:
+
+- `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there's no connection yet, and pins exactly one workspace. Supplies the `workspace_id` that every later call carries.
+- `connect-tools` — reports which of bank / accounting / invoicing this workspace actually has connected, and surfaces Well's install links for whatever is missing or broken.
+
+Both ship with the `well-skills` plugin. This skill is also installable on its own, so steps 1 and 2 of the workflow each carry the inline fallback to use when they're absent.
 
 ## Workflow
 
-1. **Confirm the MCP server is configured.** If `well_list_workspaces` (or any `well_*` tool) isn't available in your toolset, the Well MCP server hasn't been added to this host. Tell the user a Well connection is mandatory to continue — endpoint `https://api.wellapp.ai/v1/mcp` — because Well is where their financial data is aggregated securely to compute a real receivables answer; without it there's nothing to age. Stop until it's there; don't estimate from assumptions.
+1. **Pin the workspace — run `define-workspace`.** Invoke the `define-workspace` skill with `purpose: "to age the invoices your customers still owe"` and use its typed hand-off. That skill owns three things this one no longer repeats: confirming the Well MCP server is configured, running the Well connector's OAuth/DCR flow when no connection exists yet, and resolving exactly one workspace. Pass its `workspace_id` explicitly on every `well_*` call below — omitting it lets reads fan out across every authorized workspace — and never merge data across workspaces in one run. If it hands back `resolution: unresolved`, stop: there is nothing to age without a pinned workspace.
+   - **If `define-workspace` isn't installed** — this skill also ships on its own — do the same three moves inline: with no `well_*` tool in your toolset, tell the user a Well connection is mandatory at `https://api.wellapp.ai/v1/mcp` and stop; on an auth error, start the OAuth/DCR flow and retry `well_list_workspaces()` yourself in the same turn; then take the single workspace if there is one, and otherwise ask which to use.
 
-2. **Confirm the account.** Attempt `well_list_workspaces()`.
-   - If the call fails with an auth error, no Well MCP connection exists yet — start the Well connector's OAuth/DCR flow (via the host's connector authentication, or the Well connector's `authenticate` tool if present). The moment that flow returns, immediately retry `well_list_workspaces()` yourself in the same turn and continue — don't stop to ask the user to confirm they've logged in or wait for a new message.
-   - If it returns one workspace, use it. If more than one workspace exists, ask the user which one to use, and use that single workspace for the rest of this skill. Never query or merge data across multiple workspaces in one run.
+2. **Confirm the connections this answer needs — run `connect-tools`.** Invoke the `connect-tools` skill with the pinned `workspace_id`, `kinds: [invoicing, accounting]`, `required: []`, and the same `purpose`, then read its hand-off instead of querying `workspace_connectors` yourself. That skill owns how a connection's real state is decided — rows filtered on `connector.direction: input` and matched on `connector.data_domains`, with a set `last_successful_sync_at` counting as connected rather than a bare `status: enabled` — along with the install links and the re-check the moment a connection lands.
+   - `coverage: none` → stop; there is nothing to age yet. `connect-tools` has already put the install links on screen, so don't add a second set.
+   - Any kind reported `connecting`, or a connected connector whose latest sync is still running → carry on, and carry "the data may still be partial" into the answer.
+   - `coverage: partial` → carry on with what is connected, and keep the missing kinds for the coverage disclosure the Output requirements ask for.
+   - A kind the user chose to skip comes back under `skipped_by_user` — respect that and don't re-ask for it in this run.
+   - **If `connect-tools` isn't installed**, do the connector half inline: keep `workspace_connectors` rows whose `connector.direction` is `input` and whose `connector.data_domains` covers `invoicing` or `accounting`, treat a set `last_successful_sync_at` as connected, and on a gap hand the user the top 2-3 `install_url` links from `well_list_connectors()` (invoicing and accounting connectors first), re-running this check yourself the moment one lands rather than waiting to be re-prompted.
 
-3. **Verify the workspace has enough data.** Query `workspace_connectors` (fields: `status`, `connector.name`, `connector.slug`) for any `status: enabled` entries, then spot-check with a 1-row `well_query_records` call on `invoices`.
-   - If no connector is enabled, or the spot-check returns zero rows, call `well_list_connectors()` and present the top 2-3 `install_url` links (invoicing/accounting connectors first), and stop here until one is connected — there is nothing to age yet. Once a connector shows as connected, immediately re-run this check yourself and continue through the rest of the workflow — don't wait to be re-prompted or ask the user to restate the request.
-   - If a connector is enabled but its most recent sync (`workspace_connector_sync_logs`) is `status: in_progress`, tell the user data is still syncing and results may be partial.
+3. **Verify the data itself has landed.** `connect-tools` reports connections, not rows — a connector can be connected and still have delivered nothing this skill can use. Spot-check what this skill actually reads: a 1-row `well_query_records` read on `invoices`. Zero rows means the workspace has no invoices synced yet — say so and stop, rather than reporting an empty aging table as a clean one.
 
 4. **Resolve `own_company` — never infer it.** Call `well_get_schema({ root: "workspaces" })`, then read `workspaces.own_company` on the resolved workspace. Treat all three of these as **unresolved**, not just the null case: the relation is `null`; the field is **absent from the schema entirely** (some workspaces don't expose it, and an absent field is not permission to work around it); or it resolves to more than one plausible company. When unresolved, ask the user which company in Well is theirs and use their answer **for this run only**. Never infer it from the workspace's name, title, logo, slug, or email domain — a workspace named after its owner is a coincidence, not a record, and a wrong pick silently turns payables into receivables. No MCP tool can persist `own_company`; if the user wants it set permanently, point them at their workspace in the Well app (`<well-app-base-url>/workspaces/<workspace_id>`), where the own-company picker writes it, and say plainly that until then every run will ask again. If the user declines to confirm, state plainly that receivables can't be isolated from the full invoice list until it's set.
 
@@ -82,7 +91,7 @@ Return:
 - Aging buckets (current, 1-30, 31-60, 61-90, 90+) each listing customer name, amount, currency, due date, and days overdue per invoice (or per customer if a customer-level summary was requested).
 - A total outstanding receivables figure, with currency.
 - A one-line note on how "days overdue" was computed — `due_date`, or `issue_date` fallback if any invoices lacked a due date.
-- Whether the picture is complete: which relevant connector categories (invoicing/accounting) are connected versus still missing, and whether the workspace's own company is set, so the user knows whether this reflects their full receivables or a partial view gated by what's connected today.
+- Whether the picture is complete: which relevant connector categories (invoicing/accounting) are connected versus still missing, and whether the workspace's own company is set, so the user knows whether this reflects their full receivables or a partial view gated by what's connected today. Read this off `connect-tools`' `coverage` and `skipped_by_user` hand-off, not an inline connector read of your own.
 - A one-line pointer to `company-profile` for a deep dive on any single overdue customer's full history.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 8's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
@@ -92,8 +101,8 @@ Return:
 Before finishing, verify:
 
 - If `well_*` tools weren't available at all, the user was pointed at the MCP endpoint (`https://api.wellapp.ai/v1/mcp`) instead of erroring silently.
-- A Well workspace was resolved unambiguously (not guessed when multiple existed).
-- Data presence was checked, not just connector "enabled" status.
+- The workspace came from `define-workspace`'s hand-off — it was not resolved here — and its `workspace_id` rode every `well_*` call rather than being left off.
+- Connection state came from `connect-tools`' hand-off, and row presence was spot-checked separately in step 3 — a connected connector was never assumed to mean usable data had landed.
 - `own_company` was read, not inferred. If it was null, absent from the schema, or ambiguous, the user was asked or the limitation was stated plainly — it was never derived from the workspace's name, logo, slug, or email domain, and an absent field was not treated as license to guess.
 - Duplicate company records (legal-form prefixes/suffixes, punctuation, accents) were checked with two-directional normalized containment and confirmed with the user before being folded into the own-company identity — not merged silently, and not missed by testing containment one way only.
 - Null-`issuer_company_id` invoices were split on the receiver before aging: own-company receiver routed to payables and excluded, external receiver aged as a labeled row, both-null reported as a separate unsplit line outside the total outstanding.
@@ -103,7 +112,7 @@ Before finishing, verify:
 - Every invoice is bucketed by days overdue, with the `due_date` vs. `issue_date` fallback stated when used.
 - Multi-currency results are converted (with rate/date noted) or clearly separated, never blended.
 - Every number carries a currency and an as-of date.
-- Which connector categories (invoicing/accounting) are connected versus missing was stated, so the user knows whether the picture is complete or partial.
+- Which connector categories (invoicing/accounting) are connected versus missing was stated from `connect-tools`' hand-off, so the user knows whether the picture is complete or partial.
 - Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation — not forced into every answer.
 
 ## Examples
@@ -114,7 +123,7 @@ Before finishing, verify:
 
 ### Expected behavior
 
-Resolve the workspace, confirm invoicing data exists, resolve `own_company`, pull all `invoices` where this workspace is issuer and `payment_status` is `unpaid` or `partial`, bucket each by days overdue from `due_date`, and present the buckets (current, 1-30, 31-60, 61-90, 90+) with customer, amount, currency, due date, and days overdue per invoice, plus a total outstanding figure and as-of date.
+Run `define-workspace`, then `connect-tools`, and spot-check that rows have landed; resolve `own_company`, pull all `invoices` where this workspace is issuer and `payment_status` is `unpaid` or `partial`, bucket each by days overdue from `due_date`, and present the buckets (current, 1-30, 31-60, 61-90, 90+) with customer, amount, currency, due date, and days overdue per invoice, plus a total outstanding figure and as-of date.
 
 ### Example request
 
