@@ -1,6 +1,6 @@
 ---
 name: fx-exposure
-requires: [define-workspace, connect-tools]
+requires: [define-workspace, connect-tools, normalize-currency]
 description: Measure how exposed a company is to foreign-currency risk using Well's MCP financial graph — outstanding invoice balances and cash balances summed by non-home currency and converted to the workspace's home/reporting currency at real exchange rates. Use when the user asks "measure our FX exposure", "FX exposure", "currency risk", "how much of our cash/receivables is in foreign currency", "what's our exposure to EUR/USD/GBP", or "currency breakdown of our cash and invoices". Requires a connected Well workspace with invoicing and/or banking data plus a resolvable home currency; if either is missing, this skill walks the user through connecting one or confirming the home currency first.
 ---
 
@@ -45,12 +45,13 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 - `well_list_connectors` — how `connect-tools` surfaces install links. Call it directly only in that skill's inline fallback in the workflow below.
 - Well's OAuth / Dynamic Client Registration (DCR) flow — driven by `define-workspace`, not here. Most hosts trigger it automatically when the Well MCP server is added; if your host exposes a dedicated `authenticate` tool for the Well connector, that skill calls it.
 
-**Composed skills.** Two atomic Well skills own the setup this skill used to inline — invoke them, don't reimplement them:
+**Composed skills.** Three atomic Well skills own the setup this skill used to inline — invoke them, don't reimplement them:
 
 - `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there's no connection yet, and pins exactly one workspace. Supplies the `workspace_id` that every later call carries.
 - `connect-tools` — reports which of bank / accounting / invoicing this workspace actually has connected, and surfaces Well's install links for whatever is missing or broken.
+- `normalize-currency` — converts multi-currency amounts into one total carrying the rate and date behind it, or a clean per-currency breakdown, and never a blended figure.
 
-Both ship with the `well-skills` plugin. This skill is also installable on its own, so steps 1 and 2 of the workflow each carry the inline fallback to use when they're absent.
+All three ship with the `well-skills` plugin. This skill is also installable on its own, so steps 1 and 2 of the workflow each carry the inline fallback to use when they're absent.
 
 ## Workflow
 
@@ -73,7 +74,10 @@ Both ship with the `well-skills` plugin. This skill is also installable on its o
    - Cash: query `accounts` joined to `account_balances` where `balance_at_to IS NULL` (the current-balance row) — never join to `ledger_accounts` for this. Group by `accounts.currency`.
    - Group both result sets by currency, and separate out everything that is **not** the home currency from step 4 — that's the exposure set.
 
-6. **Convert each non-home currency to the home currency.** For each non-home currency found, call `well_get_schema({ root: "exchange_rates" })` if not already called this session, then look up the rate for that currency pair as of the as-of date (default today). If an exact-date rate isn't available, use the most recent rate at or before the as-of date and state which date's rate was used — never pick an arbitrary or future rate.
+6. **Convert each non-home currency to the home currency — run `normalize-currency`.** Invoke the `normalize-currency` skill with the pinned `workspace_id`, the exposure subtotal per non-home currency, `target_currency` set to the home currency from step 4, `as_of` (default today), and `mode: convert`. That skill owns the `exchange_rates` read, the most-recent-rate-at-or-before-`as_of` fallback, the never-a-future-rate rule, and the pair-direction check — the rate logic this step used to carry alone.
+   - Use its `per_currency` rows for the per-currency exposure lines and its `converted_total` for the single home-currency figure. Every rate and rate date it returns belongs in the output; an exposure number without its rate is not auditable.
+   - `partial: true` means a currency had no rate in Well. That currency is still real exposure — report it in its own currency, name it as unconverted, and say the home-currency total excludes it. Dropping it understates exposure, which is the one direction this skill must never err in.
+   - **If `normalize-currency` isn't installed**, do it inline: call `well_get_schema({ root: "exchange_rates" })`, look up each pair as of the as-of date, fall back to the most recent rate at or before it and state which date was used, never use a later rate, and check pair direction before dividing rather than multiplying.
 
 7. **Report exposure per currency.** For each non-home currency: the exposure amount in its original currency, the converted home-currency equivalent, and its share of total exposure. Total everything into one home-currency exposure figure.
 
