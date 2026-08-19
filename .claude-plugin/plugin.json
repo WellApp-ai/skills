@@ -1,10 +1,25 @@
 {
   "name": "well-skills",
-  "description": "Grounded financial answers — expenses, runway, cash position, receivables, payables, FX exposure, reconciliation, and invoice drafting — computed live from Well's MCP financial graph.",
-  "version": "1.1.0",
-  "author": { "name": "Well App, Inc." },
+  "description": "Grounded financial answers \u2014 expenses, runway, cash position, receivables, payables, FX exposure, reconciliation, and invoice drafting \u2014 computed live from Well's MCP financial graph.",
+  "version": "1.2.0",
+  "author": {
+    "name": "Well App, Inc."
+  },
   "homepage": "https://wellapp.ai",
-  "keywords": ["finance", "runway", "expenses", "accounting", "cfo", "mcp", "well", "invoicing", "receivables", "reconciliation", "fx", "connectors"],
+  "keywords": [
+    "finance",
+    "runway",
+    "expenses",
+    "accounting",
+    "cfo",
+    "mcp",
+    "well",
+    "invoicing",
+    "receivables",
+    "reconciliation",
+    "fx",
+    "connectors"
+  ],
   "skills": "./skills",
   "mcpServers": {
     "well": {

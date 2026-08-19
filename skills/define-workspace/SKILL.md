@@ -103,6 +103,12 @@ Do not return:
 - A workspace chosen by similarity or by `is_primary` when the user did not pick it.
 - Data from any workspace other than the pinned one.
 
+**How this reaches the user.** A Well MCP tool that ships a widget attaches
+`_meta.ui.resourceUri` to its result. If the result you received carries that key and your
+host renders it, the product has already drawn this answer — add only what the card cannot
+say, and do not restate what it shows. Otherwise prose is the default; if a visual genuinely
+reads better and the `well-design-system` skill is available, use it.
+
 ## Quality checks
 
 Before finishing, verify:

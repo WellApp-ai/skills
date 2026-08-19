@@ -3,11 +3,14 @@
 install:
 	git config core.hooksPath .githooks
 
+# The manifest lives at the repository root; `skills/` is the plugin's skills
+# directory, not a plugin of its own. The frontmatter check below covers the skills.
 validate:
 	claude plugin validate . --strict
-	claude plugin validate ./skills --strict
 	node scripts/check-skill-frontmatter.js
 
+# `-y` on both zips: without it a symlink under skills/ is stored as its target's
+# CONTENT, which would publish an arbitrary local file in a public archive.
 build:
 	@set -e; \
 	for dir in skills/*/; do \
@@ -22,7 +25,7 @@ build:
 			rm -rf "$$tmp"; \
 		fi; \
 		rm -f "dist/$$name.zip" "dist/$$name.skill"; \
-		( cd "$$dir" && zip -r -X -q "../../dist/$$name.zip" . -x ".DS_Store" ); \
-		( cd "$$dir" && zip -0r -X -q "../../dist/$$name.skill" . -x ".DS_Store" ); \
+		( cd "$$dir" && zip -ry -X -q "../../dist/$$name.zip" . -x ".DS_Store" ); \
+		( cd "$$dir" && zip -0ry -X -q "../../dist/$$name.skill" . -x ".DS_Store" ); \
 		echo "rebuilt dist/$$name.{zip,skill}"; \
 	done
