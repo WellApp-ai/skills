@@ -32,7 +32,7 @@ The user may supply, or will be asked for:
 
 - Issuer (usually the workspace's own company) — offered as a default, always confirmed.
 - Receiver (the client being billed) — name required; other details optional.
-- Reference number — asked for; never invented outright (see workflow step 3).
+- Reference number — asked for; never invented outright (see workflow step 2).
 - Issue date — defaults to today if unspecified, stated as a default rather than assumed silently.
 - Due date — optional, only set if the user cares about payment terms.
 - Currency — required, ISO 4217 three-letter code.
@@ -42,7 +42,7 @@ The user may supply, or will be asked for:
 
 This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). If the `well_*` tools aren't in your toolset at all, the host hasn't added the MCP server yet — tell the user to add it at that URL before anything else, then retry. Required tools once it's added:
 
-- `well_list_workspaces` — resolve which workspace to write into.
+- `well_list_workspaces` — how `define-workspace` resolves the workspace. Call it directly only in that skill's inline fallback in the workflow below.
 - `well_query_records` — read `workspaces` (for `own_company`) and search `companies` for a possible receiver match.
 - `well_get_schema` — call this before querying `invoices` or `companies` for the first time in a session; field names and semantics are workspace/connector-dependent, never assume them.
 - `well_create_invoice_from_data` — the write tool. Exact input schema (verified against source, use these field names as-is):
@@ -63,18 +63,21 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
   - Returns `{ success, invoice_id, document_id, reference_number }`.
   - Fails with a 409-class error when the invoice already has a real source document attached — an ingested vendor PDF or scan. It never overwrites one; it only repoints the metadata-only stub that `well_create_invoice_from_data` leaves behind.
   - The letterhead uses the issuer's own logo only if Well already has one on file for that company; otherwise it prints the issuer's name as text. A logo is usually absent for a company Well has just met, so never promise one.
-  - This does not make the PDF a legally-compliant sequential invoice — Well keeps no invoice-numbering sequence. The reference number printed on it is exactly the one the user supplied in step 3, never an invented one.
-- Well's OAuth / Dynamic Client Registration (DCR) flow — if no Well MCP connection exists yet, most hosts trigger this automatically when the Well MCP server is added. If your host exposes a dedicated `authenticate` tool for the Well connector, call that instead.
+  - This does not make the PDF a legally-compliant sequential invoice — Well keeps no invoice-numbering sequence. The reference number printed on it is exactly the one the user supplied in step 2, never an invented one.
+- Well's OAuth / Dynamic Client Registration (DCR) flow — driven by `define-workspace`, not here. Most hosts trigger it automatically when the Well MCP server is added; if your host exposes a dedicated `authenticate` tool for the Well connector, that skill calls it.
+
+**Composed skills.** One atomic Well skill owns the setup this skill used to inline — invoke it, don't reimplement it:
+
+- `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there's no connection yet, and pins exactly one workspace. Supplies the `workspace_id` that every later call carries.
+
+It ships with the `well-skills` plugin. This skill is also installable on its own, so step 1 of the workflow carries the inline fallback to use when it's absent.
 
 ## Workflow
 
-1. **Confirm the MCP server is configured.** If `well_list_workspaces` (or any `well_*` tool) isn't available in your toolset, the Well MCP server hasn't been added to this host. Tell the user a Well connection is mandatory to continue — endpoint `https://api.wellapp.ai/v1/mcp` — because Well is where the invoice would actually be created and stored; without it there is nothing to write to. Stop until it's there; don't estimate or invent data instead.
+1. **Pin the workspace — run `define-workspace`.** Invoke the `define-workspace` skill with `purpose: "to draft and create this invoice"` and use its typed hand-off. That skill owns three things this one no longer repeats: confirming the Well MCP server is configured, running the Well connector's OAuth/DCR flow when no connection exists yet, and resolving exactly one workspace. Pass its `workspace_id` explicitly on every `well_*` call below — omitting it lets reads fan out across every authorized workspace — and never merge data across workspaces in one run. If it hands back `resolution: unresolved`, stop: nothing can be created without a pinned workspace.
+   - **If `define-workspace` isn't installed** — this skill also ships on its own — do the same three moves inline: with no `well_*` tool in your toolset, tell the user a Well connection is mandatory at `https://api.wellapp.ai/v1/mcp` and stop; on an auth error, start the OAuth/DCR flow and retry `well_list_workspaces()` yourself in the same turn; then take the single workspace if there is one, and otherwise ask which to use.
 
-2. **Confirm the account.** Attempt `well_list_workspaces()`.
-   - If the call fails with an auth error, no Well MCP connection exists yet — start the Well connector's OAuth/DCR flow (via the host's connector authentication, or the Well connector's `authenticate` tool if present). The moment that flow returns, immediately retry `well_list_workspaces()` yourself in the same turn and continue — don't stop to ask the user to confirm they've logged in or wait for a new message.
-   - If it returns one workspace, use it. If more than one workspace exists, ask the user which one to use, and use that single workspace for the rest of this skill. Never query or merge data across multiple workspaces in one run.
-
-3. **Gather every required field — never invent one.** Call `well_get_schema({ root: "invoices" })` and `well_get_schema({ root: "companies" })` before relying on assumptions about either.
+2. **Gather every required field — never invent one.** Call `well_get_schema({ root: "invoices" })` and `well_get_schema({ root: "companies" })` before relying on assumptions about either.
    - **Issuer**: read `workspaces.own_company` for the resolved workspace and offer it as the likely issuer, but let the user confirm or override it — never assume it silently.
    - **Receiver**: search `companies` (`well_query_records`, `_ilike` on `name`) for a possible match to the client's name. If found, offer to reuse its `domain`/`tax_id_value`, but only if the user confirms it's the right company — never silently substitute an unconfirmed match. If no match, take the name fresh from the user.
    - **Reference number**: ask if the user hasn't given one. Never invent a numbering scheme; if they have no preference, suggest a simple placeholder (e.g. today's date plus a sequence marker) and let them confirm or supply their own.
@@ -83,17 +86,17 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
    - **Currency**: required — ask if not implied by the request.
    - **Line items**: at least one, each with a real `unit_price` from the user. Never invent a price, quantity, or line description. If the user gives only a total amount with no breakdown, ask for at least one line item (name and price) rather than fabricating a single generic line from the total.
 
-4. **Show the full composed draft and get explicit confirmation.** Before calling any write tool, present the complete invoice back to the user — issuer, receiver, reference number, issue date, due date (if any), currency, every line item, and the computed/stated totals — and ask them to confirm it's correct. This is a real, consequential write (Well does have a delete tool, but confirming first is far better practice than relying on undo). Do not proceed without an explicit yes; if the user asks for changes, update the draft and re-confirm.
+3. **Show the full composed draft and get explicit confirmation.** Before calling any write tool, present the complete invoice back to the user — issuer, receiver, reference number, issue date, due date (if any), currency, every line item, and the computed/stated totals — and ask them to confirm it's correct. This is a real, consequential write (Well does have a delete tool, but confirming first is far better practice than relying on undo). Do not proceed without an explicit yes; if the user asks for changes, update the draft and re-confirm.
 
-5. **On confirmation, call `well_create_invoice_from_data`** with exactly the confirmed fields — no silent additions, no substitutions. If this fails, stop here: surface the exact error and ask the user how they'd like to proceed (see step 7). Do not attempt step 6 without a created invoice.
+4. **On confirmation, call `well_create_invoice_from_data`** with exactly the confirmed fields — no silent additions, no substitutions. If this fails, stop here: surface the exact error and ask the user how they'd like to proceed (see step 6). Do not attempt step 5 without a created invoice.
 
-6. **On success, call `well_create_invoice_document`** with the `invoice_id` just returned, to render the invoice into a PDF and attach it to the record. This is not a separate ask — the confirmation the user gave in step 4 already covers producing the invoice and its PDF together. If the call fails, do not retry it silently: surface the exact error and ask the user how they'd like to proceed (retry, skip the PDF, or handle the document another way). A failed render never undoes the invoice created in step 5 — say so plainly so the user knows the record itself is safe.
+5. **On success, call `well_create_invoice_document`** with the `invoice_id` just returned, to render the invoice into a PDF and attach it to the record. This is not a separate ask — the confirmation the user gave in step 3 already covers producing the invoice and its PDF together. If the call fails, do not retry it silently: surface the exact error and ask the user how they'd like to proceed (retry, skip the PDF, or handle the document another way). A failed render never undoes the invoice created in step 4 — say so plainly so the user knows the record itself is safe.
 
-7. **Report the result honestly.** On success, report the returned `invoice_id`, `reference_number`, and — once step 6 completes — the `document_id`. If step 5 failed, surface its exact error and ask the user how to proceed; no PDF is attempted. If step 5 succeeded but step 6 failed, report both outcomes: the invoice exists, and the PDF render failed with the specific error. Never invent or silently retry a correction for either failure.
+6. **Report the result honestly.** On success, report the returned `invoice_id`, `reference_number`, and — once step 5 completes — the `document_id`. If step 4 failed, surface its exact error and ask the user how to proceed; no PDF is attempted. If step 4 succeeded but step 5 failed, report both outcomes: the invoice exists, and the PDF render failed with the specific error. Never invent or silently retry a correction for either failure.
 
-8. **Be explicit that this creates the record plus an attached PDF in Well.** State plainly that no email/delivery to the client occurred — the user still needs to send the invoice themselves.
+7. **Be explicit that this creates the record plus an attached PDF in Well.** State plainly that no email/delivery to the client occurred — the user still needs to send the invoice themselves.
 
-9. **If MCP tools aren't available, or the workspace can't be resolved,** use the same fallback as the read-only skills: state the natural-language request plainly (e.g. "draft an invoice for Acme Corp"), note that nothing could be created, and if a workspace was at least resolved, link the user to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can create it directly there. If a transient (network/timeout) error hits one of the *read* calls in steps 2-3 (resolving the workspace or looking up a company match), retry that call once before falling back. Never apply this retry to the `well_create_invoice_from_data` write in step 5 or the `well_create_invoice_document` write in step 6 — a retried write risks creating a duplicate invoice or a duplicate document; step 7 already covers write failures (surface the real error, no silent retry).
+8. **If MCP tools aren't available, or the workspace can't be resolved,** use the same fallback as the read-only skills: state the natural-language request plainly (e.g. "draft an invoice for Acme Corp"), note that nothing could be created, and if a workspace was at least resolved, link the user to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can create it directly there. If a transient (network/timeout) error hits one of the *read* calls in steps 1-2 (resolving the workspace or looking up a company match), retry that call once before falling back. Never apply this retry to the `well_create_invoice_from_data` write in step 4 or the `well_create_invoice_document` write in step 5 — a retried write risks creating a duplicate invoice or a duplicate document; step 6 already covers write failures (surface the real error, no silent retry).
 
 ## Output requirements
 
@@ -112,14 +115,14 @@ Return:
 - Whether the picture is complete: which issuer/receiver details came from existing Well records versus fresh from the user, and — if the `companies` search found no match for the client — that Well has nothing on file for them yet, so the user knows nothing was silently substituted.
 - A one-line pointer to `payment-invoice-lookup` for finding the payment that settles this invoice once the client pays.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. Skip it if it feels forced.
-- If step 9's fallback was used, the caveated note plus the workspace link, clearly labeled as a fallback.
+- If step 8's fallback was used, the caveated note plus the workspace link, clearly labeled as a fallback.
 
 ## Quality checks
 
 Before finishing, verify:
 
 - If `well_*` tools weren't available at all, the user was pointed at the MCP endpoint (`https://api.wellapp.ai/v1/mcp`) instead of erroring silently.
-- A Well workspace was resolved unambiguously (not guessed when multiple existed).
+- The workspace came from `define-workspace`'s hand-off — it was not resolved here — and its `workspace_id` rode every `well_*` call rather than being left off.
 - `well_get_schema` was called for `invoices` and `companies` before relying on assumptions about either.
 - No monetary amount, price, tax id, or date was fabricated — every one came from the user or was explicitly stated as a default (e.g. today's date) and confirmed.
 - The receiver company match (if any) was confirmed by the user, not silently substituted.
@@ -141,7 +144,7 @@ Before finishing, verify:
 
 ### Expected behavior
 
-Resolve the workspace, offer the workspace's `own_company` as issuer (confirmed by the user), search `companies` for "Acme Corp" and confirm the match (or take the name fresh if none found), ask for a reference number if none given, default the issue date to today (stating that it's a default), set the due date 30 days out, confirm the currency, and build a single line item ("Consulting work", `unit_price: 2500`). Show the complete draft — issuer, receiver, dates, currency, line item, total — and get an explicit yes before calling `well_create_invoice_from_data`. Once it succeeds, call `well_create_invoice_document` with the new `invoice_id` to render and attach the PDF. Report the resulting `invoice_id`, `document_id`, and `reference_number`, and state clearly that the invoice and its PDF were created in Well but not sent to Acme Corp.
+Run `define-workspace`, offer the workspace's `own_company` as issuer (confirmed by the user), search `companies` for "Acme Corp" and confirm the match (or take the name fresh if none found), ask for a reference number if none given, default the issue date to today (stating that it's a default), set the due date 30 days out, confirm the currency, and build a single line item ("Consulting work", `unit_price: 2500`). Show the complete draft — issuer, receiver, dates, currency, line item, total — and get an explicit yes before calling `well_create_invoice_from_data`. Once it succeeds, call `well_create_invoice_document` with the new `invoice_id` to render and attach the PDF. Report the resulting `invoice_id`, `document_id`, and `reference_number`, and state clearly that the invoice and its PDF were created in Well but not sent to Acme Corp.
 
 ### Example request
 
