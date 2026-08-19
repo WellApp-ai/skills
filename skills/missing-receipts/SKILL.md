@@ -1,6 +1,6 @@
 ---
 name: missing-receipts
-requires: [define-workspace, connect-tools]
+requires: [define-workspace, connect-tools, normalize-currency]
 description: Find invoices (and optionally transactions) with no source document attached — a compliance/expense-hygiene check backed by Well's MCP financial graph. Use when the user asks "which expenses are missing receipts", "find missing receipts", "compliance check on receipts", "which invoices have no document attached", "do we have documentation for all our expenses", or "missing documentation". This is a find-only check — it surfaces the gap but cannot fetch a missing receipt from a vendor portal or inbox. Requires a connected Well workspace with invoicing data; if none is connected, this skill walks the user through connecting one first.
 ---
 
@@ -46,12 +46,13 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 - `well_list_connectors` — how `connect-tools` surfaces install links. Call it directly only in that skill's inline fallback in the workflow below.
 - Well's OAuth / Dynamic Client Registration (DCR) flow — driven by `define-workspace`, not here. Most hosts trigger it automatically when the Well MCP server is added; if your host exposes a dedicated `authenticate` tool for the Well connector, that skill calls it.
 
-**Composed skills.** Two atomic Well skills own the setup this skill used to inline — invoke them, don't reimplement them:
+**Composed skills.** Three atomic Well skills own the setup this skill used to inline — invoke them, don't reimplement them:
 
 - `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there's no connection yet, and pins exactly one workspace. Supplies the `workspace_id` that every later call carries.
 - `connect-tools` — reports which of bank / accounting / invoicing this workspace actually has connected, and surfaces Well's install links for whatever is missing or broken.
+- `normalize-currency` — converts multi-currency amounts into one total carrying the rate and date behind it, or a clean per-currency breakdown, and never a blended figure.
 
-Both ship with the `well-skills` plugin. This skill is also installable on its own, so steps 1 and 2 of the workflow each carry the inline fallback to use when they're absent.
+All three ship with the `well-skills` plugin. This skill is also installable on its own, so steps 1 and 2 of the workflow each carry the inline fallback to use when they're absent.
 
 ## Workflow
 
@@ -73,7 +74,9 @@ Both ship with the `well-skills` plugin. This skill is also installable on its o
 
 6. **Optional deeper check: transactions with no linked document.** This is secondary — not required for a basic answer, and worth calling out as such to the user. `documents` link to `transactions` through a many-to-many join, not a direct foreign key, so call `well_get_schema({ root: "transactions" })` first to find the exact current field/relation name that exposes it — do not guess or hardcode a name. If found, query `transactions` within the same window for entries with no linked document, and report the count as an additional finding alongside the invoice results.
 
-7. **Normalize currency.** If results span more than one `local_currency`, either convert to one base currency via the `exchange_rates` root or report totals per currency — never blend currencies silently.
+7. **Normalize currency — run `normalize-currency`.** If results span more than one currency, invoke the `normalize-currency` skill with the pinned `workspace_id`, the tagged amounts (one tag per invoice), `target_currency` (default: the workspace's base currency), and `as_of` (default today). That skill owns the never-blend invariant, the rate read from `exchange_rates`, the most-recent-rate-at-or-before-`as_of` fallback, and the rule that every converted figure carries the rate and date behind it. Report its `converted_total` with those rates, or its `per_currency` breakdown — never a blended total. Build any per-row figure from its `converted` entries, matched back by tag, rather than re-applying rates yourself.
+   - `partial: true` means a currency had no rate in Well. Name it and say the total covers the rest, rather than letting a quietly smaller total read as complete.
+   - **If `normalize-currency` isn't installed**, do it inline: group amounts per currency first, then either convert via the `exchange_rates` root — using the most recent rate at or before `as_of`, never a later one, and stating the rate and date used — or report totals per currency. Never blend currencies silently.
 
 8. **State the scope limit plainly.** Regardless of how many results are found, tell the user this skill only finds the gap — it cannot fetch or collect the missing receipt from a vendor portal, email, or anywhere else.
 

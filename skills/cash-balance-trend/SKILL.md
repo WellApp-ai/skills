@@ -1,6 +1,6 @@
 ---
 name: cash-balance-trend
-requires: [define-workspace, connect-tools]
+requires: [define-workspace, connect-tools, normalize-currency]
 description: Show how a company's cash balance has changed over time — a historical trend built from Well's MCP financial graph's real balance snapshots, never a forecast. Use when the user asks "cash balance trend", "chart our cash over time", "is our cash going up or down", "cash trajectory", "how has our cash changed", or "cash history". Requires a connected Well workspace with bank data covering more than one historical balance period; if none is connected or history is too thin, this skill walks the user through connecting one or says plainly there's not enough history yet.
 ---
 
@@ -33,7 +33,7 @@ The user may provide:
 
 - A workspace hint — an id, a workspace name, or the company behind it — if they manage more than one. Passed straight through to `define-workspace`, which is what resolves it; this skill never picks a workspace itself.
 - The time window to trend over — default to the trailing 3 full months if unspecified.
-- A target currency — default to reporting per-account currency, converting only if the user asks or if a single total is required.
+- A target currency — default to reporting per-account currency. If the user asks for one total, invoke `normalize-currency` with the balance points tagged by date and account rather than converting here, build the series from its `converted` entries, and report its rates and rate dates alongside the total.
 
 ## Tooling
 
@@ -45,12 +45,13 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 - `well_list_connectors` — how `connect-tools` surfaces install links. Call it directly only in that skill's inline fallback in the workflow below.
 - Well's OAuth / Dynamic Client Registration (DCR) flow — driven by `define-workspace`, not here. Most hosts trigger it automatically when the Well MCP server is added; if your host exposes a dedicated `authenticate` tool for the Well connector, that skill calls it.
 
-**Composed skills.** Two atomic Well skills own the setup this skill used to inline — invoke them, don't reimplement them:
+**Composed skills.** Three atomic Well skills own the setup this skill used to inline — invoke them, don't reimplement them:
 
 - `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there's no connection yet, and pins exactly one workspace. Supplies the `workspace_id` that every later call carries.
 - `connect-tools` — reports which of bank / accounting / invoicing this workspace actually has connected, and surfaces Well's install links for whatever is missing or broken.
+- `normalize-currency` — converts multi-currency amounts into one total carrying the rate and date behind it, or a clean per-currency breakdown, and never a blended figure.
 
-Both ship with the `well-skills` plugin. This skill is also installable on its own, so steps 1 and 2 of the workflow each carry the inline fallback to use when they're absent.
+All three ship with the `well-skills` plugin. This skill is also installable on its own, so steps 1 and 2 of the workflow each carry the inline fallback to use when they're absent.
 
 ## Workflow
 
@@ -70,7 +71,7 @@ Both ship with the `well-skills` plugin. This skill is also installable on its o
 
 5. **Pull the accounts and their balance history.** Call `well_get_schema({ root: "accounts" })` and `well_get_schema({ root: "account_balances" })`. Query `accounts` for the workspace's own accounts (`ownership` indicating workspace-owned, not counterparty), then query `account_balances` for each account across the requested window, ordered by `balance_at_from` ascending. Pull `balance_at_from`, `balance_at_to`, `accounting_balance` (`closing_booked`, `closing_value`, `currency`), and `account.account_name`.
 
-6. **Build the trend series.** Assemble a time-ordered series of `{ date, balance, currency }` points per account, using `balance_at_to` as the point date and `closing_booked` (or `closing_value` if that's what the connector populates) as the balance. If summing across multiple accounts into one line, sum only same-currency accounts per period; report other currencies as separate series, or convert via `exchange_rates` and state the rate/date used — never blend currencies silently. If accounts report on different cadences or period boundaries, flag the misalignment in the answer rather than silently interpolating between mismatched dates.
+6. **Build the trend series.** Assemble a time-ordered series of `{ date, balance, currency }` points per account, using `balance_at_to` as the point date and `closing_booked` (or `closing_value` if that's what the connector populates) as the balance. If summing across multiple accounts into one line, sum only same-currency accounts per period; report other currencies as separate series, or hand the points to `normalize-currency` tagged by date and account and build the line from its `converted` entries, stating the rates and rate dates it used — never blend currencies silently. If accounts report on different cadences or period boundaries, flag the misalignment in the answer rather than silently interpolating between mismatched dates.
 
 7. **Describe the trend, using only real rows.** State the direction (up, down, or flat) and the magnitude of change from the first to the last real data point in the window. Never interpolate between snapshots and never extrapolate past the last real `account_balances` row — this skill reports history only.
 
@@ -106,7 +107,7 @@ Before finishing, verify:
 - `well_get_schema` was called before querying `accounts` or `account_balances` for the first time.
 - Every point in the trend comes from a real `account_balances` row — never fabricated or interpolated.
 - An account with only one `account_balances` row was flagged as "not enough history for a trend" rather than faked into a direction.
-- Multi-currency results were converted (with rate/date noted) or clearly kept separate, never blended.
+- Multi-currency results went through `normalize-currency` when a single total was required — carrying its rates and rate dates — or were kept clearly separate per account. Never blended.
 - Every number carries a currency and a date.
 - Which banking connectors are connected versus missing was stated from `connect-tools`' hand-off, so the user knows whether the picture is complete or partial.
 - The answer never states or implies a future balance — the "no projection made" line is present.

@@ -1,6 +1,6 @@
 ---
 name: company-profile
-requires: [define-workspace, connect-tools, resolve-own-company]
+requires: [define-workspace, connect-tools, resolve-own-company, normalize-currency]
 description: Compose everything Well knows about one named company — customer or vendor — into a single 360 view using Well's MCP financial graph — profile info, contact channels, and the invoice relationship (as issuer, receiver, or both). Use when the user asks "build a customer 360 view", "customer 360", "give me a 360 view of X", "everything about [company name]", "vendor across every rail", "who is this company", "show me our history with X", or "tell me about our relationship with [vendor/customer]". Requires a connected Well workspace with at least one connector that has synced company/invoice data; if none is connected or the company can't be found, this skill says so instead of guessing.
 ---
 
@@ -46,13 +46,14 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 - `well_list_connectors` — how `connect-tools` surfaces install links. Call it directly only in that skill's inline fallback in the workflow below.
 - Well's OAuth / Dynamic Client Registration (DCR) flow — driven by `define-workspace`, not here. Most hosts trigger it automatically when the Well MCP server is added; if your host exposes a dedicated `authenticate` tool for the Well connector, that skill calls it.
 
-**Composed skills.** Two atomic Well skills own the setup this skill used to inline — invoke them, don't reimplement them:
+**Composed skills.** Four atomic Well skills own the setup this skill used to inline — invoke them, don't reimplement them:
 
 - `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there's no connection yet, and pins exactly one workspace. Supplies the `workspace_id` that every later call carries.
 - `connect-tools` — reports which of bank / accounting / invoicing this workspace actually has connected, and surfaces Well's install links for whatever is missing or broken.
 - `resolve-own-company` — works out which company in the workspace is the user's own legal entity, folds in its duplicate records, and hands back the `identity_set` that decides which side of an invoice is a payable.
+- `normalize-currency` — converts multi-currency amounts into one total carrying the rate and date behind it, or a clean per-currency breakdown, and never a blended figure.
 
-All three ship with the `well-skills` plugin. This skill is also installable on its own, so steps 1 and 2 of the workflow each carry the inline fallback to use when they're absent.
+All four ship with the `well-skills` plugin. This skill is also installable on its own, so steps 1 and 2 of the workflow each carry the inline fallback to use when they're absent.
 
 ## Workflow
 
@@ -93,7 +94,9 @@ All three ship with the `well-skills` plugin. This skill is also installable on 
 
    Then compare the resolved company's role in `invoices` against `own_company`: if the resolved company is the issuer and the workspace is the receiver, they're a vendor to us; if the reverse, they're a customer; if both directions have invoices, say so — this schema doesn't force a single label. Invoices missing an `issuer_company_id` or `receiver_company_id` can't be framed either way — report them in a labeled "unattributed" line, kept out of the vendor and customer totals so neither direction is overstated, rather than dropping them from the profile entirely. Invoices whose issuer and receiver are the same company establish no relationship at all; note them once as a data-quality issue and leave them out of both totals.
 
-7. **Normalize currency.** If invoice totals span more than one `local_currency`, either convert to one base currency via `exchange_rates` and note the rate/date used, or report totals per currency — never blend currencies silently.
+7. **Normalize currency — run `normalize-currency`.** If invoice totals span more than one currency, invoke the `normalize-currency` skill with the pinned `workspace_id`, the tagged amounts (one tag per invoice), `target_currency` (default: the workspace's base currency), and `as_of` (default today). That skill owns the never-blend invariant, the rate read from `exchange_rates`, the most-recent-rate-at-or-before-`as_of` fallback, and the rule that every converted figure carries the rate and date behind it. Report its `converted_total` with those rates, or its `per_currency` breakdown — never a blended total. Build any per-row figure from its `converted` entries, matched back by tag, rather than re-applying rates yourself.
+   - `partial: true` means a currency had no rate in Well. Name it and say the total covers the rest, rather than letting a quietly smaller total read as complete.
+   - **If `normalize-currency` isn't installed**, do it inline: group amounts per currency first, then either convert via the `exchange_rates` root — using the most recent rate at or before `as_of`, never a later one, and stating the rate and date used — or report totals per currency. Never blend currencies silently.
 
 8. **If any required step errors or returns unusable data**, do not guess. If the failure is transient (a network/timeout error on the MCP call itself), retry once before falling back — don't dead-end on a blip. If it errors again or the data stays unusable, the fallback is: (a) state the fallback question plainly in your reply (e.g. "give me a 360 view of [company]"), (b) answer it yourself using whatever partial Well MCP data you already have, clearly caveated, and (c) give the user a direct link to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can ask it there directly and get a second opinion from their own AI assistant.
 

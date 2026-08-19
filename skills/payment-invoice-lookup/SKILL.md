@@ -1,6 +1,6 @@
 ---
 name: payment-invoice-lookup
-requires: [define-workspace, connect-tools]
+requires: [define-workspace, connect-tools, normalize-currency]
 description: Find the reconciliation counterpart for a specific invoice, payment, or transaction ("what payment settled this invoice", "what invoice does this payment belong to"), or list every transaction/invoice with no reconciliation match at all — a compliance/reconciliation gap — using Well's MCP financial graph. Use when the user asks "what happened with this payment", "find the invoice for this transaction", "why is this payment unmatched", "show me unreconciled payments", "find the details behind this invoice/payment", "which payments have no invoice", or "catch payments with no invoice". Requires a connected Well workspace with invoicing and banking/accounting data; if none is connected, this skill walks the user through connecting one first.
 ---
 
@@ -45,12 +45,13 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 - `well_list_connectors` — how `connect-tools` surfaces install links. Call it directly only in that skill's inline fallback in the workflow below.
 - Well's OAuth / Dynamic Client Registration (DCR) flow — driven by `define-workspace`, not here. Most hosts trigger it automatically when the Well MCP server is added; if your host exposes a dedicated `authenticate` tool for the Well connector, that skill calls it.
 
-**Composed skills.** Two atomic Well skills own the setup this skill used to inline — invoke them, don't reimplement them:
+**Composed skills.** Three atomic Well skills own the setup this skill used to inline — invoke them, don't reimplement them:
 
 - `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there's no connection yet, and pins exactly one workspace. Supplies the `workspace_id` that every later call carries.
 - `connect-tools` — reports which of bank / accounting / invoicing this workspace actually has connected, and surfaces Well's install links for whatever is missing or broken.
+- `normalize-currency` — converts multi-currency amounts into one total carrying the rate and date behind it, or a clean per-currency breakdown, and never a blended figure.
 
-Both ship with the `well-skills` plugin. This skill is also installable on its own, so steps 1 and 2 of the workflow each carry the inline fallback to use when they're absent.
+All three ship with the `well-skills` plugin. This skill is also installable on its own, so steps 1 and 2 of the workflow each carry the inline fallback to use when they're absent.
 
 ## Workflow
 
@@ -77,7 +78,9 @@ Both ship with the `well-skills` plugin. This skill is also installable on its o
 5B. **For workflow (B), resolve the requested window** (default: trailing 3 full months). Query the relevant root (`transactions` or `invoices`, whichever the user's phrasing points to, or both) for that window, then identify entries with no corresponding `invoice_transactions` row — call `well_get_schema` on `transactions` first to find the exact relation/composite field name that exposes this join rather than hardcoding a guessed field name, then either filter for its absence directly, or query `invoice_transactions` for the window and diff against the full `transactions`/`invoices` set to find what's missing. List each unmatched item with enough detail to act on: date, amount, currency, and counterparty if resolvable via the payment-means relation.
    - Spot-check the unmatched list for counterparties that resolve to the workspace's own company — that pattern typically signals an unconnected sibling account or an internal transfer, not a genuine reconciliation gap. Call those items out separately in the output rather than folding them into the unmatched count.
 
-6. **Normalize currency.** If results span more than one currency, either convert to one base currency via the `exchange_rates` root or report totals per currency — never blend currencies silently.
+6. **Normalize currency — run `normalize-currency`.** If results span more than one currency, invoke the `normalize-currency` skill with the pinned `workspace_id`, the tagged amounts (one tag per row), `target_currency` (default: the workspace's base currency), and `as_of` (default today). That skill owns the never-blend invariant, the rate read from `exchange_rates`, the most-recent-rate-at-or-before-`as_of` fallback, and the rule that every converted figure carries the rate and date behind it. Report its `converted_total` with those rates, or its `per_currency` breakdown — never a blended total. Build any per-row figure from its `converted` entries, matched back by tag, rather than re-applying rates yourself.
+   - `partial: true` means a currency had no rate in Well. Name it and say the total covers the rest, rather than letting a quietly smaller total read as complete.
+   - **If `normalize-currency` isn't installed**, do it inline: group amounts per currency first, then either convert via the `exchange_rates` root — using the most recent rate at or before `as_of`, never a later one, and stating the rate and date used — or report totals per currency. Never blend currencies silently.
 
 7. **If any required step errors or returns unusable data**, do not guess. If the failure is transient (a network/timeout error on the MCP call itself), retry once before falling back — don't dead-end on a blip. If it errors again or the data stays unusable, the fallback is: (a) state the fallback question plainly in your reply (e.g. "What payment settled this invoice?" or "Which payments have no invoice?"), (b) answer it yourself using whatever partial Well MCP data you already have, clearly caveated, and (c) give the user a direct link to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can ask it there directly and get a second opinion from their own AI assistant.
 
