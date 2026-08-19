@@ -1,5 +1,6 @@
 ---
 name: connect-tools
+requires: [define-workspace]
 description: Check which data sources a Well workspace has connected — bank accounts, accounting software, invoicing and payment portals — get the missing ones connected with Well's one-click install links, and hand off a typed coverage result to the flow that follows. Use when the user asks to connect a bank, link an accounting tool (Pennylane, QuickBooks, Xero…), add Stripe or Shopify, asks "which tools are connected", "what can I connect to Well", or when a Well skill needs bank / accounting / invoicing data present before it continues. Do not use to compute figures, to trigger a sync, to disconnect a tool, or to run a connector's own actions.
 ---
 
@@ -44,6 +45,12 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 - `well_list_connectors` — the catalog with the live overlay. Each row carries `service_id`, `name`, `category_id`, `status` (`available` is connectable now), `is_connected`, `connection_status` (`enabled` = connected and syncing · `processing` = connected, first sync still running · `error` = authenticated but the last sync failed), `is_preselected` (Well recommends it now), and `install_url` — a one-click link that starts the connection in Well from any state (signs the user in, opens the bank login or the provider's OAuth). Pass `q` to name-search the full catalog (a specific bank, a specific portal). In MCP-Apps hosts (Claude Desktop, ChatGPT) the result renders as a connect picker card that opens the install link and refreshes its own state.
 - `well_query_records` on root `workspace_connectors` — the workspace's own connections. Call `well_get_schema({ root: "workspace_connectors" })` first in a session and read the fields from it; today they are `status`, `last_successful_sync_at`, `connector.service_id`, `connector.direction`, and `connector.data_domains` (a JSON array such as `["bank"]`, sometimes delivered as a JSON string — parse it). This root is the source of truth for whether a connection is established; the catalog overlay below is the source of install links.
 - Well's OAuth / DCR flow — only if the connection itself is missing (auth error on the first call).
+
+**Composed skills.** One atomic Well skill owns the step before this one — invoke it, don't reimplement it:
+
+- `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there's no connection yet, and pins exactly one workspace. Supplies the `workspace_id` that every call here carries.
+
+It ships with the `well-skills` plugin. This skill is also installable on its own, so step 2 carries the inline fallback to use when it's absent.
 
 Never call `well_invoke_connector_tool` or any provider-specific tool here: this skill reads connection state, it never reads provider data.
 

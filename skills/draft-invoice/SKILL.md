@@ -1,6 +1,6 @@
 ---
 name: draft-invoice
-requires: [define-workspace]
+requires: [define-workspace, resolve-own-company]
 description: Draft and create a real invoice record in Well from a conversational description — e.g. "invoice Acme Corp $2,500 for consulting work, due in 30 days." Use when the user asks to "draft an invoice", "create an invoice for [client]", "bill this client for Y", "send an invoice to [company] for [amount]", or "invoice [client] $[amount] for [description]". This is a WRITE skill — it composes the invoice from user-supplied fields (never inventing an amount, tax id, date, or line item) and always shows the full draft for explicit confirmation before creating it. Once created, it also renders the invoice into a print-ready A4 PDF on the issuer's own letterhead and attaches it to the invoice record. Requires a connected Well workspace; if none, this skill walks the user through connecting one first. It creates the invoice record and its attached PDF only — it does not email or send anything to the client.
 ---
 
@@ -67,11 +67,12 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
   - This does not make the PDF a legally-compliant sequential invoice — Well keeps no invoice-numbering sequence. The reference number printed on it is exactly the one the user supplied in step 2, never an invented one.
 - Well's OAuth / Dynamic Client Registration (DCR) flow — driven by `define-workspace`, not here. Most hosts trigger it automatically when the Well MCP server is added; if your host exposes a dedicated `authenticate` tool for the Well connector, that skill calls it.
 
-**Composed skills.** One atomic Well skill owns the setup this skill used to inline — invoke it, don't reimplement it:
+**Composed skills.** Two atomic Well skills own the setup this skill used to inline — invoke them, don't reimplement them:
 
 - `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there's no connection yet, and pins exactly one workspace. Supplies the `workspace_id` that every later call carries.
+- `resolve-own-company` — called in `suggest` mode only, to offer the workspace's own company as the likely issuer for the user to confirm.
 
-It ships with the `well-skills` plugin. This skill is also installable on its own, so step 1 of the workflow carries the inline fallback to use when it's absent.
+Both ship with the `well-skills` plugin. This skill is also installable on its own, so step 1 of the workflow carries the inline fallback to use when it's absent.
 
 ## Workflow
 
@@ -79,7 +80,7 @@ It ships with the `well-skills` plugin. This skill is also installable on its ow
    - **If `define-workspace` isn't installed** — this skill also ships on its own — do the same three moves inline: with no `well_*` tool in your toolset, tell the user a Well connection is mandatory at `https://api.wellapp.ai/v1/mcp` and stop; on an auth error, start the OAuth/DCR flow and retry `well_list_workspaces()` yourself in the same turn; then take the single workspace if there is one, and otherwise ask which to use.
 
 2. **Gather every required field — never invent one.** Call `well_get_schema({ root: "invoices" })` and `well_get_schema({ root: "companies" })` before relying on assumptions about either.
-   - **Issuer**: read `workspaces.own_company` for the resolved workspace and offer it as the likely issuer, but let the user confirm or override it — never assume it silently.
+   - **Issuer**: invoke the `resolve-own-company` skill with the pinned `workspace_id` and `mode: suggest` — it reads `workspaces.own_company` and hands back a default without running the full resolution ceremony, because the user confirms the issuer on the draft anyway. Offer that company as the likely issuer and let the user confirm or override it; never assume it silently. If the skill isn't installed, read `workspaces.own_company` directly for the same suggestion, and if it's null or absent from the schema, just ask who the issuer is rather than inferring it from the workspace's name.
    - **Receiver**: search `companies` (`well_query_records`, `_ilike` on `name`) for a possible match to the client's name. If found, offer to reuse its `domain`/`tax_id_value`, but only if the user confirms it's the right company — never silently substitute an unconfirmed match. If no match, take the name fresh from the user.
    - **Reference number**: ask if the user hasn't given one. Never invent a numbering scheme; if they have no preference, suggest a simple placeholder (e.g. today's date plus a sequence marker) and let them confirm or supply their own.
    - **Issue date**: default to today if unspecified, but say plainly that a default was used.

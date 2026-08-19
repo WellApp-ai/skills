@@ -20,12 +20,13 @@ Ask your AI assistant to rank your clients by lifetime value, and it pulls the a
 
 ## Composes onto
 
-This skill delegates two setup steps to Well's atomic skills rather than repeating them:
+This skill delegates three setup steps to Well's atomic skills rather than repeating them:
 
 - **[`define-workspace`](define-workspace.md)** — pins which Well workspace the answer is for.
 - **[`connect-tools`](connect-tools.md)** — checks which of your bank / accounting / invoicing sources are connected.
+- **[`resolve-own-company`](resolve-own-company.md)** — works out which company in your workspace is yours, so only the invoices you issued count as revenue.
 
-Install both alongside this one. The skill still runs without them — each step falls back to resolving things inline — but with them installed you get one consistent workspace and connection flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install all three together; if you download the `.skill` file on its own, grab those two as well.
+Install all three alongside this one. The skill still runs without them — each step falls back to resolving things inline — but with them installed you get one consistent workspace and connection flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install all four together; if you download the `.skill` file on its own, grab those three as well.
 
 ---
 
@@ -47,6 +48,7 @@ Install the following official skills from Well.
     a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/rank-clients-by-ltv/SKILL.md
     b. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
     c. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
+    d. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/resolve-own-company/SKILL.md
 2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
 3. Install these skills.
 4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
