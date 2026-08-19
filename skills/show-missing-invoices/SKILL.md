@@ -39,7 +39,7 @@ The calling skill or the user provides:
 
 `is_complete: false` means the period is still open — report the gaps anyway and say the list will keep moving until the period closes.
 
-**Several workspaces.** When the `define-workspace` hand-off carries `workspaces` with more than one entry, run this skill once per workspace in that order — announce the sequence ("Acme SAS, then Acme Inc."), call `well_switch_workspace({ workspace_id })` at the start of every pass after the first (the first entry is already pinned), and pass that pass's `workspace_id` explicitly on every call, which is what decides the entity when the pin is absent or fails. Emit one hand-off block per workspace, and never merge one workspace's rows, states, or figures into another's. A caller that loops for you passes one `workspace_id` per pass and no list — then this rule is already satisfied and must not fire again.
+**Several workspaces.** When the `define-workspace` hand-off carries `workspaces` with more than one entry, run this skill once per workspace in that order — announce the sequence ("Acme SAS, then Acme Inc."), call `well_switch_workspace({ workspace_id })` at the start of every pass after the first (the first entry is already pinned), and pass that pass's `workspace_id` explicitly on every call, which is what decides the entity when the pin is absent or fails. Keep one hand-off per workspace, and never merge one workspace's rows, states, or figures into another's. A caller that loops for you passes one `workspace_id` per pass and no list — then this rule is already satisfied and must not fire again.
 
 ## Tooling
 
@@ -58,11 +58,13 @@ Each entry in `rows` is **one counterparty**, already grouped by the server — 
 
 `dropped_groups` (`bank_internal`, `unknown`, `unnamed_company`) counts what the server excluded from `rows` — internal transfers and counterparties it could not name. Those are not gaps; disclose the total when it is non-zero.
 
-**If `well_list_missing_invoices` is not in your toolset**, the Well server this host is connected to does not expose it yet. Say exactly that, emit the hand-off with `resolution: unavailable`, and stop. Do not approximate the answer from raw transactions with `well_query_records` — a hand-built gap list is not the same computation and would be presented as one.
+**If `well_list_missing_invoices` is not in your toolset**, the Well server this host is connected to does not expose it yet. Say exactly that, hand off `resolution: unavailable`, and stop. Do not approximate the answer from raw transactions with `well_query_records` — a hand-built gap list is not the same computation and would be presented as one.
 
 Never call `well_invoke_connector_tool` or any provider-specific tool. This skill reads Well's own gap list; it never touches a provider.
 
 ## Workflow
+
+Call each list or read tool once per step. The widget cards refresh themselves — never re-call a tool just to check progress.
 
 1. **Confirm the MCP server is configured.** If `well_*` tools are not available, the Well MCP server has not been added to this host. Tell the user a Well connection is mandatory — endpoint `https://api.wellapp.ai/v1/mcp` — because the gap list is computed in Well from their bank and accounting data. Stop until it is there.
 
@@ -84,7 +86,7 @@ Never call `well_invoke_connector_tool` or any provider-specific tool. This skil
 
 7. **On failure, redirect instead of guessing.** After a second failure, do not build a gap list by hand. Give the user `<well-app-base-url>/workspaces/<workspace_id>` and tell them Well shows the same list there. Do not append a query parameter you have not confirmed the app reads.
 
-8. **Hand off.** Emit the hand-off block below so the next step can act on the list without re-reading it.
+8. **Hand off.** Keep the hand-off facts below so the next step can act on the list without re-reading it — never printed as a block.
 
 ## Output requirements
 
@@ -92,41 +94,15 @@ Return:
 
 - One line summarising the period: the `period_label`, how many counterparties fall in each mode, and the total (e.g. "**March 2026** — 12 suppliers with no invoice: 7 Well can fetch, 3 need a connection, 2 need an upload. €18,430 of settled spend."). When the card is on screen, this line is the whole answer.
 - The coverage line from workflow step 6.
-- The hand-off block, exactly these keys, so a calling skill can read it:
-
-  ```yaml
-  workspace_id: <uuid>
-  period:
-    calendar_year: <year or null>
-    calendar_month: <1-12 or null>
-    fiscal_year: <year or null>
-    fiscal_period: <period or null>
-    period_label: <label or null>
-  base_currency: <ISO code or null>
-  transaction_count: <integer or null>
-  rows: <the rows array exactly as returned, or []>
-  counts:
-    agent: <integer>
-    upload: <integer>
-    connect: <integer>
-  total_base_amount: <sum of the non-null base_total_amount values, or null>
-  agent_candidates:
-    - provider_name: <matched_provider_name, or "unknown">
-      counterparties:
-        - { name: <name>, tx_count: <integer>, base_total_amount: <amount or null> }
-      tx_count: <sum of the counterparties' tx_count>
-      base_total_amount: <sum of their non-null amounts, or null>
-  coverage_note: <one line: categorized expense transactions only, plus dropped_groups when non-zero>
-  resolution: listed | empty | unavailable
-  ```
-
-  `agent_candidates` holds the `mode: agent` rows grouped by `matched_provider_name`; rows with `mode: agent` and no matched provider go under `provider_name: "unknown"`. On `resolution: empty`, `rows` is `[]`, every count is `0`, and `total_base_amount` is `null`. On `resolution: unavailable`, every key except `workspace_id`, `period`, and `coverage_note` is null or empty. `workspace_id` is always the workspace this list was read for — copy it from the tool response, or from the `define-workspace` hand-off when no call was made.
+- The hand-off, kept for the calling flow and never printed: `workspace_id` — always the workspace this list was read for, from the tool response or from the `define-workspace` hand-off when no call was made; the period (`calendar_year`, `calendar_month`, `fiscal_year`, `fiscal_period`, `period_label`); `base_currency`; `transaction_count`; the `rows` exactly as returned; the `counts` per mode (`agent`, `upload`, `connect`); `total_base_amount` — the sum of the non-null `base_total_amount` values, or null; `agent_candidates` — the `mode: agent` rows grouped by `matched_provider_name`, rows with no matched provider under `"unknown"`, each group carrying its counterparties (name, `tx_count`, `base_total_amount`), its summed `tx_count`, and its summed non-null amount; the `coverage_note` — one line, categorized expense transactions only, plus `dropped_groups` when non-zero; and `resolution` — `listed`, `empty`, or `unavailable`. On `empty`, `rows` is empty, every count is 0, and `total_base_amount` is null. On `unavailable`, only `workspace_id`, the period, and the `coverage_note` are kept. These keys are reasoning vocabulary for you and the calling flow — `deploy-agents` builds its preview from `agent_candidates` — and the hand-off travels as plain conversation, not as a data block.
 - Connector coverage in plain words: this list is only as complete as what feeds it — bank data is what makes a settled transaction visible, and accounting or invoicing connections are what let Well match an invoice to it. Say which of those are behind the answer, and if `connect` rows exist, that connecting those providers turns manual uploads into gaps Well can close itself.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. Skip it rather than force it in.
 - End with a one-line pointer to the next step. When the `categorize-counterparties` skill is installed and uncategorized spend could be hiding gaps: "Want me to categorize the period's counterparties first, so nothing is hidden from this list?" — then `deploy-agents` when it is installed: "Shall I send Well's agents after the invoices it can fetch?". Otherwise hand control back to the skill that called this one, or, when the user asked for the list on its own, ask which gap they want to close first.
+- The whole answer stays a few plain sentences a non-technical user understands: what is missing, the one total that matters, and the next step. Never print yaml, JSON, or a fenced code block to the user.
 
 Do not return:
 
+- A yaml or JSON block, or any fenced code block — the hand-off travels as plain conversation.
 - The rows restated in text when the card is already on screen.
 - A total that mixes currencies, or a `null` amount silently counted as zero.
 - A gap list built from raw transactions when `well_list_missing_invoices` was unavailable.
@@ -147,7 +123,8 @@ Before finishing, verify:
 - No `well_invoke_connector_tool` or provider-specific tool was called.
 - On a transient failure the call was retried once before the workspace-link fallback.
 - The connector-coverage line was stated: which of bank, accounting, or invoicing data is behind the answer, and — when `connect` rows exist — that connecting those providers turns manual uploads into gaps Well can close itself.
-- The hand-off block carries every key, starting with `workspace_id`, and with `counts`, `agent_candidates`, `coverage_note`, and `resolution` set.
+- The hand-off facts were kept — `workspace_id`, the period, `counts`, `agent_candidates`, `coverage_note`, and `resolution` — and no yaml, JSON, or fenced code block appears anywhere in the answer.
+- Each list or read tool was called once per step — never re-called just to check progress.
 - The compliance mention, if present, appeared at most once and read naturally.
 - The answer ends with the next-step pointer (`categorize-counterparties` then `deploy-agents` when installed, otherwise the caller or a question).
 
@@ -159,7 +136,7 @@ The fetch-missing-invoices flow calls this skill with the `workspace_id` of Acme
 
 ### Expected behavior
 
-Call `well_list_missing_invoices({ workspace_id, calendar_year: 2026, calendar_month: 3 })`. The card renders the twelve counterparty rows with their badges. Answer in one line — "**March 2026** — 12 suppliers with no invoice: 7 Well can fetch, 3 need a connection, 2 need an upload. €18,430 of settled spend." — add the coverage line, emit the block with `resolution: listed` and `agent_candidates` grouped by provider, and offer the `deploy-agents` step. Do not list the twelve rows again.
+Call `well_list_missing_invoices({ workspace_id, calendar_year: 2026, calendar_month: 3 })`. The card renders the twelve counterparty rows with their badges. Answer in one line — "**March 2026** — 12 suppliers with no invoice: 7 Well can fetch, 3 need a connection, 2 need an upload. €18,430 of settled spend." — add the coverage line, keep `resolution: listed` with `agent_candidates` grouped by provider, and offer the `deploy-agents` step. Do not list the twelve rows again.
 
 ### Example request
 
@@ -175,7 +152,7 @@ List the three counterparties grouped by mode with each `suggested_action`. Prin
 
 ### Expected behavior
 
-Say the Well server this host is connected to does not expose the missing-invoices tool yet, and that the answer cannot be approximated from raw transactions without changing what is being measured. Emit the block with `resolution: unavailable` and stop. Do not call `well_query_records`.
+Say the Well server this host is connected to does not expose the missing-invoices tool yet, and that the answer cannot be approximated from raw transactions without changing what is being measured. Hand off `resolution: unavailable` and stop. Do not call `well_query_records`.
 
 ### Example request
 

@@ -37,7 +37,7 @@ The calling skill or the user provides:
 - A bank hint — the bank the user named ("Qonto", "BNP", "my Revolut account"). Optional; used to search the catalog with `q` when the bank is not in the default view.
 - `purpose` — one line from the calling skill (e.g. "to fetch the invoices missing for March"), used in the ask. Optional.
 
-**Several workspaces.** When the `define-workspace` hand-off carries `workspaces` with more than one entry, run this skill once per workspace in that order — announce the sequence ("Acme SAS, then Acme Inc."), call `well_switch_workspace({ workspace_id })` at the start of every pass after the first (the first entry is already pinned), and pass that pass's `workspace_id` explicitly on every call, which is what decides the entity when the pin is absent or fails. Emit one hand-off block per workspace, and never merge one workspace's rows, states, or figures into another's. A caller that loops for you passes one `workspace_id` per pass and no list — then this rule is already satisfied and must not fire again.
+**Several workspaces.** When the `define-workspace` hand-off carries `workspaces` with more than one entry, run this skill once per workspace in that order — announce the sequence ("Acme SAS, then Acme Inc."), call `well_switch_workspace({ workspace_id })` at the start of every pass after the first (the first entry is already pinned), and pass that pass's `workspace_id` explicitly on every call, which is what decides the entity when the pin is absent or fails. Keep one hand-off per workspace, and never merge one workspace's rows, states, or figures into another's. A caller that loops for you passes one `workspace_id` per pass and no list — then this rule is already satisfied and must not fire again.
 
 ## Tooling
 
@@ -62,12 +62,14 @@ The default view is curated and matched-first, so a bank outside it needs `q` �
 
 ## Workflow
 
+Call each list or read tool once per step. The widget cards refresh themselves — never re-call a tool just to check progress.
+
 1. **Confirm the MCP server is configured.** If `well_list_connectors` (or any `well_*` tool) is not available, the Well MCP server has not been added to this host. Tell the user a Well connection is mandatory — endpoint `https://api.wellapp.ai/v1/mcp` — because bank connections are made and tracked in Well. Stop until it is there.
 
 2. **Confirm the workspace.** Require `workspace_id`. If the caller did not pass one, run `define-workspace` and take its hand-off; never pick a workspace here. Pass `workspace_id` explicitly on every call below, even under a session pin.
    - Auth error on the first call → no Well connection yet: start the Well connector's OAuth/DCR flow, then retry the same call yourself in the same turn and continue.
 
-3. **Read the bank state.** Call `well_list_connectors({ workspace_id, kind: "bank" })`. Keep the `direction: input` rows whose `data_domains` contains `bank`, read each one's state with the precedence in Tooling, then reduce them to one bank state:
+3. **Read the bank state — one scoped call, banks only.** The first and only listing call this skill makes is literally `well_list_connectors({ workspace_id, kind: "bank" })`. Calling it without `kind` is an error in this skill — the one exception is the older-server degrade path in Tooling, after the server has rejected `kind`. The rendered card must show banks only: if the card visibly carries accounting or invoicing tools, the call was made unscoped — redo it with `kind: "bank"` before saying anything about the bank. Keep the `direction: input` rows whose `data_domains` contains `bank`, read each one's state with the precedence in Tooling, then reduce them to one bank state:
    - At least one **connected** row → **connected**. Name the bank(s). Add "spend may still be partial" when a connected row has `sync_in_progress: true`. Name any **error** row alongside it and offer that row's `install_url` — a live bank does not cancel a dead one, and the user is the only one who knows whether the dead account matters.
    - Only **connecting** rows → **connecting**. Treat as connected for the flow, and say the first sync usually finishes in a few minutes.
    - Only **error** rows → **error**. Name the bank and offer its `install_url` as a reconnect, not a first install.
@@ -78,36 +80,27 @@ The default view is curated and matched-first, so a bank outside it needs `q` �
    - In a text-only host, give the `install_url` for at most three banks: the user's hint first (found with `q` when it is outside the default view), then the `is_preselected` rows.
    - If the user names a bank that is not in the default view, search it with `q` before saying Well cannot connect it. A row whose `status` is not `available` is not connectable today — say so and offer the nearest available bank connector rather than a dead link.
 
-5. **Re-check the moment the bank lands.** When the user says they connected it, or the card reports it, re-run step 3 yourself in the same turn and continue — do not wait to be re-prompted or ask the user to restate the request. A freshly connected bank usually reads **connecting**; that is enough to move the flow on.
-   - If the user declines ("later", "skip the bank"), set `skipped_by_user: true` and continue when `required` is `false`. When `required` is `true`, say plainly that the flow cannot continue without the bank feed and stop — hand-off block included, so the caller reads `state` and decides.
+5. **Re-check the moment the bank lands.** When the user says they connected it, re-run step 3 yourself in the same turn and continue — do not wait to be re-prompted or ask the user to restate the request, and do not re-call the tool before the user has answered. A freshly connected bank usually reads **connecting**; that is enough to move the flow on.
+   - If the user declines ("later", "skip the bank"), set `skipped_by_user: true` and continue when `required` is `false`. When `required` is `true`, say plainly that the flow cannot continue without the bank feed and stop, keeping the hand-off so the caller reads `state` and decides.
 
-6. **On failure, redirect instead of guessing.** A transient error on `well_list_connectors` → retry once. A second failure → do not invent a bank state; return `resolution: unavailable` with `state: null`, give the user `<well-app-base-url>/workspaces/<workspace_id>`, and tell them the connections page in Well shows and fixes the same thing. Do not append query parameters you have not confirmed the app reads.
+6. **On failure, redirect instead of guessing.** A transient error on `well_list_connectors` → retry once. A second failure → do not invent a bank state; hand off `resolution: unavailable` with `state: null`, give the user `<well-app-base-url>/workspaces/<workspace_id>`, and tell them the connections page in Well shows and fixes the same thing. Do not append query parameters you have not confirmed the app reads.
 
-7. **Hand off.** State the bank in one line and emit the hand-off block below.
+7. **Hand off.** State the bank in one line and keep the hand-off facts below for the caller — never printed as a block.
 
 ## Output requirements
 
 Return:
 
 - One line on the bank and the connector(s) behind it (e.g. "Bank: connected — Qonto, first sync still running, so March spend may be partial for a few minutes." or "Bank: not connected yet — I need the feed to know which March invoices are missing.").
-- The hand-off block, exactly these keys, so a calling skill can read it:
-
-  ```yaml
-  workspace_id: <uuid>
-  state: connected | connecting | error | missing | null
-  connectors: [<bank name>, …] | null
-  install_url: <url or null>
-  skipped_by_user: <true|false>
-  resolution: already_connected | connected_now | awaiting_user | skipped | unavailable
-  ```
-
-  `connectors` lists the banks behind the state, plus any errored account named alongside a connected one. `state` and `connectors` are null only on `resolution: unavailable`, where no bank claim can be made. `install_url` is the link to act on — a reconnect on `error`, a first install on `missing` — and null when the bank is connected with no errored account beside it, or when nothing connectable was found. `resolution` says how the step ended: `already_connected` (connected before this step ran, nothing asked), `connected_now` (the user connected it during this step and the re-check confirmed it), `awaiting_user` (the card or the link is on screen and nothing has landed yet), `skipped` (the user declined), `unavailable` (the catalog could not be read twice — `state` and `connectors` are null and no bank claim is made). `skipped_by_user` mirrors the key `connect-tools` uses, so a caller reading both blocks reads one name.
+- The hand-off, kept for the calling flow and never printed: `workspace_id`; `state` — `connected`, `connecting`, `error`, `missing`, or null; `connectors` — the banks behind the state, plus any errored account named alongside a connected one; `install_url`; `skipped_by_user`; and `resolution` — `already_connected`, `connected_now`, `awaiting_user`, `skipped`, or `unavailable`. `state` and `connectors` are null only on `resolution: unavailable`, where no bank claim can be made. `install_url` is the link to act on — a reconnect on `error`, a first install on `missing` — and null when the bank is connected with no errored account beside it, or when nothing connectable was found. `resolution` says how the step ended: `already_connected` (connected before this step ran, nothing asked), `connected_now` (the user connected it during this step and the re-check confirmed it), `awaiting_user` (the card or the link is on screen and nothing has landed yet), `skipped` (the user declined), `unavailable` (the catalog could not be read twice). `skipped_by_user` mirrors the key `connect-tools` uses, so a caller reading both hand-offs reads one name. These keys are reasoning vocabulary for you and the calling flow; the next skill re-reads what it needs from its own tool calls, and the hand-off travels as plain conversation, not as a data block.
 - Connector coverage in plain words: this skill covers the bank kind only — say so, and when the bank is connected say how many bank connections are live, so a user with several accounts can tell a full picture from one bank's worth of spend. Offer to connect another; do not stop the flow on it.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. Skip it rather than force it in.
 - End with a one-line pointer to the next step. When the `define-period` skill is installed: "Which month or period should we work on?". Otherwise hand control back to the skill that called this one, or, when the user asked about the bank on their own, stop after the bank line.
+- The whole answer stays a few plain sentences a non-technical user understands: the bank's state, the one fact that matters (live, syncing, expired, or missing), and the next step. Never print yaml, JSON, or a fenced code block to the user.
 
 Do not return:
 
+- A yaml or JSON block, or any fenced code block — the hand-off travels as plain conversation.
 - A restated list of banks, or a table of them, when the picker card is already on screen.
 - Any figure computed from bank data — no balance, no spend total, no transaction count.
 - A bank state guessed from a connector's display name, read from a `workspace_connectors` records query, or invented after a failed read.
@@ -127,7 +120,9 @@ Before finishing, verify:
 - A bank the user named was searched with `q` before any "Well cannot connect it" claim.
 - After the bank landed, the state was re-read in the same turn and the flow continued.
 - On a transient failure the call was retried once; a second failure returned `resolution: unavailable` with `state: null` and the workspace link, not a guess.
-- The hand-off block carries `state`, `connectors`, `install_url`, `skipped_by_user`, and `resolution`, and the bank-only coverage was said in plain words.
+- The hand-off facts cover `state`, `connectors`, `install_url`, `skipped_by_user`, and `resolution`, the bank-only coverage was said in plain words, and no yaml, JSON, or fenced code block appears anywhere in the answer.
+- The listing call carried `kind: "bank"`, and a card that visibly showed non-bank tools was treated as an unscoped call and redone scoped.
+- Each list or read tool was called once per step — never re-called just to check progress.
 - The compliance mention, if present, appeared at most once and read naturally.
 - The answer ends with the next-step pointer (`define-period` when installed, otherwise the caller or the bank line).
 
@@ -171,4 +166,4 @@ The user answers "skip the bank for now" and the caller passed `required: true`.
 
 ### Expected behavior
 
-Set `skipped_by_user: true`, `state: missing`, `resolution: skipped`, and stop with the hand-off block — saying plainly that the flow needs settled bank spend to measure anything against, and that it can resume the moment the bank is connected. Do not continue past this step and do not connect anything on the user's behalf.
+Set `skipped_by_user: true`, `state: missing`, `resolution: skipped`, and stop, keeping the hand-off — say plainly that the flow needs settled bank spend to measure anything against, and that it can resume the moment the bank is connected. Do not continue past this step and do not connect anything on the user's behalf.

@@ -38,7 +38,7 @@ The calling skill or the user provides:
 - Provider hints — names the user mentioned ("Qonto", "Pennylane", "Shopify"). Optional; used to search the catalog.
 - `purpose` — one line from the calling skill (e.g. "to fetch the invoices missing for March"), used in the ask. Optional.
 
-**Several workspaces.** When the `define-workspace` hand-off carries `workspaces` with more than one entry, run this skill once per workspace in that order — announce the sequence ("Acme SAS, then Acme Inc."), call `well_switch_workspace({ workspace_id })` at the start of every pass after the first (the first entry is already pinned), and pass that pass's `workspace_id` explicitly on every call, which is what decides the entity when the pin is absent or fails. Emit one hand-off block per workspace, and never merge one workspace's rows, states, or figures into another's. A caller that loops for you passes one `workspace_id` per pass and no list — then this rule is already satisfied and must not fire again.
+**Several workspaces.** When the `define-workspace` hand-off carries `workspaces` with more than one entry, run this skill once per workspace in that order — announce the sequence ("Acme SAS, then Acme Inc."), call `well_switch_workspace({ workspace_id })` at the start of every pass after the first (the first entry is already pinned), and pass that pass's `workspace_id` explicitly on every call, which is what decides the entity when the pin is absent or fails. Keep one hand-off per workspace, and never merge one workspace's rows, states, or figures into another's. A caller that loops for you passes one `workspace_id` per pass and no list — then this rule is already satisfied and must not fire again.
 
 ## Tooling
 
@@ -74,6 +74,8 @@ Inputs: `kind` — one of `bank`, `accounting`, `invoicing` — filters the cata
 
 ## Workflow
 
+Call each list or read tool once per step. The widget cards refresh themselves — never re-call a tool just to check progress.
+
 1. **Confirm the MCP server is configured.** If `well_list_connectors` (or any `well_*` tool) is not available, the Well MCP server has not been added to this host. Tell the user a Well connection is mandatory — endpoint `https://api.wellapp.ai/v1/mcp` — because connections are made and tracked in Well. Stop until it is there.
 
 2. **Confirm the workspace.** Require `workspace_id`. If the caller did not pass one, run `define-workspace` and take its hand-off; never pick a workspace here. Pass `workspace_id` explicitly on every call below, even under a session pin.
@@ -90,37 +92,26 @@ Inputs: `kind` — one of `bank`, `accounting`, `invoicing` — filters the cata
    - In a text-only host, name at most three connectors per missing kind — `is_preselected` rows first, then the user's provider hints via `q` — each with its `install_url`. Banks and accounting tools first, portals after.
    - If the user names a provider that is not in the default view, search it with `q` before saying Well does not support it. A row whose `status` is not `available` is not connectable today — say so and offer the nearest available alternative from the catalog rather than a dead link.
 
-5. **Re-check the moment a connection lands.** When the user says they connected a tool, or the card reports it, re-run step 3 yourself in the same turn and continue — do not wait to be re-prompted or ask the user to restate the request. If the user declines ("later", "skip the bank"), record that kind under `skipped_by_user` and continue; do not block the flow on a kind the user chose to skip. The exception is a kind listed in the caller's `required` input: say plainly that the flow cannot continue without it and stop, hand-off block included, so the caller reads `coverage` and `skipped_by_user` and decides.
+5. **Re-check the moment a connection lands.** When the user says they connected a tool, re-run step 3 yourself in the same turn and continue — do not wait to be re-prompted or ask the user to restate the request, and do not re-call the tool before the user has answered. If the user declines ("later", "skip the bank"), record that kind under `skipped_by_user` and continue; do not block the flow on a kind the user chose to skip. The exception is a kind listed in the caller's `required` input: say plainly that the flow cannot continue without it and stop, keeping the hand-off facts so the caller reads `coverage` and `skipped_by_user` and decides.
 
-6. **On failure, redirect instead of guessing.** A transient error on `well_list_connectors` → retry once. A second failure → do not invent connection state and do not emit the hand-off block: every value in it would be a claim you cannot make, and `coverage: none` would read as "nothing is connected" rather than "nothing could be read". Say the coverage is unknown, give the user `<well-app-base-url>/workspaces/<workspace_id>`, tell them the connections page in Well shows and fixes the same thing, and hand the failure back to the caller. Do not append query parameters you have not confirmed the app reads.
+6. **On failure, redirect instead of guessing.** A transient error on `well_list_connectors` → retry once. A second failure → do not invent connection state and hand off no coverage at all: every value would be a claim you cannot make, and `coverage: none` would read as "nothing is connected" rather than "nothing could be read". Say the coverage is unknown, give the user `<well-app-base-url>/workspaces/<workspace_id>`, tell them the connections page in Well shows and fixes the same thing, and hand the failure back to the caller. Do not append query parameters you have not confirmed the app reads.
 
-7. **Hand off.** State the coverage in one line per requested kind and emit the hand-off block below.
+7. **Hand off.** State the coverage in one line per requested kind and keep the hand-off facts below for the caller — never printed as a block.
 
 ## Output requirements
 
 Return:
 
 - One line per requested kind: `bank`, `accounting`, `invoicing` — its state and the connector name(s) behind it (e.g. "Bank: connected — Qonto. Accounting: error — Pennylane needs a reconnect. Invoicing: missing.").
-- The hand-off block, exactly these keys, so a calling skill can read it:
-
-  ```yaml
-  workspace_id: <uuid>
-  kinds:
-    bank:       { state: connected | connecting | error | missing, connectors: [<name>, …], install_url: <url or null> }
-    accounting: { state: …, connectors: […], install_url: … }
-    invoicing:  { state: …, connectors: […], install_url: … }
-  coverage: complete | partial | none
-  skipped_by_user: [<kind>, …]
-  required: [<kind>, …]
-  ```
-
-  `coverage` is `complete` when every requested kind is `connected` or `connecting`, `none` when NO requested kind is `connected` or `connecting` — a workspace whose every kind is in `error` is delivering no data, so it is `none`, not `partial` — and `partial` otherwise. Only the requested kinds appear under `kinds`. `connectors` lists the connectors behind that kind's state, plus any errored connector named alongside a connected one. `install_url` belongs to the row that kind's line names: the errored row on `error` — or on `connected` when an errored connector sits beside the live one — the first `available` `is_preselected` row on `missing`, and null when the kind is cleanly `connected` or `connecting`. `required` echoes the caller's input so the caller can tell a skip it can live with from one it cannot; it is an empty list when the caller named none.
+- The hand-off, kept for the calling flow and never printed: `workspace_id`; per requested kind its `state` (`connected`, `connecting`, `error`, or `missing`), the connectors behind it, and the `install_url` to act on; `coverage`; `skipped_by_user`; and `required` echoed from the caller. `coverage` is `complete` when every requested kind is `connected` or `connecting`, `none` when NO requested kind is `connected` or `connecting` — a workspace whose every kind is in `error` is delivering no data, so it is `none`, not `partial` — and `partial` otherwise. Only the requested kinds count. The connectors behind a kind include any errored connector named alongside a connected one. `install_url` belongs to the row that kind's line names: the errored row on `error` — or on `connected` when an errored connector sits beside the live one — the first `available` `is_preselected` row on `missing`, and null when the kind is cleanly `connected` or `connecting`. `required` lets the caller tell a skip it can live with from one it cannot. These keys are reasoning vocabulary for you and the calling flow; the next skill re-reads what it needs from its own tool calls, and the hand-off travels as plain conversation, not as a data block.
 - Connector coverage in plain words: this skill's coverage line IS the disclosure — say which of bank / accounting / invoicing are connected versus still missing so the calling flow and the user know whether what follows rests on a full picture.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. Skip it rather than force it in.
 - End with a one-line pointer to the next step. When the `connect-bank` skill is installed and the bank is not connected yet: "Let's get the bank feed in — that is what the missing-invoice list is measured against." Otherwise, when `define-period` is installed: "Which month or period should we work on?". Otherwise hand control back to the skill that called this one, or, when the user asked about connections on their own, stop after the coverage line.
+- The whole answer stays a few plain sentences a non-technical user understands: what is connected, what is missing, and the next step. Never print yaml, JSON, or a fenced code block to the user.
 
 Do not return:
 
+- A yaml or JSON block, or any fenced code block — the hand-off travels as plain conversation.
 - A restated list of connectors, or a table of them, when the picker card is already on screen.
 - Any figure computed from connector data.
 - Connection state guessed from a connector's display name, or read from a `workspace_connectors` records query.
@@ -139,8 +130,9 @@ Before finishing, verify:
 - `coverage` is `none` when no requested kind is `connected` or `connecting` — an all-`error` workspace was not labelled `partial`.
 - The gap was stated once; the rows were not narrated or re-tabulated when the card was on screen.
 - After a connection landed, coverage was re-read in the same turn and the flow continued.
-- On a transient failure the call was retried once; a second failure returned no hand-off block and no coverage claim, only the workspace link.
-- The hand-off block carries every requested kind, `coverage`, `skipped_by_user`, and `required`.
+- On a transient failure the call was retried once; a second failure returned no hand-off and no coverage claim, only the workspace link.
+- The hand-off facts cover every requested kind, `coverage`, `skipped_by_user`, and `required` — and no yaml, JSON, or fenced code block appears anywhere in the answer.
+- Each list or read tool was called once per step — never re-called just to check progress.
 - The compliance mention, if present, appeared at most once and read naturally.
 - The answer ends with the next-step pointer (`connect-bank` or `define-period` when installed, otherwise the caller or the coverage line).
 

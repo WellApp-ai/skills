@@ -9,10 +9,10 @@ description: Walk Well's whole missing-invoice flow end to end — pin the works
 
 Run every brick of Well's missing-invoice flow in one pass, in a fixed order, routing on each
 brick's typed hand-off keys rather than on impressions: `define-workspace` → `connect-tools` →
-`connect-bank` → `define-period` → `show-missing-invoices` → (`categorize-counterparties`, when that
-brick is installed, → `show-missing-invoices` again) → `deploy-agents`. Six bricks ship bundled next
-to this file; the categorization one ships separately, and the flow says so rather than improvising
-it. Every stop is explicit and named, and the last step previews the invoice-fetching agents without
+`connect-bank` → `define-period` → `show-missing-invoices` → (`categorize-counterparties`, when its
+procedure is available, → `show-missing-invoices` again) → `deploy-agents`. Each brick's full
+procedure ships with this skill; when the categorization one is absent, the flow says so rather than
+improvising it. Every stop is explicit and named, and the last step previews the invoice-fetching agents without
 launching one. When `define-workspace` hands back several entities, the same walk becomes a loop —
 one full pass per workspace, re-pinned at the start of each, with their figures kept apart.
 
@@ -61,8 +61,10 @@ shortcut a step: `well_list_workspaces`; `well_list_connectors`, which is the ON
 connection steps call (never `well_query_records` on `workspace_connectors` — that renders a records
 table where the connect card belongs); `well_switch_workspace`, `well_list_periods`,
 `well_list_missing_invoices` and `well_preview_invoice_fetch` when present;
-`well_list_counterparties` and `well_update_company` with its `relationships.categories`;
-`well_get_schema` and `well_query_records` on `transactions` and `categories`; and Well's OAuth /
+`well_list_counterparties` — whose result also carries the company-category catalog — and
+`well_update_company` with its `relationships.categories`; `well_get_schema` and
+`well_query_records` on `transactions` only (the period-activity probe — never on `categories` or
+`workspace_connectors`); and Well's OAuth /
 DCR flow when no Well connection exists yet — the moment it returns, retry the failed call in the
 same turn, never waiting for the user to confirm they signed in.
 
@@ -72,13 +74,15 @@ This flow reads, and writes only the workspace pin `define-workspace` sets — r
 each later pass on a multi-workspace run — and the counterparty categories the user confirmed inside
 `categorize-counterparties`.
 
-The bricks are bundled next to this file. At each step, **read `references/<name>.md` and follow
-it** — do not re-derive its checks here.
+Each brick's full procedure ships with this skill. At each step, **read `references/<name>.md` and
+follow it** — do not re-derive its checks here.
 
 ## Workflow
 
 Walk the steps in order, passing `workspace_id` explicitly on every `well_*` call from step 2 on.
-After each step, read its hand-off block and route on the routing table's exact key before the next.
+After each step, take its hand-off — the facts the brick keeps, never printed — and route on the
+routing table's exact key before the next. Call each list or read tool once per step: the widget
+cards refresh themselves, so never re-call a tool just to check progress.
 
 1. **Workspace** — `references/define-workspace.md`, with the workspace hint and `purpose`. Keep
    `workspace_id` and `identity.fiscal_year_start_month`. On `resolution: multi_picked` the hand-off
@@ -110,11 +114,12 @@ After each step, read its hand-off block and route on the routing table's exact 
    categorize, or when the list is **thin**: `transaction_count` is null or 0 while the period's
    `has_activity` is `true`. Never run it silently — say in one line that the gap list rests on
    `transaction_count` categorized transactions while the month has bank activity, ask whether to
-   categorize the counterparties behind the rest first, and run
+   categorize the counterparties behind the rest first, and follow
    `references/categorize-counterparties.md` (with `workspace_id`, `periods` holding the step 4
    month, `purpose`) only on the user's yes, because it writes. Keep `coverage_before`,
-   `coverage_after`, and `changed`. When that brick is not bundled next to this file, say the
-   categorization step is not available yet and go to step 8 — never substitute your own labelling.
+   `coverage_after`, and `changed`. When that brick's procedure does not ship with this copy of the
+   skill, say the categorization step is not available yet and go to step 8 — never substitute your
+   own labelling.
 
 7. **Re-read the gap list, once** — `references/show-missing-invoices.md` again, same `workspace_id`
    and period. Replace the step 5 hand-off and route it as in step 5, except that a second thin
@@ -167,7 +172,7 @@ redirect carries the failing pass's own `workspace_id`.
 | 5 | `resolution` | `listed`, thin (with `has_activity: true`) or user asked | go to 6 |
 | 5 | `resolution` | `listed`, not thin | skip to 8 |
 | 5 | `has_activity` | `false` · `unknown` | the thin test never fires — a list that would otherwise read as thin skips 6 and 7 and goes to 8, saying the month's bank activity could not be confirmed |
-| 6 | — | the categorization brick is not bundled | go to 8, say the step is unavailable |
+| 6 | — | the categorization brick's procedure is absent | go to 8, say the step is unavailable |
 | 6 | `resolution` | `updated` | keep `coverage_before` / `coverage_after`; re-read the list at 7 |
 | 6 | `resolution` | `unchanged` · `read_only` · `unavailable` | keep the step 5 list, say why coverage did not move — nothing to assign, this server cannot write categories, or it does not expose the counterparty list — and go to 8 |
 | 7 | `resolution` | thin again | go to 8, say coverage did not move enough to change the list |
@@ -188,8 +193,8 @@ name, so no line, total, or coverage claim ever spans two of them:
 - **Missing invoices** — counterparty counts per mode (`agent` / `connect` / `upload`) and the
   base-currency total, over the rows that carry an amount only.
 - **Categorization delta** — only when step 6 ran: categorized before → after, and how many changes
-  the user confirmed, or one line saying the categorization step was unavailable when the brick is
-  not bundled.
+  the user confirmed, or one line saying the categorization step was unavailable when its
+  procedure is absent.
 - **Preview** — the per-agent lines with the demo-mode suffix, or one summary line when the cards
   are already on screen, plus the upload line and the connect line.
 - **The no-launch sentence**, on its own: no agent was launched, no task was queued, no browser
@@ -199,11 +204,15 @@ name, so no line, total, or coverage claim ever spans two of them:
   than force it in — it is offered, never mandatory.
 - End with one line on what is next: connecting the providers behind the `connect` rows turns manual
   uploads into gaps Well can fetch itself (`connect-tools`), and the Well app runs the real fetch.
+- The recap and every step's report stay plain sentences a non-technical user understands. Never
+  print yaml, JSON, or a fenced code block to the user — the bricks' hand-offs are reasoning state,
+  carried forward in the conversation, and the next step re-reads what it needs from its own tool
+  calls.
 
-Do not return a step's rows restated when its card is on screen, a total that mixes currencies, a
-claim that anything was launched or collected, a gap list, coverage figure, or preview built here
-instead of by its brick, or — across a multi-workspace run — one merged table, one combined total, or
-one recap standing for two entities.
+Do not return a yaml, JSON, or fenced code block anywhere, a step's rows restated when its card is
+on screen, a total that mixes currencies, a claim that anything was launched or collected, a gap
+list, coverage figure, or preview built here instead of by its brick, or — across a multi-workspace
+run — one merged table, one combined total, or one recap standing for two entities.
 
 ## Quality checks
 
@@ -211,7 +220,7 @@ Before finishing, verify:
 
 - If no `well_*` tool was in the toolset, the user was pointed at `https://api.wellapp.ai/v1/mcp`
   and the flow stopped there.
-- Every step ran by reading its `references/*.md` file, in order — none skipped or re-implemented
+- Every step ran by reading `references/<name>.md`, in order — none skipped or re-implemented
   inline — and each route was decided on the routing table's key.
 - The flow stopped, with a reason, on `unresolved` at steps 1 and 4, on `coverage: none` until the
   user answered, on a `missing` or `error` bank at step 3 until the user answered or skipped, on
@@ -219,8 +228,8 @@ Before finishing, verify:
 - The bank step ran unless step 2 already reported the bank connected, and no bank claim was made on
   a `resolution: unavailable` bank read.
 - `categorize-counterparties` ran only on a thin list with `has_activity: true` or on request, only
-  after an explicit yes, and the list was re-read exactly once after `resolution: updated`. When the
-  brick was not bundled, the step was declared unavailable rather than improvised.
+  after an explicit yes, and the list was re-read exactly once after `resolution: updated`. When
+  its procedure was absent, the step was declared unavailable rather than improvised.
 - `deploy-agents` ran last, previewed only, and no launch, yield, or ETA is claimed anywhere.
 - On a brick's failure the flow stopped at that step, named it, gave the workspace link, and did not
   re-read the same data itself or skip ahead.
@@ -232,6 +241,8 @@ Before finishing, verify:
   summary, the categorization delta when step 6 ran, the preview lines, and the no-launch sentence.
 - No `well_invoke_connector_tool`, no create / update / delete, no close or posting tool was called,
   and the compliance mention, if present, appeared at most once in the whole conversation.
+- No yaml, JSON, or fenced code block appears anywhere in the answer.
+- Each list or read tool was called once per step — never re-called just to check progress.
 
 ## Examples
 

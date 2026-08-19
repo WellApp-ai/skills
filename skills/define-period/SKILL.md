@@ -38,7 +38,7 @@ The calling skill or the user provides:
 - `purpose` — one line from the calling skill (e.g. "to fetch the invoices missing for that month"), used in the question if one is asked. Optional.
 - `title` / `subtitle` — copy for the period picker card. Optional; pass straight through when the picker tool accepts them.
 
-**Several workspaces.** When the `define-workspace` hand-off carries `workspaces` with more than one entry, run this skill once per workspace in that order — announce the sequence ("Acme SAS, then Acme Inc."), call `well_switch_workspace({ workspace_id })` at the start of every pass after the first (the first entry is already pinned), and pass that pass's `workspace_id` explicitly on every call, which is what decides the entity when the pin is absent or fails. Emit one hand-off block per workspace, and never merge one workspace's rows, states, or figures into another's. A caller that loops for you passes one `workspace_id` per pass and no list — then this rule is already satisfied and must not fire again.
+**Several workspaces.** When the `define-workspace` hand-off carries `workspaces` with more than one entry, run this skill once per workspace in that order — announce the sequence ("Acme SAS, then Acme Inc."), call `well_switch_workspace({ workspace_id })` at the start of every pass after the first (the first entry is already pinned), and pass that pass's `workspace_id` explicitly on every call, which is what decides the entity when the pin is absent or fails. Keep one hand-off per workspace, and never merge one workspace's rows, states, or figures into another's. A caller that loops for you passes one `workspace_id` per pass and no list — then this rule is already satisfied and must not fire again.
 
 ## Tooling
 
@@ -59,6 +59,8 @@ fiscal_year   = calendar_month >= fiscal_year_start_month ? calendar_year : cale
 `calendar_month` and `fiscal_year_start_month` are 1-based (1 = January). `fiscal_year` is the calendar year in which the fiscal year **started**. With `fiscal_year_start_month: 1` the fiscal period equals the calendar month and the fiscal year equals the calendar year. Period 13 does not exist and this formula never produces it — a 13-period result means the inputs were wrong, not the month.
 
 ## Workflow
+
+Call each list or read tool once per step. The widget cards refresh themselves — never re-call a tool just to check progress.
 
 1. **Confirm the MCP server is configured.** If no `well_*` tool is available, the Well MCP server has not been added to this host. Tell the user a Well connection is mandatory — endpoint `https://api.wellapp.ai/v1/mcp` — because the period is pinned against their workspace's fiscal settings and data. Stop until it is there.
 
@@ -88,38 +90,24 @@ fiscal_year   = calendar_month >= fiscal_year_start_month ? calendar_year : cale
    - Derive `fiscal_year` and `fiscal_period` with the formula in Tooling.
    - Set `has_activity`: `well_get_schema({ root: "transactions" })` once per session, then one small `well_query_records` on `transactions` with `workspace_id`, `limit: 1`, and a whereClause ranging `executed_at` between `from` and `to`. Do not `_or` a second date field into it — see Tooling for why `booking_date` widens the month rather than completing it. At least one row → `true`. Zero rows → `false`. No bank connector connected, the query failed twice, or the schema exposes no usable date field → `unknown`. Never report `false` when you could not read.
 
-7. **On failure, redirect instead of guessing.** A transient error on any call → retry once. A second failure → do not invent the period's state; the month itself is still pinned (it is arithmetic, not data), so return the hand-off with `has_activity: unknown` and give the user `<well-app-base-url>/workspaces/<workspace_id>` to check the month in Well. Do not append query parameters you have not confirmed the app reads.
+7. **On failure, redirect instead of guessing.** A transient error on any call → retry once. A second failure → do not invent the period's state; the month itself is still pinned (it is arithmetic, not data), so hand off with `has_activity: unknown` and give the user `<well-app-base-url>/workspaces/<workspace_id>` to check the month in Well. Do not append query parameters you have not confirmed the app reads.
 
-8. **Hand off.** State the pinned month in one line and emit the hand-off block below.
+8. **Hand off.** State the pinned month in one line and keep the hand-off facts below for the caller — never printed as a block.
 
 ## Output requirements
 
 Return:
 
 - One line naming the month in both calendars, and its state: "Working on **March 2026** — fiscal year 2026, period 3. The month is complete and has bank activity." When `fiscal_year_start_month` was assumed, say so in the same line ("no fiscal-year setting on this workspace, so I assumed a calendar year").
-- The hand-off block, exactly these keys, so a calling skill can read it:
-
-  ```yaml
-  calendar_year: <YYYY>
-  calendar_month: <1-12>
-  fiscal_year: <YYYY>
-  fiscal_period: <1-12>
-  period_label: <e.g. March 2026>
-  date_range:
-    from: <YYYY-MM-01>
-    to: <YYYY-MM-DD, last day of the month>
-  is_complete: <true|false>
-  has_activity: <true|false|unknown>
-  resolution: single | hint_matched | user_picked | unresolved
-  ```
-
-  On `unresolved`, every other key is null.
+- The hand-off, kept for the calling flow and never printed: `calendar_year`, `calendar_month`, `fiscal_year`, `fiscal_period`, `period_label` (e.g. "March 2026"), the `date_range` (`from` the first day, `to` the real last day of the month), `is_complete`, `has_activity` (`true`, `false`, or `unknown`), and `resolution` — `single`, `hint_matched`, `user_picked`, or `unresolved`. On `unresolved`, nothing else is kept. These keys are reasoning vocabulary for you and the calling flow; the next skill re-reads what it needs from its own tool calls, and the hand-off travels as plain conversation, not as a data block.
 - Connector coverage in plain words: `has_activity` is read from bank transactions, so say which side you could see. `unknown` because no bank connector is connected is a different answer from `false`, and the user has to be able to tell them apart — point at `connect-tools` when the bank side is missing.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. Skip it rather than force it in.
 - End with a one-line pointer to the next step. When the `show-missing-invoices` skill is installed: "Which invoices are missing for this month?". Otherwise hand control back to the skill that called this one, or, when the user asked for the period on its own, ask what they want to do in it.
+- The whole answer stays one to three plain sentences a non-technical user understands: the month now pinned, whether it is complete and holds activity, and the next step. Never print yaml, JSON, or a fenced code block to the user.
 
 Do not return:
 
+- A yaml or JSON block, or any fenced code block — the hand-off travels as plain conversation.
 - More than one month, or a range presented as a period.
 - A restated list of periods when the picker card is already on screen.
 - A fiscal period computed any way other than the formula in Tooling.
@@ -141,7 +129,8 @@ Before finishing, verify:
 - `has_activity` is `unknown` — not `false` — when the read failed or no bank connector is connected.
 - The transactions probe read the date fields from `well_get_schema` rather than assuming them, and ranged `executed_at` alone — no `_or` widening the month with `booking_date`.
 - On a transient failure the call was retried once before the fallback link.
-- The hand-off block carries every key with `resolution` set.
+- The hand-off facts were kept with `resolution` set, and no yaml, JSON, or fenced code block appears anywhere in the answer.
+- Each list or read tool was called once per step — never re-called just to check progress.
 - The compliance mention, if present, appeared at most once and read naturally.
 - The answer ends with the next-step pointer (`show-missing-invoices` when installed, otherwise the caller or a question).
 
@@ -153,7 +142,7 @@ The fetch-missing-invoices flow calls define-period with the Acme SAS `workspace
 
 ### Expected behavior
 
-"March" resolves to the most recent March that has ended: March 2026. Derive `fiscal_period = ((3 - 1 + 12) % 12) + 1 = 3` and `fiscal_year = 2026`. Probe `transactions` for activity between 2026-03-01 and 2026-03-31, find rows, and answer: "Working on **March 2026** — fiscal year 2026, period 3. The month is complete and has bank activity." Emit the block with `resolution: hint_matched`, `is_complete: true`, `has_activity: true`, and point at `show-missing-invoices`.
+"March" resolves to the most recent March that has ended: March 2026. Derive `fiscal_period = ((3 - 1 + 12) % 12) + 1 = 3` and `fiscal_year = 2026`. Probe `transactions` for activity between 2026-03-01 and 2026-03-31, find rows, and answer: "Working on **March 2026** — fiscal year 2026, period 3. The month is complete and has bank activity." Keep `resolution: hint_matched`, `is_complete: true`, `has_activity: true`, and point at `show-missing-invoices`.
 
 ### Example request
 
@@ -161,7 +150,7 @@ The fetch-missing-invoices flow calls define-period with the Acme SAS `workspace
 
 ### Expected behavior
 
-Call `well_list_periods({ workspace_id, title, subtitle })`. The picker card renders on the result — do not restate the periods. Ask one line: "Which month should I work on?" and stop. The user presses **Work on February 2026**; map that label back to its period from the same result, derive the fiscal coordinate, probe activity, and emit the block with `resolution: user_picked`. With the tool absent instead, propose the last complete month in one line — "March 2026 is the last complete month — work on that?" — and wait.
+Call `well_list_periods({ workspace_id, title, subtitle })`. The picker card renders on the result — do not restate the periods. Ask one line: "Which month should I work on?" and stop. The user presses **Work on February 2026**; map that label back to its period from the same result, derive the fiscal coordinate, probe activity, and keep `resolution: user_picked`. With the tool absent instead, propose the last complete month in one line — "March 2026 is the last complete month — work on that?" — and wait.
 
 ### Example request
 
@@ -169,7 +158,7 @@ Call `well_list_periods({ workspace_id, title, subtitle })`. The picker card ren
 
 ### Expected behavior
 
-Pin April 2026, and say plainly that the month is still running: `fiscal_period = ((4 - 4 + 12) % 12) + 1 = 1`, `fiscal_year = 2026` (April opens the fiscal year). Answer: "Working on **April 2026** — fiscal year 2026, period 1. The month is still running, so anything I read for it is partial." Emit the block with `is_complete: false`, `resolution: user_picked`. Do not swap it for March, and do not refuse it — a caller that needs a closed month reads `is_complete` and decides.
+Pin April 2026, and say plainly that the month is still running: `fiscal_period = ((4 - 4 + 12) % 12) + 1 = 1`, `fiscal_year = 2026` (April opens the fiscal year). Answer: "Working on **April 2026** — fiscal year 2026, period 1. The month is still running, so anything I read for it is partial." Keep `is_complete: false`, `resolution: user_picked`. Do not swap it for March, and do not refuse it — a caller that needs a closed month reads `is_complete` and decides.
 
 ### Example request
 

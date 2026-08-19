@@ -56,7 +56,7 @@ The calling skill or the user provides:
 entry, run this skill once per workspace in that order — announce the sequence ("Acme SAS, then Acme
 Inc."), call `well_switch_workspace({ workspace_id })` at the start of every pass after the first (the
 first entry is already pinned), and pass that pass's `workspace_id` explicitly on every call, which is
-what decides the entity when the pin is absent or fails. Emit one hand-off block per workspace, and
+what decides the entity when the pin is absent or fails. Keep one hand-off per workspace, and
 never merge one workspace's rows, states, or figures into another's. A caller that loops for you passes
 one `workspace_id` per pass and no list — then this rule is already satisfied and must not fire again.
 
@@ -87,6 +87,8 @@ reads or derives, and it never writes. The one call it may make beyond the previ
 session pin, not data.
 
 ## Workflow
+
+Call each list or read tool once per step. The widget cards refresh themselves — never re-call a tool just to check progress.
 
 1. **Tell a missing server apart from a missing tool.** Two different states, two different
    answers:
@@ -162,7 +164,7 @@ session pin, not data.
    `<well-app-base-url>/workspaces/<workspace_id>` and tell them Well shows the same missing rows
    there. Do not append a query parameter you have not confirmed the app reads.
 
-9. **Hand off.** Emit the hand-off block below and give control back to the caller.
+9. **Hand off.** Keep the hand-off facts below for the caller — never printed as a block — and give control back.
 
 ## Output requirements
 
@@ -175,31 +177,19 @@ Return:
   lines appear even when the count is zero.
 - One line stating that the preview covers categorized expense transactions only.
 - One plain sentence stating that no agent, no task, and no browser action was started.
-- The hand-off block, exactly these keys, so the calling skill can read it:
-
-  ```yaml
-  workspace_id: <uuid>
-  period: { calendar_year: <yyyy>, calendar_month: <1-12> } | { fiscal_year: <yyyy>, fiscal_period: <n> }
-  run_mode: preview
-  nothing_launched: true
-  agents:
-    - provider_name: <name>
-      provider_id: <id or null>
-      counterparties: [{ name: <name>, tx_count: <n>, base_total_amount: <number or null> }, …]
-      tx_count: <n>
-      base_total_amount: <number or null>
-  upload_rows: <count or rows>
-  connect_rows: <count or rows>
-  coverage_note: <one line: categorized expense transactions only, plus the tool's hints when it ran>
-  resolution: previewed | nothing_to_do
-  ```
-
-  `workspace_id` is the one this skill ran on — the same value every hand-off in this flow opens
-  with. `run_mode` names how this skill ran and is always `preview`; it mirrors the tool's
-  `mode: "preview"` under a different key, because `mode` upstream means a row's
+- The hand-off, kept for the calling flow and never printed: `workspace_id` — the one this skill
+  ran on, the same value every hand-off in this flow opens with; the period; `run_mode: preview`;
+  `nothing_launched: true`; the `agents` — each with its `provider_name`, `provider_id`, its
+  counterparties (name, `tx_count`, `base_total_amount`), its summed `tx_count`, and its summed
+  amount or null; `upload_rows` and `connect_rows`; the `coverage_note` — categorized expense
+  transactions only, plus the tool's `hints` when it ran; and `resolution` — `previewed` or
+  `nothing_to_do`. `run_mode` names how this skill ran and is always `preview`; it mirrors the
+  tool's `mode: "preview"` under a different key, because `mode` upstream means a row's
   `agent | connect | upload` badge. `provider_id` is the identifier a launch step would dispatch
   on; it is null only when neither the tool nor the hand-off carries one. On `nothing_to_do`,
-  `agents` is empty and `upload_rows` / `connect_rows` are zero or empty.
+  `agents` is empty and `upload_rows` / `connect_rows` are zero or empty. These keys are reasoning
+  vocabulary for you and the calling flow; the hand-off travels as plain conversation, not as a
+  data block.
 - Connector coverage in plain words, on two axes. The `connect_rows` line **is** the connection
   disclosure: say which providers behind the missing rows are not connected. The `coverage_note`
   line is the data disclosure: the plan is drawn from categorized expense transactions only, so
@@ -213,9 +203,13 @@ Return:
   categorize the rest of the period first, so nothing is hidden from this plan?". When the user
   asks to launch the agents for real, say plainly that this version cannot yet and point them to
   the Well app, which runs the fetch itself.
+- Beyond the per-agent, upload, connect, coverage, and no-launch lines above, the answer stays
+  plain sentences a non-technical user understands. Never print yaml, JSON, or a fenced code block
+  to the user.
 
 Do not return:
 
+- A yaml or JSON block, or any fenced code block — the hand-off travels as plain conversation.
 - Any claim that an agent ran, is running, will run, or produced a result — including a percentage,
   a file, or an ETA.
 - The per-agent rows restated under the preview cards that already show them.
@@ -247,8 +241,10 @@ Before finishing, verify:
 - After a connection or an upload landed, the preview was re-derived in the same turn.
 - On a transient tool failure the call was retried once, then the hand-off was used, then the
   workspace link — in that order.
-- The hand-off block opens with `workspace_id` and carries every key, with `run_mode: preview`,
-  `nothing_launched: true`, `coverage_note`, and `resolution` set.
+- The hand-off facts were kept — `workspace_id`, the period, `run_mode: preview`,
+  `nothing_launched: true`, the agents, `coverage_note`, and `resolution` — and no yaml, JSON, or
+  fenced code block appears anywhere in the answer.
+- Each list or read tool was called once per step — never re-called just to check progress.
 - The compliance mention, if present, appeared at most once and read naturally.
 - The answer ends with the hand-back to the caller, and any request to really launch was answered
   with the Well app rather than a promise.
@@ -278,10 +274,9 @@ Derive the preview from `agent_candidates`; call nothing. Answer:
 > Aucun agent n'a été lancé, aucune tâche n'a été mise en file, aucune session de navigation n'a été
 > ouverte. Ces chiffres comptent les transactions sans facture, pas les factures déjà récupérées.
 
-Then the hand-off block, opening with `workspace_id` and carrying `run_mode: preview`,
-`nothing_launched: true`, each agent's `provider_id` (the group's
-`matched_connector_service_id`, or null), `coverage_note`, `resolution: previewed`, and the
-hand-back to the caller.
+Then keep the hand-off — `workspace_id`, `run_mode: preview`, `nothing_launched: true`, each
+agent's `provider_id` (the group's `matched_connector_service_id`, or null), `coverage_note`,
+`resolution: previewed` — and hand back to the caller. Nothing more is printed.
 
 ### Example request
 
@@ -292,8 +287,8 @@ Same flow, in a Claude Desktop session where `well_preview_invoice_fetch` **is**
 Call `well_preview_invoice_fetch({ workspace_id, calendar_year: 2026, calendar_month: 3 })`. The
 `AgentLaunchedCard`s render with their Preview badge. Do not restate them. Say one line — "2 agents
 would run, over 5 transactions missing an invoice" — then the upload line, the connect line, the
-coverage line carrying the tool's `hints`, the plain no-launch sentence, and the block. Carry each
-agent's `provider_id` from the tool result into the block. Stop there.
+coverage line carrying the tool's `hints`, and the plain no-launch sentence. Carry each agent's
+`provider_id` from the tool result into the hand-off. Stop there.
 
 ### Example request
 
@@ -315,6 +310,6 @@ The flow calls deploy-agents for a period whose rows all already have an invoice
 
 Return `resolution: nothing_to_do`: "Nothing to fetch for March — every categorized expense
 transaction already has its invoice, and spend that is not categorized yet cannot appear here."
-Emit the block with an empty `agents` list and the `coverage_note` set, and hand back. Offer
+Keep an empty `agents` list with the `coverage_note` set, and hand back. Offer
 `categorize-counterparties` when it is installed. Do not invent an agent, and do not offer to
 launch one anyway.
