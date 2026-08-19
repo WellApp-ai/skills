@@ -122,7 +122,7 @@ Return:
 Before finishing, verify:
 
 - If `well_*` tools weren't available at all, the user was pointed at the MCP endpoint (`https://api.wellapp.ai/v1/mcp`) instead of erroring silently.
-- The workspace came from `define-workspace`'s hand-off — it was not resolved here — and its `workspace_id` rode every `well_*` call rather than being left off.
+- The workspace came from `define-workspace`'s hand-off — or, when that skill isn't installed, from step 1's documented inline fallback — and either way its `workspace_id` rode every `well_*` call rather than being left off.
 - `well_get_schema` was called for `invoices` and `companies` before relying on assumptions about either.
 - No monetary amount, price, tax id, or date was fabricated — every one came from the user or was explicitly stated as a default (e.g. today's date) and confirmed.
 - The receiver company match (if any) was confirmed by the user, not silently substituted.
