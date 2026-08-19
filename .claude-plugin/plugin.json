@@ -4,7 +4,7 @@
   "version": "1.1.0",
   "author": { "name": "Well App, Inc." },
   "homepage": "https://wellapp.ai",
-  "keywords": ["finance", "runway", "expenses", "accounting", "cfo", "mcp", "well", "invoicing", "receivables", "reconciliation", "fx", "connectors"],
+  "keywords": ["finance", "runway", "expenses", "accounting", "cfo", "mcp", "well", "invoicing", "receivables", "reconciliation", "fx", "connectors", "banking"],
   "skills": "./skills",
   "mcpServers": {
     "well": {

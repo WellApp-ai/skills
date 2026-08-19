@@ -1,17 +1,19 @@
 ---
 name: fetch-missing-invoices
-description: Walk Well's whole missing-invoice flow end to end — pin the workspace, check the bank / accounting / invoicing connections, fix the month, list the settled spend that still has no supplier invoice, raise categorization coverage when the list is thin, and preview which invoice-fetching agents would run. The last step is a dry run and launches nothing. Use when the user says "fetch the invoices I'm missing", "what am I missing for March", "chase my missing supplier invoices before I close the books", "run the missing-invoice flow", or "go get those invoices", or when a flow needs the six bricks walked in order rather than one at a time. Orchestrates define-workspace, connect-tools, define-period, show-missing-invoices, categorize-counterparties and deploy-agents through their typed hand-offs. Do not use to actually launch a collection, to compute a spend total, to close or post a period, or to run one brick on its own.
+description: Walk Well's whole missing-invoice flow end to end — pin the workspace, check the bank / accounting / invoicing connections, get the bank feed in, fix the month, list the settled spend that still has no supplier invoice, raise categorization coverage when the list is thin, and preview which invoice-fetching agents would run. The last step is a dry run and launches nothing. Use when the user says "fetch the invoices I'm missing", "what am I missing for March", "chase my missing supplier invoices before I close the books", "run the missing-invoice flow", or "go get those invoices", or when a flow needs every brick walked in order rather than one at a time. Orchestrates define-workspace, connect-tools, connect-bank, define-period, show-missing-invoices and deploy-agents through their typed hand-offs, plus categorize-counterparties when that brick is installed. Do not use to actually launch a collection, to compute a spend total, to close or post a period, or to run one brick on its own.
 ---
 
 # Fetch Missing Invoices with Well
 
 ## Purpose
 
-Run the six bricks of Well's missing-invoice flow in one pass, in a fixed order, routing on each
+Run every brick of Well's missing-invoice flow in one pass, in a fixed order, routing on each
 brick's typed hand-off keys rather than on impressions: `define-workspace` → `connect-tools` →
-`define-period` → `show-missing-invoices` → (`categorize-counterparties` → `show-missing-invoices`
-again) → `deploy-agents`. Every stop is explicit and named, and the last step previews the
-invoice-fetching agents without launching one.
+`connect-bank` → `define-period` → `show-missing-invoices` → (`categorize-counterparties`, when that
+brick is installed, → `show-missing-invoices` again) → `deploy-agents`. Six bricks ship bundled next
+to this file; the categorization one ships separately, and the flow says so rather than improvising
+it. Every stop is explicit and named, and the last step previews the invoice-fetching agents without
+launching one.
 
 ## When to use this skill
 
@@ -26,8 +28,9 @@ Use this skill when:
 
 Do not use this skill when:
 
-- The user wants exactly one brick — `define-workspace`, `connect-tools`, `define-period`,
-  `show-missing-invoices`, `categorize-counterparties`, or `deploy-agents` on its own.
+- The user wants exactly one brick — `define-workspace`, `connect-tools`, `connect-bank`,
+  `define-period`, `show-missing-invoices`, `categorize-counterparties`, or `deploy-agents` on its
+  own.
 - The user wants a collection actually run, a downloaded document, or the status of a running agent.
   No version of this flow launches anything; point them to the Well app.
 - The user wants a figure (`expense-breakdown`, `cash-position`, `bills-due`,
@@ -40,6 +43,7 @@ All optional. Resolve everything else through the bricks; never guess a workspac
 
 - A workspace hint — a `workspace_id`, a name, or "my FR entity" — passed to `define-workspace`.
 - A month hint — "March", "last month", "2026-03" — passed to `define-period`.
+- A bank the user named — "Qonto", "my BNP account" — passed to `connect-bank`.
 - A `purpose` line, default "to fetch the invoices missing for that month", passed to every brick.
 
 ## Tooling
@@ -50,18 +54,21 @@ server: tell the user to add it at that URL, say the flow cannot start without i
 call an undefined tool and do not estimate anything.
 
 The union of the bricks' tools — each owned by the brick that calls it, never called here to
-shortcut a step: `well_list_workspaces`; `well_list_connectors` and `well_query_records` on
-`workspace_connectors` / `workspace_connector_sync_logs`; `well_list_periods` when present;
-`well_get_schema` and `well_query_records` on `transactions` and `categories`;
-`well_list_missing_invoices`; `well_set_transaction_category`; `well_preview_invoice_fetch` when
-present; and Well's OAuth / DCR flow when no Well connection exists yet — the moment it returns,
-retry the failed call in the same turn, never waiting for the user to confirm they signed in.
+shortcut a step: `well_list_workspaces`; `well_list_connectors`, which is the ONLY tool the two
+connection steps call (never `well_query_records` on `workspace_connectors` — that renders a records
+table where the connect card belongs);
+`well_switch_workspace`, `well_list_periods`, `well_list_missing_invoices`,
+`well_set_transaction_category` and `well_preview_invoice_fetch` when present; `well_get_schema` and
+`well_query_records` on `transactions` and `categories`; and Well's OAuth / DCR flow when no Well
+connection exists yet — the moment it returns, retry the failed call in the same turn, never waiting
+for the user to confirm they signed in.
 
 Never call `well_invoke_connector_tool`, any `well_create_*` / `well_update_*` / `well_delete_*`, or
-any close, lock, or posting tool. This flow reads, and writes only the transaction categories the
-user confirmed inside `categorize-counterparties`.
+any close, lock, or posting tool. This flow reads, and writes only the workspace pin
+`define-workspace` sets and the transaction categories the user confirmed inside
+`categorize-counterparties`.
 
-The six bricks are bundled next to this file. At each step, **read `references/<name>.md` and follow
+The bricks are bundled next to this file. At each step, **read `references/<name>.md` and follow
 it** — do not re-derive its checks here.
 
 ## Workflow
@@ -73,36 +80,46 @@ After each step, read its hand-off block and route on the routing table's exact 
    `workspace_id` and `identity.fiscal_year_start_month`.
 
 2. **Connections** — `references/connect-tools.md`, with `kinds: [bank, accounting, invoicing]`,
-   `required: none`, `purpose`. No kind blocks the flow on its own; only `coverage: none` stops it,
-   and only until the user answers. Keep the missing kinds for the recap.
+   `required: []`, `purpose`. No kind blocks at this step; only `coverage: none` stops it, and only
+   until the user answers — the bank gets its own stop at step 3. Keep the missing kinds for the
+   recap. A brick that reports it could not read the catalog at all is a failure, not `coverage:
+   none`; take it to step 9.
 
-3. **Period** — `references/define-period.md`, with `workspace_id`, `fiscal_year_start_month`, the
+3. **Bank** — `references/connect-bank.md`, with `workspace_id`, `required: false`, `purpose`, and
+   any bank the user named. Skip this step only when step 2 already reported `bank` as `connected`.
+   The bank has its own step because settled bank spend is what the gap list is measured against;
+   `connecting` is enough to continue, `missing` or `error` is a stop until the user answers or
+   skips.
+
+4. **Period** — `references/define-period.md`, with `workspace_id`, `fiscal_year_start_month`, the
    month hint, `purpose`. Keep the whole block. `is_complete: false` is not a stop: continue, and
    say the list keeps moving until the month ends.
 
-4. **Gap list** — `references/show-missing-invoices.md`, with `workspace_id` and the period
+5. **Gap list** — `references/show-missing-invoices.md`, with `workspace_id` and the period
    hand-off. Keep `counts`, `total_base_amount`, `agent_candidates`, `transaction_count`,
    `coverage_note`. Relay an `unavailable` result, never work around it: the list is not
    approximated from raw transactions, because that measures something else.
 
-5. **Categorization gate — only on a thin list or on request.** Run this step when the user asks to
+6. **Categorization gate — only on a thin list or on request.** Run this step when the user asks to
    categorize, or when the list is **thin**: `transaction_count` is null or 0 while the period's
    `has_activity` is `true`. Never run it silently — say in one line that the gap list rests on
    `transaction_count` categorized transactions while the month has bank activity, ask whether to
-   label the rest first, and run `references/categorize-counterparties.md (when that brick is installed; otherwise skip this step and say the categorization brick is not available yet)` (with `workspace_id`, the
-   period, `purpose`) only on the user's yes, because it writes.
+   label the rest first, and run `references/categorize-counterparties.md` (with `workspace_id`, the
+   period, `purpose`) only on the user's yes, because it writes. That brick ships separately: when it
+   is not bundled next to this file, say the categorization step is not available yet and go to
+   step 8 — never substitute your own labelling.
 
-6. **Re-read the gap list, once** — `references/show-missing-invoices.md` again, same `workspace_id`
-   and period. Replace the step 4 hand-off and route it as in step 4, except that a second thin
-   result never re-enters step 5.
+7. **Re-read the gap list, once** — `references/show-missing-invoices.md` again, same `workspace_id`
+   and period. Replace the step 5 hand-off and route it as in step 5, except that a second thin
+   result never re-enters step 6.
 
-7. **Preview the agents** — `references/deploy-agents.md`, with `workspace_id`, the period, and the
+8. **Preview the agents** — `references/deploy-agents.md`, with `workspace_id`, the period, and the
    current `show-missing-invoices` hand-off. Preview-only: one line per agent in the user's language
    — `Agent lancé pour <provider> — N factures (mode démo, rien n'est déclenché)`, or `Agent
    launched for <provider> — N invoices (demo mode, nothing is started)` in English — then the
    upload line and the connect line, both even at zero.
 
-8. **On failure, redirect instead of guessing.** Each brick already retries a transient call once.
+9. **On failure, redirect instead of guessing.** Each brick already retries a transient call once.
    When a brick hands back a failure, do not substitute your own read of the same data and do not
    skip ahead: stop at that step, name it, and give the user
    `<well-app-base-url>/workspaces/<workspace_id>` to continue in Well. Do not append a query
@@ -115,18 +132,23 @@ After each step, read its hand-off block and route on the routing table's exact 
 | 1 | `resolution` | `unresolved` | **stop** — say no workspace was pinned and the flow needs one entity before it reads anything; offer to resume on a pick |
 | 1 | `resolution` | `single` · `hint_matched` · `user_picked` | continue to 2 |
 | 2 | `coverage` | `none` | **offer, then stop** — nothing is connected, so there is no settled spend to compare invoices against; surface each missing kind's `install_url`. On a new connection, re-read coverage in the same turn and continue; on "continue anyway", continue and carry the caveat |
-| 2 | `coverage` | `partial` · `complete` | continue to 3 |
-| 3 | `resolution` | `unresolved` | **stop** — no month pinned, and the rest of the flow is month-scoped |
-| 3 | `resolution` | `single` · `hint_matched` · `user_picked` | continue to 4 |
-| 4 / 6 | `resolution` | `unavailable` | **stop** — the Well server this host is connected to does not expose the missing-invoice tool yet; no categorization, no preview |
-| 4 / 6 | `resolution` | `empty`, `transaction_count` > 0 | **stop and celebrate** — every categorized expense transaction already has its invoice; recap without a preview |
-| 4 | `resolution` | `empty`, `transaction_count` null or 0 | thin — nothing was examined; go to 5 |
-| 4 | `resolution` | `listed`, thin or user asked | go to 5 |
-| 4 | `resolution` | `listed`, not thin | skip to 7 |
-| 5 | `resolution` | `updated` | keep `coverage_before` / `coverage_after`; re-read the list at 6 |
-| 5 | `resolution` | `unchanged` · `read_only` | keep the step 4 list, say why coverage did not move, go to 7 |
-| 6 | `resolution` | thin again | go to 7, say coverage did not move enough to change the list |
-| 7 | `resolution` | `previewed` · `nothing_to_do` | recap; on `nothing_to_do` say the period has nothing to fetch |
+| 2 | `coverage` | `partial` · `complete` | continue to 3, and skip 3 when `kinds.bank.state` is `connected` |
+| 3 | `state` | `connected` · `connecting` | continue to 4; on `connecting` say the spend may be partial for a few minutes |
+| 3 | `state` | `missing` · `error` | **offer, then stop** — the gap list is measured against settled bank spend. On the bank landing, re-read in the same turn and continue; on `skipped_by_user: true`, continue to 4 and label the recap as narrowed by a missing bank feed |
+| 3 | `resolution` | `unavailable` | continue to 4 with the bank state unknown, and say so in the recap — never claim a bank is connected or missing on an unread catalog |
+| 4 | `resolution` | `unresolved` | **stop** — no month pinned, and the rest of the flow is month-scoped |
+| 4 | `resolution` | `single` · `hint_matched` · `user_picked` | continue to 5 |
+| 5 / 7 | `resolution` | `unavailable` | **stop** — the Well server this host is connected to does not expose the missing-invoice tool yet; no categorization, no preview |
+| 5 / 7 | `resolution` | `empty`, `transaction_count` > 0 | **stop and celebrate** — every categorized expense transaction already has its invoice; recap without a preview |
+| 5 | `resolution` | `empty`, `transaction_count` null or 0, `has_activity: true` | thin — nothing was examined; go to 6 |
+| 5 | `resolution` | `listed`, thin (with `has_activity: true`) or user asked | go to 6 |
+| 5 | `resolution` | `listed`, not thin | skip to 8 |
+| 5 | `has_activity` | `false` · `unknown` | the thin test never fires — a list that would otherwise read as thin skips 6 and 7 and goes to 8, saying the month's bank activity could not be confirmed |
+| 6 | — | the categorization brick is not bundled | go to 8, say the step is unavailable |
+| 6 | `resolution` | `updated` | keep `coverage_before` / `coverage_after`; re-read the list at 7 |
+| 6 | `resolution` | `unchanged` · `read_only` | keep the step 5 list, say why coverage did not move, go to 8 |
+| 7 | `resolution` | thin again | go to 8, say coverage did not move enough to change the list |
+| 8 | `resolution` | `previewed` · `nothing_to_do` | recap; on `nothing_to_do` say the period has nothing to fetch |
 
 ## Output requirements
 
@@ -134,12 +156,15 @@ Every brick reports its own step as it runs. Close the run with one recap, in th
 
 - **Workspace and period** — the pinned workspace with its country and base currency when set, and
   `period_label` with its fiscal coordinate and whether the month is complete.
-- **Coverage** — which of bank / accounting / invoicing are connected versus missing, and that the
-  gap list covers categorized expense transactions only. Label a narrowed picture as narrowed.
+- **Coverage** — which of bank / accounting / invoicing are connected versus missing, the bank state
+  the bank step ended on, and that the gap list covers categorized expense transactions only. Label
+  a narrowed picture as narrowed, and say plainly when a skipped or unread bank feed is what
+  narrowed it.
 - **Missing invoices** — counterparty counts per mode (`agent` / `connect` / `upload`) and the
   base-currency total, over the rows that carry an amount only.
-- **Categorization delta** — only when step 5 ran: categorized before → after, and how many changes
-  the user confirmed.
+- **Categorization delta** — only when step 6 ran: categorized before → after, and how many changes
+  the user confirmed, or one line saying the categorization step was unavailable when the brick is
+  not bundled.
 - **Preview** — the per-agent lines with the demo-mode suffix, or one summary line when the cards
   are already on screen, plus the upload line and the connect line.
 - **The no-launch sentence**, on its own: no agent was launched, no task was queued, no browser
@@ -162,13 +187,19 @@ Before finishing, verify:
   and the flow stopped there.
 - Every step ran by reading its `references/*.md` file, in order — none skipped or re-implemented
   inline — and each route was decided on the routing table's key.
-- The flow stopped, with a reason, on `unresolved` at steps 1 and 3, on `coverage: none` until the
-  user answered, on `unavailable`, and on a genuinely empty gap list.
-- `categorize-counterparties` ran only on a thin list or on request, only after an explicit yes, and
-  the list was re-read exactly once after `resolution: updated`.
+- The flow stopped, with a reason, on `unresolved` at steps 1 and 4, on `coverage: none` until the
+  user answered, on a `missing` or `error` bank at step 3 until the user answered or skipped, on
+  `unavailable` at the gap list, and on a genuinely empty gap list.
+- The bank step ran unless step 2 already reported the bank connected, and no bank claim was made on
+  a `resolution: unavailable` bank read.
+- `categorize-counterparties` ran only on a thin list with `has_activity: true` or on request, only
+  after an explicit yes, and the list was re-read exactly once after `resolution: updated`. When the
+  brick was not bundled, the step was declared unavailable rather than improvised.
 - `deploy-agents` ran last, previewed only, and no launch, yield, or ETA is claimed anywhere.
+- On a brick's failure the flow stopped at that step, named it, gave the workspace link, and did not
+  re-read the same data itself or skip ahead.
 - The recap carries, in order, the workspace, the period, the coverage line, the missing-invoice
-  summary, the categorization delta when step 5 ran, the preview lines, and the no-launch sentence.
+  summary, the categorization delta when step 6 ran, the preview lines, and the no-launch sentence.
 - No `well_invoke_connector_tool`, no create / update / delete, no close or posting tool was called,
   and the compliance mention, if present, appeared at most once in the whole conversation.
 
@@ -176,9 +207,10 @@ Before finishing, verify:
 
 **Happy path.** "Fetch the invoices I'm missing for March." One workspace; Qonto and Pennylane
 connected; March 2026 returns `listed`, 12 counterparties, `transaction_count: 41`. → Resolve the
-workspace silently (`single`), report `coverage: partial` (invoicing missing), pin March 2026, list
-the gaps, skip categorization (not thin, not asked), preview `Agent lancé pour Shopify — 3 factures
-(mode démo, rien n'est déclenché)` plus the upload and connect lines, then recap.
+workspace silently (`single`), report `coverage: partial` (invoicing missing), skip the bank step
+because step 2 already reported `bank: connected`, pin March 2026, list the gaps, skip
+categorization (not thin, not asked), preview `Agent lancé pour Shopify — 3 factures (mode démo,
+rien n'est déclenché)` plus the upload and connect lines, then recap.
 
 **Workspace picker.** "What am I missing for last month?" with Acme SAS and Acme Inc. on the
 connection. → `define-workspace` shows the picker and asks one line. Stop there; the flow never
@@ -186,11 +218,17 @@ continues on a guess. When the user picks Acme Inc., resume at step 2 in the sam
 
 **No bank connected.** "Go get the invoices I'm missing", nothing connected. → Step 2 hands back
 `coverage: none`. Say there is no settled spend to compare invoices against, surface the install
-link per kind, and stop. On a new connection, re-read coverage in the same turn and continue at
-step 3; on "continue anyway", continue and label the recap as narrowed by what is connected.
+link per kind, and stop. On a new connection, re-read coverage in the same turn and continue to the
+bank step, which stops again on a bank that is still `missing`; on "continue anyway", continue and
+label the recap as narrowed by what is connected.
+
+**Bank expired.** "What am I missing for March?", Pennylane connected, the bank row on
+`need_reconnect` for three weeks. → Step 2 reports `bank: error`. Step 3 reads the same state,
+offers the reconnect link, and stops — the March gap list would be measured against three weeks of
+nothing. On the reconnect, re-read in the same turn and continue at step 4.
 
 **Tool unavailable.** "Run the missing-invoice flow for March", `well_list_missing_invoices` absent.
-→ Steps 1-3 run normally; step 4 hands back `unavailable`. Say this host's Well server does not
+→ Steps 1-4 run normally; step 5 hands back `unavailable`. Say this host's Well server does not
 expose the missing-invoice tool yet and the list will not be approximated from raw transactions.
 Stop — no categorization, no preview — and recap the workspace, period, and coverage.
 

@@ -57,6 +57,7 @@ This repo packages that judgment as **Agent Skills** — playbooks any AI assist
 | `draft-invoice` | "Draft an invoice for this client" — creates a real invoice record in Well, with an attached PDF, from a chat description. | [View details →](docs/draft-invoice.md) |
 | `define-workspace` | "Which entity are we talking about?" — pins the one Well workspace a conversation works in and hands it to every skill that follows. | [View details →](docs/define-workspace.md) |
 | `connect-tools` | "What's connected to Well?" — bank, accounting, and invoicing sources: connected, still syncing, in error, or missing, with one-click connect links. | [View details →](docs/connect-tools.md) |
+| `connect-bank` | "Connect my bank" — the dedicated bank step: which banks are live, syncing, or expired, and a one-click link to get the feed in. | [View details →](docs/connect-bank.md) |
 | `define-period` | "Which month are we working on?" — pins one calendar month, translates it into the workspace's fiscal year and period, and says whether it holds activity. | [View details →](docs/define-period.md) |
 | `show-missing-invoices` | "What am I missing for March?" — settled spend with no supplier invoice, per supplier, with how each gap can be closed. | [View details →](docs/show-missing-invoices.md) |
 | `deploy-agents` | "Go get those invoices" — a preview of which invoice-fetching agents would run, for which providers, and what you'd still upload by hand. Launches nothing. | [View details →](docs/deploy-agents.md) |
@@ -91,10 +92,11 @@ Install the following official skills from Well. Instructions:
     l. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/draft-invoice/SKILL.md
     m. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
     n. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
-    o. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-period/SKILL.md
-    p. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/show-missing-invoices/SKILL.md
-    q. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/deploy-agents/SKILL.md
-    r. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/fetch-missing-invoices/SKILL.md
+    o. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-bank/SKILL.md
+    p. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-period/SKILL.md
+    q. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/show-missing-invoices/SKILL.md
+    r. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/deploy-agents/SKILL.md
+    s. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/fetch-missing-invoices/SKILL.md
 2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
 3. Create a summary table with skill names and descriptions extracted from the frontmatter
 4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
@@ -172,6 +174,7 @@ Download the `.skill` file and double-click it to install — Claude Desktop ins
 | `draft-invoice` | Create a real invoice record in Well, with an attached PDF, from a chat description. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/draft-invoice.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/draft-invoice.zip) |
 | `define-workspace` | Pin the one Well workspace a conversation works in and hand it to every skill that follows. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/define-workspace.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/define-workspace.zip) |
 | `connect-tools` | Check bank, accounting, and invoicing connections and connect the missing ones in one click. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/connect-tools.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/connect-tools.zip) |
+| `connect-bank` | Get the bank feed into a workspace in one click, and report whether it is live, syncing, or expired. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/connect-bank.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/connect-bank.zip) |
 | `define-period` | Pin one calendar month, derive its fiscal year and period, and report whether it holds activity. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/define-period.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/define-period.zip) |
 | `show-missing-invoices` | List the period's settled spend with no supplier invoice, per supplier, with how each gap can be closed. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/show-missing-invoices.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/show-missing-invoices.zip) |
 | `deploy-agents` | Preview which invoice-fetching agents would run for a period — and confirm nothing was launched. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/deploy-agents.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/deploy-agents.zip) |
