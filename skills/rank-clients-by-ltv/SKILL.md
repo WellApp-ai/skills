@@ -141,7 +141,7 @@ Run `define-workspace`, then `connect-tools`, and spot-check that rows have land
 
 ### Expected behavior
 
-In the multi-currency workspace's run: either convert the EUR customer's total to USD via `exchange_rates` (stating the rate and date used) or report that customer's total separately in EUR rather than adding it directly into a USD-only ranking. In the zero-paid-invoice workspace's run: state plainly that no realized revenue exists yet (all invoices are unpaid/partial), do not fabricate a ranking, and offer the same fallback link so the user can ask in Well directly.
+In the multi-currency workspace's run: pass the per-customer totals to `normalize-currency` tagged by customer and rank on its `converted` entries — reporting the rate and date it used — or report the EUR customer separately rather than adding their total directly into a USD-only ranking. In the zero-paid-invoice workspace's run: state plainly that no realized revenue exists yet (all invoices are unpaid/partial), do not fabricate a ranking, and offer the same fallback link so the user can ask in Well directly.
 
 ### Example request
 

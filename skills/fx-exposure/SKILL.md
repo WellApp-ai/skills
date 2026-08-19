@@ -119,7 +119,7 @@ Before finishing, verify:
 
 ### Expected behavior
 
-Run `define-workspace`, then `connect-tools`, and spot-check that rows have landed; determine the home currency (asking the user or inferring it and stating which), pull unpaid/partial invoices and current account balances grouped by currency, convert every non-home currency using the nearest at-or-before exchange rate, and present a table showing each foreign currency's original amount, converted amount, rate/rate_date used, and share of total exposure, plus a total exposure figure and as-of date.
+Run `define-workspace`, then `connect-tools`, and spot-check that rows have landed; determine the home currency (asking the user or inferring it and stating which), pull unpaid/partial invoices and current account balances grouped by currency, hand the per-currency subtotals to `normalize-currency` with `mode: convert` and use the rates it returns, and present a table showing each foreign currency's original amount, converted amount, rate/rate_date used, and share of total exposure, plus a total exposure figure and as-of date.
 
 ### Example request
 
