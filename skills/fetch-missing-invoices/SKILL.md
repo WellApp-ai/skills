@@ -13,7 +13,8 @@ brick's typed hand-off keys rather than on impressions: `define-workspace` → `
 brick is installed, → `show-missing-invoices` again) → `deploy-agents`. Six bricks ship bundled next
 to this file; the categorization one ships separately, and the flow says so rather than improvising
 it. Every stop is explicit and named, and the last step previews the invoice-fetching agents without
-launching one.
+launching one. When `define-workspace` hands back several entities, the same walk becomes a loop —
+one full pass per workspace, re-pinned at the start of each, with their figures kept apart.
 
 ## When to use this skill
 
@@ -41,7 +42,9 @@ Do not use this skill when:
 
 All optional. Resolve everything else through the bricks; never guess a workspace or a month here.
 
-- A workspace hint — a `workspace_id`, a name, or "my FR entity" — passed to `define-workspace`.
+- A workspace hint — a `workspace_id`, a name, "my FR entity", or several of them ("FR and US", "both
+  my companies") — passed straight to `define-workspace`, which decides whether that is one entity or
+  a sequence.
 - A month hint — "March", "last month", "2026-03" — passed to `define-period`.
 - A bank the user named — "Qonto", "my BNP account" — passed to `connect-bank`.
 - A `purpose` line, default "to fetch the invoices missing for that month", passed to every brick.
@@ -65,8 +68,9 @@ same turn, never waiting for the user to confirm they signed in.
 
 Never call `well_invoke_connector_tool`, any `well_create_*` / `well_delete_*`, any `well_update_*`
 other than `well_update_company`'s categories relationship, or any close, lock, or posting tool.
-This flow reads, and writes only the workspace pin `define-workspace` sets and the counterparty
-categories the user confirmed inside `categorize-counterparties`.
+This flow reads, and writes only the workspace pin `define-workspace` sets — re-set at the start of
+each later pass on a multi-workspace run — and the counterparty categories the user confirmed inside
+`categorize-counterparties`.
 
 The bricks are bundled next to this file. At each step, **read `references/<name>.md` and follow
 it** — do not re-derive its checks here.
@@ -77,7 +81,9 @@ Walk the steps in order, passing `workspace_id` explicitly on every `well_*` cal
 After each step, read its hand-off block and route on the routing table's exact key before the next.
 
 1. **Workspace** — `references/define-workspace.md`, with the workspace hint and `purpose`. Keep
-   `workspace_id` and `identity.fiscal_year_start_month`.
+   `workspace_id` and `identity.fiscal_year_start_month`. On `resolution: multi_picked` the hand-off
+   also carries `workspaces` in the user's pick order — read **Several workspaces** below before
+   step 2.
 
 2. **Connections** — `references/connect-tools.md`, with `kinds: [bank, accounting, invoicing]`,
    `required: []`, `purpose`. No kind blocks at this step; only `coverage: none` stops it, and only
@@ -126,12 +132,28 @@ After each step, read its hand-off block and route on the routing table's exact 
    `<well-app-base-url>/workspaces/<workspace_id>` to continue in Well. Do not append a query
    parameter you have not confirmed the app reads.
 
+### Several workspaces
+
+`resolution: multi_picked` is a sequence, not a wider scope — Well pins one workspace at a time. Run
+steps 2 to 8 in full, once per entry of `workspaces`, in that order. The first entry is already
+pinned, so pass one opens directly at step 2; every later pass opens with
+`well_switch_workspace({ workspace_id })` on its own entry, and passes that entry's `workspace_id`
+and its own `fiscal_year_start_month` explicitly on every call below. **Hand each brick that one
+`workspace_id`, never the `workspaces` list** — the loop lives here, and a brick that receives the
+list loops again inside a pass that is already looping. Resolve the period inside each
+pass: a month hint applies to every pass, and a month the user picked belongs to the pass that asked.
+Announce the sequence once ("Acme SAS, then Acme Inc."), then recap each entity as its pass ends.
+Never merge rows, counts, totals, or coverage across two entities. A stop or a skip inside one pass
+ends that pass only — record it in that entity's recap and start the next pass anyway — and step 9's
+redirect carries the failing pass's own `workspace_id`.
+
 ### Routing table
 
 | after | key | value | action |
 |---|---|---|---|
 | 1 | `resolution` | `unresolved` | **stop** — say no workspace was pinned and the flow needs one entity before it reads anything; offer to resume on a pick |
 | 1 | `resolution` | `single` · `hint_matched` · `user_picked` | continue to 2 |
+| 1 | `resolution` | `multi_picked` | run 2→8 once per `workspaces` entry, in order — see **Several workspaces**; every row below applies inside a pass, to that pass alone |
 | 2 | `coverage` | `none` | **offer, then stop** — nothing is connected, so there is no settled spend to compare invoices against; surface each missing kind's `install_url`. On a new connection, re-read coverage in the same turn and continue; on "continue anyway", continue and carry the caveat |
 | 2 | `coverage` | `partial` · `complete` | continue to 3, and skip 3 when `kinds.bank.state` is `connected` |
 | 3 | `state` | `connected` · `connecting` | continue to 4; on `connecting` say the spend may be partial for a few minutes |
@@ -153,7 +175,9 @@ After each step, read its hand-off block and route on the routing table's exact 
 
 ## Output requirements
 
-Every brick reports its own step as it runs. Close the run with one recap, in this order:
+Every brick reports its own step as it runs. Close the run with one recap, in this order — and on
+`multi_picked`, one such recap per entity, in `workspaces` order, each opening with that entity's
+name, so no line, total, or coverage claim ever spans two of them:
 
 - **Workspace and period** — the pinned workspace with its country and base currency when set, and
   `period_label` with its fiscal coordinate and whether the month is complete.
@@ -177,8 +201,9 @@ Every brick reports its own step as it runs. Close the run with one recap, in th
   uploads into gaps Well can fetch itself (`connect-tools`), and the Well app runs the real fetch.
 
 Do not return a step's rows restated when its card is on screen, a total that mixes currencies, a
-claim that anything was launched or collected, or a gap list, coverage figure, or preview built here
-instead of by its brick.
+claim that anything was launched or collected, a gap list, coverage figure, or preview built here
+instead of by its brick, or — across a multi-workspace run — one merged table, one combined total, or
+one recap standing for two entities.
 
 ## Quality checks
 
@@ -199,6 +224,10 @@ Before finishing, verify:
 - `deploy-agents` ran last, previewed only, and no launch, yield, or ETA is claimed anywhere.
 - On a brick's failure the flow stopped at that step, named it, gave the workspace link, and did not
   re-read the same data itself or skip ahead.
+- On `multi_picked`, steps 2 to 8 ran once per `workspaces` entry in order, each later pass opened
+  with `well_switch_workspace`, every call carried that pass's own `workspace_id`, each entity got its
+  own recap, no row / count / total / coverage claim spanned two entities, and a stop inside one pass
+  did not abort the remaining passes.
 - The recap carries, in order, the workspace, the period, the coverage line, the missing-invoice
   summary, the categorization delta when step 6 ran, the preview lines, and the no-launch sentence.
 - No `well_invoke_connector_tool`, no create / update / delete, no close or posting tool was called,
@@ -216,6 +245,16 @@ rien n'est déclenché)` plus the upload and connect lines, then recap.
 **Workspace picker.** "What am I missing for last month?" with Acme SAS and Acme Inc. on the
 connection. → `define-workspace` shows the picker and asks one line. Stop there; the flow never
 continues on a guess. When the user picks Acme Inc., resume at step 2 in the same turn.
+
+**Two entities.** "What am I missing for March across FR and US?" → the compound hint goes to step 1,
+which matches both fragments on `identity.country`, pins Acme SAS itself, and hands back
+`multi_picked` with Acme SAS then Acme Inc. plus the line `Working through Acme SAS, Acme Inc. —
+starting with Acme SAS.` Run 2→8 for Acme SAS, with only its `workspace_id` passed to each brick:
+`coverage: partial`, March 2026 pinned, 12 gaps, preview, recap. Then open the second pass with
+`well_switch_workspace` on the Acme Inc. id and run 2→8 again with that `workspace_id` — March comes
+back `empty` with `transaction_count: 23`, so that pass stops at step 5 and celebrates, and Acme Inc.
+gets its own recap with no preview. Two recaps, two totals, nothing added together; and if the Acme
+Inc. pass had stopped on a missing bank instead, the Acme SAS recap would stand untouched.
 
 **No bank connected.** "Go get the invoices I'm missing", nothing connected. → Step 2 hands back
 `coverage: none`. Say there is no settled spend to compare invoices against, surface the install

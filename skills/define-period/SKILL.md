@@ -38,6 +38,8 @@ The calling skill or the user provides:
 - `purpose` — one line from the calling skill (e.g. "to fetch the invoices missing for that month"), used in the question if one is asked. Optional.
 - `title` / `subtitle` — copy for the period picker card. Optional; pass straight through when the picker tool accepts them.
 
+**Several workspaces.** When the `define-workspace` hand-off carries `workspaces` with more than one entry, run this skill once per workspace in that order — announce the sequence ("Acme SAS, then Acme Inc."), call `well_switch_workspace({ workspace_id })` at the start of every pass after the first (the first entry is already pinned), and pass that pass's `workspace_id` explicitly on every call, which is what decides the entity when the pin is absent or fails. Emit one hand-off block per workspace, and never merge one workspace's rows, states, or figures into another's. A caller that loops for you passes one `workspace_id` per pass and no list — then this rule is already satisfied and must not fire again.
+
 ## Tooling
 
 Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). If the `well_*` tools are not in your toolset, the host has not added the Well MCP server yet — tell the user to add it at that URL, then retry. Two paths, decided by what your toolset actually holds:

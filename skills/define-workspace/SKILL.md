@@ -1,13 +1,13 @@
 ---
 name: define-workspace
-description: Resolve which Well workspace (legal entity / company account) a conversation works in, and hand it off as a typed result — workspace_id, name, identity, and how it was resolved — to any Well skill or flow that follows. Use when the user asks to select, choose, switch, or confirm a workspace, says "use my FR entity" / "work in workspace X" / "which company account is this", or when a Well skill needs one workspace pinned before it reads or writes data. Do not use to connect a bank or accounting tool, to compute any financial figure, or to confirm the company identity inside the Well app.
+description: Resolve which Well workspace (legal entity / company account) a conversation works in, and hand it off as a typed result — workspace_id, name, identity, and how it was resolved — to any Well skill or flow that follows. Use when the user asks to select, choose, switch, or confirm a workspace, says "use my FR entity" / "work in workspace X" / "which company account is this", or when a Well skill needs one workspace pinned before it reads or writes data. Resolves several entities too — "do both my companies", "FR and US" — as an ordered sequence the caller walks one workspace per pass. Do not use to connect a bank or accounting tool, to compute any financial figure, or to confirm the company identity inside the Well app.
 ---
 
 # Define Workspace with Well
 
 ## Purpose
 
-Pin exactly one Well workspace for the rest of the conversation. Read the workspaces this connection is authorized on, resolve a single one — automatically when there is one, from the user's hint when it matches, or from the user's pick otherwise — and return a typed hand-off that every later `well_*` call reuses as `workspace_id`. This is the first brick of Well's fetch-missing-invoices and close-books flows: their sub-skills take their `workspace_id` from this hand-off. Well's data skills (`expense-breakdown`, `runway-calculator`, …) still resolve the workspace inline today and can adopt the same hand-off.
+Pin exactly one Well workspace at a time for the rest of the conversation. Read the workspaces this connection is authorized on, resolve a single one — automatically when there is one, from the user's hint when it matches, or from the user's pick otherwise — and return a typed hand-off that every later `well_*` call reuses as `workspace_id`. When the user picks several, hand off the same shape plus the whole selection in order: Well pins one workspace at a time, so several entities are a sequence the caller walks pass by pass, never a merged view. This is the first brick of Well's fetch-missing-invoices and close-books flows: their sub-skills take their `workspace_id` from this hand-off. Well's data skills (`expense-breakdown`, `runway-calculator`, …) still resolve the workspace inline today and can adopt the same hand-off.
 
 ## When to use this skill
 
@@ -17,6 +17,7 @@ Use this skill when:
 - A Well skill or an orchestrating flow (fetch missing invoices, close the books, connect tools) needs one workspace resolved before it continues.
 - A Well tool answered `WORKSPACE_REQUIRED` or fanned out across several workspaces and the user needs to pick one.
 - The user manages several legal entities in Well and it is unclear which one a request is about.
+- The user names or picks several entities for one job ("do both my companies", "FR and US", "run it on all three") and the flow that follows has to walk them one at a time.
 
 ## When not to use this skill
 
@@ -42,6 +43,8 @@ This skill runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streama
 
 - `well_list_workspaces` — the read this skill is built on. Takes no input; returns `workspaces[]` with `workspace_id`, `workspace_name` (nullable), `is_primary` (the token's default workspace), and `identity` (`registered_name`, `trade_name`, `registered_value`, `country`, `domain`, `base_currency`, `fiscal_year_start_month` — every field null until the workspace has accounting settings). In MCP-Apps hosts (Claude Desktop, ChatGPT) the result renders as an interactive workspace picker card.
 - `well_switch_workspace({ workspace_id })` — pins one workspace as this connection's standing default, so a later call that omits `workspace_id` targets it. The pin is a default, not a permission: it only chooses among the workspaces the connection is already authorized for, it grants no new access, and `well_list_workspaces` keeps listing the whole set so the user can switch again. Call it when a hint resolved the workspace or the user picked one in text; the picker card's **Use** button already calls it itself, and one authorized workspace needs no pin at all. If it is not in your toolset, the Well server predates it — resolve the workspace as usual and rely on the explicit `workspace_id` argument alone.
+
+  **There is no multi-workspace pin.** The tool takes one `workspace_id`, and Well answers for one entity at a time. Several picked workspaces are therefore a sequence, not a wider scope: one pass per workspace, re-pinned at the start of each pass, with no read that spans two of them.
 - Well's OAuth / Dynamic Client Registration (DCR) flow, or the Well connector's `authenticate` tool if the host exposes one — when no Well connection exists yet.
 
 The pin is a convenience, never the contract. Pass `workspace_id` explicitly on every call that follows, pinned or not — belt and braces, so one skill in a chain that forgets the argument cannot silently read a different entity.
@@ -58,15 +61,18 @@ The pin is a convenience, never the contract. Pass `workspace_id` explicitly on 
 3. **Resolve without asking when you can.**
    - Exactly one workspace → use it. `resolution: single`. Say which one in one line; do not ask for confirmation. Do not call `well_switch_workspace` here: with one authorized workspace there is nothing to choose between, and every call already resolves to it.
    - Several workspaces and a hint → match the hint exactly on `workspace_id`; otherwise case-insensitively on `workspace_name`, `identity.registered_name`, `identity.trade_name`, or — for a country hint such as "my US entity" — on `identity.country` (ISO code). Exactly one match → use it, `resolution: hint_matched`, and say which one you matched. Then call `well_switch_workspace({ workspace_id })`, because the match may not be the connection's default and the pin is what keeps a later call from falling back to a sibling entity. A failed or absent switch is not a stop — continue on the explicit argument. Zero or several matches → fall to step 4; never pick the closest name.
+   - **A hint that names several entities** ("FR and US", "Acme SAS and Acme Inc.", "both my companies") is a sequence, not an ambiguity. Split it into its fragments, match each one exactly as above, and keep the user's order. Every fragment matching exactly one workspace, and at least two distinct workspaces matched → `resolution: multi_picked`: call `well_switch_workspace({ workspace_id })` for the FIRST one only, say one line naming the whole sequence (`Working through Acme SAS, Acme Inc. — starting with Acme SAS.`), and hand off the list. Every fragment resolving to the same single workspace → that is one entity, `resolution: hint_matched`, not a sequence. Any fragment matching zero or several workspaces → fall to step 4 and let the user pick; never resolve part of a compound hint and drop the rest silently.
 
 4. **Ask, on the card, once.** With several workspaces and no usable hint:
-   - In an MCP-Apps host the `well_list_workspaces` result already shows the picker card (one tile per workspace, the token's default marked, identity on hover). Do not restate the workspaces as a list or table under it. Ask one line — the calling skill's `purpose` if given, e.g. "Which workspace should I fetch the missing March invoices for?" — and stop.
+   - In an MCP-Apps host the `well_list_workspaces` result already shows the picker card (one tile per workspace, the token's default marked, identity on hover). The tiles are multi-select, so picking more than one is a legal answer to the one question you ask — do not ask a second question about how many. Do not restate the workspaces as a list or table under it. Ask one line — the calling skill's `purpose` if given, e.g. "Which workspace should I fetch the missing March invoices for?" — and stop.
    - In a text-only host, list each workspace on one line: name, country, base currency, and "(default)" on the primary. Ask the same one-line question and stop.
    - Do not default to the primary workspace on the user's behalf. `is_primary` is a fact to display, not a choice to make.
 
 5. **Read the answer.**
    - The card's **Use** button performs the switch itself: it calls `well_switch_workspace` with the workspace the user picked, then says one line naming the workspace it is now working in (for example `Working in <name> now.`). By the time you read that line the pin is already in place — do not call `well_switch_workspace` again for it. Map the name back to its `workspace_id` from the same `well_list_workspaces` result — never a guessed id. If that name is null or matches more than one row, ask which one they picked rather than choosing the closest. `resolution: user_picked`.
+   - **Several tiles picked.** The card pins the FIRST workspace of the selection itself — one `well_switch_workspace` call — and emits exactly one line naming the whole selection in the user's pick order, for example `Working through Acme SAS, Acme Inc., Acme GmbH — starting with Acme SAS.` That first pin is already in place, so do not call `well_switch_workspace` again for it, and do not pin the others: each one is pinned by the caller when its pass starts. Map every name in that line back to its `workspace_id` from the same `well_list_workspaces` result, keep the order exactly as the line gives it, and set `resolution: multi_picked`. A name that is null or matches more than one row is asked about, never guessed, as in the single case. Collapse a workspace that appears twice to its first position — a duplicate entry would spend a whole extra pass on the same entity. A selection of some tiles plus a decline on the rest is a `multi_picked` of the ones picked; the declined workspaces are simply absent from `workspaces`.
    - A typed answer names or describes one workspace instead. Map it back to its `workspace_id` the same way, then call `well_switch_workspace({ workspace_id })` yourself so the rest of the conversation defaults to it. `resolution: user_picked`. If that call fails, or the tool is absent, continue anyway — the pin is a convenience and the explicit `workspace_id` argument carries the choice regardless. Do not re-ask the user.
+   - A typed answer that names several workspaces ("FR and US", "both of them", "all three") resolves the same way: map each name to its `workspace_id`, keep the user's order, call `well_switch_workspace({ workspace_id })` yourself for the FIRST one only, and set `resolution: multi_picked`.
    - The card's secondary button sends `Let's come back to choosing a workspace later.` → `resolution: unresolved`. Say that nothing was pinned and stop; do not call `well_switch_workspace` and do not run any workspace-scoped call.
    - An answer that matches no workspace → say so and re-ask once against the same set. Do not call `well_list_workspaces` again unless the user says the set changed.
 
@@ -74,11 +80,13 @@ The pin is a convenience, never the contract. Pass `workspace_id` explicitly on 
 
 7. **Hand off.** Restate the resolved workspace in one line and emit the hand-off block below. From here on, pass `workspace_id` explicitly on every `well_*` call, whether or not `well_switch_workspace` succeeded. A pin changes what an omitted argument falls back to; it does not make the argument optional. Without both, a call that omits it on an unpinned connection lets read tools fan out across every authorized workspace and write tools fail with `WORKSPACE_REQUIRED`.
 
+**Several workspaces — the loop rule.** `multi_picked` hands the caller a sequence, and the caller processes one workspace at a time. It runs its whole walk once per entry of `workspaces`, in that order, calling `well_switch_workspace({ workspace_id })` at the start of each pass — the first entry excepted, which the card or step 5 already pinned — and passing that pass's `workspace_id` explicitly on every `well_*` call. Each pass gets its own recap. Nothing is merged across two entities: no shared row, no combined total, no coverage line spanning both. A stop or a skip inside one pass ends that pass only; the remaining workspaces still run. When `well_switch_workspace` is absent from the toolset or a re-pin fails, the loop still holds — every call carries its own pass's `workspace_id` explicitly, which is what decides the entity. State this rule in one line when you hand off a `multi_picked` block, so the caller cannot read the list as a wider scope.
+
 ## Output requirements
 
 Return:
 
-- One line naming the pinned workspace with its `identity.country` and `identity.base_currency` when set (e.g. "Working in **Acme SAS** (FR, EUR)."). When identity fields are null, say the workspace has no accounting settings yet rather than printing nulls.
+- One line naming the pinned workspace with its `identity.country` and `identity.base_currency` when set (e.g. "Working in **Acme SAS** (FR, EUR)."). When identity fields are null, say the workspace has no accounting settings yet rather than printing nulls. On `multi_picked`, one line naming the whole sequence in pick order and the entity the first pass runs in (e.g. "Working through **Acme SAS** (FR, EUR), then **Acme Inc.** (US, USD) — starting with Acme SAS."), plus one line of the loop rule. Past three or four entities, name them without their identity and give the country and currency of the first one only — the line stays a sentence, not the list the card already shows.
 - The hand-off block, exactly these keys, so a calling skill can read it:
 
   ```yaml
@@ -91,19 +99,30 @@ Return:
     country: <ISO code or null>
     base_currency: <ISO code or null>
     fiscal_year_start_month: <1-12 or null>
-  resolution: single | hint_matched | user_picked | unresolved
+  resolution: single | hint_matched | user_picked | multi_picked | unresolved
+  workspaces:                       # multi_picked only, in the user's pick order
+    - workspace_id: <uuid>
+      workspace_name: <name or null>
+      is_primary: <true|false>
+      identity:
+        registered_name: <value or null>
+        trade_name: <value or null>
+        country: <ISO code or null>
+        base_currency: <ISO code or null>
+        fiscal_year_start_month: <1-12 or null>
   ```
 
-  On `unresolved`, every other key is null.
-- The instruction that applies to the rest of the conversation: pass `workspace_id: <uuid>` on every following `well_*` call — including when the workspace was pinned as this connection's default, which happens on every resolution except `single` (nothing to pin) and `unresolved` (nothing resolved).
+  On `unresolved`, every other key is null. `workspaces` appears on `multi_picked` only, one entry per picked workspace, in the user's pick order, each carrying the same keys the top level carries. Its first entry is the workspace already pinned, and it is the same workspace the top-level keys describe — so a caller that knows nothing about `workspaces` reads the first entity and behaves exactly as it does on a single pick. Every other resolution emits the block unchanged, with no `workspaces` key at all.
+- The instruction that applies to the rest of the conversation: pass `workspace_id: <uuid>` on every following `well_*` call — including when the workspace was pinned as this connection's default, which happens on every resolution except `single` (nothing to pin) and `unresolved` (nothing resolved). On `multi_picked` that instruction is per pass: the `workspace_id` of the workspace the current pass is walking, never a mix of two.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. Skip it rather than force it in.
-- End with a one-line pointer to the next step. When the `connect-tools` skill is installed: "Is a bank and an accounting tool connected to this workspace?". Otherwise hand control back to the skill that called this one, or, when the user asked for the workspace on its own, ask what they want to do in it.
+- End with a one-line pointer to the next step. When the `connect-tools` skill is installed: "Is a bank and an accounting tool connected to this workspace?". On `multi_picked`, ask it about the first entity and say the same walk repeats for the next one. Otherwise hand control back to the skill that called this one, or, when the user asked for the workspace on its own, ask what they want to do in it.
 
 Do not return:
 
 - A restated list of the workspaces when the picker card is already on screen.
 - A workspace chosen by similarity or by `is_primary` when the user did not pick it.
-- Data from any workspace other than the pinned one.
+- Data from any workspace other than the one the current pass is pinned to.
+- A `multi_picked` hand-off presented as a wider scope, a merged view, or a single pass over several entities.
 
 ## Quality checks
 
@@ -111,12 +130,15 @@ Before finishing, verify:
 
 - If `well_*` tools were absent, the user was pointed at `https://api.wellapp.ai/v1/mcp` instead of a tool error.
 - After an OAuth/DCR flow, `well_list_workspaces()` was retried in the same turn.
-- Exactly one workspace is pinned, or `resolution: unresolved` is returned — never two, never a merged view.
+- Exactly one workspace is pinned, or `resolution: unresolved` is returned — never two at once, never a merged view. A multi-pick is pinned one entity at a time, the first here and the rest by the caller.
 - A hint resolved only on an exact id or a case-insensitive name match with exactly one hit.
 - With several workspaces and no hint, the user was asked once, in one line, and the workspaces were not narrated when the card was on screen.
-- `well_switch_workspace` was called exactly once on `hint_matched` and on a typed pick, not at all on the card's **Use** button (which called it itself), not at all on `single` (nothing to choose between), and not at all on **Keep for later**. A failed or absent switch did not stop the skill or re-ask the user.
+- `well_switch_workspace` was called exactly once on `hint_matched` and on a typed single pick, once for the FIRST entity only on a compound hint or a typed multi-pick, not at all on the card's **Use** button or its multi-select line (which pin the first entity themselves), not at all on `single` (nothing to choose between), and not at all on **Keep for later**. A failed or absent switch did not stop the skill or re-ask the user.
 - The `workspace_id` in the hand-off comes from the `well_list_workspaces` result the user answered against.
 - The hand-off block carries all keys with `resolution` set.
+- Several picked workspaces produced `resolution: multi_picked`, a `workspaces` list in the user's pick order whose first entry is the already-pinned workspace the top-level keys describe, and the loop rule stated in one line.
+- A compound hint resolved to `multi_picked` only when every fragment matched exactly one workspace; a fragment matching zero or several sent the user to the picker rather than resolving part of the hint and dropping the rest. A workspace named or picked twice appears once in `workspaces`.
+- Every resolution other than `multi_picked` emitted the block with no `workspaces` key — a single-workspace hand-off is unchanged.
 - On a transient failure the call was retried once before the fallback link.
 - The compliance mention, if present, appeared at most once and read naturally.
 - The answer ends with the next-step pointer (`connect-tools` when installed, otherwise the caller or a question).
@@ -146,6 +168,14 @@ The picker card renders on the tool result. Ask exactly one line — "Which work
 ### Expected behavior
 
 Map "Acme Inc." to its `workspace_id` from the same `well_list_workspaces` result, then call `well_switch_workspace({ workspace_id })` so later calls default to it. Report the workspace, emit the block with `resolution: user_picked`, and keep passing `workspace_id` explicitly. If the switch call fails, say nothing about it and continue — the explicit argument already carries the choice.
+
+### Example request
+
+"Fetch the invoices I'm missing for March in both my entities." (the connection covers Acme SAS and Acme Inc.)
+
+### Expected behavior
+
+The picker card renders; ask one line and stop. The user picks both tiles, in the order Acme SAS then Acme Inc. The card pins Acme SAS itself and says `Working through Acme SAS, Acme Inc. — starting with Acme SAS.` Do not switch again and do not pin Acme Inc. Map both names to their `workspace_id`s from the same result, answer "Working through **Acme SAS** (FR, EUR), then **Acme Inc.** (US, USD) — starting with Acme SAS. I walk one entity at a time and keep their figures apart.", and emit the block with `resolution: multi_picked`, the top-level keys describing Acme SAS, and `workspaces` holding both entries in that order. The caller then runs its walk for Acme SAS, and opens the Acme Inc. pass with `well_switch_workspace` on the Acme Inc. id.
 
 ### Example request
 

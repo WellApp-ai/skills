@@ -52,6 +52,14 @@ The calling skill or the user provides:
   `{ fiscal_year, fiscal_period }`.
 - `purpose` — one line from the calling skill, used in the ask when one is needed. Optional.
 
+**Several workspaces.** When the `define-workspace` hand-off carries `workspaces` with more than one
+entry, run this skill once per workspace in that order — announce the sequence ("Acme SAS, then Acme
+Inc."), call `well_switch_workspace({ workspace_id })` at the start of every pass after the first (the
+first entry is already pinned), and pass that pass's `workspace_id` explicitly on every call, which is
+what decides the entity when the pin is absent or fails. Emit one hand-off block per workspace, and
+never merge one workspace's rows, states, or figures into another's. A caller that loops for you passes
+one `workspace_id` per pass and no list — then this rule is already satisfied and must not fire again.
+
 ## Tooling
 
 Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). Only one tool is
@@ -74,7 +82,9 @@ involved, and it is optional:
 
 Never call a tool that changes anything. Specifically: no `well_invoke_connector_tool`, no
 `well_create_*`, no `well_update_*`, no `well_delete_*`, no connector action of any kind. This skill
-reads or derives, and it never writes.
+reads or derives, and it never writes. The one call it may make beyond the preview is
+`well_switch_workspace`, on a multi-workspace run, to re-point the session at the next entity — a
+session pin, not data.
 
 ## Workflow
 

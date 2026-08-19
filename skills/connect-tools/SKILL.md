@@ -38,11 +38,13 @@ The calling skill or the user provides:
 - Provider hints — names the user mentioned ("Qonto", "Pennylane", "Shopify"). Optional; used to search the catalog.
 - `purpose` — one line from the calling skill (e.g. "to fetch the invoices missing for March"), used in the ask. Optional.
 
+**Several workspaces.** When the `define-workspace` hand-off carries `workspaces` with more than one entry, run this skill once per workspace in that order — announce the sequence ("Acme SAS, then Acme Inc."), call `well_switch_workspace({ workspace_id })` at the start of every pass after the first (the first entry is already pinned), and pass that pass's `workspace_id` explicitly on every call, which is what decides the entity when the pin is absent or fails. Emit one hand-off block per workspace, and never merge one workspace's rows, states, or figures into another's. A caller that loops for you passes one `workspace_id` per pass and no list — then this rule is already satisfied and must not fire again.
+
 ## Tooling
 
 Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). If the `well_*` tools are not in your toolset, the host has not added the Well MCP server yet — tell the user to add it at that URL, then retry.
 
-**`well_list_connectors` is the only tool this skill calls.** It returns the connectable catalog with a live overlay: every connection the workspace already holds is represented on its own catalog row, so one call answers both "what can I connect?" and "what is connected?". Each row carries:
+**`well_list_connectors` is the only tool this skill calls for connection state** — a multi-workspace run also calls `well_switch_workspace` to re-point the session at the next entity, and nothing else. It returns the connectable catalog with a live overlay: every connection the workspace already holds is represented on its own catalog row, so one call answers both "what can I connect?" and "what is connected?". Each row carries:
 
 - `service_id` — the connector's stable catalog id. `name`, `category_id`, `logo_url` — what it is.
 - `status` — `available` is connectable now; anything else (`coming_soon`, `unavailable`, `maintenance`) is not.
@@ -128,7 +130,7 @@ Do not return:
 Before finishing, verify:
 
 - If `well_*` tools were absent, the user was pointed at `https://api.wellapp.ai/v1/mcp` instead of a tool error.
-- `well_list_connectors` was the only tool called — no `well_query_records` on `workspace_connectors`, no `well_invoke_connector_tool`, no provider-specific tool.
+- `well_list_connectors` was the only tool called, apart from the `well_switch_workspace` re-pin on a multi-workspace run — no `well_query_records` on `workspace_connectors`, no `well_invoke_connector_tool`, no provider-specific tool.
 - `kind` was passed when the job covered one or two kinds, rather than reading the whole catalog and filtering it by hand; an all-three job read it unscoped once.
 - `workspace_id` came from `define-workspace` (or the caller) and was passed on every call — the workspace was not resolved here.
 - Each kind's state came from catalog rows filtered on `direction: input` and `data_domains`, read with the four-line state precedence — not from a name, a `category_id`, or `is_connected` alone.

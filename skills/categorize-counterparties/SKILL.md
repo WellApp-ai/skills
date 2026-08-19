@@ -41,6 +41,8 @@ The calling skill or the user provides:
 
 `periods` and `uncategorized_only` are the two scopes and they are exclusive. Pass one. Never send both, and never send `uncategorized_only` alongside a period the caller gave you — that would silently answer a wider question than the one asked.
 
+**Several workspaces.** When the `define-workspace` hand-off carries `workspaces` with more than one entry, run this skill once per workspace in that order — announce the sequence ("Acme SAS, then Acme Inc."), call `well_switch_workspace({ workspace_id })` at the start of every pass after the first (the first entry is already pinned), and pass that pass's `workspace_id` explicitly on every call, which is what decides the entity when the pin is absent or fails. Emit one hand-off block per workspace, and never merge one workspace's rows, states, or figures into another's. A caller that loops for you passes one `workspace_id` per pass and no list — then this rule is already satisfied and must not fire again.
+
 ## Tooling
 
 Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). If the `well_*` tools are not in your toolset at all, the host has not added the Well MCP server yet — tell the user to add it at that URL, then retry. Required once it is added:
@@ -62,7 +64,7 @@ Never call `well_invoke_connector_tool`, any other `well_create_*` / `well_updat
 
 1. **Confirm the MCP server is configured.** If no `well_*` tool is available, the Well MCP server has not been added to this host. Tell the user a Well connection is mandatory — endpoint `https://api.wellapp.ai/v1/mcp` — because both the counterparty list and the category catalog live in Well. Stop until it is there; do not categorize from assumptions.
 
-2. **Confirm the tools, the workspace, and the scope.** Require `well_list_counterparties` in the toolset — absent, hand off `resolution: unavailable` and stop (see Tooling). Require `workspace_id` from `define-workspace`; absent, run that skill first and never pick a workspace here. That one workspace holds for the whole run — pass it explicitly on every call and never widen the pass to a second one, however closely the entities are related. Then check whether `well_update_company` accepts `relationships.categories`; if it does not, you are on the read-only path — read the list, report coverage, hand off `read_only`, and do not open the confirm gate. Decide the scope: the caller's `periods` when given, otherwise `uncategorized_only: true`.
+2. **Confirm the tools, the workspace, and the scope.** Require `well_list_counterparties` in the toolset — absent, hand off `resolution: unavailable` and stop (see Tooling). Require `workspace_id` from `define-workspace`; absent, run that skill first and never pick a workspace here. That one workspace holds for the whole pass — pass it explicitly on every call and never widen a pass to a second one, however closely the entities are related. Then check whether `well_update_company` accepts `relationships.categories`; if it does not, you are on the read-only path — read the list, report coverage, hand off `read_only`, and do not open the confirm gate. Decide the scope: the caller's `periods` when given, otherwise `uncategorized_only: true`.
    - Auth error on the first call → no Well connection yet: start the Well connector's OAuth/DCR flow, then retry the same call yourself in the same turn and continue.
 
 3. **List the counterparties.** Call `well_list_counterparties` once, with `workspace_id` and the one scope. A transient failure → retry once; a second failure → step 9.
@@ -136,6 +138,7 @@ Before finishing, verify:
 - If `well_list_counterparties` was absent, the answer said this Well server does not expose it yet, handed off `resolution: unavailable`, and rebuilt nothing from raw queries.
 - If `well_update_company` had no `relationships.categories`, that was detected before any proposal, the run ended at `read_only`, and no confirm gate was opened.
 - `workspace_id` came from `define-workspace` and was passed on every call — the workspace was not resolved here.
+- On a multi-workspace run, every `well_update_company` write carried the current pass's `workspace_id`, and no proposed or confirmed batch mixed counterparties from two entities.
 - Exactly one scope was sent: the caller's `periods` (at most 12) or `uncategorized_only: true`, never both.
 - On the workspace-wide scope, the 50-row cap and the real `total` were both stated.
 - The counterparty rows were used as returned — not re-grouped, not re-counted.

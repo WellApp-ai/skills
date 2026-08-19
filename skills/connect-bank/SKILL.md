@@ -37,11 +37,13 @@ The calling skill or the user provides:
 - A bank hint — the bank the user named ("Qonto", "BNP", "my Revolut account"). Optional; used to search the catalog with `q` when the bank is not in the default view.
 - `purpose` — one line from the calling skill (e.g. "to fetch the invoices missing for March"), used in the ask. Optional.
 
+**Several workspaces.** When the `define-workspace` hand-off carries `workspaces` with more than one entry, run this skill once per workspace in that order — announce the sequence ("Acme SAS, then Acme Inc."), call `well_switch_workspace({ workspace_id })` at the start of every pass after the first (the first entry is already pinned), and pass that pass's `workspace_id` explicitly on every call, which is what decides the entity when the pin is absent or fails. Emit one hand-off block per workspace, and never merge one workspace's rows, states, or figures into another's. A caller that loops for you passes one `workspace_id` per pass and no list — then this rule is already satisfied and must not fire again.
+
 ## Tooling
 
 Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). If the `well_*` tools are not in your toolset, the host has not added the Well MCP server yet — tell the user to add it at that URL, then retry.
 
-**`well_list_connectors` is the only tool this skill calls**, always with `kind` set to `bank` so the catalog comes back scoped to banks server-side. Each row carries `service_id`, `name`, `category_id`, `logo_url`, `status` (`available` is connectable now), `direction` (`input` is a data source), `data_domains` (contains `bank` for a bank row), `is_connected`, `connection_status`, `last_successful_sync_at`, `sync_in_progress`, `workspace_connector_id`, `is_preselected` (Well recommends it now, and the picker pre-checks exactly these), and `install_url` — a one-click link that starts the connection in Well from any state, signing the user in and opening the bank's own login flow with the institution pre-selected. `install_url` is null only when the row is not `available`.
+**`well_list_connectors` is the only tool this skill calls for bank state** — a multi-workspace run also calls `well_switch_workspace` to re-point the session at the next entity, and nothing else — always with `kind` set to `bank` so the catalog comes back scoped to banks server-side. Each row carries `service_id`, `name`, `category_id`, `logo_url`, `status` (`available` is connectable now), `direction` (`input` is a data source), `data_domains` (contains `bank` for a bank row), `is_connected`, `connection_status`, `last_successful_sync_at`, `sync_in_progress`, `workspace_connector_id`, `is_preselected` (Well recommends it now, and the picker pre-checks exactly these), and `install_url` — a one-click link that starts the connection in Well from any state, signing the user in and opening the bank's own login flow with the institution pre-selected. `install_url` is null only when the row is not `available`.
 
 The default view is curated and matched-first, so a bank outside it needs `q` — pass the bank's name before concluding Well cannot connect it. Do not classify a row by `category_id`: Plaid institutions sit under `banks` while native banks such as Qonto sit under `finance`, and a display name is never a kind. A bank row is a `direction: input` row whose `data_domains` contains `bank`; drop any `direction: output` row from the coverage decision.
 
@@ -116,7 +118,7 @@ Do not return:
 Before finishing, verify:
 
 - If `well_*` tools were absent, the user was pointed at `https://api.wellapp.ai/v1/mcp` instead of a tool error.
-- `well_list_connectors` with `kind` `bank` was the only tool called — no `well_query_records` on `workspace_connectors`, no `well_invoke_connector_tool` — and the catalog was read unscoped and filtered by hand only when the server rejected `kind`.
+- `well_list_connectors` with `kind` `bank` was the only tool called, apart from the `well_switch_workspace` re-pin on a multi-workspace run — no `well_query_records` on `workspace_connectors`, no `well_invoke_connector_tool` — and the catalog was read unscoped and filtered by hand only when the server rejected `kind`.
 - `workspace_id` came from `define-workspace` (or the caller) and was passed on every call — the workspace was not resolved here.
 - The state came from `direction: input` rows whose `data_domains` contains `bank`, read with the four-line state precedence — not from a name, a `category_id`, or `is_connected` alone.
 - A `need_reconnect` / `degraded` / `suspended` bank was reported as `error` even when it had synced before, and an errored account was named even when another bank was connected.

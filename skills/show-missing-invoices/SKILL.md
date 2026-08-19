@@ -39,11 +39,13 @@ The calling skill or the user provides:
 
 `is_complete: false` means the period is still open — report the gaps anyway and say the list will keep moving until the period closes.
 
+**Several workspaces.** When the `define-workspace` hand-off carries `workspaces` with more than one entry, run this skill once per workspace in that order — announce the sequence ("Acme SAS, then Acme Inc."), call `well_switch_workspace({ workspace_id })` at the start of every pass after the first (the first entry is already pinned), and pass that pass's `workspace_id` explicitly on every call, which is what decides the entity when the pin is absent or fails. Emit one hand-off block per workspace, and never merge one workspace's rows, states, or figures into another's. A caller that loops for you passes one `workspace_id` per pass and no list — then this rule is already satisfied and must not fire again.
+
 ## Tooling
 
 Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). If the `well_*` tools are not in your toolset at all, the host has not added the Well MCP server yet — tell the user to add it at that URL, then retry. Required once it is added:
 
-- `well_list_missing_invoices` — the only tool this skill calls. Input: the period, as either `{ calendar_year, calendar_month }` or `{ fiscal_year, fiscal_period }`; pass `workspace_id` explicitly alongside it, as on every `well_*` call. Output: `workspace_id`, `calendar_year`, `calendar_month`, `fiscal_year`, `fiscal_period`, `period_label`, `base_currency`, `transaction_count`, `rows`, `row_count`, `group_count`, `dropped_groups`, `hints`, `success`, and `error` on failure.
+- `well_list_missing_invoices` — the only tool this skill calls for the gap list; a multi-workspace run also calls `well_switch_workspace` to re-point the session at the next entity, and nothing else. Input: the period, as either `{ calendar_year, calendar_month }` or `{ fiscal_year, fiscal_period }`; pass `workspace_id` explicitly alongside it, as on every `well_*` call. Output: `workspace_id`, `calendar_year`, `calendar_month`, `fiscal_year`, `fiscal_period`, `period_label`, `base_currency`, `transaction_count`, `rows`, `row_count`, `group_count`, `dropped_groups`, `hints`, `success`, and `error` on failure.
 
 Each entry in `rows` is **one counterparty**, already grouped by the server — never re-aggregate it:
 
