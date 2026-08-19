@@ -56,17 +56,17 @@ call an undefined tool and do not estimate anything.
 The union of the bricks' tools — each owned by the brick that calls it, never called here to
 shortcut a step: `well_list_workspaces`; `well_list_connectors`, which is the ONLY tool the two
 connection steps call (never `well_query_records` on `workspace_connectors` — that renders a records
-table where the connect card belongs);
-`well_switch_workspace`, `well_list_periods`, `well_list_missing_invoices`,
-`well_set_transaction_category` and `well_preview_invoice_fetch` when present; `well_get_schema` and
-`well_query_records` on `transactions` and `categories`; and Well's OAuth / DCR flow when no Well
-connection exists yet — the moment it returns, retry the failed call in the same turn, never waiting
-for the user to confirm they signed in.
+table where the connect card belongs); `well_switch_workspace`, `well_list_periods`,
+`well_list_missing_invoices` and `well_preview_invoice_fetch` when present;
+`well_list_counterparties` and `well_update_company` with its `relationships.categories`;
+`well_get_schema` and `well_query_records` on `transactions` and `categories`; and Well's OAuth /
+DCR flow when no Well connection exists yet — the moment it returns, retry the failed call in the
+same turn, never waiting for the user to confirm they signed in.
 
-Never call `well_invoke_connector_tool`, any `well_create_*` / `well_update_*` / `well_delete_*`, or
-any close, lock, or posting tool. This flow reads, and writes only the workspace pin
-`define-workspace` sets and the transaction categories the user confirmed inside
-`categorize-counterparties`.
+Never call `well_invoke_connector_tool`, any `well_create_*` / `well_delete_*`, any `well_update_*`
+other than `well_update_company`'s categories relationship, or any close, lock, or posting tool.
+This flow reads, and writes only the workspace pin `define-workspace` sets and the counterparty
+categories the user confirmed inside `categorize-counterparties`.
 
 The bricks are bundled next to this file. At each step, **read `references/<name>.md` and follow
 it** — do not re-derive its checks here.
@@ -104,10 +104,11 @@ After each step, read its hand-off block and route on the routing table's exact 
    categorize, or when the list is **thin**: `transaction_count` is null or 0 while the period's
    `has_activity` is `true`. Never run it silently — say in one line that the gap list rests on
    `transaction_count` categorized transactions while the month has bank activity, ask whether to
-   label the rest first, and run `references/categorize-counterparties.md` (with `workspace_id`, the
-   period, `purpose`) only on the user's yes, because it writes. That brick ships separately: when it
-   is not bundled next to this file, say the categorization step is not available yet and go to
-   step 8 — never substitute your own labelling.
+   categorize the counterparties behind the rest first, and run
+   `references/categorize-counterparties.md` (with `workspace_id`, `periods` holding the step 4
+   month, `purpose`) only on the user's yes, because it writes. Keep `coverage_before`,
+   `coverage_after`, and `changed`. When that brick is not bundled next to this file, say the
+   categorization step is not available yet and go to step 8 — never substitute your own labelling.
 
 7. **Re-read the gap list, once** — `references/show-missing-invoices.md` again, same `workspace_id`
    and period. Replace the step 5 hand-off and route it as in step 5, except that a second thin
@@ -146,7 +147,7 @@ After each step, read its hand-off block and route on the routing table's exact 
 | 5 | `has_activity` | `false` · `unknown` | the thin test never fires — a list that would otherwise read as thin skips 6 and 7 and goes to 8, saying the month's bank activity could not be confirmed |
 | 6 | — | the categorization brick is not bundled | go to 8, say the step is unavailable |
 | 6 | `resolution` | `updated` | keep `coverage_before` / `coverage_after`; re-read the list at 7 |
-| 6 | `resolution` | `unchanged` · `read_only` | keep the step 5 list, say why coverage did not move, go to 8 |
+| 6 | `resolution` | `unchanged` · `read_only` · `unavailable` | keep the step 5 list, say why coverage did not move — nothing to assign, this server cannot write categories, or it does not expose the counterparty list — and go to 8 |
 | 7 | `resolution` | thin again | go to 8, say coverage did not move enough to change the list |
 | 8 | `resolution` | `previewed` · `nothing_to_do` | recap; on `nothing_to_do` say the period has nothing to fetch |
 
