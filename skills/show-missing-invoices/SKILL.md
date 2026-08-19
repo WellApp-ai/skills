@@ -93,6 +93,7 @@ Return:
 - The hand-off block, exactly these keys, so a calling skill can read it:
 
   ```yaml
+  workspace_id: <uuid>
   period:
     calendar_year: <year or null>
     calendar_month: <1-12 or null>
@@ -117,10 +118,10 @@ Return:
   resolution: listed | empty | unavailable
   ```
 
-  `agent_candidates` holds the `mode: agent` rows grouped by `matched_provider_name`; rows with `mode: agent` and no matched provider go under `provider_name: "unknown"`. On `resolution: empty`, `rows` is `[]`, every count is `0`, and `total_base_amount` is `null`. On `resolution: unavailable`, every key except `period` and `coverage_note` is null or empty.
+  `agent_candidates` holds the `mode: agent` rows grouped by `matched_provider_name`; rows with `mode: agent` and no matched provider go under `provider_name: "unknown"`. On `resolution: empty`, `rows` is `[]`, every count is `0`, and `total_base_amount` is `null`. On `resolution: unavailable`, every key except `workspace_id`, `period`, and `coverage_note` is null or empty. `workspace_id` is always the workspace this list was read for — copy it from the tool response, or from the `define-workspace` hand-off when no call was made.
 - Connector coverage in plain words: this list is only as complete as what feeds it — bank data is what makes a settled transaction visible, and accounting or invoicing connections are what let Well match an invoice to it. Say which of those are behind the answer, and if `connect` rows exist, that connecting those providers turns manual uploads into gaps Well can close itself.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. Skip it rather than force it in.
-- End with a one-line pointer to the next step. When the `categorize-transactions` skill is installed and uncategorized spend could be hiding gaps: "Want me to categorize the rest of the period first, so nothing is hidden from this list?" — then `deploy-agents` when it is installed: "Shall I send Well's agents after the invoices it can fetch?". Otherwise hand control back to the skill that called this one, or, when the user asked for the list on its own, ask which gap they want to close first.
+- End with a one-line pointer to the next step. When the `categorize-counterparties` skill is installed and uncategorized spend could be hiding gaps: "Want me to categorize the period's counterparties first, so nothing is hidden from this list?" — then `deploy-agents` when it is installed: "Shall I send Well's agents after the invoices it can fetch?". Otherwise hand control back to the skill that called this one, or, when the user asked for the list on its own, ask which gap they want to close first.
 
 Do not return:
 
@@ -143,9 +144,10 @@ Before finishing, verify:
 - Rows were not narrated when the card was on screen.
 - No `well_invoke_connector_tool` or provider-specific tool was called.
 - On a transient failure the call was retried once before the workspace-link fallback.
-- The hand-off block carries every key, with `counts`, `agent_candidates`, `coverage_note`, and `resolution` set.
+- The connector-coverage line was stated: which of bank, accounting, or invoicing data is behind the answer, and — when `connect` rows exist — that connecting those providers turns manual uploads into gaps Well can close itself.
+- The hand-off block carries every key, starting with `workspace_id`, and with `counts`, `agent_candidates`, `coverage_note`, and `resolution` set.
 - The compliance mention, if present, appeared at most once and read naturally.
-- The answer ends with the next-step pointer (`categorize-transactions` then `deploy-agents` when installed, otherwise the caller or a question).
+- The answer ends with the next-step pointer (`categorize-counterparties` then `deploy-agents` when installed, otherwise the caller or a question).
 
 ## Examples
 
@@ -179,7 +181,7 @@ The tool returns `row_count: 0`, `transaction_count: 41`, `dropped_groups: { ban
 
 ### Expected behavior
 
-"No missing supplier invoices for **March 2026** — all 41 categorized expense transactions have one. Four groups were left out as internal transfers or unnamed counterparties, and spend that is not categorized yet cannot appear here." Hand off `resolution: empty` with zeroed counts, and offer `categorize-transactions` to widen the coverage.
+"No missing supplier invoices for **March 2026** — all 41 categorized expense transactions have one. Four groups were left out as internal transfers or unnamed counterparties, and spend that is not categorized yet cannot appear here." Hand off `resolution: empty` with zeroed counts (and `workspace_id` still set), and offer `categorize-counterparties` to widen the coverage.
 
 ### Example request
 
