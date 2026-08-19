@@ -33,7 +33,7 @@ The user may provide:
 
 - A workspace hint — an id, a workspace name, or the company behind it — if they manage more than one. Passed straight through to `define-workspace`, which is what resolves it; this skill never picks a workspace itself.
 - The time window to trend over — default to the trailing 3 full months if unspecified.
-- A target currency — default to reporting per-account currency. If the user asks for one total, invoke `normalize-currency` with the per-currency subtotals rather than converting here; report its rates and rate dates alongside the total.
+- A target currency — default to reporting per-account currency. If the user asks for one total, invoke `normalize-currency` with the balance points tagged by date and account rather than converting here, build the series from its `converted` entries, and report its rates and rate dates alongside the total.
 
 ## Tooling
 
