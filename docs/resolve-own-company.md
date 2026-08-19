@@ -22,6 +22,16 @@ Other Well skills call this one internally; you rarely need to run it yourself.
 - **Any connector that has synced companies** — invoicing, accounting, or bank. Without company records there is nothing to resolve against.
 - **The own-company setting on your workspace** — *optional.* If it's set, this skill reads it and doesn't ask. If it isn't, the skill asks you once and uses your answer for that run only. Setting it permanently is done in the Well app; no skill can write it.
 
+## Composes onto
+
+This skill delegates one setup step to a Well atomic skill rather than repeating it:
+
+- **[`define-workspace`](define-workspace.md)** — pins which Well workspace the own company is resolved in.
+
+Install it alongside this one. The skill still runs without it — step 1 falls back to resolving the workspace inline — but with it installed you get one consistent workspace flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install both together; if you download the `.skill` file on its own, grab `define-workspace` as well.
+
+---
+
 ## Installation
 
 ### AI Assisted (Recommended)
