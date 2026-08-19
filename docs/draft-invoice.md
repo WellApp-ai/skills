@@ -23,11 +23,12 @@ The PDF's letterhead carries your logo only if Well already has one on file for 
 
 ## Composes onto
 
-This skill delegates one setup step to a Well atomic skill rather than repeating it:
+This skill delegates two setup steps to Well's atomic skills rather than repeating them:
 
 - **[`define-workspace`](define-workspace.md)** — pins which Well workspace the invoice is created in.
+- **[`resolve-own-company`](resolve-own-company.md)** — offers your own company as the likely issuer, for you to confirm or override.
 
-Install it alongside this one. The skill still runs without it — step 1 falls back to resolving the workspace inline — but with it installed you get one consistent workspace flow across every Well skill. It needs no connector skill: the invoice is written straight into Well, so there is nothing to sync first. The **Claude Code plugin** and **Codex plugin** paths below install both together; if you download the `.skill` file on its own, grab `define-workspace` as well.
+Install both alongside this one. The skill still runs without them — each step falls back inline — but with them installed you get one consistent workspace flow across every Well skill. It needs no connector skill: the invoice is written straight into Well, so there is nothing to sync first. The **Claude Code plugin** and **Codex plugin** paths below install all three together; if you download the `.skill` file on its own, grab both as well.
 
 ---
 

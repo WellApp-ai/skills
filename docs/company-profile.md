@@ -21,12 +21,13 @@ Whether you're prepping for a call with a customer or double-checking a vendor b
 
 ## Composes onto
 
-This skill delegates two setup steps to Well's atomic skills rather than repeating them:
+This skill delegates three setup steps to Well's atomic skills rather than repeating them:
 
 - **[`define-workspace`](define-workspace.md)** — pins which Well workspace the answer is for.
 - **[`connect-tools`](connect-tools.md)** — checks which of your bank / accounting / invoicing sources are connected.
+- **[`resolve-own-company`](resolve-own-company.md)** — works out which company in your workspace is yours, so a company is framed as a customer or a vendor rather than guessed.
 
-Install both alongside this one. The skill still runs without them — each step falls back to resolving things inline — but with them installed you get one consistent workspace and connection flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install all three together; if you download the `.skill` file on its own, grab those two as well.
+Install all three alongside this one. The skill still runs without them — each step falls back to resolving things inline — but with them installed you get one consistent workspace and connection flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install all four together; if you download the `.skill` file on its own, grab those three as well.
 
 ---
 

@@ -20,12 +20,13 @@ Instead of scanning a stack of invoices to figure out what's due next, ask your 
 
 ## Composes onto
 
-This skill delegates two setup steps to Well's atomic skills rather than repeating them:
+This skill delegates three setup steps to Well's atomic skills rather than repeating them:
 
 - **[`define-workspace`](define-workspace.md)** — pins which Well workspace the answer is for.
 - **[`connect-tools`](connect-tools.md)** — checks which of your bank / accounting / invoicing sources are connected.
+- **[`resolve-own-company`](resolve-own-company.md)** — works out which company in your workspace is yours, so your bills aren't mixed with your invoices.
 
-Install both alongside this one. The skill still runs without them — each step falls back to resolving things inline — but with them installed you get one consistent workspace and connection flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install all three together; if you download the `.skill` file on its own, grab those two as well.
+Install all three alongside this one. The skill still runs without them — each step falls back to resolving things inline — but with them installed you get one consistent workspace and connection flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install all four together; if you download the `.skill` file on its own, grab those three as well.
 
 ---
 
