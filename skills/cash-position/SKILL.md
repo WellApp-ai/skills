@@ -90,7 +90,7 @@ Return:
 Before finishing, verify:
 
 - If `well_*` tools weren't available at all, the user was pointed at the MCP endpoint (`https://api.wellapp.ai/v1/mcp`) instead of erroring silently.
-- The workspace came from `define-workspace`'s hand-off — it was not resolved here — and its `workspace_id` rode every `well_*` call rather than being left off.
+- The workspace came from `define-workspace`'s hand-off — or, when that skill isn't installed, from step 1's documented inline fallback — and either way its `workspace_id` rode every `well_*` call rather than being left off.
 - Connector "enabled" status was checked before calling `well_get_cash_position`, not just assumed.
 - The total and per-account breakdown came straight from `well_get_cash_position`'s response, not re-derived from raw `accounts`/`account_balances`/`exchange_rates` reads.
 - If `partial: true`, the `excluded` count and any `hints` were disclosed rather than silently absorbed into the total.

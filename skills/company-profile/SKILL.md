@@ -113,12 +113,12 @@ Return:
 Before finishing, verify:
 
 - If `well_*` tools weren't available at all, the user was pointed at the MCP endpoint (`https://api.wellapp.ai/v1/mcp`) instead of erroring silently.
-- The workspace came from `define-workspace`'s hand-off at step 1 — it was not resolved here — and the question was never re-raised at step 4.
+- The workspace came from `define-workspace`'s hand-off at step 1 — or, when that skill isn't installed, from step 1's documented inline fallback — and the question was never re-raised at step 4.
 - No turn ended on a bare "which company?" with zero tool calls behind it — steps 1–3 ran, and a company list was on screen, before the question was asked.
 - No list of records was restated in prose under the table that already rendered it; where the table was truncated, the total was stated instead.
 - Every `well_*` call after step 1 carried the pinned `workspace_id`.
 - "No such company" was never concluded from the browse page — only from an `_ilike` search, or from a browse whose `totalCount` proved it was the whole set.
-- Connection state came from `connect-tools`' hand-off, and row presence was spot-checked separately in step 3 — a connected connector was never assumed to mean usable data had landed.
+- Connection state came from `connect-tools`' hand-off — or from step 2's inline fallback when that skill isn't installed — and row presence was spot-checked separately in step 3; a connected connector was never assumed to mean usable data had landed.
 - The company was resolved unambiguously — not guessed on an ambiguous or zero-match name search.
 - `well_get_schema` was called before querying `companies` (and any other root) for the first time.
 - No `industry` field or customer/vendor boolean was fabricated — the relationship is framed only from issuer/receiver invoice data against `own_company`.

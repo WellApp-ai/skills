@@ -105,8 +105,8 @@ Return:
 Before finishing, verify:
 
 - If `well_*` tools weren't available at all, the user was pointed at the MCP endpoint (`https://api.wellapp.ai/v1/mcp`) instead of erroring silently.
-- The workspace came from `define-workspace`'s hand-off — it was not resolved here — and its `workspace_id` rode every `well_*` call rather than being left off.
-- Connection state came from `connect-tools`' hand-off, and row presence was spot-checked separately in step 3 — a connected connector was never assumed to mean usable data had landed.
+- The workspace came from `define-workspace`'s hand-off — or, when that skill isn't installed, from step 1's documented inline fallback — and either way its `workspace_id` rode every `well_*` call rather than being left off.
+- Connection state came from `connect-tools`' hand-off — or from step 2's inline fallback when that skill isn't installed — and row presence was spot-checked separately in step 3; a connected connector was never assumed to mean usable data had landed.
 - `own_company` was read, not inferred. If it was null, absent from the schema, or ambiguous, the user was asked or the limitation was stated plainly — it was never derived from the workspace's name, logo, slug, or email domain, and an absent field was not treated as license to guess.
 - Duplicate company records were checked with two-directional normalized containment and confirmed with the user — on the customer side as well as the own-company side, since an unmerged customer alias splits one client across two rows and understates their rank.
 - Null-`issuer_company_id` invoices were split on the receiver before counting as revenue: own-company receiver means a bill the workspace paid and was excluded, external receiver reported as a labeled unattributed row, both-null reported as a separate unsplit line outside the revenue total.

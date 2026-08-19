@@ -113,8 +113,8 @@ Return:
 Before finishing, verify:
 
 - If `well_*` tools weren't available at all, the user was pointed at the MCP endpoint (`https://api.wellapp.ai/v1/mcp`) instead of erroring silently.
-- The workspace came from `define-workspace`'s hand-off — it was not resolved here — and its `workspace_id` rode every `well_*` call rather than being left off.
-- Connection state came from `connect-tools`' hand-off, and row presence was spot-checked separately in step 3 — a connected connector was never assumed to mean usable data had landed.
+- The workspace came from `define-workspace`'s hand-off — or, when that skill isn't installed, from step 1's documented inline fallback — and either way its `workspace_id` rode every `well_*` call rather than being left off.
+- Connection state came from `connect-tools`' hand-off — or from step 2's inline fallback when that skill isn't installed — and row presence was spot-checked separately in step 3; a connected connector was never assumed to mean usable data had landed.
 - `well_get_schema` was called before querying `invoices`/`workspaces` for the first time.
 - Category totals came straight from `well_get_cost_structure`, not re-derived from raw `account_balances`/`ledger_accounts`/`transactions` reads.
 - No figure came from `well_invoke_connector_tool` or any provider-specific tool (Pennylane, Qonto, QuickBooks, Xero, …) — all numbers trace back to `well_get_cost_structure` / `well_query_records`.

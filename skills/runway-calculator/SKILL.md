@@ -105,8 +105,8 @@ Return:
 Before finishing, verify:
 
 - If `well_*` tools weren't available at all, the user was pointed at the MCP endpoint (`https://api.wellapp.ai/v1/mcp`) instead of erroring silently.
-- The workspace came from `define-workspace`'s hand-off — it was not resolved here — and its `workspace_id` rode every `well_*` call rather than being left off.
-- Connection state came from `connect-tools`' hand-off, and data freshness was read separately in step 3 — a connected connector was never assumed to mean usable data had landed.
+- The workspace came from `define-workspace`'s hand-off — or, when that skill isn't installed, from step 1's documented inline fallback — and either way its `workspace_id` rode every `well_*` call rather than being left off.
+- Connection state came from `connect-tools`' hand-off — or from step 2's inline fallback when that skill isn't installed — and data freshness was read separately in step 3; a connected connector was never assumed to mean usable data had landed.
 - Cash and burn figures came straight from `well_get_runway`'s response, not re-derived from raw record reads.
 - Cash-flow-positive (`"infinite"`) and capped (`"capped"`) workspaces are reported with their dedicated phrasing, not as a division error or a raw number past 36 months.
 - The final answer states runway in **both months and days**, per the user's requirement (except the `"capped"`/`"infinite"` branches, which have no days remainder).
