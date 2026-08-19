@@ -46,7 +46,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 - `well_query_records` on root `workspace_connectors` — the workspace's own connections. Call `well_get_schema({ root: "workspace_connectors" })` first in a session and read the fields from it; today they are `status`, `last_successful_sync_at`, `connector.service_id`, `connector.direction`, and `connector.data_domains` (a JSON array such as `["bank"]`, sometimes delivered as a JSON string — parse it). This root is the source of truth for whether a connection is established; the catalog overlay below is the source of install links.
 - Well's OAuth / DCR flow — only if the connection itself is missing (auth error on the first call).
 
-**Composed skills.** One atomic Well skill owns the step before this one — invoke it, don't reimplement it:
+**Composed skills.** One atomic Well skill ownss the step before this one — invoke it, don't reimplement it:
 
 - `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there's no connection yet, and pins exactly one workspace. Supplies the `workspace_id` that every call here carries.
 

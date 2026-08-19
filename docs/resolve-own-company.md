@@ -28,7 +28,7 @@ This skill delegates one setup step to a Well atomic skill rather than repeating
 
 - **[`define-workspace`](define-workspace.md)** — pins which Well workspace the own company is resolved in.
 
-Install it alongside this one. The skill still runs without it — step 1 falls back to resolving the workspace inline — but with it installed you get one consistent workspace flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install both together; if you download the `.skill` file on its own, grab `define-workspace` as well.
+Install it alongside this one. The skill still runs without it — step 1 falls back to resolving the workspace inline — but with it installed you get one consistent workspace flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install all two together; if you download the `.skill` file on its own, grab `define-workspace` as well.
 
 ---
 

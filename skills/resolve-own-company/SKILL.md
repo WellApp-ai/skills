@@ -52,7 +52,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 Never call `well_update_company` or `well_delete_company` from this skill. Folding an alias is a within-run decision about how to *compare* names; merging records is a destructive write on the user's data, and the two are not the same operation.
 
-**Composed skills.** One atomic Well skill owns the step before this one — invoke it, don't reimplement it:
+**Composed skills.** One atomic Well skill ownss the step before this one — invoke it, don't reimplement it:
 
 - `define-workspace` — pins exactly one workspace and supplies the `workspace_id` every call here carries.
 
