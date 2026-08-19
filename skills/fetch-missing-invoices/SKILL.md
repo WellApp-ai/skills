@@ -53,12 +53,13 @@ The union of the bricks' tools — each owned by the brick that calls it, never 
 shortcut a step: `well_list_workspaces`; `well_list_connectors` and `well_query_records` on
 `workspace_connectors` / `workspace_connector_sync_logs`; `well_list_periods` when present;
 `well_get_schema` and `well_query_records` on `transactions` and `categories`;
-`well_list_missing_invoices`; `well_set_transaction_category`; `well_preview_invoice_fetch` when
+`well_list_missing_invoices`; `well_list_counterparties` and `well_update_company` with its
+`relationships.categories`; `well_preview_invoice_fetch` when
 present; and Well's OAuth / DCR flow when no Well connection exists yet — the moment it returns,
 retry the failed call in the same turn, never waiting for the user to confirm they signed in.
 
 Never call `well_invoke_connector_tool`, any `well_create_*` / `well_update_*` / `well_delete_*`, or
-any close, lock, or posting tool. This flow reads, and writes only the transaction categories the
+any close, lock, or posting tool. This flow reads, and writes only the counterparty categories the
 user confirmed inside `categorize-counterparties`.
 
 The six bricks are bundled next to this file. At each step, **read `references/<name>.md` and follow
@@ -89,8 +90,10 @@ After each step, read its hand-off block and route on the routing table's exact 
    categorize, or when the list is **thin**: `transaction_count` is null or 0 while the period's
    `has_activity` is `true`. Never run it silently — say in one line that the gap list rests on
    `transaction_count` categorized transactions while the month has bank activity, ask whether to
-   label the rest first, and run `references/categorize-counterparties.md (when that brick is installed; otherwise skip this step and say the categorization brick is not available yet)` (with `workspace_id`, the
-   period, `purpose`) only on the user's yes, because it writes.
+   categorize the counterparties behind the rest first, and run
+   `references/categorize-counterparties.md` (with `workspace_id`, `periods` holding the step 3
+   month, `purpose`) only on the user's yes, because it writes. Keep `coverage_before`,
+   `coverage_after`, and `changed`.
 
 6. **Re-read the gap list, once** — `references/show-missing-invoices.md` again, same `workspace_id`
    and period. Replace the step 4 hand-off and route it as in step 4, except that a second thin
@@ -124,7 +127,7 @@ After each step, read its hand-off block and route on the routing table's exact 
 | 4 | `resolution` | `listed`, thin or user asked | go to 5 |
 | 4 | `resolution` | `listed`, not thin | skip to 7 |
 | 5 | `resolution` | `updated` | keep `coverage_before` / `coverage_after`; re-read the list at 6 |
-| 5 | `resolution` | `unchanged` · `read_only` | keep the step 4 list, say why coverage did not move, go to 7 |
+| 5 | `resolution` | `unchanged` · `read_only` · `unavailable` | keep the step 4 list, say why coverage did not move — nothing to assign, this server cannot write categories, or it does not expose the counterparty list — and go to 7 |
 | 6 | `resolution` | thin again | go to 7, say coverage did not move enough to change the list |
 | 7 | `resolution` | `previewed` · `nothing_to_do` | recap; on `nothing_to_do` say the period has nothing to fetch |
 
