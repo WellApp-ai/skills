@@ -1,5 +1,6 @@
 ---
 name: deploy-agents
+requires: [define-workspace, define-period, show-missing-invoices]
 description: Preview which invoice-fetching agents Well would launch for a period, and for which providers, counterparties, and transactions — then say plainly that nothing was started. This version is a dry run — it launches no agent, opens no browser session, and queues no task. Use when the user asks to fetch, collect, or chase the invoices they are missing, says "launch the agents", "go get those invoices", "deploy the collectors", or when the fetch-missing-invoices flow reaches its last step after the missing rows have been listed. Do not use to actually run a collection, to invoke a connector's own actions, to create or edit an invoice, to connect a provider, or to list which invoices are missing in the first place.
 ---
 
@@ -88,6 +89,22 @@ Never call a tool that changes anything. Specifically: no `well_invoke_connector
 `well_create_*`, no `well_update_*`, no `well_delete_*`, no connector action of any kind. This skill
 reads or derives, and it never writes. It does not re-pin the session either: on a multi-workspace
 run the caller calls `well_switch_workspace` between passes, as the Inputs section says.
+
+**Composed skills.** Three Well skills own the steps this skill must not inline — invoke them,
+don't reimplement them:
+
+- `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there's no
+  connection yet, and pins exactly one workspace. Supplies the `workspace_id` that every call here
+  carries.
+- `define-period` — resolves the month or fiscal period and writes the selection server-side, which
+  is what makes the periods argument unnecessary on the preview call.
+- `show-missing-invoices` — lists the transactions with no invoice for that period. Supplies the
+  rows and the `agent_candidates` this skill previews, and is the only source of the preview on the
+  tool-absent path.
+
+All three ship with the `well-skills` plugin. None has an inline fallback here: this skill resolves
+no workspace of its own, guesses no month, and never rebuilds the gap list, so when one is absent
+the workflow runs that skill instead of working around it.
 
 ## Workflow
 
