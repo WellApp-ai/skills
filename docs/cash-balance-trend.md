@@ -26,7 +26,7 @@ This skill delegates three setup steps to Well's atomic skills rather than repea
 - **[`connect-tools`](connect-tools.md)** — checks which of your bank / accounting / invoicing sources are connected.
 - **[`normalize-currency`](normalize-currency.md)** — turns amounts in several currencies into one total with its rate and date, so a single-total view carries the rate and date behind it.
 
-Install all three alongside this one. The skill still runs without them — each step falls back to resolving things inline — but with them installed you get one consistent workspace and connection flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install all four together; if you download the `.skill` file on its own, grab those three as well.
+Install all three alongside this one. The skill still runs without them: `define-workspace` and `connect-tools` each have an inline fallback, while `normalize-currency` doesn't — without it, the skill reports other currencies as separate series instead of converting them into one total. With all three installed you get one consistent workspace and connection flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install all four together; if you download the `.skill` file on its own, grab those three as well.
 
 ---
 

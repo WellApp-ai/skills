@@ -54,7 +54,7 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 - `resolve-own-company` — works out which company in the workspace is the user's own legal entity, folds in its duplicate records, and hands back the `identity_set` that decides which side of an invoice is a payable.
 - `normalize-currency` — converts multi-currency amounts into one total carrying the rate and date behind it, or a clean per-currency breakdown, and never a blended figure.
 
-All four ship with the `well-skills` plugin. This skill is also installable on its own, so steps 1 and 2 of the workflow each carry the inline fallback to use when they're absent.
+All four ship with the `well-skills` plugin. This skill is also installable on its own, so steps 1, 2, 5, and 7 of the workflow each carry the inline fallback to use when they're absent.
 
 **Never fetch the underlying financial data from a third-party provider directly.** Every number in this skill's answer comes from `well_get_cost_structure` and `well_query_records` — Well's own synced, normalized financial graph. Do not call `well_invoke_connector_tool`, and do not call any provider-specific tool (Pennylane, Qonto, QuickBooks, Xero, …) to pull ledger lines, transactions, or invoices yourself, even when such a tool is listed as available. Well has already synced and normalized this data; bypassing it produces figures that disagree with what the Well app itself shows the user.
 
@@ -172,4 +172,4 @@ Detect in step 5 that the field is absent — not merely null — and ask which 
 
 ### Expected behavior
 
-Check `workspace_connector_sync_logs`; if the sync is still `in_progress`, tell the user results are partial/pending rather than presenting a misleadingly confident number.
+Run `connect-tools`; its hand-off reports the connector as connected but its latest sync still running, so carry on and tell the user results are partial/pending rather than presenting a misleadingly confident number.
