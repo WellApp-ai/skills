@@ -32,7 +32,7 @@ Do not use this skill when:
 
 The calling skill or the user provides:
 
-- `workspace_id` — required. Comes from `define-workspace`. If absent, run that skill first; do not resolve the workspace here — and when the session already holds a pin (`well_list_workspaces`' `session.pinned_workspace_id`), use it silently rather than asking anything.
+- `workspace_id` — required. Comes from `define-workspace`. If absent, run that skill first; do not resolve the workspace here. Reuse a session pin (`well_list_workspaces`' `session.pinned_workspace_id`) silently only when THIS conversation established it — hosts share one MCP session across conversations, so a pin this conversation never made is another conversation's leftover: ignore it, never mention it, and run `define-workspace`.
 - `kinds` — which connection kinds this job needs, any of `bank`, `accounting`, `invoicing`. Default: all three. When the user's own question names one kind ("is my accounting connected?"), treat that as the scope even with no calling skill involved.
 - `required` — the subset of `kinds` the calling flow cannot continue without. A missing required kind at the acknowledgment stops the flow instead of continuing. Default: none.
 - Provider hints — names the user mentioned ("Qonto", "Pennylane", "Shopify"). Optional; used to search the catalog.
@@ -83,7 +83,7 @@ Call each list or read tool once per step, and render at most one widget card pe
 
 1. **Confirm the MCP server is configured.** If `well_list_connectors` (or any `well_*` tool) is not available, the Well MCP server has not been added to this host. Tell the user a Well connection is mandatory — endpoint `https://api.wellapp.ai/v1/mcp` — because connections are made and tracked in Well. Stop until it is there.
 
-2. **Confirm the workspace.** Require `workspace_id`. If the caller did not pass one, use the session pin silently when one exists; otherwise run `define-workspace` (its picker renders at the point of need — never ask "which workspace?" in text). Pass `workspace_id` explicitly on every call below, even under a session pin.
+2. **Confirm the workspace.** Require `workspace_id`. If the caller did not pass one, use the session pin silently when this conversation established it; otherwise run `define-workspace` (its picker renders at the point of need — never ask "which workspace?" in text, and never reuse or mention a pin left by another conversation). Pass `workspace_id` explicitly on every call below, even under a session pin.
    - Auth error on the first call → no Well connection yet: start the Well connector's OAuth/DCR flow, then retry the same call yourself in the same turn and continue.
 
 3. **Read the current coverage in one call.** `well_list_connectors({ workspace_id, kind })` when the job covers exactly one kind, `well_list_connectors({ workspace_id })` otherwise. The result renders the connect picker card. Keep the `direction: input` rows, group them by `data_domains`, and read each row's state with the precedence in Tooling. Per requested kind:
@@ -133,7 +133,7 @@ Before finishing, verify:
 - If `well_*` tools were absent, the user was pointed at `https://api.wellapp.ai/v1/mcp` instead of a tool error.
 - `well_list_connectors` was the only listing tool called — no `well_query_records` on `workspace_connectors`, no `well_invoke_connector_tool`, no provider-specific tool.
 - One kind meant one scoped call; two or three kinds meant one unscoped call — one card per turn, never two.
-- `workspace_id` came from `define-workspace`, the caller, or the session pin used silently — the workspace was not resolved or asked for in text here.
+- `workspace_id` came from `define-workspace`, the caller, or a session pin this conversation established — the workspace was not resolved or asked for in text here, and no leftover pin from another conversation was reused or mentioned.
 - Each kind's state came from catalog rows filtered on `direction: input` and `data_domains`, read with the four-line state precedence — not from a name, a `category_id`, or `is_connected` alone.
 - A `need_reconnect` / `degraded` / `suspended` row was reported as `error` even when it had synced before, and an errored connector was named even when another connector covered the same kind.
 - An absent `last_successful_sync_at` was degraded to `connected` on `enabled`, an absent `data_domains` fell back to `kind`-scoped calls, a rejected `kind` fell back to an unscoped read plus `q`, and an unrecognized `connection_status` was reported as `error`, never as connected.

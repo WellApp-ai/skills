@@ -32,7 +32,7 @@ Do not use this skill when:
 
 The calling skill or the user provides:
 
-- `workspace_id` — required. Comes from `define-workspace`. If absent, run that skill first; do not resolve the workspace here — and when the session already holds a pin (`well_list_workspaces`' `session.pinned_workspace_id`), use it silently rather than asking anything.
+- `workspace_id` — required. Comes from `define-workspace`. If absent, run that skill first; do not resolve the workspace here. Reuse a session pin (`well_list_workspaces`' `session.pinned_workspace_id`) silently only when THIS conversation established it — hosts share one MCP session across conversations, so a pin this conversation never made is another conversation's leftover: ignore it, never mention it, and run `define-workspace`.
 - `required` — whether the calling flow can continue without a bank. `true` means a still-missing bank at the acknowledgment stops the flow; `false` means it continues with the caveat recorded. Default: `false`.
 - A bank hint — the bank the user named ("Qonto", "BNP", "my Revolut account"). Optional; used to search the catalog with `q` when the bank is not in the default view.
 - `purpose` — one line from the calling skill (e.g. "to fetch the invoices missing for March"), used in the ask. Optional.
@@ -71,7 +71,7 @@ Call each list or read tool once per step, and render at most one widget card pe
 
 1. **Confirm the MCP server is configured.** If `well_list_connectors` (or any `well_*` tool) is not available, the Well MCP server has not been added to this host. Tell the user a Well connection is mandatory — endpoint `https://api.wellapp.ai/v1/mcp` — because bank connections are made and tracked in Well. Stop until it is there.
 
-2. **Confirm the workspace.** Require `workspace_id`. If the caller did not pass one, use the session pin silently when one exists; otherwise run `define-workspace` (its picker renders at the point of need — never ask "which workspace?" in text). Pass `workspace_id` explicitly on every call below, even under a session pin.
+2. **Confirm the workspace.** Require `workspace_id`. If the caller did not pass one, use the session pin silently when this conversation established it; otherwise run `define-workspace` (its picker renders at the point of need — never ask "which workspace?" in text, and never reuse or mention a pin left by another conversation). Pass `workspace_id` explicitly on every call below, even under a session pin.
    - Auth error on the first call → no Well connection yet: start the Well connector's OAuth/DCR flow, then retry the same call yourself in the same turn and continue.
 
 3. **Read the bank state — one scoped call, banks only.** The first and only listing call this skill makes is literally `well_list_connectors({ workspace_id, kind: "bank" })`. Calling it without `kind` is an error in this skill — the one exception is the older-server degrade path in Tooling, after the server has rejected `kind`. The rendered card must show banks only: if the card visibly carries accounting or invoicing tools, the call was made unscoped — redo it with `kind: "bank"` before saying anything about the bank. Keep the `direction: input` rows whose `data_domains` contains `bank`, read each one's state with the precedence in Tooling, then reduce them to one bank state:
@@ -121,7 +121,7 @@ Before finishing, verify:
 
 - If `well_*` tools were absent, the user was pointed at `https://api.wellapp.ai/v1/mcp` instead of a tool error.
 - `well_list_connectors` with `kind` `bank` was the only listing tool called — no `well_query_records` on `workspace_connectors`, no `well_invoke_connector_tool` — and the catalog was read unscoped and filtered by hand only when the server rejected `kind`.
-- `workspace_id` came from `define-workspace`, the caller, or the session pin used silently — the workspace was not resolved or asked for in text here.
+- `workspace_id` came from `define-workspace`, the caller, or a session pin this conversation established — the workspace was not resolved or asked for in text here, and no leftover pin from another conversation was reused or mentioned.
 - The state came from `direction: input` rows whose `data_domains` contains `bank`, read with the four-line state precedence — not from a name, a `category_id`, or `is_connected` alone.
 - A `need_reconnect` / `degraded` / `suspended` bank was reported as `error` even when it had synced before, and an errored account was named even when another bank was connected.
 - An absent `last_successful_sync_at` was degraded to `connected` on `enabled`, a rejected `kind` fell back to an unscoped read filtered on `data_domains`, and an unrecognized `connection_status` was reported as `error`, never as connected.
