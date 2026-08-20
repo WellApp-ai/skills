@@ -56,12 +56,12 @@ This repo packages that judgment as **Agent Skills** — playbooks any AI assist
 | `missing-receipts` | "Which expenses are missing receipts?" — invoices with no source document attached, for compliance. | [View details →](docs/missing-receipts.md) |
 | `draft-invoice` | "Draft an invoice for this client" — creates a real invoice record in Well, with an attached PDF, from a chat description. | [View details →](docs/draft-invoice.md) |
 | `fetch-missing-invoices` | "Fetch the invoices I'm missing" — the whole month-end sweep in one prompt: workspace, connections, bank, month, the gap list, then a preview of the agents that would fetch them. | [View details →](docs/fetch-missing-invoices.md) |
-| `show-missing-invoices` | "What am I missing for March?" — settled bank spend that still has no supplier invoice, one row per supplier, with how each gap can be closed. | [View details →](docs/show-missing-invoices.md) |
+| `show-missing-invoices` | "What am I missing for March?" — settled spend with no supplier invoice, one row per supplier, each row saying how the gap can be closed. | [View details →](docs/show-missing-invoices.md) |
 | `deploy-agents` | "Go get those invoices" — a preview of which invoice-fetching agents Well would launch, per provider, before any of them runs. | [View details →](docs/deploy-agents.md) |
 
 ## Utils
 
-These aren't skills you ask for directly — the skills above invoke them automatically to handle a setup step. Listed here for reference, or if you want to see exactly how that step works.
+These are the setup steps the skills above invoke automatically to get what they need. Several also stand on their own when you ask for them directly. Listed here for reference, or if you want to see exactly how that step works.
 
 | Skill | Description | Details |
 |---|---|---|
@@ -191,7 +191,7 @@ Download the `.skill` file and double-click it to install — Claude Desktop ins
 | `missing-receipts` | Invoices with no source document attached, for compliance. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/missing-receipts.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/missing-receipts.zip) |
 | `draft-invoice` | Create a real invoice record in Well, with an attached PDF, from a chat description. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/draft-invoice.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/draft-invoice.zip) |
 | `fetch-missing-invoices` | Walk the whole missing-invoice flow end to end, from workspace to a preview of the agents that would fetch. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/fetch-missing-invoices.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/fetch-missing-invoices.zip) |
-| `show-missing-invoices` | List the settled spend with no supplier invoice behind it, and how each gap can be closed. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/show-missing-invoices.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/show-missing-invoices.zip) |
+| `show-missing-invoices` | Settled spend for a period that still has no supplier invoice, one row per supplier, with how each gap can be closed. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/show-missing-invoices.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/show-missing-invoices.zip) |
 | `deploy-agents` | Preview the invoice-fetching agents Well would launch for a period, without launching any. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/deploy-agents.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/deploy-agents.zip) |
 
 **Utils** — each `.skill`/`.zip` above only bundles its own folder, so a util it depends on isn't included; download and install the util separately alongside it.

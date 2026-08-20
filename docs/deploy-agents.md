@@ -32,12 +32,18 @@ the plan before the launch exists.
 
 ## Composes onto
 
-This skill delegates two setup steps to Well's atomic skills rather than repeating them:
+This skill delegates three setup steps to Well's atomic skills rather than repeating them:
 
-- **[`define-workspace`](define-workspace.md)** — pins which Well workspace the preview is built for.
-- **[`define-period`](define-period.md)** — writes the period selection Well reads when it computes the plan.
+- **[`define-workspace`](define-workspace.md)** — pins which Well workspace the preview is for.
+- **[`define-period`](define-period.md)** — resolves the month or fiscal period, and writes the
+  selection Well reads when it builds the preview.
+- **[`show-missing-invoices`](show-missing-invoices.md)** — lists the transactions with no invoice,
+  which are the rows this preview groups into agents.
 
-Install both alongside this one. This skill needs them: it resolves no workspace of its own and never picks a month, so without them there is nothing to build a preview against. The **Claude Code plugin** and **Codex plugin** paths below install all three together; if you download the `.skill` file on its own, grab those two as well.
+Install all three alongside this one. This skill needs them: it resolves no workspace of its own,
+never guesses a month, and never rebuilds the gap list, so without them there is nothing to preview.
+The **Claude Code plugin** and **Codex plugin** paths below install all four together; if you
+download the `.skill` file on its own, grab those three as well.
 
 ---
 
@@ -59,6 +65,7 @@ Install the following official skills from Well.
     a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/deploy-agents/SKILL.md
     b. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
     c. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-period/SKILL.md
+    d. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/show-missing-invoices/SKILL.md
 2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
 3. Install these skills.
 4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
