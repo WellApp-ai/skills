@@ -52,13 +52,20 @@ build_skill_md() {
 for dir in skills/*/; do
 	name=$(basename "$dir")
 	stage=$(mktemp -d)
+	# The stage holds regular files only, so no symlink is ever stored as its
+	# target's content in a public archive. A symlink outside references/ would
+	# instead be dropped from the download without a trace, so fail on one.
+	if stray=$(cd "$dir" && find . -type l ! -path './references/*' -print -quit) && [ -n "$stray" ]; then
+		echo "skills/$name/${stray#./} is a symlink; only references/ may be one" >&2
+		exit 1
+	fi
 	(cd "$dir" && find . -type f ! -path './references/*' ! -name '.DS_Store' | while read -r f; do
 		mkdir -p "$stage/$(dirname "$f")"
 		cp "$f" "$stage/$f"
 	done)
 	build_skill_md "$dir" "$stage/SKILL.md"
 
-	if [ -f "dist/$name.skill" ]; then
+	if [ -f "dist/$name.skill" ] && [ -f "dist/$name.zip" ]; then
 		prev=$(mktemp -d)
 		unzip -q "dist/$name.skill" -d "$prev"
 		if diff -rq --exclude=.DS_Store "$prev" "$stage" >/dev/null 2>&1; then
