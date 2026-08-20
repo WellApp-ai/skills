@@ -82,7 +82,7 @@ The click-chain tools:
 
 `sync_in_progress: true` on a **connected** row keeps it connected — say data may be partial until the pass finishes.
 
-**Degrade gracefully on an older server.** If `data_domains` is absent, fall back to one `kind`-scoped call per requested kind — then said calls span turns, one card each — and treat each call's rows as that kind. If `kind` is rejected as an unknown input too, read the catalog unscoped and fall back to `q` on the providers the user named. If `last_successful_sync_at` is absent, read `enabled` as **connected** rather than reporting `connecting` forever. If `connection_status` carries a value outside the vocabulary above, treat the row as **error** and say the state is unrecognized — never read an unknown value as connected.
+**Degrade gracefully on an older server.** If `data_domains` is absent, fall back to one `kind`-scoped call per requested kind — those calls then span turns, one card each — and treat each call's rows as that kind. If `kind` is rejected as an unknown input too, read the catalog unscoped and fall back to `q` on the providers the user named. If `last_successful_sync_at` is absent, read `enabled` as **connected** rather than reporting `connecting` forever. If `connection_status` carries a value outside the vocabulary above, treat the row as **error** and say the state is unrecognized — never read an unknown value as connected.
 
 ## Workflow
 
@@ -105,7 +105,7 @@ Call each list or read tool once per step, and render at most one widget card pe
    - If the user names a provider that is not in the default view, search it with `q` before saying Well does not support it. A row whose `status` is not `available` is not connectable today — say so and offer the nearest available alternative from the catalog rather than a dead link.
 
 5. **Resolve the next message after the card.** In this order, and never by re-asking:
-   - The message is the card's "Continue" prefill, or says continue / done / connected in its own words → that is the acknowledgment; move on in one short sentence. No verification call is needed here — the next step's own read is the verification, and anything the user connected during the stop lands in the later steps' own reads while the hand-off's coverage describes the read that rendered the card.
+   - The message is the card's "Continue" prefill, or says continue / done / connected in its own words → that is the acknowledgment. When no `required` kind is outstanding, move on in one short sentence: no verification call is needed here — the next step's own read is the verification, and anything the user connected during the stop lands in the later steps' own reads while the hand-off's coverage describes the read that rendered the card. When a `required` kind was **missing** or **error** on the read that rendered the card, re-read the coverage once in this turn first, because the user may have connected it during the stop; if that kind is still neither `connected` nor `connecting`, say plainly that the flow cannot continue without it and stop, keeping the hand-off so the caller reads `coverage` and decides.
    - The user says in text they connected a tool → re-read the coverage once in that turn (that turn's one card) and hand off the fresh state.
    - Any other message → call `well_wait_for_selection({ kind: "connect_ack", timeout_s: 10 })` once. `selected` (fresh or `already_set`) → the ack is in; move on. `no_selection_yet` → one line asking to click Continue on the card, end the turn.
    - The user declines a kind ("later", "skip invoicing") → record it under `skipped_by_user` and continue — unless the kind is in `required`, in which case say plainly that the flow cannot continue without it and stop, keeping the hand-off so the caller reads `coverage` and decides.
@@ -133,6 +133,14 @@ Do not return:
 - Connection state guessed from a connector's display name, or read from a `workspace_connectors` records query.
 - A flow continuation that skipped the Continue click — as a flow step, the acknowledgment (clicked or typed) is the gate, green coverage included.
 
+**How this reaches the user.** A Well MCP tool that ships a widget attaches
+`_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
+never reaches you, so you cannot tell a host that drew the card from one that did not.
+Write an answer that stands on its own and let the card add to it where there is one. Do
+not compose a second rendering of figures the tool already returned; where a visual the
+tool does not draw genuinely reads better and the `well-design-system` skill is available,
+use it.
+
 ## Quality checks
 
 Before finishing, verify:
@@ -146,6 +154,7 @@ Before finishing, verify:
 - An absent `last_successful_sync_at` was degraded to `connected` on `enabled`, an absent `data_domains` fell back to `kind`-scoped calls, a rejected `kind` fell back to an unscoped read plus `q`, and an unrecognized `connection_status` was reported as `error`, never as connected.
 - `coverage` is `none` when no requested kind is `connected` or `connecting` — an all-`error` workspace was not labelled `partial`.
 - As a flow step, the turn ended on the card — green coverage included — and the flow moved on only on the acknowledgment: the "Continue" prefill or a typed continue taken at its word with no extra call, or one `well_wait_for_selection({ kind: "connect_ack", timeout_s: 10 })` call on any other message. The wait tool was never called before this conversation rendered the card.
+- A `required` kind that was **missing** or **error** when the card rendered got one fresh coverage read on the acknowledgment, and the flow stopped — with the hand-off kept — when that kind was still neither `connected` nor `connecting`. No `required` kind was continued past on the card's own read alone.
 - A typed "I connected it" got one fresh coverage read in that turn, and nothing was re-asked in text.
 - The gap was stated once; the rows were not narrated or re-tabulated when the card was on screen.
 - On a transient failure the call was retried once; a second failure returned no hand-off and no coverage claim, only the workspace link.
