@@ -55,11 +55,18 @@ This repo packages that judgment as **Agent Skills** — playbooks any AI assist
 | `payment-invoice-lookup` | "What happened with this payment?" — match a payment to its invoice, or list every unreconciled one. | [View details →](docs/payment-invoice-lookup.md) |
 | `missing-receipts` | "Which expenses are missing receipts?" — invoices with no source document attached, for compliance. | [View details →](docs/missing-receipts.md) |
 | `draft-invoice` | "Draft an invoice for this client" — creates a real invoice record in Well, with an attached PDF, from a chat description. | [View details →](docs/draft-invoice.md) |
-| `define-workspace` | "Which entity are we talking about?" — pins the one Well workspace a conversation works in and hands it to every skill that follows. | [View details →](docs/define-workspace.md) |
-| `connect-tools` | "What's connected to Well?" — bank, accounting, and invoicing sources: connected, still syncing, in error, or missing, with one-click connect links. | [View details →](docs/connect-tools.md) |
-| `resolve-own-company` | "Which company here is ours?" — resolves the own-company pointer that decides payable from receivable, and folds in an entity's duplicate records. | [View details →](docs/resolve-own-company.md) |
-| `normalize-currency` | "What is this worth in one currency?" — converts multi-currency amounts into one total carrying its rate and date, or a clean per-currency breakdown, never a blended figure. | [View details →](docs/normalize-currency.md) |
-| `well-design-system` | Style a view you compose for Well data — tokens, card anatomy, and a precompiled stylesheet — so it looks like Well rather than a generic page. | [View details →](docs/well-design-system.md) |
+
+## Utils
+
+These aren't skills you ask for directly — the skills above invoke them automatically to handle a setup step. Listed here for reference, or if you want to see exactly how that step works.
+
+| Skill | Description | Details |
+|---|---|---|
+| `define-workspace` | Pins the one Well workspace a conversation works in and hands it to every skill that follows. | [View details →](docs/define-workspace.md) |
+| `connect-tools` | Checks bank, accounting, and invoicing sources: connected, still syncing, in error, or missing, with one-click connect links. | [View details →](docs/connect-tools.md) |
+| `resolve-own-company` | Resolves the own-company pointer that decides payable from receivable, and folds in an entity's duplicate records. | [View details →](docs/resolve-own-company.md) |
+| `normalize-currency` | Converts multi-currency amounts into one total carrying its rate and date, or a clean per-currency breakdown, never a blended figure. | [View details →](docs/normalize-currency.md) |
+| `well-design-system` | Styles a view you compose for Well data — tokens, card anatomy, and a precompiled stylesheet — so it looks like Well rather than a generic page. | [View details →](docs/well-design-system.md) |
 
 ---
 
@@ -171,6 +178,11 @@ Download the `.skill` file and double-click it to install — Claude Desktop ins
 | `payment-invoice-lookup` | Match a payment to its invoice, or list every unreconciled one. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/payment-invoice-lookup.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/payment-invoice-lookup.zip) |
 | `missing-receipts` | Invoices with no source document attached, for compliance. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/missing-receipts.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/missing-receipts.zip) |
 | `draft-invoice` | Create a real invoice record in Well, with an attached PDF, from a chat description. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/draft-invoice.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/draft-invoice.zip) |
+
+**Utils** — installed automatically alongside the skill above that needs them; download directly only if you're composing your own workflow.
+
+| Skill | Description | Download |
+|---|---|---|
 | `define-workspace` | Pin the one Well workspace a conversation works in and hand it to every skill that follows. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/define-workspace.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/define-workspace.zip) |
 | `connect-tools` | Check bank, accounting, and invoicing connections and connect the missing ones in one click. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/connect-tools.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/connect-tools.zip) |
 | `resolve-own-company` | Work out which company in the workspace is yours, and fold in its duplicate records. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/resolve-own-company.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/resolve-own-company.zip) |
