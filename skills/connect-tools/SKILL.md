@@ -51,7 +51,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 It ships with the `well-skills` plugin. This skill does not resolve the workspace itself: when no `workspace_id` was passed and this conversation established no pin, run `define-workspace` first (step 2) rather than asking for a workspace here.
 
-**`well_list_connectors` is the only listing tool this skill calls.** It returns the connectable catalog with a live overlay: every connection the workspace already holds is represented on its own catalog row, so one call answers both "what can I connect?" and "what is connected?". Each row carries:
+**`well_list_connectors` is the only connector-listing tool this skill calls**, and the one read that decides coverage. The `well_list_workspaces` session read below is the sole exemption. `well_list_connectors` returns the connectable catalog with a live overlay: every connection the workspace already holds is represented on its own catalog row, so one call answers both "what can I connect?" and "what is connected?". Each row carries:
 
 - `service_id` — the connector's stable catalog id. `name`, `category_id`, `logo_url` — what it is.
 - `status` — `available` is connectable now; anything else (`coming_soon`, `unavailable`, `maintenance`) is not.
@@ -67,7 +67,7 @@ Inputs: `kind` — one of `bank`, `accounting`, `invoicing` — filters the cata
 The click-chain tools:
 
 - `well_wait_for_selection({ kind: "connect_ack", timeout_s? })` — reads the Continue click (the card calls `well_switch_workspace` with `ack: "connectors"` itself), for when a later message is not the card's "Continue" prefill. Call it only after this conversation has rendered the connect card: reading a click on that card is its one job. Never call it at step start, never before the card exists, and never to probe for an ack — an ack exists only once this conversation's card has been clicked, so the card always comes first, with no tool call before its own read. An already-made ack returns instantly as `{ status: "selected", selection: { acknowledged: true }, already_set: true }`; when nothing is set yet it waits briefly (default 10 seconds) and returns `{ status: "no_selection_yet" }` — a normal result, not an error. Never call it in the turn that renders the card, and never use it as a long wait. If the tool is absent, treat the user's next continue-message as the acknowledgment.
-- `well_list_workspaces` — for resync only: its `session` block carries the pinned workspace and queue.
+- `well_list_workspaces` — the one exemption from the connector-listing rule above, and only to resync this conversation's own state after a stop: its `session` block carries the pinned workspace and the `workspace_queue` a multi-workspace run walks. It never contributes to the coverage decision, and it never resolves a workspace this conversation did not pin.
 
 **Never call `well_query_records` on `workspace_connectors` in this skill.** That root is for record-level reads — timestamps, filters, joins — and querying it here renders a records table where the connect picker belongs, which is the wrong surface for a connect step and does not carry an install link. Everything this skill needs is on the catalog row. Never call `well_invoke_connector_tool` or any provider-specific tool either: this skill reads connection state, never provider data.
 
@@ -149,7 +149,7 @@ use it.
 Before finishing, verify:
 
 - If `well_*` tools were absent, the user was pointed at `https://api.wellapp.ai/v1/mcp` instead of a tool error.
-- `well_list_connectors` was the only listing tool called — no `well_query_records` on `workspace_connectors`, no `well_invoke_connector_tool`, no provider-specific tool.
+- `well_list_connectors` was the only connector read called — no `well_query_records` on `workspace_connectors`, no `well_invoke_connector_tool`, no provider-specific tool. A `well_list_workspaces` call, if any, only resynced this conversation's pin and queue and fed nothing into the coverage decision.
 - One kind meant one scoped call; two or three kinds meant one unscoped call — one card per turn, never two.
 - `workspace_id` came from `define-workspace`, the caller, or a session pin this conversation established — the workspace was not resolved or asked for in text here, and no leftover pin from another conversation was reused or mentioned.
 - Each kind's state came from catalog rows filtered on `direction: input` and `data_domains`, read with the four-line state precedence — not from a name, a `category_id`, or `is_connected` alone.
