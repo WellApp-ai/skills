@@ -79,6 +79,23 @@ for dir in skills/*/; do
 	done <<-EOF
 		$(cd "$dir" && find . -type l -path './references/*')
 	EOF
+	# The stage excludes references/ wholesale and the inliner picks up only
+	# top-level .md files that resolve, so anything else under references/ —
+	# a broken symlink, a non-markdown file, a nested file — would drop out
+	# of the download without a trace.
+	while IFS= read -r entry; do
+		[ -n "$entry" ] || continue
+		case "$entry" in
+		./references/*/*) ;;
+		./references/*.md)
+			if [ -f "$dir/$entry" ]; then continue; fi
+			;;
+		esac
+		echo "skills/$name/${entry#./} would not reach the archive; references/ may hold only top-level .md files that resolve to a real file" >&2
+		exit 1
+	done <<-EOF
+		$(cd "$dir" && find ./references -mindepth 1 \( -type f -o -type l \) 2>/dev/null)
+	EOF
 	stage=$(mktemp -d)
 	(cd "$dir" && find . -type f ! -path './references/*' ! -name '.DS_Store' | while read -r f; do
 		mkdir -p "$stage/$(dirname "$f")"
