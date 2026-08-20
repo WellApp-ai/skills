@@ -1,13 +1,14 @@
 ---
 name: connect-tools
-description: Check which data sources a Well workspace has connected — bank accounts, accounting software, invoicing and payment portals — get the missing ones connected with Well's one-click install links, and hand off a typed coverage result to the flow that follows. Use when the user asks to connect their finance tools, link an accounting tool (Pennylane, QuickBooks, Xero…), add Stripe or Shopify, asks "which tools are connected", "what can I connect to Well", or when a Well skill needs bank / accounting / invoicing data present before it continues. Use connect-bank instead for a bank-only ask. Do not use to compute figures, to trigger a sync, to disconnect a tool, or to run a connector's own actions.
+requires: [define-workspace]
+description: Check which data sources a Well workspace has connected — bank accounts, accounting software, invoicing and payment portals — get the missing ones connected with Well's one-click install links, and hand off a typed coverage result to the flow that follows. Use when the user asks to connect a bank, connect their finance tools, link an accounting tool (Pennylane, QuickBooks, Xero…), add Stripe or Shopify, asks "which tools are connected", "what can I connect to Well", or when a Well skill needs bank / accounting / invoicing data present before it continues. Do not use to compute figures, to trigger a sync, to disconnect a tool, or to run a connector's own actions.
 ---
 
 # Connect Tools with Well
 
 ## Purpose
 
-Answer "does this workspace have the connections this job needs?" and close the gap. One tool does the whole job: `well_list_connectors` returns Well's connector catalog with every one of the workspace's connections represented on its own catalog row, and in an MCP-Apps host that result renders as the connect picker card. Read the state per kind — bank, accounting, invoicing — from those rows, let the card carry the connect links, and hand a typed coverage result to the calling flow. As a flow step this is **always a user stop**: the card renders — green or not — with a per-row **Connect** button on each tile and one **Continue** button. The Continue click writes an acknowledgment server-side (`well_switch_workspace` with `ack: "connectors"`) and prefills "Continue" in the user's composer; the user sends it, and that message is how the flow moves on. Step two of Well's fetch-missing-invoices flow, ahead of the dedicated `connect-bank` step.
+Answer "does this workspace have the connections this job needs?" and close the gap. One tool does the whole job: `well_list_connectors` returns Well's connector catalog with every one of the workspace's connections represented on its own catalog row, and in an MCP-Apps host that result renders as the connect picker card. Read the state per kind — bank, accounting, invoicing — from those rows, let the card carry the connect links, and hand a typed coverage result to the calling flow. As a flow step this is **always a user stop**: the card renders — green or not — with a per-row **Connect** button on each tile and one **Continue** button. The Continue click writes an acknowledgment server-side (`well_switch_workspace` with `ack: "connectors"`) and prefills "Continue" in the user's composer; the user sends it, and that message is how the flow moves on. Step two of Well's fetch-missing-invoices flow, ahead of the dedicated `connect-bank` step where that skill is installed.
 
 ## When to use this skill
 
@@ -23,7 +24,7 @@ Use this skill when:
 Do not use this skill when:
 
 - The workspace is not resolved yet — run `define-workspace` first and pass its `workspace_id` in.
-- The ask is only about the bank ("connect my Qonto", "is my bank connected?") — that is the `connect-bank` skill, which scopes the catalog to banks and returns one state instead of three.
+- The ask is only about the bank ("connect my Qonto", "is my bank connected?") **and** the `connect-bank` skill is installed — it scopes the catalog to banks and returns one state instead of three. When it is not installed, answer here instead: scope this run to `kinds: [bank]` rather than sending the user to a skill they do not have.
 - The user wants a figure (cash, runway, spend) — the data skills run this check internally.
 - The user wants to disconnect a tool, force a re-sync, or run an action on a connected provider (`well_invoke_connector_tool`) — out of scope; point them to the Well app.
 - The user wants Well to fetch invoices from a portal — that is the deploy-agents step of the flow, after this one.
@@ -43,6 +44,12 @@ The calling skill or the user provides:
 ## Tooling
 
 Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). If the `well_*` tools are not in your toolset, the host has not added the Well MCP server yet — tell the user to add it at that URL, then retry.
+
+**Composed skills.** One atomic Well skill owns the step before this one — invoke it, don't reimplement it:
+
+- `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there is no connection yet, and pins exactly one workspace. Supplies the `workspace_id` that every call here carries.
+
+It ships with the `well-skills` plugin. This skill does not resolve the workspace itself: when no `workspace_id` was passed and this conversation established no pin, run `define-workspace` first (step 2) rather than asking for a workspace here.
 
 **`well_list_connectors` is the only listing tool this skill calls.** It returns the connectable catalog with a live overlay: every connection the workspace already holds is represented on its own catalog row, so one call answers both "what can I connect?" and "what is connected?". Each row carries:
 
@@ -75,7 +82,7 @@ The click-chain tools:
 
 `sync_in_progress: true` on a **connected** row keeps it connected — say data may be partial until the pass finishes.
 
-**Degrade gracefully on an older server.** If `data_domains` is absent, fall back to one `kind`-scoped call per requested kind — then said calls span turns, one card each — and treat each call's rows as that kind. If `kind` is rejected as an unknown input too, read the catalog unscoped and fall back to `q` on the providers the user named. If `last_successful_sync_at` is absent, read `enabled` as **connected** rather than reporting `connecting` forever. If `connection_status` carries a value outside the vocabulary above, treat the row as **error** and say the state is unrecognized — never read an unknown value as connected.
+**Degrade gracefully on an older server.** If `data_domains` is absent, fall back to one `kind`-scoped call per requested kind — those calls then span turns, one card each — and treat each call's rows as that kind. If `kind` is rejected as an unknown input too, read the catalog unscoped and fall back to `q` on the providers the user named. If `last_successful_sync_at` is absent, read `enabled` as **connected** rather than reporting `connecting` forever. If `connection_status` carries a value outside the vocabulary above, treat the row as **error** and say the state is unrecognized — never read an unknown value as connected.
 
 ## Workflow
 
@@ -97,10 +104,13 @@ Call each list or read tool once per step, and render at most one widget card pe
    - In a text-only host, name at most three connectors per missing kind — `is_preselected` rows first, then the user's provider hints via `q` — each with its `install_url`, and treat the user's next message as the answer.
    - If the user names a provider that is not in the default view, search it with `q` before saying Well does not support it. A row whose `status` is not `available` is not connectable today — say so and offer the nearest available alternative from the catalog rather than a dead link.
 
-5. **Resolve the next message after the card.** In this order, and never by re-asking:
-   - The message is the card's "Continue" prefill, or says continue / done / connected in its own words → that is the acknowledgment; move on in one short sentence. No verification call is needed here — the next step's own read is the verification, and anything the user connected during the stop lands in the later steps' own reads while the hand-off's coverage describes the read that rendered the card.
+5. **Resolve the next message after the card.** In this order, and never by re-asking.
+
+   **The `required` gate applies to every path below that moves the flow on.** When a kind in `required` was **missing** or **error** on the read that rendered the card, re-read the coverage once in that turn (that turn's one card) before continuing — the user may have connected it during the stop. When the kind is still neither `connected` nor `connecting`, say plainly that the flow cannot continue without it and stop, keeping the hand-off so the caller reads `coverage` and decides. With no `required` kind outstanding, no such read is needed.
+
+   - The message is the card's "Continue" prefill, or says continue / done / connected in its own words → that is the acknowledgment; move on in one short sentence, subject to the gate above. No verification call is needed on this path — the next step's own read is the verification, and anything the user connected during the stop lands in the later steps' own reads while the hand-off's coverage describes the read that rendered the card.
    - The user says in text they connected a tool → re-read the coverage once in that turn (that turn's one card) and hand off the fresh state.
-   - Any other message → call `well_wait_for_selection({ kind: "connect_ack", timeout_s: 10 })` once. `selected` (fresh or `already_set`) → the ack is in; move on. `no_selection_yet` → one line asking to click Continue on the card, end the turn.
+   - Any other message → call `well_wait_for_selection({ kind: "connect_ack", timeout_s: 10 })` once. `selected` (fresh or `already_set`) → the ack is in; move on, subject to the same gate. `no_selection_yet` → one line asking to click Continue on the card, end the turn.
    - The user declines a kind ("later", "skip invoicing") → record it under `skipped_by_user` and continue — unless the kind is in `required`, in which case say plainly that the flow cannot continue without it and stop, keeping the hand-off so the caller reads `coverage` and decides.
 
 6. **On failure, redirect instead of guessing.** A transient error on `well_list_connectors` → retry once. A second failure → do not invent connection state and hand off no coverage at all: every value would be a claim you cannot make, and `coverage: none` would read as "nothing is connected" rather than "nothing could be read". Say the coverage is unknown, give the user `<well-app-base-url>/workspaces/<workspace_id>`, tell them the connections page in Well shows and fixes the same thing, and hand the failure back to the caller. Do not append query parameters you have not confirmed the app reads.
@@ -126,6 +136,14 @@ Do not return:
 - Connection state guessed from a connector's display name, or read from a `workspace_connectors` records query.
 - A flow continuation that skipped the Continue click — as a flow step, the acknowledgment (clicked or typed) is the gate, green coverage included.
 
+**How this reaches the user.** A Well MCP tool that ships a widget attaches
+`_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
+never reaches you, so you cannot tell a host that drew the card from one that did not.
+Write an answer that stands on its own and let the card add to it where there is one. Do
+not compose a second rendering of figures the tool already returned; where a visual the
+tool does not draw genuinely reads better and the `well-design-system` skill is available,
+use it.
+
 ## Quality checks
 
 Before finishing, verify:
@@ -139,6 +157,7 @@ Before finishing, verify:
 - An absent `last_successful_sync_at` was degraded to `connected` on `enabled`, an absent `data_domains` fell back to `kind`-scoped calls, a rejected `kind` fell back to an unscoped read plus `q`, and an unrecognized `connection_status` was reported as `error`, never as connected.
 - `coverage` is `none` when no requested kind is `connected` or `connecting` — an all-`error` workspace was not labelled `partial`.
 - As a flow step, the turn ended on the card — green coverage included — and the flow moved on only on the acknowledgment: the "Continue" prefill or a typed continue taken at its word with no extra call, or one `well_wait_for_selection({ kind: "connect_ack", timeout_s: 10 })` call on any other message. The wait tool was never called before this conversation rendered the card.
+- A `required` kind that was **missing** or **error** when the card rendered got one fresh coverage read before the flow moved on — whichever path delivered the acknowledgment, the prefill or `well_wait_for_selection`'s `selected` — and the flow stopped, with the hand-off kept, when that kind was still neither `connected` nor `connecting`. No `required` kind was continued past on the card's own read alone.
 - A typed "I connected it" got one fresh coverage read in that turn, and nothing was re-asked in text.
 - The gap was stated once; the rows were not narrated or re-tabulated when the card was on screen.
 - On a transient failure the call was retried once; a second failure returned no hand-off and no coverage claim, only the workspace link.
