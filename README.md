@@ -62,11 +62,11 @@ These aren't skills you ask for directly — the skills above invoke them automa
 
 | Skill | Description | Details |
 |---|---|---|
-| `define-workspace` | Pins the one Well workspace a conversation works in and hands it to every skill that follows. | [View details →](docs/define-workspace.md) |
-| `connect-tools` | Checks bank, accounting, and invoicing sources: connected, still syncing, in error, or missing, with one-click connect links. | [View details →](docs/connect-tools.md) |
-| `resolve-own-company` | Resolves the own-company pointer that decides payable from receivable, and folds in an entity's duplicate records. | [View details →](docs/resolve-own-company.md) |
-| `normalize-currency` | Converts multi-currency amounts into one total carrying its rate and date, or a clean per-currency breakdown, never a blended figure. | [View details →](docs/normalize-currency.md) |
-| `well-design-system` | Styles a view you compose for Well data — tokens, card anatomy, and a precompiled stylesheet — so it looks like Well rather than a generic page. | [View details →](docs/well-design-system.md) |
+| `define-workspace` | "Which entity are we talking about?" — pins the one Well workspace a conversation works in and hands it to every skill that follows. | [View details →](docs/define-workspace.md) |
+| `connect-tools` | "What's connected to Well?" — bank, accounting, and invoicing sources: connected, still syncing, in error, or missing, with one-click connect links. | [View details →](docs/connect-tools.md) |
+| `resolve-own-company` | "Which company here is ours?" — resolves the own-company pointer that decides payable from receivable, and folds in an entity's duplicate records. | [View details →](docs/resolve-own-company.md) |
+| `normalize-currency` | "What is this worth in one currency?" — converts multi-currency amounts into one total carrying its rate and date, or a clean per-currency breakdown, never a blended figure. | [View details →](docs/normalize-currency.md) |
+| `well-design-system` | Style a view you compose for Well data — tokens, card anatomy, and a precompiled stylesheet — so it looks like Well rather than a generic page. | [View details →](docs/well-design-system.md) |
 
 ---
 
