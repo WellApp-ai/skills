@@ -1,6 +1,6 @@
 # Conventions
 
-For people (and agents) editing this repo. Nothing here ships to users — the skills themselves are the product; this is how to change them without breaking the parts that are easy to miss.
+Internal notes for the Well team and the agents working alongside us. This repo is public so the skills can be installed from it, not as an invitation to send skill PRs — nothing here ships to users, it is just how we change the skills without breaking the parts that are easy to miss.
 
 Every rule below exists because a reviewer caught it, usually more than once.
 
