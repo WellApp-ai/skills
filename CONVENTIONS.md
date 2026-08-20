@@ -31,9 +31,13 @@ Derive all four from the actual bullet count rather than editing by hand, then c
 
 ## Reuse the README's install copy — never rewrite it
 
-Each docs page's AI-assisted block mirrors the multi-file shape in [`README.md`](README.md#assisted-by-ai-recommended): `1. Fetch these files:` with lettered sub-items, then its downstream wording verbatim. To add a dependency, extend step 1 with the next letter.
+The canonical template for a docs page's AI-assisted block is **any of the fifteen pages that already share it** — [`docs/expense-breakdown.md`](docs/expense-breakdown.md) is as good a reference as any. Those fifteen blocks are byte-identical: five steps, opening `1. Fetch these files:` with lettered sub-items. To add a dependency, extend step 1 with the next letter and change nothing else.
 
-Do not write new prose for it. That copy has been tuned for install UX, and rewriting it reintroduces untested wording — one attempt added an "each must land in its own skill folder named after that skill" instruction that was never true and had to be reverted.
+**Do not copy the block out of [`README.md`](README.md#assisted-by-ai-recommended).** It looks like the same thing and is not: it installs *every* skill at once, so it runs to six steps and carries two that a single-skill page must never import — a "create a summary table" step, and a clause about keeping the design-system's two `.css` files in `assets/`. The README block is where the multi-file *shape* came from, but its wording has since diverged, and copying it verbatim into a docs page would change the established install flow.
+
+Do not write new prose for it either. That copy is tuned for install UX, and rewriting it reintroduces untested wording — one attempt added an "each must land in its own skill folder named after that skill" instruction that was never true and had to be reverted.
+
+Two pages differ legitimately. [`docs/define-workspace.md`](docs/define-workspace.md) depends on nothing, so it uses the singular `1. Fetch this file:` with no sub-items. [`docs/well-design-system.md`](docs/well-design-system.md) ships stylesheets rather than a lone `SKILL.md`, so it fetches assets separately and says where to put them.
 
 ## Never blind find-and-replace a shared phrase
 
