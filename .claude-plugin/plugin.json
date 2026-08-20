@@ -18,7 +18,8 @@
     "receivables",
     "reconciliation",
     "fx",
-    "connectors"
+    "connectors",
+    "banking"
   ],
   "skills": "./skills",
   "mcpServers": {
