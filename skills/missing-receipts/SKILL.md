@@ -126,7 +126,7 @@ Before finishing, verify:
 
 ### Expected behavior
 
-Run `define-workspace`, then `connect-tools`, and spot-check that rows have landed; query `invoices` for the trailing 3 months where `document` is null, and return something like "14 invoices this quarter have no document attached, totaling $8,240 across 3 currencies" followed by a capped list (issuer, amount, currency, date, invoice number) and the explicit note that this skill cannot fetch the missing receipts itself — only surface them.
+Run `define-workspace`, then `connect-tools`, and spot-check that rows have landed; query `invoices` for the trailing 3 months where `document` is null, and return something like "14 invoices in the trailing 3 months have no document attached: $6,100 USD, €1,450 EUR, and $690 CAD" — never a blended $8,240-style total — followed by a capped list (issuer, amount, currency, date, invoice number) and the explicit note that this skill cannot fetch the missing receipts itself — only surface them.
 
 ### Example request
 
