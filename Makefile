@@ -1,4 +1,4 @@
-.PHONY: install validate build
+.PHONY: install validate build refresh refresh-check
 
 install:
 	git config core.hooksPath .githooks
@@ -29,3 +29,12 @@ build:
 		( cd "$$dir" && zip -0ry -X -q "../../dist/$$name.skill" . -x ".DS_Store" ); \
 		echo "rebuilt dist/$$name.{zip,skill}"; \
 	done
+
+# The kit under skills/well-design-system/assets is a copy of what
+# @wellapp-ai/design-tokens builds. Reads npm.pkg.github.com and needs a token.
+refresh:
+	node scripts/refresh-design-system.mjs
+	$(MAKE) build
+
+refresh-check:
+	node scripts/refresh-design-system.mjs --check
