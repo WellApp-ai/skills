@@ -11,13 +11,22 @@
 
 ## What it does
 
-Ask your AI assistant what you are missing for a month, and it reads Well's gap list for that period: the money that actually left your bank account and still has no supplier invoice behind it, one row per supplier, with the number of transactions and the total. Each row says how the gap can be closed — Well's agent can fetch it from the supplier's portal, the provider needs connecting first, or it needs an upload from you. Amounts that Well has no exchange rate for are shown as unavailable rather than folded into a wrong total, and the list covers your categorized expense transactions, which the skill tells you every time. It is the fourth step of Well's fetch-missing-invoices flow — it lists the gaps and hands them on. It never collects the documents itself.
+Ask your AI assistant what you are missing for a month, and it reads Well's gap list for that period: the money that actually left your bank account and still has no supplier invoice behind it, one row per supplier, with the number of transactions and the total. Each row says how the gap can be closed — Well's agent can fetch it from the supplier's portal, the provider needs connecting first, or it needs an upload from you. Amounts that Well has no exchange rate for are shown as unavailable rather than folded into a wrong total, and the list covers your categorized expense transactions, which the skill tells you every time. It is the gap-list step of Well's fetch-missing-invoices flow, after `define-period` — it lists the gaps and hands them on. It never collects the documents itself.
 
 ## Required data in Well
 
 - **A workspace and a period** — *required.* The `define-workspace` skill pins the entity, and the `define-period` skill resolves the month or fiscal period this list is about.
 - **Banking connector** — required. Settled spend is what makes a gap visible; without it there is nothing to be missing an invoice against.
 - **Accounting or invoicing connector** — *optional but recommended.* This is what lets Well match an invoice to a payment, so an already-received invoice stops showing up as a gap.
+
+## Composes onto
+
+This skill delegates two setup steps to Well's atomic skills rather than repeating them:
+
+- **[`define-workspace`](define-workspace.md)** — pins which Well workspace the gap list is for.
+- **[`define-period`](define-period.md)** — resolves the month or fiscal period, and writes the selection Well reads when it computes the list.
+
+Install both alongside this one. This skill needs them: it resolves no workspace of its own and never guesses a month, so without them there is nothing to compute the list against. The **Claude Code plugin** and **Codex plugin** paths below install all three together; if you download the `.skill` file on its own, grab those two as well.
 
 ---
 
@@ -31,15 +40,17 @@ Paste this into any AI agent — Claude, Codex, Cursor, OpenCode, and others:
 > We suggest using **Claude Chat** rather than Claude Cowork for this step — Cowork's approach is noticeably slower and pricier for a quick install like this. Any Claude model works fine.
 
 ```
-Install the following official skill from Well.
+Install the following official skills from Well.
 
 **Instructions**:
 
-1. Fetch this file: 
-    https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/show-missing-invoices/SKILL.md
-2. Download and display this file to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
-3. Install this skill.
-4. Before replying to the user, ensure you have named the downloaded file "SKILL.md". This is crucial for the rest of the steps.
+1. Fetch these files:
+    a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/show-missing-invoices/SKILL.md
+    b. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
+    c. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-period/SKILL.md
+2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
+3. Install these skills.
+4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
 5. If the MCP https://api.wellapp.ai/v1/mcp is not installed: suggest it to the user and explain how to add a new MCP.
 ```
 
