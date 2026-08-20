@@ -46,7 +46,8 @@ The calling skill or the user provides:
 
 - The `show-missing-invoices` hand-off — required in practice. Its rows and its `agent_candidates`
   are what this skill previews. Without it, and without the preview tool below, there is nothing to
-  preview: say so and stop.
+  preview: say so, hand off `resolution: unavailable`, and stop. Never report that state as
+  `nothing_to_do` — the period may hold plenty to fetch; the preview simply could not be built.
 - `workspace_id` — required. Comes from `define-workspace` or the session pin, used silently; never
   resolved or asked for in text here.
 - A period selection written server-side — required, but **not passed to the tool**: the user's
@@ -85,9 +86,8 @@ involved, and it is optional:
 
 Never call a tool that changes anything. Specifically: no `well_invoke_connector_tool`, no
 `well_create_*`, no `well_update_*`, no `well_delete_*`, no connector action of any kind. This skill
-reads or derives, and it never writes. The one call it may make beyond the preview is
-`well_switch_workspace`, on a multi-workspace run, to re-point the session at the next entity — a
-session pin, not data.
+reads or derives, and it never writes. It does not re-pin the session either: on a multi-workspace
+run the caller calls `well_switch_workspace` between passes, as the Inputs section says.
 
 ## Workflow
 
@@ -121,12 +121,19 @@ Call each list or read tool once per step. The widget cards refresh themselves �
      `tx_count`, and its `base_total_amount`. Carry no amount at all rather than a partial one when
      a counterparty in the group has none. The hand-off's `counts.upload` and `counts.connect` are
      `upload_rows` and `connect_rows`.
+   - The `"unknown"` group is never an agent, whichever path produced it — the one exception to
+     using the tool's `agents` as they come. `show-missing-invoices` files the rows whose provider it
+     could not match under `provider_name: "unknown"`, and no agent can be dispatched against a
+     provider that was never identified. Keep that group out of `agents` and carry its `tx_count` as
+     `unmatched_rows`, counted apart from `upload_rows` so neither number is misreported.
    - Carry a structured provider identifier on every agent. `provider_id` is the tool's
      `provider_id` when you called the tool; otherwise the `matched_connector_service_id` shared by
      that group's rows in the `show-missing-invoices` hand-off; otherwise null. Never make a later
      step identify a provider by its name alone.
-   - No agents, no upload rows, no connect rows → `resolution: nothing_to_do`. Say the period has
-     nothing to fetch and stop; do not manufacture a plan.
+   - No agents, no upload rows, no connect rows, and no unmatched rows → resolution
+     `nothing_to_do`. Say the period has nothing to fetch and stop; do not manufacture a plan. A
+     period holding only an `"unknown"` group is **not** `nothing_to_do`: those transactions are
+     still missing an invoice, so report them on their own line and resolve `previewed`.
 
 4. **Say what would be launched — one line per agent, in the user's language.** Read the user's
    language from the conversation, not from the workspace country.
@@ -143,12 +150,16 @@ Call each list or read tool once per step. The widget cards refresh themselves �
    - Print an amount only when `base_total_amount` is set. Never print `null`, and never sum across
      currencies that were not already converted to the workspace base currency.
 
-5. **Then the two other lines, always both, even at zero.** One line for the rows the user has to
-   upload by hand (`upload_rows`) — no agent can fetch these. One line for the providers that are
-   not connected yet (`connect_rows`) — nothing can be fetched from them until they are. State the
-   count for each; when the tool returns the rows themselves rather than a count, name at most three
-   and give the total. If the user connects a provider or uploads a document and says so, re-derive
-   the preview yourself in the same turn and restate it — do not wait to be re-prompted.
+5. **Then the rows no agent covers — two lines always, a third when it applies.** On a previewed
+   run: one line for the rows the user has to upload by hand (`upload_rows`) — no agent can fetch
+   these. One line for the providers that are not connected yet (`connect_rows`) — nothing can be
+   fetched from them until they are. Both appear even at zero. State the count for each; when the
+   tool returns the rows themselves rather than a count, name at most three and give the total. A
+   third line, only when `unmatched_rows` is non-zero: Well could not match a provider for those
+   transactions, so no agent covers them. Keep it a line of its own with its own count — folding it
+   into `upload_rows` misreports both. On `nothing_to_do` step 3 already closed the answer, and none
+   of these lines apply. If the user connects a provider or uploads a document and says so,
+   re-derive the preview yourself in the same turn and restate it — do not wait to be re-prompted.
 
 6. **Restate how far the preview reaches.** One line, every time. These counts cover the period's
    **categorized** expense transactions only, so spend that is not categorized yet cannot appear in
@@ -180,22 +191,27 @@ Return:
   suffix — or, when the preview cards are already on screen, one summary line instead of restating
   them.
 - One line for the rows to upload by hand, and one line for the providers still to connect. Both
-  lines appear even when the count is zero.
+  lines appear even when the count is zero. A third line, only when `unmatched_rows` is non-zero, for
+  the transactions whose provider Well could not identify. On `nothing_to_do` the single
+  nothing-to-fetch sentence replaces all three.
 - One line stating that the preview covers categorized expense transactions only.
 - One plain sentence stating that no agent, no task, and no browser action was started.
 - The hand-off, kept for the calling flow and never printed: `workspace_id` — the one this skill
   ran on, the same value every hand-off in this flow opens with; the period; `run_mode: preview`;
   `nothing_launched: true`; the `agents` — each with its `provider_name`, `provider_id`, its
   counterparties (name, `tx_count`, `base_total_amount`), its summed `tx_count`, and its summed
-  amount or null; `upload_rows` and `connect_rows`; the `coverage_note` — categorized expense
-  transactions only, plus the tool's `hints` when it ran; and `resolution` — `previewed` or
-  `nothing_to_do`. `run_mode` names how this skill ran and is always `preview`; it mirrors the
-  tool's `mode: "preview"` under a different key, because `mode` upstream means a row's
-  `agent | connect | upload` badge. `provider_id` is the identifier a launch step would dispatch
-  on; it is null only when neither the tool nor the hand-off carries one. On `nothing_to_do`,
-  `agents` is empty and `upload_rows` / `connect_rows` are zero or empty. These keys are reasoning
-  vocabulary for you and the calling flow; the hand-off travels as plain conversation, not as a
-  data block.
+  amount or null; `upload_rows`, `connect_rows`, and `unmatched_rows`; the `coverage_note` —
+  categorized expense transactions only, plus the tool's `hints` when it ran; and `resolution` —
+  `previewed`, `nothing_to_do`, or `unavailable`. `run_mode` names how this skill ran and is always
+  `preview`; it mirrors the tool's `mode: "preview"` under a different key, because `mode` upstream
+  means a row's `agent | connect | upload` badge. `provider_id` is the identifier a launch step
+  would dispatch on; it is null only when neither the tool nor the hand-off carries one.
+  `unmatched_rows` counts the `"unknown"` group's transactions, which no agent covers. On
+  `nothing_to_do`, `agents` is empty and every row count is zero or empty. On `unavailable` —
+  neither the preview tool nor a `show-missing-invoices` hand-off was there to build a plan from —
+  only `workspace_id`, the period, and `run_mode` are kept, and no counts are claimed. These keys
+  are reasoning vocabulary for you and the calling flow; the hand-off travels as plain conversation,
+  not as a data block.
 - Connector coverage in plain words, on two axes. The `connect_rows` line **is** the connection
   disclosure: say which providers behind the missing rows are not connected. The `coverage_note`
   line is the data disclosure: the plan is drawn from categorized expense transactions only, so
@@ -209,9 +225,9 @@ Return:
   categorize the rest of the period first, so nothing is hidden from this plan?". When the user
   asks to launch the agents for real, say plainly that this version cannot yet and point them to
   the Well app, which runs the fetch itself.
-- Beyond the per-agent, upload, connect, coverage, and no-launch lines above, the answer stays
-  plain sentences a non-technical user understands. Never print yaml, JSON, or a fenced code block
-  to the user.
+- Beyond the per-agent, upload, unmatched, connect, coverage, and no-launch lines above, the answer
+  stays plain sentences a non-technical user understands. Never print yaml, JSON, or a fenced code
+  block to the user.
 
 Do not return:
 
@@ -221,6 +237,7 @@ Do not return:
 - The per-agent rows restated under the preview cards that already show them.
 - A `null` amount printed as a number, or amounts summed across currencies.
 - An agent for a provider that is not in the preview or in `agent_candidates`.
+- An agent named for a provider Well never matched — the `"unknown"` group is not an agent.
 
 ## Quality checks
 
@@ -236,7 +253,11 @@ Before finishing, verify:
   which providers a workspace uses.
 - One line per agent, in the user's language, each carrying the demo-mode suffix — or one summary
   line when the cards are on screen, with no agent-by-agent restatement.
-- The upload line and the connect line are both present, even at zero.
+- On a previewed run the upload line and the connect line are both present, even at zero, plus an
+  `unmatched_rows` line of its own when that count is non-zero. On `nothing_to_do` none appear.
+- No agent was built for the `"unknown"` group; its transactions were counted as `unmatched_rows`
+  instead, never folded into `upload_rows`, and a period holding only that group resolved
+  `previewed` rather than `nothing_to_do`.
 - The categorized-only coverage line was stated, with the tool's `hints` when the tool ran.
 - Every agent carries a `provider_id` — from the tool, or from the hand-off's
   `matched_connector_service_id` — and null only when neither source has one.
@@ -251,6 +272,8 @@ Before finishing, verify:
 - The hand-off facts were kept — `workspace_id`, the period, `run_mode: preview`,
   `nothing_launched: true`, the agents, `coverage_note`, and `resolution` — and no yaml, JSON, or
   fenced code block appears anywhere in the answer.
+- A run with neither the preview tool nor a hand-off handed off `resolution: unavailable`, never
+  `nothing_to_do`, and claimed no counts.
 - Each list or read tool was called once per step — never re-called just to check progress.
 - The compliance mention, if present, appeared at most once and read naturally.
 - The answer ends with the hand-back to the caller, and any request to really launch was answered
@@ -263,9 +286,9 @@ Before finishing, verify:
 The fetch-missing-invoices flow calls deploy-agents with `workspace_id` of Acme SAS, the March 2026
 selection already written by the user's click on the period card, and the `show-missing-invoices`
 hand-off:
-`agent_candidates` covering Shopify (3 transactions, 1 counterparty), Free Pro (2 transactions),
-plus 4 rows with no provider and 1 row on an unconnected Stripe account. The user writes in French.
-`well_preview_invoice_fetch` is not in the toolset.
+`agent_candidates` covering Shopify (3 transactions, 1 counterparty) and Free Pro (2 transactions),
+with no `"unknown"` group, plus `counts.upload` of 4 and one `connect` row on an unconnected Stripe
+account. The user writes in French. `well_preview_invoice_fetch` is not in the toolset.
 
 ### Expected behavior
 
@@ -311,13 +334,28 @@ a run.
 
 ### Example request
 
+Same flow, tool absent, and the hand-off's `agent_candidates` hold two groups: Amazon with three
+counterparties (5 transactions) and `"unknown"` with two counterparties (2 transactions).
+
+### Expected behavior
+
+Build one agent, for Amazon. The `"unknown"` group is not an agent: Well matched no provider for
+those rows, so nothing can be dispatched for them. Its 2 transactions become `unmatched_rows`, on a
+line of their own rather than folded into `upload_rows`: "Agent launched for Amazon — 5 invoices
+(demo mode: nothing is actually started)", then the upload line, then "2 transactions have no
+provider Well could identify — no agent covers them", then the connect line, the coverage line, and
+the plain no-launch sentence. Never write "Agent launched for unknown".
+
+### Example request
+
 The flow calls deploy-agents for a period whose rows all already have an invoice attached —
 `agent_candidates` is empty and there is nothing to upload or connect.
 
 ### Expected behavior
 
 Return `resolution: nothing_to_do`: "Nothing to fetch for March — every categorized expense
-transaction already has its invoice, and spend that is not categorized yet cannot appear here."
-Keep an empty `agents` list with the `coverage_note` set, and hand back. Offer
-`categorize-counterparties` when it is installed. Do not invent an agent, and do not offer to
-launch one anyway.
+transaction already has its invoice, and spend that is not categorized yet cannot appear here. No
+agent was launched, no task was queued, no browser session was opened." The upload line and the
+connect line are dropped: there is nothing to upload and nothing to connect. Keep an empty `agents`
+list with the `coverage_note` set, and hand back. Offer `categorize-counterparties` when it is
+installed. Do not invent an agent, and do not offer to launch one anyway.

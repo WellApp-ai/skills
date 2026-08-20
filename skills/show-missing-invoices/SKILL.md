@@ -1,5 +1,6 @@
 ---
 name: show-missing-invoices
+requires: [define-workspace, define-period]
 description: List the settled spend in one Well workspace that still has no supplier invoice for a given month or fiscal period, one row per counterparty, each row carrying how the gap can be closed — Well's agent fetches it, connect the provider, or upload it by hand — and hand the list off as a typed result. Use when the user asks which invoices or receipts are missing, "what am I missing for March", "which vendor invoices do I still owe my accountant", "show me the gaps before I close the books", or when a close-books or fetch-missing-invoices flow needs the period's gap list before it collects anything. Needs a workspace pinned by define-workspace and a period resolved by define-period. Do not use to fetch, download, or collect the documents themselves, to compute a spend total, or to list unpaid customer invoices.
 ---
 
@@ -7,7 +8,7 @@ description: List the settled spend in one Well workspace that still has no supp
 
 ## Purpose
 
-Answer "what supplier invoices am I still missing for this period?" for exactly one workspace and the period selection the user picked. Read Well's gap list, report it once — one row per counterparty, with how each gap can be closed — and emit a typed hand-off the next step reads to decide what to collect. Fourth brick of Well's fetch-missing-invoices flow: it takes `workspace_id` from `define-workspace`, and the period comes from the **server-held selection** the user's click on the period card (or `define-period`) already wrote — so the gap-list call carries no periods argument at all. It lists gaps only; it never fetches, downloads, or collects a document.
+Answer "what supplier invoices am I still missing for this period?" for exactly one workspace and the period selection the user picked. Read Well's gap list, report it once — one row per counterparty, with how each gap can be closed — and emit a typed hand-off the next step reads to decide what to collect. The gap-list step of Well's fetch-missing-invoices flow, after `define-period`: it takes `workspace_id` from `define-workspace`, and the period comes from the **server-held selection** the user's click on the period card (or `define-period`) already wrote — so the gap-list call carries no periods argument at all. It lists gaps only; it never fetches, downloads, or collects a document.
 
 ## When to use this skill
 
@@ -33,8 +34,8 @@ Do not use this skill when:
 
 The calling skill or the user provides:
 
-- `workspace_id` — required. Comes from `define-workspace`. If absent, use the session pin silently when one exists (`well_list_workspaces`' `session.pinned_workspace_id`); otherwise run `define-workspace` first — its picker renders at the point of need, and no "which workspace?" question is asked in text.
-- A period selection written server-side — required, but **not passed to the tool**: the user's click on the period card, or `define-period` on a typed month, already wrote it, and the tool reads it on its own. The `define-period` hand-off (its `period_label`, `is_complete`) is narration context only. If no selection exists yet, the tool says so — run `define-period` then; never guess a period from today's date.
+- `workspace_id` — required. Comes from `define-workspace`. If absent, reuse a session pin (`well_list_workspaces`' `session.pinned_workspace_id`) silently only when THIS conversation established it — hosts share one MCP session across conversations, so a pin this conversation never made is another conversation's leftover: ignore it, never mention it, and run `define-workspace` first — its picker renders at the point of need, and no "which workspace?" question is asked in text.
+- A period selection written server-side — required, but **not passed to the tool**: the user's click on the period card, or `define-period` on a typed month, already wrote it, and the tool reads it on its own. The `define-period` hand-off (its `periods`, `period_label`, `is_complete`) is narration context only — except on the older-server degrade path in Tooling, where its `periods` entries are the months the call carries. If no selection exists yet, the tool says so — run `define-period` then; never guess a period from today's date.
 - `purpose` — one line from the calling skill (e.g. "to decide which suppliers Well should chase"), used when a question is needed. Optional.
 
 A still-running month in the selection means the list is still moving — report the gaps anyway and say so.
@@ -45,7 +46,8 @@ A still-running month in the selection means the list is still moving — report
 
 Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). If the `well_*` tools are not in your toolset at all, the host has not added the Well MCP server yet — tell the user to add it at that URL, then retry. Required once it is added:
 
-- `well_list_missing_invoices` — the only tool this skill calls for the gap list. Input: `workspace_id` explicitly, as on every `well_*` call, and **no periods argument** — omitted, the server uses the period selection the user's click (or `define-period`) already wrote. An error comes back only when no selection exists yet: run `define-period`, then re-call. Pass a period pair explicitly only on an older server that holds no session selection — the degrade path, never the default. Output: `workspace_id`, `calendar_year`, `calendar_month`, `fiscal_year`, `fiscal_period`, `period_label`, `base_currency`, `transaction_count`, `rows`, `row_count`, `group_count`, `dropped_groups`, `hints`, `success`, and `error` on failure.
+- `well_list_missing_invoices` — the only tool this skill calls for the gap list. Input: `workspace_id` explicitly, as on every `well_*` call, and **no periods argument** — omitted, the server uses the period selection the user's click (or `define-period`) already wrote. An error comes back only when no selection exists yet: run `define-period`, then re-call. Pass the months explicitly only on an older server that holds no session selection, and then take them from `define-period`'s hand-off (`periods`), never from today's date — the degrade path, never the default. Output: `workspace_id`, `calendar_year`, `calendar_month`, `fiscal_year`, `fiscal_period`, `period_label`, `base_currency`, `transaction_count`, `rows`, `row_count`, `group_count`, `dropped_groups`, `hints`, `success`, and `error` on failure.
+- `well_list_workspaces` — for resync only: its `session` block carries the pinned workspace and the queue a multi-workspace caller walks. This skill never re-pins; `well_switch_workspace` belongs to the caller.
 
 Each entry in `rows` is **one counterparty**, already grouped by the server — never re-aggregate it:
 
@@ -62,13 +64,20 @@ Each entry in `rows` is **one counterparty**, already grouped by the server — 
 
 Never call `well_invoke_connector_tool` or any provider-specific tool. This skill reads Well's own gap list; it never touches a provider.
 
+**Composed skills.** Two atomic Well skills own the setup this skill must not inline — invoke them, don't reimplement them:
+
+- `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there's no connection yet, and pins exactly one workspace. Supplies the `workspace_id` that every call here carries.
+- `define-period` — resolves the month or fiscal period and writes the selection server-side, which is what makes the periods argument unnecessary on the gap-list call.
+
+Both ship with the `well-skills` plugin. Neither has an inline fallback here: this skill resolves no workspace of its own and guesses no month, so when one is absent the workflow runs that skill instead of working around it.
+
 ## Workflow
 
 Call each list or read tool once per step. The widget cards refresh themselves — never re-call a tool just to check progress.
 
 1. **Confirm the MCP server is configured.** If `well_*` tools are not available, the Well MCP server has not been added to this host. Tell the user a Well connection is mandatory — endpoint `https://api.wellapp.ai/v1/mcp` — because the gap list is computed in Well from their bank and accounting data. Stop until it is there.
 
-2. **Confirm the tool and the workspace.** Require `well_list_missing_invoices` in the toolset (see Tooling — if it is absent, hand off `resolution: unavailable` and stop) and `workspace_id` from `define-workspace` or the session pin, used silently. Missing workspace → run `define-workspace`; do not resolve it here and do not ask for it in text.
+2. **Confirm the tool and the workspace.** Require `well_list_missing_invoices` in the toolset (see Tooling — if it is absent, hand off `resolution: unavailable` and stop) and `workspace_id` from the caller, or a session pin used silently when this conversation established it. Missing workspace, or a pin left by another conversation → run `define-workspace` and never reuse or mention that leftover pin; do not resolve the workspace here and do not ask for it in text. Pass `workspace_id` explicitly on every call, even under a session pin.
    - Auth error on the call → no Well connection yet: start the Well connector's OAuth/DCR flow, then retry the same call yourself in the same turn and continue.
 
 3. **Read the gap list.** Call `well_list_missing_invoices` once, with `workspace_id` and nothing else — the server reads the period selection the user clicked. `period_label` in the result is the period name to quote.
@@ -77,13 +86,13 @@ Call each list or read tool once per step. The widget cards refresh themselves �
    - `row_count: 0` → no gaps for the period. Say so plainly with the coverage caveat below, and hand off `resolution: empty`.
 
 4. **Report it once.**
-   - In an MCP-Apps host the result already renders the missing-invoices card — every counterparty row with its Agent / Connect *provider* / Upload badge. Do not restate the rows in text under it. Give one line only: how many counterparties in each mode, and the total. Then stop.
+   - In an MCP-Apps host the result already renders the missing-invoices card — every counterparty row with its Agent / Connect *provider* / Upload badge. Do not restate the rows in text under it. Give the summary line — how many counterparties in each mode, and the total — then the coverage line from step 6 and the next-step pointer. Nothing else: no per-row commentary and no restated rows.
    - In a text-only host, list the counterparties grouped by mode — `agent` first (Well can close these itself), then `connect`, then `upload` — largest amount first inside each group. Give each row's name, `tx_count`, amount, and its `suggested_action`. Cap the list at fifteen rows and say how many remain.
    - A row whose `base_total_amount` is `null` has no FX rate for its currency: print **amount unavailable** for it. Never convert it yourself, and never add native amounts of different currencies together.
 
 5. **Total honestly.** The only total is the sum of the non-null `base_total_amount` values, stated in `base_currency`. When some rows are null, say the total covers the rows that have an amount and name how many do not. When every row is null, report no total at all.
 
-6. **State the coverage.** Say it in one line, every time, even when the list is empty: these gaps cover the period's **categorized** expense transactions only (`transaction_count` is how many were examined), so spend that is not categorized yet cannot appear here. Add the `dropped_groups` total when it is non-zero, and any `hints` the tool returned.
+6. **State the coverage.** Say it in one line, every time, even when the list is empty: these gaps cover the period's **categorized** expense transactions only (`transaction_count` is how many were examined), so spend that is not categorized yet cannot appear here. Add the `dropped_groups` total when it is non-zero, and any `hints` the tool returned. When the selection holds a month that is still running (`is_complete: false` in the `define-period` hand-off), say in the same line that the list is still moving.
 
 7. **On failure, redirect instead of guessing.** After a second failure, do not build a gap list by hand. Give the user `<well-app-base-url>/workspaces/<workspace_id>` and tell them Well shows the same list there. Do not append a query parameter you have not confirmed the app reads.
 
@@ -93,7 +102,7 @@ Call each list or read tool once per step. The widget cards refresh themselves �
 
 Return:
 
-- One line summarising the period: the `period_label`, how many counterparties fall in each mode, and the total (e.g. "**March 2026** — 12 suppliers with no invoice: 7 Well can fetch, 3 need a connection, 2 need an upload. €18,430 of settled spend."). When the card is on screen, this line is the whole answer.
+- One line summarising the period: the `period_label`, how many counterparties fall in each mode, and the total (e.g. "**March 2026** — 12 suppliers with no invoice: 7 Well can fetch, 3 need a connection, 2 need an upload. €18,430 of settled spend."). When the card is on screen this line replaces the rows, not the coverage and next-step lines below.
 - The coverage line from workflow step 6.
 - The hand-off, kept for the calling flow and never printed: `workspace_id` — always the workspace this list was read for, from the tool response or from the `define-workspace` hand-off when no call was made; the period (`calendar_year`, `calendar_month`, `fiscal_year`, `fiscal_period`, `period_label`); `base_currency`; `transaction_count`; the `rows` exactly as returned; the `counts` per mode (`agent`, `upload`, `connect`); `total_base_amount` — the sum of the non-null `base_total_amount` values, or null; `agent_candidates` — the `mode: agent` rows grouped by `matched_provider_name`, rows with no matched provider under `"unknown"`, each group carrying its counterparties (name, `tx_count`, `base_total_amount`), its summed `tx_count`, and its summed non-null amount; the `coverage_note` — one line, categorized expense transactions only, plus `dropped_groups` when non-zero; and `resolution` — `listed`, `empty`, or `unavailable`. On `empty`, `rows` is empty, every count is 0, and `total_base_amount` is null. On `unavailable`, only `workspace_id`, the period, and the `coverage_note` are kept. These keys are reasoning vocabulary for you and the calling flow — `deploy-agents` builds its preview from `agent_candidates` — and the hand-off travels as plain conversation, not as a data block.
 - Connector coverage in plain words: this list is only as complete as what feeds it — bank data is what makes a settled transaction visible, and accounting or invoicing connections are what let Well match an invoice to it. Say which of those are behind the answer, and if `connect` rows exist, that connecting those providers turns manual uploads into gaps Well can close itself.
@@ -115,11 +124,11 @@ Before finishing, verify:
 
 - If `well_*` tools were absent, the user was pointed at `https://api.wellapp.ai/v1/mcp` instead of a tool error.
 - If `well_list_missing_invoices` was absent, the answer said this Well server does not expose it yet, handed off `resolution: unavailable`, and computed nothing.
-- `workspace_id` came from `define-workspace` or the session pin used silently, and no workspace question was asked in text.
+- `workspace_id` came from `define-workspace`, the caller, or a session pin this conversation established — no leftover pin from another conversation was reused or mentioned, and no workspace question was asked in text.
 - The tool was called once, with no periods argument — the server-held selection decided the period — and `period_label` was quoted from the result. A no-selection error sent the flow to `define-period`, not to a guessed month.
 - The counterparty rows were used as returned and not re-grouped or re-counted.
 - Every `null` `base_total_amount` was reported as "amount unavailable"; the total summed only non-null base-currency amounts and disclosed how many rows it excluded.
-- The categorized-only coverage line was stated, even on an empty list, with `dropped_groups` and `hints` when present.
+- The categorized-only coverage line was stated, even on an empty list, with `dropped_groups` and `hints` when present, and with the still-moving caveat when the selection holds a month that is still running.
 - Rows were not narrated when the card was on screen.
 - No `well_invoke_connector_tool` or provider-specific tool was called.
 - On a transient failure the call was retried once before the workspace-link fallback.
