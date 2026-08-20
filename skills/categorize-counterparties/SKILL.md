@@ -116,6 +116,14 @@ Do not return:
 - A counterparty list rebuilt from `companies` or `transactions` when `well_list_counterparties` was unavailable.
 - Anything beyond the one sentence, and the pointer line the rule above allows, when the scope had nothing to categorize.
 
+**How this reaches the user.** A Well MCP tool that ships a widget attaches
+`_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
+never reaches you, so you cannot tell a host that drew the counterparties card from one
+that did not. Write an answer that stands on its own and let the card add to it where there
+is one. Do not compose a second rendering of counterparties the tool already returned;
+where a visual the tool does not draw genuinely reads better and the `well-design-system`
+skill is available, use it.
+
 ## Quality checks
 
 Before finishing, verify:
