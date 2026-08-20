@@ -59,7 +59,7 @@ jobs:
       - name: Validate
         run: node scripts/check-skill-frontmatter.js
 
-      - name: Open a PR when the kit moved
+      - name: Open or update the refresh PR
         id: pr
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -70,23 +70,38 @@ jobs:
             exit 0
           fi
           VERSION=$(npm view @wellapp-ai/design-tokens version --registry=https://npm.pkg.github.com)
-          BRANCH="bot/refresh-design-system-${VERSION}"
+          # One branch for every refresh, not one per version. A per-version branch
+          # leaves an unreviewed refresh open when the next release lands, so the
+          # queue grows by one PR per release instead of the newest superseding the
+          # last. The version stays in the title, the body, and the commit.
+          BRANCH="bot/refresh-design-system"
+          TITLE="chore(well-design-system): refresh the kit from design-tokens@${VERSION}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
           git add -A
           git commit -m "chore(well-design-system): refresh the kit from @wellapp-ai/design-tokens@${VERSION}"
-          git push -u origin "$BRANCH" --force-with-lease
-          # An open PR for this branch already carries the change; reuse it.
-          if [ -z "$(gh pr list --head "$BRANCH" --state open --json number -q '.[].number')" ]; then
-            {
-              echo "The published \`@wellapp-ai/design-tokens\` no longer matches the copy under \`skills/well-design-system/assets\`."
-              echo
-              echo "Regenerated with \`make refresh\`, which also rebuilt every \`dist/\` archive so the packaged skills carry the new stylesheet."
-              echo
-              echo "Opened by \`.github/workflows/refresh-design-system.yml\`."
-            } > /tmp/pr-body.md
-            gh pr create --base main --head "$BRANCH" \
-              --title "chore(well-design-system): refresh the kit from design-tokens@${VERSION}" \
-              --body-file /tmp/pr-body.md
+          # A lease needs a value to hold the remote to, and a fresh checkout that
+          # never fetched this branch has none — git rejects an unqualified
+          # --force-with-lease as stale info exactly when the branch already exists,
+          # which is every run after the first unreviewed refresh. Fetch it, then
+          # name the observed SHA. When the branch is absent the push creates it and
+          # there is nothing to protect.
+          if git fetch --quiet origin "$BRANCH" 2>/dev/null; then
+            git push -u origin "$BRANCH" --force-with-lease="$BRANCH:$(git rev-parse FETCH_HEAD)"
+          else
+            git push -u origin "$BRANCH"
+          fi
+          {
+            echo "The published \`@wellapp-ai/design-tokens\` no longer matches the copy under \`skills/well-design-system/assets\`."
+            echo
+            echo "Regenerated with \`make refresh\`, which also rebuilt every \`dist/\` archive so the packaged skills carry the new stylesheet."
+            echo
+            echo "Opened by \`.github/workflows/refresh-design-system.yml\`. A later run replaces this branch rather than opening a second PR."
+          } > /tmp/pr-body.md
+          NUMBER=$(gh pr list --head "$BRANCH" --state open --json number -q '.[].number' | head -1)
+          if [ -n "$NUMBER" ]; then
+            gh pr edit "$NUMBER" --title "$TITLE" --body-file /tmp/pr-body.md
+          else
+            gh pr create --base main --head "$BRANCH" --title "$TITLE" --body-file /tmp/pr-body.md
           fi
