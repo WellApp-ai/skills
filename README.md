@@ -179,7 +179,7 @@ Download the `.skill` file and double-click it to install — Claude Desktop ins
 | `missing-receipts` | Invoices with no source document attached, for compliance. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/missing-receipts.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/missing-receipts.zip) |
 | `draft-invoice` | Create a real invoice record in Well, with an attached PDF, from a chat description. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/draft-invoice.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/draft-invoice.zip) |
 
-**Utils** — installed automatically alongside the skill above that needs them; download directly only if you're composing your own workflow.
+**Utils** — each `.skill`/`.zip` above only bundles its own folder, so a util it depends on isn't included; download and install the util separately alongside it.
 
 | Skill | Description | Download |
 |---|---|---|
