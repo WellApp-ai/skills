@@ -35,6 +35,7 @@ The calling skill or the user provides:
 
 - `workspace_id` — required. Comes from `define-workspace`. If absent, run that skill first; never resolve a workspace here.
 - `fiscal_year_start_month` — the workspace's `identity.fiscal_year_start_month` from the same hand-off, 1-12. Optional. When it is null or absent, assume `1` (calendar-aligned, the same default Well applies to a workspace with no accounting settings) and say so in the answer.
+- `bank_state` — the bank side's state from the same flow: `connect-bank`'s `state`, or the bank kind's `state` from `connect-tools`' hand-off — `connected`, `connecting`, `error`, or `missing`. Optional. It is the only thing that tells a month holding no activity apart from a month with no bank feed behind it; this skill reads no connector state of its own.
 - `hint` — what the user said about the month: `"March"`, `"last month"`, `"2026-03"`, `"Q1"`. Optional.
 - `purpose` — one line from the calling skill (e.g. "to fetch the invoices missing for that month"), used in the card-pointing line when one is needed. Optional.
 - `title` / `subtitle` — copy for the period picker card. Optional; pass straight through when the picker tool accepts them.
@@ -99,7 +100,7 @@ Call each list or read tool once per step, and render at most one widget card pe
    - Build `date_range`: `from` is the first day (`YYYY-MM-01`), `to` is its last day (28, 29 on a leap February, 30, or 31).
    - `is_complete` is `true` when the month's last day is before today, `false` for the running month. The current month is a legal answer — a caller that needs a closed month reads `is_complete` and decides. Never silently swap a user's current-month pick for the previous month.
    - Derive `fiscal_year` and `fiscal_period` with the formula in Tooling.
-   Then set `has_activity` once for the whole selection: `well_get_schema({ root: "transactions" })` once per session, then one small `well_query_records` on `transactions` with `workspace_id`, `limit: 1`, and a whereClause ranging `executed_at` from the earliest `from` to the latest `to`. Do not `_or` a second date field into it. At least one row → `true`. Zero rows → `false`. No bank connector connected, the query failed twice, or the schema exposes no usable date field → `unknown`. Never report `false` when you could not read.
+   Then set `has_activity` once for the whole selection. When `bank_state` is `missing` or `error`, no settled activity can have reached Well: set `unknown` and skip the probe. Otherwise call `well_get_schema({ root: "transactions" })` once per session, then one small `well_query_records` on `transactions` with `workspace_id`, `limit: 1`, and a whereClause ranging `executed_at` from the earliest `from` to the latest `to`. Do not `_or` a second date field into it. At least one row → `true`. Zero rows → `false`, but only when `bank_state` said the bank is `connected` or `connecting`; with no `bank_state` an empty probe is `unknown`, because this skill cannot tell an empty month from an absent feed. The query failed twice, or the schema exposes no usable date field → `unknown`. Never report `false` when you could not read.
 
 7. **On failure, redirect instead of guessing.** A transient error on any call → retry once. A second failure → do not invent the selection's state; the months themselves are pinned (arithmetic, not data), so hand off with `has_activity: unknown` and give the user `<well-app-base-url>/workspaces/<workspace_id>` to check the month in Well. Do not append query parameters you have not confirmed the app reads.
 
@@ -111,7 +112,7 @@ Return:
 
 - One line naming the selection in both calendars, and its state: "Working on **March 2026** — fiscal year 2026, period 3. The month is complete and has bank activity." For several months: "Working on **March and April 2026** — fiscal periods 3 and 4. March is complete; April is still running." When `fiscal_year_start_month` was assumed, say so in the same line.
 - The hand-off, kept for the calling flow and never printed: `periods` — one entry per selected month, each with `calendar_year`, `calendar_month`, `fiscal_year`, `fiscal_period`, its label, `date_range` (`from` the first day, `to` the real last day), and `is_complete`; `period_label` for the whole selection (e.g. "March 2026", "March–April 2026"); `has_activity` (`true`, `false`, or `unknown`); and `resolution` — `single`, `hint_matched`, `user_picked`, or `unresolved`. On `unresolved`, nothing else is kept. The selection itself lives server-side (`session.selected_periods`), which is why the later reads omit their periods argument; these keys are narration and routing vocabulary, and the hand-off travels as plain conversation, not as a data block.
-- Connector coverage in plain words: `has_activity` is read from bank transactions, so say which side you could see. `unknown` because no bank connector is connected is a different answer from `false`, and the user has to be able to tell them apart — point at `connect-tools` when the bank side is missing.
+- Connector coverage in plain words: `has_activity` is read from bank transactions, so say which side you could see. `unknown` because `bank_state` said the feed is missing or in error is a different answer from `false`, and the user has to be able to tell them apart — point at `connect-bank`, or `connect-tools` when the wider set is missing. When no `bank_state` reached this skill, say the bank side is unconfirmed rather than naming a cause you cannot check.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. Skip it rather than force it in.
 - End with a one-line pointer to the next step. When the `show-missing-invoices` skill is installed: "Which invoices are missing for this month?". Otherwise hand control back to the skill that called this one, or, when the user asked for the period on its own, ask what they want to do in it.
 - The whole answer stays one to three plain sentences a non-technical user understands: the selection now pinned, whether it is complete and holds activity, and the next step. Never print yaml, JSON, or a fenced code block to the user.
@@ -145,7 +146,7 @@ Before finishing, verify:
 - `fiscal_period` and `fiscal_year` came from the formula for every selected month, with `fiscal_year_start_month` defaulted to 1 and the assumption disclosed when it was null; period 13 was never produced.
 - Each `date_range` runs from the month's first day to its real last day, leap years included; a running month kept `is_complete: false` and was not swapped for the previous one.
 - A future month was refused; several months named resolved to one written selection, oldest first; a quarter name was read as a calendar quarter and its three months were named when the fiscal year does not start in January.
-- `has_activity` is `unknown` — not `false` — when the read failed or no bank connector is connected, and the probe ranged `executed_at` alone over the whole selection.
+- `has_activity` is `unknown` — not `false` — when the read failed, when `bank_state` said the feed is missing or in error, or when no `bank_state` was passed and the probe came back empty; and the probe ranged `executed_at` alone over the whole selection.
 - After the card, a prefill message was taken at its word with no extra verification call; any other message got one `well_wait_for_selection({ kind: "periods", timeout_s: 10 })` call; nothing was re-asked in text. `well_wait_for_selection` was called only after this conversation rendered the picker — never as a selection probe.
 - On a transient failure the call was retried once before the fallback link.
 - The hand-off facts were kept with `resolution` set, and no yaml, JSON, or fenced code block appears anywhere in the answer.
@@ -189,8 +190,8 @@ Q1 names three months — a legal selection, not an ambiguity. Write all three i
 
 ### Example request
 
-The workspace has no bank connector and the caller asks for last month.
+The caller's hand-off carries `bank_state: missing`, and it asks for last month.
 
 ### Expected behavior
 
-Pin the month normally — the fiscal coordinate is arithmetic, not data. Report `has_activity: unknown`, and say why in one line: "I can't tell whether February 2026 holds any activity — no bank connector is connected to this workspace." Point at `connect-tools` for the bank side, then hand off. Do not report `has_activity: false`.
+Pin the month normally — the fiscal coordinate is arithmetic, not data. Skip the probe, report `has_activity: unknown`, and say why in one line: "I can't tell whether February 2026 holds any activity — no bank feed is connected to this workspace." Point at `connect-bank` for the bank side, then hand off. Do not report `has_activity: false`. Had no `bank_state` reached this skill at all, the probe would run, and an empty result would still be `unknown` — with the bank side named as unconfirmed rather than missing.
