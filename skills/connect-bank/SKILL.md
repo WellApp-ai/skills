@@ -93,8 +93,8 @@ Call each list or read tool once per step, and render at most one widget card pe
    - If the user names a bank that is not in the default view, search it with `q` before saying Well cannot connect it. A row whose `status` is not `available` is not connectable today — say so and offer the nearest available bank connector rather than a dead link.
 
 5. **Resolve the next message after the card.** In this order, and never by re-asking:
-   - The message is the card's "Continue" prefill, or says continue / done / connected in its own words → that is the acknowledgment; move on in one short sentence. No verification call is needed here — the next step's own read is the verification, and a bank connected during the stop lands in the later steps' own reads while the hand-off's `state` describes the read that rendered the card.
-   - The user says in text they connected the bank → re-read the state once in that turn (that turn's one card) — a freshly connected bank usually reads **connecting**, which is enough to move the flow on, `resolution: connected_now`.
+   - The message is the card's "Continue" prefill, or says continue / done / go ahead in its own words and claims no fresh connection → that is the acknowledgment; move on in one short sentence. No verification call is needed here — the next step's own read is the verification, and a bank connected during the stop lands in the later steps' own reads while the hand-off's `state` describes the read that rendered the card.
+   - The user says in text they connected the bank, even alongside a continue word ("done, I connected Qonto") → re-read the state once in that turn (that turn's one card) — a freshly connected bank usually reads **connecting**, which is enough to move the flow on, `resolution: connected_now`. A claim of a fresh connection takes this line, not the one above.
    - Any other message → call `well_wait_for_selection({ kind: "bank_ack", timeout_s: 10 })` once. `selected` (fresh or `already_set`) → the ack is in; move on. `no_selection_yet` → one line asking to click Continue on the card, end the turn.
    - The user declines ("later", "skip the bank") → set `skipped_by_user: true`, `resolution: skipped`, and continue when `required` is `false`; when `required` is `true`, say plainly that the flow cannot continue without the bank feed and stop, keeping the hand-off so the caller reads `state` and decides.
 
@@ -134,7 +134,7 @@ Before finishing, verify:
 - An absent `last_successful_sync_at` was degraded to `connected` on `enabled`, a rejected `kind` fell back to an unscoped read filtered on `data_domains`, and an unrecognized `connection_status` was reported as `error`, never as connected.
 - As a flow step, the turn ended on the card — a connected bank included — and the flow moved on only on the acknowledgment: the "Continue" prefill or a typed continue taken at its word with no extra call, or one `well_wait_for_selection({ kind: "bank_ack", timeout_s: 10 })` call on any other message. The wait tool was never called before this conversation rendered the card.
 - A typed "I connected it" got one fresh read in that turn, and nothing was re-asked in text.
-- The gap was stated once; the banks were not narrated or re-tabulated when the card was on screen.
+- The bank state was stated once; the banks were not narrated or re-tabulated when the card was on screen.
 - A bank the user named was searched with `q` before any "Well cannot connect it" claim.
 - On a transient failure the call was retried once; a second failure returned `resolution: unavailable` with `state: null` and the workspace link, not a guess.
 - The hand-off facts cover `state`, `connectors`, `install_url`, `skipped_by_user`, and `resolution`, the bank-only coverage was said in plain words, and no yaml, JSON, or fenced code block appears anywhere in the answer.
