@@ -170,4 +170,4 @@ Detect in step 5 that the field is absent — not merely null — and ask which 
 
 ### Expected behavior
 
-Check `workspace_connector_sync_logs`; if the sync is still `in_progress`, tell the user results are partial/pending rather than presenting a misleadingly confident number.
+Run `connect-tools`; its hand-off reports the connector as connected but its latest sync still running, so carry on and tell the user results are partial/pending rather than presenting a misleadingly confident number.

@@ -122,4 +122,4 @@ Run `define-workspace`, then `connect-tools`, and spot-check that rows have land
 
 ### Expected behavior
 
-Check `workspace_connector_sync_logs`; if the sync is still `in_progress`, tell the user the balance may be partial or incomplete rather than presenting a confident total, and offer to re-check once the sync finishes.
+Run `connect-tools`; its hand-off reports the connector as connected but its latest sync still running, so carry on and tell the user the balance may be partial or incomplete rather than presenting a confident total, offering to re-check once the sync finishes.
