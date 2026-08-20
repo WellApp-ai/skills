@@ -31,7 +31,7 @@ Derive all four from the actual bullet count rather than editing by hand, then c
 
 ## Reuse the README's install copy — never rewrite it
 
-The canonical template for a docs page's AI-assisted block is **any of the fifteen pages that already share it** — [`docs/expense-breakdown.md`](docs/expense-breakdown.md) is as good a reference as any. Those fifteen blocks are byte-identical: five steps, opening `1. Fetch these files:` with lettered sub-items. To add a dependency, extend step 1 with the next letter and change nothing else.
+The canonical template for a docs page's AI-assisted block is **any of the sixteen pages that already share it** — [`docs/expense-breakdown.md`](docs/expense-breakdown.md) is as good a reference as any. Those sixteen blocks are byte-identical: five steps, opening `1. Fetch these files:` with lettered sub-items. To add a dependency, extend step 1 with the next letter and change nothing else.
 
 **Do not copy the block out of [`README.md`](README.md#assisted-by-ai-recommended).** It looks like the same thing and is not: it installs *every* skill at once, so it runs to six steps and carries two that a single-skill page must never import — a "create a summary table" step, and a clause about keeping the design-system's two `.css` files in `assets/`. The README block is where the multi-file *shape* came from, but its wording has since diverged, and copying it verbatim into a docs page would change the established install flow.
 
@@ -41,7 +41,7 @@ Two pages differ legitimately. [`docs/define-workspace.md`](docs/define-workspac
 
 ## Never blind find-and-replace a shared phrase
 
-`delegates N setup steps` currently appears across **15** docs pages at four different values of N — 3 pages at one, 3 at two, 4 at three, 5 at four. Only the pages whose dependency count actually changed may be touched. A repo-wide substitution to fix five pages will silently make ten wrong, and nothing validates prose.
+`delegates N setup steps` currently appears across **16** docs pages at four different values of N — 4 pages at one, 3 at two, 4 at three, 5 at four. Only the pages whose dependency count actually changed may be touched. A repo-wide substitution to fix five pages will silently make ten wrong, and nothing validates prose.
 
 The same applies to `Install all N alongside this one`, `install all N+1 together`, and `grab those N as well`.
 
@@ -68,9 +68,10 @@ Know these before writing a workflow step that looks similar — the logic is ce
 
 ## Before you push
 
-`make validate` is the gate, and it runs on push via `.githooks/pre-push` (set up once with `make install`). It runs two checks, and the distinction matters:
+`make validate` is the gate, and it runs on push via `.githooks/pre-push` (set up once with `make install`). It runs three checks, and the distinction matters:
 
-- **`claude plugin validate . --strict`** confirms the marketplace manifest is well-formed. It checks only that a frontmatter block *exists* — never that the block parses as YAML.
+- **`claude plugin validate . --strict`** confirms the marketplace manifest is well-formed. It never reads the skills, so it passes even when a skill carries no frontmatter at all.
+- **`claude plugin validate ./skills --strict`** confirms every skill carries a frontmatter block. It checks only that the block *exists* — never that the block parses as YAML.
 - **`node scripts/check-skill-frontmatter.js`** enforces the one YAML rule that actually bites: an unquoted value containing a bare `:` is read by YAML as the start of a nested mapping, so the skill loads with **empty metadata, silently** — no name, no description, undiscoverable, and nothing anywhere reports an error. Per that script's own header, this broke `company-profile` and `missing-receipts` in #8.
 
 So running `claude plugin validate` alone is not the gate. Run `make validate`, and read the exit status unpiped (`make validate > /dev/null 2>&1; echo $?`), since a pipe reports its last stage.

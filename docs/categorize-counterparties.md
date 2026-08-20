@@ -11,7 +11,7 @@
 
 ## What it does
 
-A missing-invoice list is only as wide as your categorized spend, so an uncategorized supplier is a supplier whose gaps you never see. This skill reads the counterparties behind a month's spend — or, asked on its own, every uncategorized counterparty in the workspace — and reports coverage in one line: how many are categorized, how many are not, and which uncategorized company carries the most spend. It then reads Well's shared category catalog and proposes one category per company, biggest spend first, in batches of at most twenty, each with the company's transaction count and total. Nothing is written until you say yes, nothing is assigned outside the catalog, and a partial answer ("all except these two") is applied exactly as given. When the writes are done it re-reads the list and reports coverage before and after. It is the fourth step of Well's fetch-missing-invoices flow, and the pass to run when that flow's gap list comes back thin.
+A missing-invoice list is only as wide as your categorized spend, so an uncategorized supplier is a supplier whose gaps you never see. This skill reads the counterparties behind a month's spend — or, asked on its own, every uncategorized counterparty in the workspace — and reports coverage in one line: how many are categorized, how many are not, and which uncategorized company carries the most spend. The card that comes back is where the categorizing happens: every row carries a category select fed by Well's shared catalog, and each pick you make saves that company immediately, with nothing left to send. The skill makes that one read, points at the card, and stops — it proposes categories only when you ask it to, and then from the rows it already holds, biggest spend first, writing only the ones you confirm. Nothing is ever assigned outside the catalog. It is the fourth step of Well's fetch-missing-invoices flow, and the pass to run when that flow's gap list comes back thin.
 
 ## Required data in Well
 
@@ -20,6 +20,14 @@ A missing-invoice list is only as wide as your categorized spend, so an uncatego
 - **Banking connector** — *required.* Bank data is what makes a counterparty's settled spend visible at all.
 - **Accounting connector** (Pennylane, QuickBooks, Xero, …) — *optional, widens the list.*
 - **Invoicing / payment portals** (Stripe, Shopify, SaaS vendors) — *optional, widens the list.*
+
+## Composes onto
+
+This skill delegates one setup step to a Well atomic skill rather than repeating it:
+
+- **[`define-workspace`](define-workspace.md)** — pins which Well workspace the counterparties are read from.
+
+Install it alongside this one. Without it there is no workspace to categorize against, so the skill has nothing to read; with it installed you get one consistent workspace flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install both together; if you download the `.skill` file on its own, grab `define-workspace` as well.
 
 ---
 
@@ -33,15 +41,16 @@ Paste this into any AI agent — Claude, Codex, Cursor, OpenCode, and others:
 > We suggest using **Claude Chat** rather than Claude Cowork for this step — Cowork's approach is noticeably slower and pricier for a quick install like this. Any Claude model works fine.
 
 ```
-Install the following official skill from Well.
+Install the following official skills from Well.
 
 **Instructions**:
 
-1. Fetch this file: 
-    https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/categorize-counterparties/SKILL.md
-2. Download and display this file to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
-3. Install this skill.
-4. Before replying to the user, ensure you have named the downloaded file "SKILL.md". This is crucial for the rest of the steps.
+1. Fetch these files:
+    a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/categorize-counterparties/SKILL.md
+    b. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
+2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
+3. Install these skills.
+4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
 5. If the MCP https://api.wellapp.ai/v1/mcp is not installed: suggest it to the user and explain how to add a new MCP.
 ```
 
