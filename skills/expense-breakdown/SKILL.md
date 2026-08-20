@@ -100,7 +100,7 @@ All four ship with the `well-skills` plugin. This skill is also installable on i
 Return:
 
 - Which month the category breakdown covers (the latest closed month — say so explicitly if the user asked for a different window) and which connector(s)/sync the accounts-payable numbers came from.
-- Top expense categories with amount, currency, and share of total spend (`entries[].pct` from `well_get_cost_structure`, straight from the tool — not recomputed). When the tool result carried `_meta.ui.resourceUri` and your host rendered it, the product has already drawn this — add only what the card cannot say rather than restating it. Otherwise judge the form yourself: a horizontal bar chart is the natural fit for a comparison across categories, so reach for it when the host supports it and prose alone would read worse. Do not stop to ask table-or-chart first. Back any visual with the exact figures.
+- Top expense categories with amount, currency, and share of total spend (`entries[].pct` from `well_get_cost_structure`, straight from the tool — not recomputed). `well_get_cost_structure` ships its own card, and that card already draws these shares as a donut — so do not compose a second chart of the same distribution. State the figures and let the card carry the visual where the host draws one; compose only what the donut does not show, such as the vendor detail below.
 - Top accounts payable: vendor, amount, currency, due date. Any unattributed or self-referencing invoices belong in this ranking as labeled rows, not in a caveat below it.
 - A one-line note that the category breakdown is the same computation the Well app itself renders, not a skill-side estimate, plus any coverage `hints` `well_get_cost_structure` returned (e.g. uncategorized spend). State which grouping actually produced it, straight from `rung`: "by ledger account" (`ledger_account`), "by Well's category" (`category_normalized`), "by transaction type" (`transaction_type`), or "uncategorised" (`uncategorised`) — not the full 4-rung fallback order, just the one the tool reports.
 - Whether the picture is complete: which relevant connector categories (banking, accounting) are connected versus still missing, so the user knows whether this reflects their full spend or a partial view gated by what's connected today. Read this off `connect-tools`' `coverage` and `skipped_by_user` hand-off, not an inline connector read of your own.
@@ -109,10 +109,12 @@ Return:
 - If step 8's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
 
 **How this reaches the user.** A Well MCP tool that ships a widget attaches
-`_meta.ui.resourceUri` to its result. If the result you received carries that key and your
-host renders it, the product has already drawn this answer — add only what the card cannot
-say, and do not restate what it shows. Otherwise prose is the default; if a visual genuinely
-reads better and the `well-design-system` skill is available, use it.
+`_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
+never reaches you, so you cannot tell a host that drew the card from one that did not.
+Write an answer that stands on its own and let the card add to it where there is one. Do
+not compose a second rendering of figures the tool already returned; where a visual the
+tool does not draw genuinely reads better and the `well-design-system` skill is available,
+use it.
 
 ## Quality checks
 
