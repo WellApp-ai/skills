@@ -130,10 +130,10 @@ Call each list or read tool once per step. The widget cards refresh themselves �
      `provider_id` when you called the tool; otherwise the `matched_connector_service_id` shared by
      that group's rows in the `show-missing-invoices` hand-off; otherwise null. Never make a later
      step identify a provider by its name alone.
-   - No agents, no upload rows, no connect rows, and no unmatched rows → `resolution:
-     nothing_to_do`. Say the period has nothing to fetch and stop; do not manufacture a plan. A
+   - No agents, no upload rows, no connect rows, and no unmatched rows → resolution
+     `nothing_to_do`. Say the period has nothing to fetch and stop; do not manufacture a plan. A
      period holding only an `"unknown"` group is **not** `nothing_to_do`: those transactions are
-     still missing an invoice, so report them on the by-hand line and resolve `previewed`.
+     still missing an invoice, so report them on their own line and resolve `previewed`.
 
 4. **Say what would be launched — one line per agent, in the user's language.** Read the user's
    language from the conversation, not from the workspace country.
@@ -154,9 +154,10 @@ Call each list or read tool once per step. The widget cards refresh themselves �
    rows the user has to upload by hand (`upload_rows`) — no agent can fetch these. One line for the
    providers that are not connected yet (`connect_rows`) — nothing can be fetched from them until
    they are. State the count for each; when the tool returns the rows themselves rather than a
-   count, name at most three and give the total. Add `unmatched_rows` to the by-hand line when it is
-   non-zero, as its own count: Well could not match a provider for those rows, so no agent covers
-   them. On `nothing_to_do` step 3 already closed the answer, and none of these lines apply. If the
+   count, name at most three and give the total. A third line, only when `unmatched_rows` is
+   non-zero: Well could not match a provider for those transactions, so no agent covers them. Keep
+   it a line of its own with its own count — folding it into `upload_rows` misreports both. On
+   `nothing_to_do` step 3 already closed the answer, and none of these lines apply. If the
    user connects a provider or uploads a document and says so, re-derive the preview yourself in the
    same turn and restate it — do not wait to be re-prompted.
 
@@ -190,8 +191,9 @@ Return:
   suffix — or, when the preview cards are already on screen, one summary line instead of restating
   them.
 - One line for the rows to upload by hand, and one line for the providers still to connect. Both
-  lines appear even when the count is zero, and the by-hand line also carries `unmatched_rows` when
-  it is non-zero. On `nothing_to_do` the single nothing-to-fetch sentence replaces both.
+  lines appear even when the count is zero. A third line, only when `unmatched_rows` is non-zero, for
+  the transactions whose provider Well could not identify. On `nothing_to_do` the single
+  nothing-to-fetch sentence replaces all three.
 - One line stating that the preview covers categorized expense transactions only.
 - One plain sentence stating that no agent, no task, and no browser action was started.
 - The hand-off, kept for the calling flow and never printed: `workspace_id` — the one this skill
@@ -223,9 +225,9 @@ Return:
   categorize the rest of the period first, so nothing is hidden from this plan?". When the user
   asks to launch the agents for real, say plainly that this version cannot yet and point them to
   the Well app, which runs the fetch itself.
-- Beyond the per-agent, upload, connect, coverage, and no-launch lines above, the answer stays
-  plain sentences a non-technical user understands. Never print yaml, JSON, or a fenced code block
-  to the user.
+- Beyond the per-agent, upload, unmatched, connect, coverage, and no-launch lines above, the answer
+  stays plain sentences a non-technical user understands. Never print yaml, JSON, or a fenced code
+  block to the user.
 
 Do not return:
 
@@ -251,10 +253,11 @@ Before finishing, verify:
   which providers a workspace uses.
 - One line per agent, in the user's language, each carrying the demo-mode suffix — or one summary
   line when the cards are on screen, with no agent-by-agent restatement.
-- On a previewed run the upload line and the connect line are both present, even at zero, and the
-  by-hand line carries `unmatched_rows` when it is non-zero. On `nothing_to_do` neither line appears.
+- On a previewed run the upload line and the connect line are both present, even at zero, plus an
+  `unmatched_rows` line of its own when that count is non-zero. On `nothing_to_do` none appear.
 - No agent was built for the `"unknown"` group; its transactions were counted as `unmatched_rows`
-  instead, apart from `upload_rows`.
+  instead, never folded into `upload_rows`, and a period holding only that group resolved
+  `previewed` rather than `nothing_to_do`.
 - The categorized-only coverage line was stated, with the tool's `hints` when the tool ran.
 - Every agent carries a `provider_id` — from the tool, or from the hand-off's
   `matched_connector_service_id` — and null only when neither source has one.
@@ -337,11 +340,11 @@ counterparties (5 transactions) and `"unknown"` with two counterparties (2 trans
 ### Expected behavior
 
 Build one agent, for Amazon. The `"unknown"` group is not an agent: Well matched no provider for
-those rows, so nothing can be dispatched for them. Report its 2 transactions as `unmatched_rows` on
-the by-hand line, counted apart from `upload_rows`: "Agent launched for Amazon — 5 invoices (demo
-mode: nothing is actually started)", then "2 transactions have no provider Well could identify — no
-agent covers them", then the upload line, the connect line, the coverage line, and the plain
-no-launch sentence. Never write "Agent launched for unknown".
+those rows, so nothing can be dispatched for them. Its 2 transactions become `unmatched_rows`, on a
+line of their own rather than folded into `upload_rows`: "Agent launched for Amazon — 5 invoices
+(demo mode: nothing is actually started)", then the upload line, then "2 transactions have no
+provider Well could identify — no agent covers them", then the connect line, the coverage line, and
+the plain no-launch sentence. Never write "Agent launched for unknown".
 
 ### Example request
 
