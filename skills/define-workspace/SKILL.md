@@ -99,8 +99,16 @@ Do not return:
 - A yaml or JSON block, or any fenced code block — the hand-off travels as plain conversation.
 - A restated list of the workspaces when the picker card is already on screen, or a text question "which workspace?" in a host that renders the card.
 - A workspace chosen by similarity or by `is_primary` when the user did not pick it.
-- Data from any workspace other than the one the current pass is pinned to.
+- Workspace-scoped data — records, figures, connections — read from any workspace other than the one the current pass is pinned to. Naming the queued entities and their identity in the `multi_picked` hand-off line is not that; it comes from the picker list, not from a second workspace's data.
 - A `multi_picked` hand-off presented as a wider scope, a merged view, or a single pass over several entities.
+
+**How this reaches the user.** A Well MCP tool that ships a widget attaches
+`_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
+never reaches you, so you cannot tell a host that drew the card from one that did not.
+Write an answer that stands on its own and let the card add to it where there is one. Do
+not compose a second rendering of figures the tool already returned; where a visual the
+tool does not draw genuinely reads better and the `well-design-system` skill is available,
+use it.
 
 ## Quality checks
 
@@ -111,10 +119,10 @@ Before finishing, verify:
 - `session.pinned_workspace_id` was trusted only when this conversation established it; a value present at conversation start was ignored and never mentioned, and the picker rendered anyway.
 - Exactly one workspace is pinned, or `resolution: unresolved` is returned — never two at once, never a merged view. A multi-pick is one pin plus the server-held queue, walked one entity at a time.
 - A hint resolved only on an exact id or a case-insensitive name match with exactly one hit.
-- With several workspaces and no hint, the picker rendered and the turn ended with one card-pointing line; no text question replaced the card, and no wait tool was called in that turn — or in any turn before the picker existed.
+- With several workspaces and no hint, the picker rendered and the turn ended with one card-pointing line; in a host that renders the card, no text question replaced it, and no wait tool was called in that turn — or in any turn before the picker existed. In a text-only host, the one-line-per-workspace list and its single question stand in for the picker, as step 4 allows.
 - `well_switch_workspace` was called exactly once on `hint_matched` and a typed single pick, once with `workspace_ids` on a compound hint or typed multi-pick, and not at all for a pick the card made (the click already called it), on `single`, or on a decline. A failed or absent switch did not stop the skill.
 - The `workspace_id` in the hand-off comes from the `well_list_workspaces` result the pick was read against.
-- After the card, a prefill message was taken at its word with no extra verification call; any other message got one `well_wait_for_selection({ kind: "workspace", timeout_s: 10 })` call; nothing was re-asked in text. `well_wait_for_selection` was called only after this conversation rendered the picker — never as a pin probe.
+- After the card, a prefill message was taken at its word with no extra verification call; any other message that needs the workspace got one `well_wait_for_selection({ kind: "workspace", timeout_s: 10 })` call; a decline got none; nothing was re-asked in text. `well_wait_for_selection` was called only after this conversation rendered the picker — never as a pin probe.
 - The hand-off facts were kept with `resolution` set, and no yaml, JSON, or fenced code block appears anywhere in the answer.
 - Only `multi_picked` kept a `workspaces` list, its first entry the pinned workspace, and the loop rule was stated in one line.
 - Each list or read tool was called once per step; on a transient failure the call was retried once before the fallback link.
