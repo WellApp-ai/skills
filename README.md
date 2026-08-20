@@ -101,16 +101,19 @@ Install the following official skills from Well. Instructions:
     j. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/payment-invoice-lookup/SKILL.md
     k. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/missing-receipts/SKILL.md
     l. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/draft-invoice/SKILL.md
-    m. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
-    n. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
-    o. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-bank/SKILL.md
-    p. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-period/SKILL.md
-    q. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/categorize-counterparties/SKILL.md
-    r. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/resolve-own-company/SKILL.md
-    s. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/normalize-currency/SKILL.md
-    t. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/well-design-system/SKILL.md
-    u. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/well-design-system/assets/well.css
-    v. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/well-design-system/assets/well-tokens.css
+    m. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/fetch-missing-invoices/SKILL.md
+    n. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/show-missing-invoices/SKILL.md
+    o. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/deploy-agents/SKILL.md
+    p. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
+    q. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
+    r. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-bank/SKILL.md
+    s. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-period/SKILL.md
+    t. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/categorize-counterparties/SKILL.md
+    u. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/resolve-own-company/SKILL.md
+    v. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/normalize-currency/SKILL.md
+    w. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/well-design-system/SKILL.md
+    x. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/well-design-system/assets/well.css
+    y. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/well-design-system/assets/well-tokens.css
 2. Download and display the SKILL.md files to the user. Each must be named "SKILL.md" — no prefix, no suffix, exact name.
    The two `.css` files are assets, not skills: keep their own names and place them in `assets/` beside the well-design-system SKILL.md, and do not display them.
 3. Create a summary table with skill names and descriptions extracted from the frontmatter
