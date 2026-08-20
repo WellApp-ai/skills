@@ -1,5 +1,6 @@
 ---
 name: deploy-agents
+requires: [define-workspace, define-period]
 description: Preview which invoice-fetching agents Well would launch for a period, and for which providers, counterparties, and transactions — then say plainly that nothing was started. This version is a dry run — it launches no agent, opens no browser session, and queues no task. Use when the user asks to fetch, collect, or chase the invoices they are missing, says "launch the agents", "go get those invoices", "deploy the collectors", or when the fetch-missing-invoices flow reaches its last step after the missing rows have been listed. Do not use to actually run a collection, to invoke a connector's own actions, to create or edit an invoice, to connect a provider, or to list which invoices are missing in the first place.
 ---
 
@@ -88,6 +89,20 @@ Never call a tool that changes anything. Specifically: no `well_invoke_connector
 `well_create_*`, no `well_update_*`, no `well_delete_*`, no connector action of any kind. This skill
 reads or derives, and it never writes. It does not re-pin the session either: on a multi-workspace
 run the caller calls `well_switch_workspace` between passes, as the Inputs section says.
+
+**Composed skills.** Two atomic Well skills own the setup this skill must not inline — invoke them,
+don't reimplement them:
+
+- `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there's no
+  connection yet, and pins exactly one workspace. Supplies the `workspace_id` every call here
+  carries.
+- `define-period` — writes the period selection server-side, which is what lets the preview call
+  omit its periods argument entirely.
+
+Both ship with the `well-skills` plugin. Neither has an inline fallback here: this skill resolves no
+workspace of its own and never picks a month, so when one is absent the workflow runs that skill
+instead of working around it. The rows it previews come from `show-missing-invoices`, as the Inputs
+section says.
 
 ## Workflow
 

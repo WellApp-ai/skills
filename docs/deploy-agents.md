@@ -30,6 +30,15 @@ the plan before the launch exists.
   directly, but a provider that is not connected shows up as a row it cannot fetch; connect them
   with the `connect-tools` skill.
 
+## Composes onto
+
+This skill delegates two setup steps to Well's atomic skills rather than repeating them:
+
+- **[`define-workspace`](define-workspace.md)** — pins which Well workspace the preview is built for.
+- **[`define-period`](define-period.md)** — writes the period selection Well reads when it computes the plan.
+
+Install both alongside this one. This skill needs them: it resolves no workspace of its own and never picks a month, so without them there is nothing to build a preview against. The **Claude Code plugin** and **Codex plugin** paths below install all three together; if you download the `.skill` file on its own, grab those two as well.
+
 ---
 
 ## Installation
@@ -42,15 +51,17 @@ Paste this into any AI agent — Claude, Codex, Cursor, OpenCode, and others:
 > We suggest using **Claude Chat** rather than Claude Cowork for this step — Cowork's approach is noticeably slower and pricier for a quick install like this. Any Claude model works fine.
 
 ```
-Install the following official skill from Well.
+Install the following official skills from Well.
 
 **Instructions**:
 
-1. Fetch this file: 
-    https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/deploy-agents/SKILL.md
-2. Download and display this file to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
-3. Install this skill.
-4. Before replying to the user, ensure you have named the downloaded file "SKILL.md". This is crucial for the rest of the steps.
+1. Fetch these files:
+    a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/deploy-agents/SKILL.md
+    b. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
+    c. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-period/SKILL.md
+2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
+3. Install these skills.
+4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
 5. If the MCP https://api.wellapp.ai/v1/mcp is not installed: suggest it to the user and explain how to add a new MCP.
 ```
 
