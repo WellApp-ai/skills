@@ -1,5 +1,6 @@
 ---
 name: categorize-counterparties
+requires: [define-workspace]
 description: Raise category coverage on the counterparties (suppliers and customers) behind one Well workspace's spend — for a given month, or workspace-wide across everything still uncategorized. Renders Well's counterparties card, where the user picks a catalog category on each row and every pick saves immediately; the skill reads one list, points at the card, and proposes categories only when the user explicitly asks it to. Use when the user asks to categorize or tag their suppliers, vendors, or counterparties, says "which suppliers have no category", "categorize the companies behind my spend", "clean up my vendor categories before I close the books", or when a fetch-missing-invoices flow needs coverage raised before it lists the gaps again. Never invents a category outside the catalog. Do not use to categorize individual transactions, to compute a spend figure, or to connect a tool.
 ---
 
@@ -60,6 +61,12 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 **What categorizing does and does not change.** A counterparty's category is how Well will decide how to retrieve that supplier's invoices; that routing is not live yet — `suggested_retrieval` on today's rows comes from whether Well matched a provider, not from the category. Never tell the user that categorizing a company changes how Well fetches its invoices right now.
 
+**Composed skills.** One atomic Well skill owns the step before this one — invoke it, don't reimplement it:
+
+- `define-workspace` — pins exactly one workspace and supplies the `workspace_id` every call here carries.
+
+It ships with the `well-skills` plugin, and step 2 hands off to it whenever the caller passed no `workspace_id`. This skill never resolves a workspace itself.
+
 ## Workflow
 
 Call each tool once per step. The card refreshes itself — never re-call a tool just to check progress or to count the user's picks.
@@ -70,12 +77,12 @@ Call each tool once per step. The card refreshes itself — never re-call a tool
    - Auth error on the first call → no Well connection yet: start the Well connector's OAuth/DCR flow, then retry the same call yourself in the same turn and continue.
 
 3. **List the counterparties — one call, one card.** Call `well_list_counterparties` once, with `workspace_id` and the one scope. A transient failure → retry once; a second failure → step 6.
-   - Nothing to categorize — every row already carries a category, or the result holds no rows → say one short sentence: "Every counterparty in this scope already carries a category." No card renders, so expect none and do not wait for one. Hand off `resolution: unchanged` with `coverage_before` equal to `coverage_after`, and when a flow called this skill, return control to it immediately, in the same turn.
+   - Nothing to categorize — every row already carries a category, or the result holds no rows → say one short sentence: "Every counterparty in this scope already carries a category." No card renders, so expect none and do not wait for one. Hand off `resolution: unchanged` with `coverage_before` as read — there is no coverage left to raise — and when a flow called this skill, return control to it immediately, in the same turn.
 
 4. **Point at the card and end the turn.** The card is on screen with a category select on every row. Say at most three plain sentences and stop:
    - One coverage line: how many counterparties are categorized out of the total, and the biggest uncategorized one by `base_total_amount` (a `null` amount is "amount unavailable" — never converted, never summed across currencies). On the `uncategorized_only` scope, include the cap: the tool returns at most 50 rows and `total` is the real count — "50 of 173 shown" — so a capped list never reads as the whole set.
    - One card line: choosing a category in a row's select saves it immediately — there is nothing else to send.
-   - Nothing else. No proposal list, no per-row commentary, no "shall I apply", no restating rows the card shows, no re-read to report a delta — the card shows its own saves. In a host that renders no MCP-Apps cards there is no select to click: give the coverage line, point at the Well app for the assignment, and propose only if the user asks.
+   - Nothing else. No proposal list, no per-row commentary, no "shall I apply", no restating rows the card shows, no re-read to report a delta — the card shows its own saves. Never branch on whether a card appeared: you cannot tell a host that drew it from one that did not, because the key announcing the card goes to the host and never reaches you. Write the coverage line so it stands on its own, and let the selects add to it wherever the host drew them.
 
 5. **Propose only when the user explicitly asks.** This mode never starts on its own — a thin list, a big row count, or the user's silence is not a request. When the user asks you to propose ("propose categories for me", "categorize them for me", "which category would you pick?"):
    - Work from what you already hold: the rows' `name` and `domain` plus `meta.categoryCatalog` from the one read. **No extra tool call of any kind** — no `well_get_entity` on the companies, no `well_query_records`, no second list read.
