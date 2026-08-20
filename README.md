@@ -58,7 +58,7 @@ This repo packages that judgment as **Agent Skills** — playbooks any AI assist
 
 ## Utils
 
-These aren't skills you ask for directly — the skills above invoke them automatically to handle a setup step. Listed here for reference, or if you want to see exactly how that step works.
+These are the setup steps the skills above invoke automatically to get what they need. Several also stand on their own when you ask for them directly. Listed here for reference, or if you want to see exactly how that step works.
 
 | Skill | Description | Details |
 |---|---|---|
