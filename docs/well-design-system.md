@@ -53,7 +53,7 @@ Install the following official skill from Well.
 3. Keep the stylesheets at `assets/well.css` and `assets/well-tokens.css` beside the skill file. The skill file must be named "SKILL.md" — no prefix, no suffix.
 4. Install this skill.
 5. Before replying to the user, ensure you have named the downloaded file "SKILL.md". This is crucial for the rest of the steps.
-5. If the MCP https://api.wellapp.ai/v1/mcp is not installed: suggest it to the user and explain how to add a new MCP.
+6. If the MCP https://api.wellapp.ai/v1/mcp is not installed: suggest it to the user and explain how to add a new MCP.
 ```
 
 ### Manual Setup
