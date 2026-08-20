@@ -1,5 +1,6 @@
 ---
 name: connect-bank
+requires: [define-workspace]
 description: Get a bank account connected to a Well workspace and confirm the feed is live — read which banks are already connected, still running their first sync, or in error, hand the user Well's one-click bank install link, and return a typed bank-coverage result to the flow that follows. Use when the user asks to connect a bank, link a bank account, add Qonto or a Plaid-supported bank, asks "is my bank connected", "why are my transactions missing", or when a Well skill needs settled bank spend in the workspace before it continues. Do not use to connect accounting or invoicing tools (that is connect-tools), to compute a figure, to force a re-sync, or to disconnect an account.
 ---
 
@@ -43,9 +44,15 @@ The calling skill or the user provides:
 
 Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). If the `well_*` tools are not in your toolset, the host has not added the Well MCP server yet — tell the user to add it at that URL, then retry.
 
+**Composed skills.** One atomic Well skill owns the step before this one — invoke it, don't reimplement it:
+
+- `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there is no connection yet, and pins exactly one workspace. Supplies the `workspace_id` that every call here carries.
+
+It ships with the `well-skills` plugin. This skill does not resolve the workspace itself: when no `workspace_id` was passed and this conversation established no pin, run `define-workspace` first (step 2) rather than asking for a workspace here.
+
 **`well_list_connectors` is the only listing tool this skill calls** — always with `kind` set to `bank`, so the catalog comes back scoped to banks server-side. Each row carries `service_id`, `name`, `category_id`, `logo_url`, `status` (`available` is connectable now), `direction` (`input` is a data source), `data_domains` (contains `bank` for a bank row), `is_connected`, `connection_status`, `last_successful_sync_at`, `sync_in_progress`, `workspace_connector_id`, `is_preselected` (Well recommends it now, and the picker pre-checks exactly these), and `install_url` — a one-click link that starts the connection in Well from any state, signing the user in and opening the bank's own login flow with the institution pre-selected. `install_url` is null only when the row is not `available`.
 
-The default view is curated and matched-first, so a bank outside it needs `q` — pass the bank's name before concluding Well cannot connect it. Do not classify a row by `category_id`: Plaid institutions sit under `banks` while native banks such as Qonto sit under `finance`, and a display name is never a kind. A bank row is a `direction: input` row whose `data_domains` contains `bank`; drop any `direction: output` row from the coverage decision.
+The default view is curated and matched-first, so a bank outside it needs `q` — pass the bank's name before concluding Well cannot connect it. Do not classify a row by `category_id`: Plaid institutions sit under `banks` while native banks such as Qonto sit under `finance`, and a display name is never a kind. A bank row is a `direction: input` row whose `data_domains` contains `bank`; drop any `direction: output` row from the coverage decision. `data_domains` is a list such as `["bank"]`, sometimes delivered as a JSON string — parse it before you read it, so the whole bank decision rests on an exact list member rather than on text found inside a string.
 
 The click-chain tools:
 
@@ -63,7 +70,7 @@ The click-chain tools:
 
 `sync_in_progress: true` on a **connected** row keeps it connected — say the spend may be partial until the pass finishes.
 
-**Degrade gracefully on an older server.** If `kind` is rejected as an unknown input, call `well_list_connectors` unscoped and keep the rows whose `data_domains` contains `bank`. If `data_domains` is absent too, keep the rows the `kind`-scoped call returned, or fall back to `q` on the bank the user named. If `last_successful_sync_at` is absent, read `enabled` as **connected** rather than reporting `connecting` forever. If `connection_status` carries a value outside the vocabulary above, treat the row as **error** and say the state is unrecognized — never read an unknown value as connected.
+**Degrade gracefully on an older server.** The two scoping degrades are independent. If `kind` is rejected as an unknown input, call `well_list_connectors` unscoped and keep the rows whose `data_domains` contains `bank`; when that unscoped read carries no `data_domains` either, search with `q` on the bank the user named rather than guessing a kind from a name. If `kind` is accepted but the rows carry no `data_domains`, trust the server's own scoping and read every returned row as a bank row. If `last_successful_sync_at` is absent, read `enabled` as **connected** rather than reporting `connecting` forever. If `connection_status` carries a value outside the vocabulary above, treat the row as **error** and say the state is unrecognized — never read an unknown value as connected.
 
 ## Workflow
 
