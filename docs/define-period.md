@@ -22,7 +22,7 @@
 
 This skill delegates one setup step to a Well atomic skill rather than repeating it:
 
-- **[`define-workspace`](define-workspace.md)** — pins which Well workspace the month is pinned in, and supplies the fiscal-year start the fiscal coordinate is derived from.
+- **[`define-workspace`](define-workspace.md)** — pins which Well workspace the period is resolved in, and supplies the fiscal-year start the fiscal coordinate is derived from.
 
 Install it alongside this one. This skill takes its `workspace_id` and does not resolve the workspace itself, so the pair belongs together. The **Claude Code plugin** and **Codex plugin** paths below install both together; if you download the `.skill` file on its own, grab `define-workspace` as well.
 

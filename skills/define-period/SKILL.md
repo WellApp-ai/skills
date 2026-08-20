@@ -86,7 +86,7 @@ Call each list or read tool once per step, and render at most one widget card pe
 
 4. **With no usable hint, end the turn on the picker.**
    - When `well_list_periods` is in your toolset, call it (with `workspace_id`, and `title` / `subtitle` when supported). Its result renders the period picker card — do not restate the periods under it and do not ask "which month?" in text; the card is the question. End the turn with one short line: pick the month or months on the card, then send the message it prepares. Use `purpose` when the caller gave one. Nothing else in the turn. The **Validate** click writes the selection server-side and prefills "Work on <Month Year> and <Month Year>" in the composer.
-   - In a text-only host (no cards, and usually no wait tool), name the last few complete months on one line each — month, fiscal year and period — and ask one line. This is the only host where a typed question stands in for the picker.
+     - In a text-only host (no cards, and usually no wait tool), the card cannot appear at all: name the last three complete months on one line each — month, fiscal year and period — and ask one line. This is the only host where a typed question stands in for the picker.
    - When the tool is absent, propose the **last complete month** in one line and ask the user to confirm or name another: "March 2026 is the last complete month — work on that?" Stop and wait. On a confirmation, write it with `well_switch_workspace({ periods: [...] })`, `resolution: single`.
 
 5. **Resolve the next message after the card.** In this order, and never by re-asking:
@@ -140,7 +140,7 @@ Before finishing, verify:
 - `workspace_id` came from `define-workspace` (or the caller) and was passed on every call — the workspace was not resolved or asked for in text here.
 - `session.selected_periods` was reused only when this conversation wrote it; a selection present at conversation start was ignored and never mentioned, and the picker rendered anyway.
 - Every resolved selection ended up server-side: written by the card's click, or by one `well_switch_workspace({ periods })` call on a hint or typed answer — and a click-written selection was not re-written.
-- With no hint, the picker rendered and the turn ended with one card-pointing line; no wait tool was called in that turn — or in any turn before the picker existed — and in a host that renders the card, no text question replaced it. In a text-only host, the month-per-line list and its single question stand in for the picker, as step 4 allows.
+- With no hint, the picker rendered and the turn ended with one card-pointing line; no wait tool was called in that turn — or in any turn before the picker existed — and in a host that renders the card, no text question replaced it. In a text-only host, the three-month list and its single question stand in for the picker, as step 4 allows.
 - `well_start_close` — and every other close, lock, or posting tool — was not called.
 - `fiscal_period` and `fiscal_year` came from the formula for every selected month, with `fiscal_year_start_month` defaulted to 1 and the assumption disclosed when it was null; period 13 was never produced.
 - Each `date_range` runs from the month's first day to its real last day, leap years included; a running month kept `is_complete: false` and was not swapped for the previous one.
