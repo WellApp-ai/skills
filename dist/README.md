@@ -4,4 +4,4 @@ Auto-generated. Each `.zip` and `.skill` here is a zip of the matching `skills/<
 
 That hook only runs if you've set it up once: `make install`.
 
-Don't edit these files directly — edit the source under [`skills/`](../skills/) instead. Download links and descriptions live in the [root README](../README.md#claude-desktop).
+Don't edit these files directly — edit the source under [`skills/`](../skills/) instead. Repo conventions for doing that live in [`CONVENTIONS.md`](../CONVENTIONS.md). Download links and descriptions live in the [root README](../README.md#claude-desktop).

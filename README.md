@@ -201,6 +201,10 @@ A: It says so plainly, tells you exactly what to connect, and — as a last reso
 **Q: Can I use these skills outside Claude?**
 A: Yes. `SKILL.md` is an open format — any Agent-Skills-compatible host (Codex, Cursor, OpenCode, and others) can load the files under `skills/` or `.agents/skills/`.
 
+## Contributing
+
+Editing a skill? Read [`CONVENTIONS.md`](CONVENTIONS.md) first. It covers the parts that are easy to miss — how a skill declares a dependency on another (three places, not one), the counts that appear four times per docs page, and the local gate to run before pushing.
+
 ## License
 
 Copyright (c) 2026 Well App, Inc. Licensed under [PolyForm Perimeter 1.0.0](LICENSE) — free to use, including commercially, in any Agent-Skills-compatible host, but not to build a competing product or service. See [LICENSE](LICENSE) for the full terms and the [Well Terms of Service](https://wellapp.ai/terms/) for terms governing the Well platform itself.
