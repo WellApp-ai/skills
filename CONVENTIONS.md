@@ -62,7 +62,7 @@ Know these before writing a workflow step that looks similar — the logic is ce
 | Brick | Owns |
 |---|---|
 | `define-workspace` | The MCP-server check, the OAuth/DCR flow, and pinning exactly one workspace. Supplies `workspace_id` to everything downstream. |
-| `connect-tools` | Whether a connection is real: `workspace_connectors` rows filtered on `connector.direction: input`, matched on `connector.data_domains`, with `last_successful_sync_at` — not a bare `status: enabled` — deciding connected. Plus install links. |
+| `connect-tools` | Whether a connection is real: `well_list_connectors` catalog rows filtered on `direction: input`, matched on `data_domains`, with `last_successful_sync_at` — not a bare `connection_status: enabled` — deciding connected. Plus install links. |
 | `resolve-own-company` | The three-way unresolved test (relation null / field **absent from the schema** / more than one candidate), the never-infer rule, and two-directional containment on normalized names for duplicate records. |
 | `normalize-currency` | The never-blend invariant, and rate selection: `exchange_rates` read, most-recent-rate-at-or-before the as-of date, never a later one, pair-direction checked. |
 
