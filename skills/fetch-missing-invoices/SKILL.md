@@ -46,7 +46,7 @@ The flow's tools, each owned by the step that calls it:
 - `well_list_counterparties` — the categorization read; its result's `meta.categoryCatalog` carries the company-category catalog (never fetch it any other way). `well_update_company` with `relationships.categories` — the one write, user-confirmed only.
 - Well's OAuth / DCR flow when no Well connection exists yet — the moment it returns, retry the failed call in the same turn.
 
-Never call `well_query_records` or `well_get_schema` — no activity checks, no side reads: the flow calls no tool outside a step's own list, every extra widget-bearing call renders an unwanted card, and the missing-invoice read IS the activity check. Never call `well_invoke_connector_tool`, any `well_create_*` / `well_delete_*`, any `well_update_*` other than `well_update_company`'s categories relationship, or any close, lock, or posting tool. This flow reads, and writes only the session context (pin, queue, periods, acks) and the counterparty categories the user confirmed.
+Never call `well_query_records`, `well_get_entity`, or `well_get_schema` — no activity checks, no enrichment, no side reads: the flow calls no tool outside a step's own list, every extra widget-bearing call renders an unwanted card, and the missing-invoice read IS the activity check. Never call `well_invoke_connector_tool`, any `well_create_*` / `well_delete_*`, any `well_update_*` other than `well_update_company`'s categories relationship, or any close, lock, or posting tool. This flow reads, and writes only the session context (pin, queue, periods, acks) and the counterparty categories the user confirmed.
 
 ## The click chain — rules that govern every step
 
@@ -107,13 +107,13 @@ Keep: `counts` per mode, `total_base_amount`, `transaction_count`, `agent_candid
 
 ### Step 6 — Categorization gate (only on a thin list or on request)
 
-**Thin** = `transaction_count` null or 0 — the gap list examined no categorized expense transactions. Run this step only then, or when the user asks — and never silently: say in one line that the gap list rests on `transaction_count` categorized transactions and may be hiding gaps, ask whether to categorize the counterparties behind the rest first, and proceed only on the user's yes, because it writes.
+**Thin** = `transaction_count` null or 0 — the gap list examined no categorized expense transactions. Run this step only then, or when the user asks — and never silently: say in one line that the gap list rests on `transaction_count` categorized transactions and may be hiding gaps, ask whether to categorize the counterparties behind the rest first, and proceed only on the user's yes — the card it opens saves each pick immediately.
 
-On yes: call `well_list_counterparties({ workspace_id, periods })` once — the periods argument here is explicit; take it from the step 4 selection (resync from `session.selected_periods` if unsure). A read with nothing to categorize — all rows categorized, or none — renders no card: say so in half a sentence, hand off `resolution: unchanged`, and continue to step 7 **in the same turn** — no card renders, and step 7's go line ends the turn. Otherwise the counterparties card renders; say one coverage line (categorized out of total, biggest uncategorized by amount). Read the catalog from the same result's `meta.categoryCatalog` — never `well_query_records`, and an empty catalog ends the step in one sentence pointing at the Well app. Propose in batches of at most 20, biggest spend first: name, spend, one catalog category by name — no invented category, no guess for an unplaceable row. **Stop for an explicit yes per batch; no write before it.** Then one `well_update_company({ workspace_id, company_id, relationships: { categories: [<category_id>] } })` per confirmed company — the array is a replace-set (to add, send the existing ids plus the new one); never retry a failed write silently. Honor partial yeses exactly; record declines under `skipped_by_user`. After the last batch, re-read the list once with the same scope and report coverage before → after as the re-read returns it. Keep `coverage_before`, `coverage_after`, `changed`, and `resolution` — `updated`, `unchanged`, `read_only` (the server's `well_update_company` has no categories relationship — detect from its declared input before proposing), or `unavailable` (`well_list_counterparties` absent — say the step is unavailable, never substitute your own labelling).
+On yes: call `well_list_counterparties({ workspace_id, periods })` once — the periods argument here is explicit; take it from the step 4 selection. A read with nothing to categorize — all rows categorized, or none — renders no card: say so in half a sentence, hand off `resolution: unchanged`, and continue to step 7 **in the same turn** — no card renders, and step 7's go line ends the turn. Otherwise the counterparties card renders with a category select on every row: **the card is the categorization tool** — a pick saves immediately through the card's own write, and the card shows its own saves. Say one coverage line (categorized out of total, biggest uncategorized by amount), one card line (picking a category in a row saves it immediately; say "continue" when done), and **end the turn** — no proposal list, no per-row commentary, no enrichment read, no "shall I apply". Propose categories only when the user explicitly asks, from the rows' names and domains plus the result's `meta.categoryCatalog`, with no extra tool call, writing via `well_update_company` (replace-set) only after a yes. On the user's next message, continue to step 7. Keep `resolution` — `rendered` (card on screen), `unchanged`, or `unavailable` (`well_list_counterparties` absent — say the step is unavailable, never substitute your own labelling).
 
 ### Step 7 — Close the gap-list turn
 
-Every path out of steps 5 and 6 ends its turn here. First, only when step 6 ended `updated`: repeat step 5's one call and replace its hand-off — the refreshed card renders. A second thin result never re-enters step 6 — say coverage did not move enough to change the list. Then end the turn with one close line naming the supplier count and the base-currency total and telling the user to say "go" to preview the agents. Never call `well_preview_invoice_fetch` in this turn. `empty` with `transaction_count` > 0 stops and celebrates instead — no go line.
+Every path out of steps 5 and 6 ends its turn here. When step 6 rendered its card, step 7 runs on the user's next message: repeat step 5's one call and replace its hand-off — the refreshed card renders, carrying whatever the user's picks unhid. A second thin result never re-enters step 6 — say coverage did not move enough to change the list. Then end the turn with one close line naming the supplier count and the base-currency total and telling the user to say "go" to preview the agents. Never call `well_preview_invoice_fetch` in this turn. `empty` with `transaction_count` > 0 stops and celebrates instead — no go line.
 
 ### Step 8 — Preview the agents
 
@@ -157,9 +157,9 @@ Several workspaces picked is **one Use click**: the card pins the first, leaves 
 | 5 / 7 | resolution | `empty`, `transaction_count` > 0 | **stop and celebrate** — every categorized expense transaction has its invoice; recap without a preview |
 | 5 | resolution | `empty` or `listed`, thin | go to 6 (ask first) |
 | 5 | resolution | `listed`, not thin | continue to 7 in the same turn |
-| 6 | resolution | `updated` | re-read once at 7 |
+| 6 | resolution | `rendered` | end turn at the card line; step 7 re-reads on the user's next message |
 | 6 | read | nothing to categorize (no card renders) | half a sentence, `unchanged`, **continue to 7 in the same turn** |
-| 6 | resolution | `unchanged` (other reasons) / `read_only` / `unavailable` | keep the step 5 list, say why coverage did not move, go to 7 |
+| 6 | resolution | `unchanged` (other reasons) / `unavailable` | keep the step 5 list, say why coverage did not move, go to 7 |
 | 7 | resolution | thin again | say coverage did not move enough; the go line still ends the turn |
 | 7 | close | go line sent | **end turn** — step 8 runs only on the user's next message |
 | 8 | reply | typed decline | recap without a preview |
@@ -192,7 +192,7 @@ Before finishing, verify:
 - Step 8 previewed only: demo-mode suffix on every agent line, upload and connect lines even at zero, the no-launch sentence present, no yield or ETA claimed.
 - On failure the flow stopped at that step, named it, gave the workspace link, and did not re-read the same data itself or skip ahead.
 - On a multi-workspace run, the queue came from the session block, each pass re-pinned with `well_switch_workspace`, every call carried that pass's `workspace_id`, and each entity got its own recap with nothing merged.
-- No forbidden tool was called — `well_query_records` and `well_get_schema` included — no yaml / JSON / fenced block was printed, and each list or read tool ran once per step.
+- No forbidden tool was called — `well_query_records`, `well_get_entity`, and `well_get_schema` included — no yaml / JSON / fenced block was printed, and each list or read tool ran once per step.
 
 ## Examples
 
