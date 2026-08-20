@@ -7,9 +7,11 @@ description: Walk Well's whole missing-invoice flow end to end — pin the works
 
 ## Purpose
 
-Run every step of Well's missing-invoice flow, in a fixed order: workspace → connections → bank → period → gap list → (categorization, on a thin list and a yes, → gap list again) → agent preview. The flow is **click-chained**: each picker or connect card the flow renders ends the turn, and the user's click writes the choice server-side AND prefills a message in their composer, which they send to move the flow on. Every stop is explicit, the gap-list card ends its own turn before the agent preview, the last step previews without launching, and a multi-workspace pick loops the whole walk one entity at a time.
+Run every step of Well's missing-invoice flow, in a fixed order: workspace → connections → bank → period → gap list → (categorization, on a thin list and a yes, → gap list again) → agent preview. The flow is **click-chained**: each picker or connect card the flow renders ends the turn, and where the card carries the choice, the user's click writes it server-side AND prefills a message in their composer, which they send to move the flow on. A card whose choice is already made ends the turn all the same, and any message moves the flow on. Every stop is explicit, the workspace read ends its own turn before the connection check, the gap-list card ends its own turn before the agent preview, the last step previews without launching, and a multi-workspace pick loops the whole walk one entity at a time.
 
 This skill is **self-contained**: each step below carries everything the flow needs. Each step also exists as its own skill (`define-workspace`, `connect-tools`, `connect-bank`, `define-period`, `show-missing-invoices`, `categorize-counterparties`, `deploy-agents`) for solo use; this flow does not read them.
+
+**The duplication is deliberate, and it can drift.** Three rules below are copies of a brick's own rule, word for word: step 2's connection-state precedence belongs to `connect-tools`, step 4's fiscal derivation to `define-period`, and step 6's card-is-the-tool rule to `categorize-counterparties`. Each brick stays the source of truth. When one of those rules changes in its brick, change the copy here in the same PR — that is the price this skill pays for reading no brick at run time.
 
 ## When to use this skill
 
@@ -50,9 +52,9 @@ Never call `well_query_records`, `well_get_entity`, or `well_get_schema` — no 
 
 ## The click chain — rules that govern every step
 
-1. **One widget card per turn — never two.** Each list tool's result renders its card (step 6's all-categorized read renders none); a turn renders at most one, never re-calls a tool just to check progress (the cards refresh themselves), and never calls a tool outside its step's own list.
+1. **One widget card per turn — never two.** Each list tool's result renders its card (step 6's all-categorized read renders none); a turn renders at most one, never re-calls a tool just to check progress (the cards refresh themselves), and never calls a tool outside its step's own list. `well_list_workspaces` renders the picker on every path, resolved or not, so its turn always ends on that card and step 2's connector read opens the next turn — in step 1 and in every pass of **Several workspaces**.
 2. **A card ends the turn.** After rendering a picker or connect card, end the turn with one short line telling the user what to click (e.g. "Pick your workspace on the card."). The click writes the choice server-side and prefills a message in the composer; the user sends it with Enter. The missing-invoices card ends its turn too — with step 7's go line instead of a click pointer.
-3. **Resolve the next message, never re-ask.** In this order: (a) the message is the card's prefill — "Continue in <name>" (multi: "Continue in <first> — then <n2>, <n3>"), "Work on <Month Year> and <Month Year>", or "Continue" — the click already executed server-side; acknowledge in half a sentence and proceed, never re-verifying with an extra tool call what the prefill already states (the one exception is the connect steps' "Continue", where the next step's own read is the verification); (b) any other message — call `well_wait_for_selection` with that step's kind and `timeout_s: 10` once: `selected` (fresh or `already_set`) → proceed; `no_selection_yet` → one line asking to click the card, end the turn. Never re-ask in text something the user already clicked.
+3. **Resolve the next message, never re-ask.** This rule governs a turn that ended on a choice the user has still to make. A turn that ended only to keep one card per turn — step 1 on a resolved path, a pass boundary of a multi-workspace run — waits on nothing: any message moves the flow on and no wait call runs. Otherwise, in this order: (a) the message is the card's prefill — "Continue in <name>" (multi: "Continue in <first> — then <n2>, <n3>"), "Work on <Month Year> and <Month Year>", or "Continue" — the click already executed server-side; acknowledge in half a sentence and proceed, never re-verifying with an extra tool call what the prefill already states (the one exception is the connect steps' "Continue", where the next step's own read is the verification); (b) any other message — call `well_wait_for_selection` with that step's kind and `timeout_s: 10` once: `selected` (fresh or `already_set`) → proceed; `no_selection_yet` → one line asking to click the card, end the turn. Never re-ask in text something the user already clicked.
 4. **Never ask for the workspace in text.** When the workspace is unresolved, call `well_list_workspaces` so the picker renders at the point of need. A `session.pinned_workspace_id` this conversation established is used silently (rule 8).
 5. **Acks gate the connect steps.** Steps 2 and 3 are always user stops — green included. The card's **Continue** (its sent prefill, or a typed continue) is the only way past them.
 6. **Pass `workspace_id` explicitly on every `well_*` read from step 2 on.** The pin is a convenience, not the contract. The one exception is step 4's period write: `well_switch_workspace({ periods })` carries no `workspace_id`, so it leaves the pin untouched and applies to the workspace the current pass pinned.
@@ -65,10 +67,14 @@ Never call `well_query_records`, `well_get_entity`, or `well_get_schema` — no 
 
 Call `well_list_workspaces()`. Auth error → OAuth/DCR, then retry in the same turn. Zero workspaces → say the account has no workspace yet and stop (`unresolved`).
 
+That read renders the workspace picker, so **step 1 always ends its turn** (rule 1) — on the resolved paths as much as on the unresolved one. What the path decides is which workspace the flow works in and which line closes the turn.
+
 - `session.pinned_workspace_id` set by THIS conversation → use it silently; a non-empty `session.workspace_queue` beside it means that multi-pick is mid-walk (see **Several workspaces**). Set otherwise → a leftover (rule 8): ignore it; a hint or the picker decides.
 - Exactly one workspace → use it, no pin call needed.
 - A hint matching exactly one workspace (`workspace_id` exact, or case-insensitive on names / `identity.country`) → `well_switch_workspace({ workspace_id })`. A compound hint whose every fragment matches exactly one workspace → `well_switch_workspace({ workspace_ids: [...] })` in the user's order — first pinned, rest queued. Zero or several matches for any fragment → the picker decides; never pick the closest name and never default to `is_primary`.
-- Otherwise the picker is on screen (the tiles are multi-select): end the turn with one card-pointing line. The **Use** click pins the choice and prefills "Continue in <name>" (multi form for several tiles); resolve the next message by rule 3 — a non-empty queue makes the run multi-workspace, and the click already pinned, so never re-pin. A typed decline ("later") → stop: no workspace, no flow.
+- Otherwise the picker is the question (the tiles are multi-select): end the turn with one card-pointing line. The **Use** click pins the choice and prefills "Continue in <name>" (multi form for several tiles); resolve the next message by rule 3 — a non-empty queue makes the run multi-workspace, and the click already pinned, so never re-pin. A typed decline ("later") → stop: no workspace, no flow.
+
+On the three resolved paths the workspace needs no click: name the entity in one line, say the next turn checks the connections, and end the turn — no wait call, since nothing is waiting on a selection. Any next message opens step 2; a message naming a different workspace re-runs step 1 instead.
 
 Keep: `workspace_id`, `identity.fiscal_year_start_month`, `base_currency`, and whether a queue exists. Narrate the pinned entity in one line ("Working in **Acme SAS** (FR, EUR).").
 
@@ -109,7 +115,7 @@ Keep: `counts` per mode, `total_base_amount`, `transaction_count`, `agent_candid
 
 **Thin** = `transaction_count` null or 0 — the gap list examined no categorized expense transactions. Run this step only then, or when the user asks — and never silently: say in one line that the gap list rests on `transaction_count` categorized transactions and may be hiding gaps, ask whether to categorize the counterparties behind the rest first, and proceed only on the user's yes — the card it opens saves each pick immediately.
 
-On yes: call `well_list_counterparties({ workspace_id, periods })` once — the periods argument here is explicit; take it from the step 4 selection. A read with nothing to categorize — all rows categorized, or none — renders no card: say so in half a sentence, hand off `resolution: unchanged`, and continue to step 7 **in the same turn** — no card renders, and step 7's go line ends the turn. Otherwise the counterparties card renders with a category select on every row: **the card is the categorization tool** — a pick saves immediately through the card's own write, and the card shows its own saves. Say one coverage line (categorized out of total, biggest uncategorized by amount), one card line (picking a category in a row saves it immediately; say "continue" when done), and **end the turn** — no proposal list, no per-row commentary, no enrichment read, no "shall I apply". Propose categories only when the user explicitly asks, from the rows' names and domains plus the result's `meta.categoryCatalog`, with no extra tool call, writing via `well_update_company` (replace-set) only after a yes. On the user's next message, continue to step 7. Keep `resolution` — `rendered` (card on screen), `updated` (a confirmed proposal wrote at least one row), `unchanged`, or `unavailable` (`well_list_counterparties` absent — say the step is unavailable, never substitute your own labelling).
+On yes: call `well_list_counterparties({ workspace_id, periods })` once — the periods argument here is explicit; take it from the step 4 selection. A read with nothing to categorize — all rows categorized, or none — renders no card: say so in half a sentence, hand off `resolution: unchanged`, and continue to step 7 **in the same turn** — no card renders, and step 7's go line ends the turn. Otherwise the counterparties card renders with a category select on every row: **the card is the categorization tool** — a pick saves immediately through the card's own write, and the card shows its own saves. Say one coverage line (categorized out of total, biggest uncategorized by amount), one card line (picking a category in a row saves it immediately; say "continue" when done), and **end the turn** — no proposal list, no per-row commentary, no enrichment read, no "shall I apply". Propose categories only when the user explicitly asks, from the rows' names and domains plus the result's `meta.categoryCatalog`, with no extra tool call, writing via `well_update_company` (replace-set) only after a yes. On the user's next message, continue to step 7. Keep `resolution` — `rendered` (the read ran and its result carries the card), `updated` (a confirmed proposal wrote at least one row), `unchanged`, or `unavailable` (`well_list_counterparties` absent — say the step is unavailable, never substitute your own labelling).
 
 ### Step 7 — Close the gap-list turn
 
@@ -121,7 +127,7 @@ Runs only on the user's next message after step 7's go line. An affirmative ("go
 
 Output, in the user's language (read from the conversation, not the workspace country):
 
-- One line per agent with the demo-mode suffix — French `Agent lancé pour <provider> — N factures (mode démo : rien n'est déclenché)`, English `Agent launched for <provider> — N invoices (demo mode: nothing is actually started)`. When the tool ran and its `AgentLaunchedCard`s are on screen (Preview badge), one summary line instead — never restate them.
+- One line per agent with the demo-mode suffix — French `Agent lancé pour <provider> — N factures (mode démo : rien n'est déclenché)`, English `Agent launched for <provider> — N invoices (demo mode: nothing is actually started)`. Write these lines whatever the host drew: you cannot tell a host that drew the preview card from one that did not (see **How this reaches the user**), so this output never branches on a card being on screen. Keep each line to the provider and its count, and never expand one into the row detail the card carries. Above five agents, name the five largest by invoice count and close with one line covering the rest — a length rule, not a host rule.
 - The upload line and the connect line, always both, even at zero.
 - The coverage line: the plan covers categorized expense transactions only.
 - **The no-launch sentence, on its own**: no agent was launched, no task was queued, no browser session was opened, and nothing happens after this answer. Counts are transactions missing an invoice, never a yield, a result, or an ETA.
@@ -135,7 +141,7 @@ Each step retries a transient call once. On a second failure, never substitute y
 Several workspaces picked is **one Use click**: the card pins the first, leaves the rest in the session's `workspace_queue`, and prefills "Continue in <first> — then <n2>, <n3>" — the sent prefill names the sequence, and no read ever spans two entities. The loop lives here and only here:
 
 - Run steps 2 → 8 in full on the pinned workspace.
-- Then read the queue from `well_list_workspaces`' `session.workspace_queue`, call `well_switch_workspace({ workspace_id: <next> })`, and run steps 2 → 8 again — every call carrying that pass's own `workspace_id`. Repeat until the queue is walked.
+- Then read the queue from `well_list_workspaces`' `session.workspace_queue` and call `well_switch_workspace({ workspace_id: <next> })`. That read renders the picker again, so this turn ends there too (rule 1): name the entity the next pass works in and end it. The pass's step 2 opens the following turn, and every call in the pass carries that pass's own `workspace_id`. Repeat until the queue is walked.
 - Resolve the period inside each pass: a month hint applies to every pass; a clicked selection belongs to the pass that asked.
 - Announce the sequence once when the queue first appears, then recap each entity as its pass ends. Never merge rows, counts, totals, or coverage across two entities. A stop or a skip inside one pass ends that pass only — record it in that entity's recap and start the next pass anyway; step 9's redirect carries the failing pass's own `workspace_id`.
 
@@ -144,9 +150,9 @@ Several workspaces picked is **one Use click**: the card pins the first, leaves 
 | after | key | value | action |
 |---|---|---|---|
 | 1 | resolution | unresolved (decline, or no workspace) | **stop** — nothing pinned; offer to resume on a click |
-| 1 | card | picker rendered | **end turn** — one line: pick on the card, then send the prepared message |
-| 1 | resolution | resolved, no queue | continue to 2 |
-| 1 | resolution | resolved, queue non-empty | run 2→8 on the pin, then loop the queue — see **Several workspaces** |
+| 1 | card | picker rendered, workspace unresolved | **end turn** — one line: pick on the card, then send the prepared message |
+| 1 | resolution | resolved, no queue | **end turn** on the same picker — one line naming the entity; step 2 opens the next turn |
+| 1 | resolution | resolved, queue non-empty | same end turn, then run 2→8 on the pin and loop the queue — see **Several workspaces** |
 | 2 | card | connect card rendered | **end turn** — one line: connect from the card if needed, then click Continue |
 | 2 | ack | "Continue" prefill, typed continue, or a wait-read ack | continue to 3 — **always**, whatever the coverage; carry missing kinds as recap caveats |
 | 3 | card | bank card rendered | **end turn** — same one-line pattern |
@@ -172,8 +178,8 @@ Every step reports itself in one to three plain sentences as it runs — no yaml
 - **Workspace and period** — the pinned workspace (country, base currency when set) and the period label with its fiscal coordinates and whether the months are complete.
 - **Coverage** — which of bank / accounting / invoicing were connected at their cards, the bank state the bank step ended on, and that the gap list covers categorized expense transactions only. Label a narrowed picture as narrowed, and say plainly when a missing bank feed is what narrowed it.
 - **Missing invoices** — counterparty counts per mode (agent / connect / upload) and the base-currency total over the rows that carry an amount.
-- **Categorization delta** — only when step 6 ran: the coverage its one read showed, and whether the card was left open for the user's own picks. Count changes only for a proposal the user confirmed — the card's own saves are never re-read, so claim no after figure for them. When the step was unavailable, or everything was already categorized, say that in one line instead.
-- **Preview** — the per-agent demo-mode lines (or one summary line when the cards are on screen), plus the upload line and the connect line.
+- **Categorization delta** — only when step 6 ran: the coverage its one read showed, and whether the flow left the picking to the user. Count changes only for a proposal the user confirmed — the card's own saves are never re-read, so claim no after figure for them. When the step was unavailable, or everything was already categorized, say that in one line instead.
+- **Preview** — the per-agent demo-mode lines (the five-largest form above five agents), plus the upload line and the connect line.
 - **The no-launch sentence**, on its own.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. Skip it rather than force it in.
 - One closing line: connecting the providers behind the `connect` rows turns manual uploads into gaps Well can fetch itself, and the Well app runs the real fetch.
@@ -194,24 +200,25 @@ Before finishing, verify:
 - If no `well_*` tool was in the toolset, the user was pointed at `https://api.wellapp.ai/v1/mcp` and the flow stopped there.
 - Every step ran in order; each route came from the routing table's key; no step was skipped — the bank step included, whatever step 2 reported.
 - No turn rendered two widget cards; every picker or connect card ended its turn with one card-pointing line, and no wait call ran before or in the card's turn; every next message was resolved by rule 3 — a prefill taken at its word with no extra verification call, any other message getting one `well_wait_for_selection` call with `timeout_s: 10` — and nothing was re-asked in text.
+- Every `well_list_workspaces` turn ended on the workspace picker — step 1 on a resolved path included, and each pass boundary of a multi-workspace run — so no connector read shared a turn with it.
 - No "which workspace?" or "which month?" question was asked in text where a card renders; a session pin or selection was reused only when this conversation established it — a leftover was ignored, unmentioned, its picker rendered anyway (rule 8).
 - Steps 2 and 3 each stopped for their ack — green coverage and a connected bank included — and moved on only on the "Continue" prefill, a typed continue, or a wait-read ack.
 - `well_list_missing_invoices` and `well_preview_invoice_fetch` were called with `workspace_id` only — no periods argument — never in the same turn as each other (the gap-list turn ended on step 7's go line), and a no-selection error went back to step 4, never to a guessed month.
 - Step 6 ran only on a thin list or on request, only after an explicit yes, wrote only rows the user confirmed, and the list was re-read exactly once after step 6's card rendered. An all-categorized read was stated in half a sentence and the flow continued to step 7's go line in the same turn.
-- Step 8 previewed only: demo-mode suffix on every agent line, upload and connect lines even at zero, the no-launch sentence present, no yield or ETA claimed.
+- Step 8 previewed only: demo-mode suffix on every agent line, upload and connect lines even at zero, the no-launch sentence present, no yield or ETA claimed. Its wording came from the agent count alone — no sentence assumed, or denied, that a card was on screen.
 - On failure the flow stopped at that step, named it, gave the workspace link, and did not re-read the same data itself or skip ahead.
 - On a multi-workspace run, the queue came from the session block, each pass re-pinned with `well_switch_workspace`, every call carried that pass's `workspace_id`, and each entity got its own recap with nothing merged.
 - No forbidden tool was called — `well_query_records`, `well_get_entity`, and `well_get_schema` included — no yaml / JSON / fenced block was printed, and each list or read tool ran once per step.
 
 ## Examples
 
-**Happy path.** "Fetch the invoices I'm missing for March." One workspace, Qonto + Pennylane connected. Step 1 resolves silently. Steps 2 and 3 each render their card, end the turn, and move on when "Continue" arrives. Step 4 writes March 2026 from the hint. Step 5 reads 12 counterparties, `transaction_count: 41`, not thin; step 7 ends the turn on its go line. On "go", step 8 previews, then the recap and the no-launch sentence.
+**Happy path.** "Fetch the invoices I'm missing for March." One workspace, Qonto + Pennylane connected. Step 1 reads the one workspace, names it, and ends its turn on the picker; the next message opens step 2. Steps 2 and 3 each render their card, end the turn, and move on when "Continue" arrives. Step 4 writes March 2026 from the hint. Step 5 reads 12 counterparties, `transaction_count: 41`, not thin; step 7 ends the turn on its go line. On "go", step 8 previews, then the recap and the no-launch sentence.
 
 **A stale session.** A fresh conversation opens with a pin and `selected_periods` set — leftovers (rule 8): ignore both silently; the pickers render at steps 1 and 4, nothing says "already pinned".
 
 **Not the prefill.** At the bank card the next message is "keep going": one wait-read (`kind: "bank_ack"`) — `already_set: true` → resume at step 4; `no_selection_yet` → a line pointing at Continue ends the turn.
 
-**Two entities.** "March across FR and US" → `well_switch_workspace({ workspace_ids: [fr, us] })` pins FR, queues US. Run 2→8, recap. Read `session.workspace_queue`, re-pin, run 2→8 again — `empty` with `transaction_count: 23` celebrates at step 5. Two recaps, nothing added together.
+**Two entities.** "March across FR and US" → `well_switch_workspace({ workspace_ids: [fr, us] })` pins FR, queues US, and step 1 ends its turn naming the sequence. Run 2→8, recap. Read `session.workspace_queue`, re-pin, end that turn on the picker, then run 2→8 again — `empty` with `transaction_count: 23` celebrates at step 5. Two recaps, nothing added together.
 
 **Thin list.** `empty`, `transaction_count: 0` → say the list rests on 0 categorized transactions, ask whether to categorize first; on yes, step 6's card, one re-read at step 7, preview at step 8 on the go.
 
