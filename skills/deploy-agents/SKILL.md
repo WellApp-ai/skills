@@ -121,16 +121,19 @@ Call each list or read tool once per step. The widget cards refresh themselves �
      `tx_count`, and its `base_total_amount`. Carry no amount at all rather than a partial one when
      a counterparty in the group has none. The hand-off's `counts.upload` and `counts.connect` are
      `upload_rows` and `connect_rows`.
-   - The `"unknown"` group is never an agent. `show-missing-invoices` files the rows whose provider
-     it could not match under `provider_name: "unknown"`, and no agent can be dispatched against a
+   - The `"unknown"` group is never an agent, whichever path produced it — the one exception to
+     using the tool's `agents` as they come. `show-missing-invoices` files the rows whose provider it
+     could not match under `provider_name: "unknown"`, and no agent can be dispatched against a
      provider that was never identified. Keep that group out of `agents` and carry its `tx_count` as
      `unmatched_rows`, counted apart from `upload_rows` so neither number is misreported.
    - Carry a structured provider identifier on every agent. `provider_id` is the tool's
      `provider_id` when you called the tool; otherwise the `matched_connector_service_id` shared by
      that group's rows in the `show-missing-invoices` hand-off; otherwise null. Never make a later
      step identify a provider by its name alone.
-   - No agents, no upload rows, no connect rows → `resolution: nothing_to_do`. Say the period has
-     nothing to fetch and stop; do not manufacture a plan.
+   - No agents, no upload rows, no connect rows, and no unmatched rows → `resolution:
+     nothing_to_do`. Say the period has nothing to fetch and stop; do not manufacture a plan. A
+     period holding only an `"unknown"` group is **not** `nothing_to_do`: those transactions are
+     still missing an invoice, so report them on the by-hand line and resolve `previewed`.
 
 4. **Say what would be launched — one line per agent, in the user's language.** Read the user's
    language from the conversation, not from the workspace country.
