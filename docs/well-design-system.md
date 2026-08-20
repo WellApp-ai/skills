@@ -22,6 +22,20 @@ somewhere else. With it, the view carries Well's surfaces, type scale, and card 
 It also says when *not* to draw. If your host already rendered the tool's own card, the
 product has drawn it for you, and a second version of the same number helps nobody.
 
+## What ships
+
+Unlike the other skills, this one carries assets: `assets/well.css` (the compiled
+stylesheet) and `assets/well-tokens.css` (the same palette as custom properties, for
+surfaces that cannot use utility classes). Both are packaged into the `.skill` and `.zip`,
+so a download installs a self-contained skill.
+
+They are a copy of what `@wellapp-ai/design-tokens` builds, so they can fall behind it.
+`make refresh-check` fails when they have, and a weekly workflow
+(`.github/workflows/refresh-design-system.yml`) opens a PR when the published package moves.
+That workflow reads GitHub Packages, so it needs a `PACKAGES_READ_TOKEN` repository secret
+— a PAT with `read:packages`. Without it the run fails loudly rather than reporting a
+current kit it never checked.
+
 ## Required data in Well
 
 None. This skill computes nothing and reads nothing — pair it with whichever skill answers
