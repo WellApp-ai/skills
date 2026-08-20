@@ -31,7 +31,13 @@ strip_frontmatter_and_demote() {
 # then append one section per reference file.
 build_skill_md() {
 	local dir=$1 out=$2 ref name
-	if [ ! -d "$dir/references" ]; then
+	local -a refs=()
+	for ref in "$dir"/references/*.md; do
+		if [ -f "$ref" ]; then refs+=("$ref"); fi
+	done
+	# An unmatched glob stays literal, so an absent or .md-free references/
+	# directory lands here with nothing to inline.
+	if [ ${#refs[@]} -eq 0 ]; then
 		cp "$dir/SKILL.md" "$out"
 		return
 	fi
@@ -39,7 +45,7 @@ build_skill_md() {
 		-e 's|`references/<name>\.md`|its "Step reference" section|g' \
 		-e 's|`references/([a-z0-9-]+)\.md`|the "Step reference: \1" section|g' \
 		"$dir/SKILL.md" >"$out"
-	for ref in "$dir"/references/*.md; do
+	for ref in "${refs[@]}"; do
 		name=$(basename "$ref" .md)
 		{
 			printf '\n---\n\n## Step reference: %s\n\n' "$name"
@@ -51,14 +57,29 @@ build_skill_md() {
 
 for dir in skills/*/; do
 	name=$(basename "$dir")
-	stage=$(mktemp -d)
-	# The stage holds regular files only, so no symlink is ever stored as its
-	# target's content in a public archive. A symlink outside references/ would
-	# instead be dropped from the download without a trace, so fail on one.
+	# Only references/ may hold a symlink. A symlink anywhere else never reaches
+	# the stage, so it would drop out of the download without a trace.
 	if stray=$(cd "$dir" && find . -type l ! -path './references/*' -print -quit) && [ -n "$stray" ]; then
 		echo "skills/$name/${stray#./} is a symlink; only references/ may be one" >&2
 		exit 1
 	fi
+	# The build inlines a reference's target into the packaged SKILL.md, so a
+	# target outside the repo would publish an arbitrary local file in a public
+	# archive. Require every target to resolve in-tree.
+	while IFS= read -r link; do
+		[ -n "$link" ] || continue
+		target=$(cd "$dir" && readlink -f "$link" 2>/dev/null || true)
+		case "$target" in
+		"$ROOT"/*) ;;
+		*)
+			echo "skills/$name/${link#./} resolves outside the repo; a reference must stay in-tree" >&2
+			exit 1
+			;;
+		esac
+	done <<-EOF
+		$(cd "$dir" && find . -type l -path './references/*')
+	EOF
+	stage=$(mktemp -d)
 	(cd "$dir" && find . -type f ! -path './references/*' ! -name '.DS_Store' | while read -r f; do
 		mkdir -p "$stage/$(dirname "$f")"
 		cp "$f" "$stage/$f"

@@ -68,9 +68,10 @@ Know these before writing a workflow step that looks similar — the logic is ce
 
 ## Before you push
 
-`make validate` is the gate, and it runs on push via `.githooks/pre-push` (set up once with `make install`). It runs two checks, and the distinction matters:
+`make validate` is the gate, and it runs on push via `.githooks/pre-push` (set up once with `make install`). It runs three checks, and the distinction matters:
 
-- **`claude plugin validate . --strict`** confirms the marketplace manifest is well-formed. It checks only that a frontmatter block *exists* — never that the block parses as YAML.
+- **`claude plugin validate . --strict`** confirms the marketplace manifest is well-formed. It never reads the skills, so it passes even when a skill carries no frontmatter at all.
+- **`claude plugin validate ./skills --strict`** confirms every skill carries a frontmatter block. It checks only that the block *exists* — never that the block parses as YAML.
 - **`node scripts/check-skill-frontmatter.js`** enforces the one YAML rule that actually bites: an unquoted value containing a bare `:` is read by YAML as the start of a nested mapping, so the skill loads with **empty metadata, silently** — no name, no description, undiscoverable, and nothing anywhere reports an error. Per that script's own header, this broke `company-profile` and `missing-receipts` in #8.
 
 So running `claude plugin validate` alone is not the gate. Run `make validate`, and read the exit status unpiped (`make validate > /dev/null 2>&1; echo $?`), since a pipe reports its last stage.
