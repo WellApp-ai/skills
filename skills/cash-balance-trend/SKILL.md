@@ -82,7 +82,7 @@ All three ship with the `well-skills` plugin. This skill is also installable on 
 Return:
 
 - The window covered (start date to end date).
-- The time-series data points: date, balance, currency — as a simple table by default. If the user didn't already say whether they want a table or a chart, ask their preference rather than silently picking one — this is a trend over time, so a line or area chart is the natural fit if they want one; render a chart only if the host environment supports it.
+- The time-series data points: date, balance, currency — as a simple table by default. When the tool result carried `_meta.ui.resourceUri` and your host rendered it, the product has already drawn this — add only what the card cannot say rather than restating it. Otherwise judge the form yourself: a line or area chart is the natural fit for a trend over time, so reach for it when the host supports it and prose alone would read worse. Do not stop to ask table-or-chart first.
 - The overall direction (up/down/flat) and the magnitude of change over the window.
 - An explicit one-line statement that no future projection was made — this is historical fact only.
 - A one-line note on which account(s) fed the series and any currency handling applied.
