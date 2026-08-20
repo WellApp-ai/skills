@@ -35,7 +35,7 @@ Do not use this skill when:
 The calling skill or the user provides:
 
 - `workspace_id` — required. Comes from `define-workspace`. If absent, reuse a session pin (`well_list_workspaces`' `session.pinned_workspace_id`) silently only when THIS conversation established it — hosts share one MCP session across conversations, so a pin this conversation never made is another conversation's leftover: ignore it, never mention it, and run `define-workspace` first — its picker renders at the point of need, and no "which workspace?" question is asked in text.
-- A period selection written server-side — required, but **not passed to the tool**: the user's click on the period card, or `define-period` on a typed month, already wrote it, and the tool reads it on its own. The `define-period` hand-off (its `period_label`, `is_complete`) is narration context only. If no selection exists yet, the tool says so — run `define-period` then; never guess a period from today's date.
+- A period selection written server-side — required, but **not passed to the tool**: the user's click on the period card, or `define-period` on a typed month, already wrote it, and the tool reads it on its own. The `define-period` hand-off (its `periods`, `period_label`, `is_complete`) is narration context only — except on the older-server degrade path in Tooling, where its `periods` entries are the months the call carries. If no selection exists yet, the tool says so — run `define-period` then; never guess a period from today's date.
 - `purpose` — one line from the calling skill (e.g. "to decide which suppliers Well should chase"), used when a question is needed. Optional.
 
 A still-running month in the selection means the list is still moving — report the gaps anyway and say so.
@@ -46,7 +46,7 @@ A still-running month in the selection means the list is still moving — report
 
 Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). If the `well_*` tools are not in your toolset at all, the host has not added the Well MCP server yet — tell the user to add it at that URL, then retry. Required once it is added:
 
-- `well_list_missing_invoices` — the only tool this skill calls for the gap list. Input: `workspace_id` explicitly, as on every `well_*` call, and **no periods argument** — omitted, the server uses the period selection the user's click (or `define-period`) already wrote. An error comes back only when no selection exists yet: run `define-period`, then re-call. Pass a period pair explicitly only on an older server that holds no session selection — the degrade path, never the default. Output: `workspace_id`, `calendar_year`, `calendar_month`, `fiscal_year`, `fiscal_period`, `period_label`, `base_currency`, `transaction_count`, `rows`, `row_count`, `group_count`, `dropped_groups`, `hints`, `success`, and `error` on failure.
+- `well_list_missing_invoices` — the only tool this skill calls for the gap list. Input: `workspace_id` explicitly, as on every `well_*` call, and **no periods argument** — omitted, the server uses the period selection the user's click (or `define-period`) already wrote. An error comes back only when no selection exists yet: run `define-period`, then re-call. Pass the months explicitly only on an older server that holds no session selection, and then take them from `define-period`'s hand-off (`periods`), never from today's date — the degrade path, never the default. Output: `workspace_id`, `calendar_year`, `calendar_month`, `fiscal_year`, `fiscal_period`, `period_label`, `base_currency`, `transaction_count`, `rows`, `row_count`, `group_count`, `dropped_groups`, `hints`, `success`, and `error` on failure.
 - `well_list_workspaces` — for resync only: its `session` block carries the pinned workspace and the queue a multi-workspace caller walks. This skill never re-pins; `well_switch_workspace` belongs to the caller.
 
 Each entry in `rows` is **one counterparty**, already grouped by the server — never re-aggregate it:
@@ -92,7 +92,7 @@ Call each list or read tool once per step. The widget cards refresh themselves �
 
 5. **Total honestly.** The only total is the sum of the non-null `base_total_amount` values, stated in `base_currency`. When some rows are null, say the total covers the rows that have an amount and name how many do not. When every row is null, report no total at all.
 
-6. **State the coverage.** Say it in one line, every time, even when the list is empty: these gaps cover the period's **categorized** expense transactions only (`transaction_count` is how many were examined), so spend that is not categorized yet cannot appear here. Add the `dropped_groups` total when it is non-zero, and any `hints` the tool returned.
+6. **State the coverage.** Say it in one line, every time, even when the list is empty: these gaps cover the period's **categorized** expense transactions only (`transaction_count` is how many were examined), so spend that is not categorized yet cannot appear here. Add the `dropped_groups` total when it is non-zero, and any `hints` the tool returned. When the selection holds a month that is still running (`is_complete: false` in the `define-period` hand-off), say in the same line that the list is still moving.
 
 7. **On failure, redirect instead of guessing.** After a second failure, do not build a gap list by hand. Give the user `<well-app-base-url>/workspaces/<workspace_id>` and tell them Well shows the same list there. Do not append a query parameter you have not confirmed the app reads.
 
@@ -128,7 +128,7 @@ Before finishing, verify:
 - The tool was called once, with no periods argument — the server-held selection decided the period — and `period_label` was quoted from the result. A no-selection error sent the flow to `define-period`, not to a guessed month.
 - The counterparty rows were used as returned and not re-grouped or re-counted.
 - Every `null` `base_total_amount` was reported as "amount unavailable"; the total summed only non-null base-currency amounts and disclosed how many rows it excluded.
-- The categorized-only coverage line was stated, even on an empty list, with `dropped_groups` and `hints` when present.
+- The categorized-only coverage line was stated, even on an empty list, with `dropped_groups` and `hints` when present, and with the still-moving caveat when the selection holds a month that is still running.
 - Rows were not narrated when the card was on screen.
 - No `well_invoke_connector_tool` or provider-specific tool was called.
 - On a transient failure the call was retried once before the workspace-link fallback.
