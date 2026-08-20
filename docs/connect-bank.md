@@ -21,6 +21,16 @@ Every grounded answer about spend rests on the bank feed. This skill reads which
 
 ---
 
+## Composes onto
+
+This skill delegates one setup step to a Well atomic skill rather than repeating it:
+
+- **[`define-workspace`](define-workspace.md)** — pins which Well workspace the bank feed is checked for.
+
+Install it alongside this one. This skill takes its `workspace_id` and does not resolve the workspace itself, so the pair belongs together. The **Claude Code plugin** and **Codex plugin** paths below install both together; if you download the `.skill` file on its own, grab `define-workspace` as well.
+
+---
+
 ## Installation
 
 ### AI Assisted (Recommended)
@@ -31,15 +41,16 @@ Paste this into any AI agent — Claude, Codex, Cursor, OpenCode, and others:
 > We suggest using **Claude Chat** rather than Claude Cowork for this step — Cowork's approach is noticeably slower and pricier for a quick install like this. Any Claude model works fine.
 
 ```
-Install the following official skill from Well.
+Install the following official skills from Well.
 
 **Instructions**:
 
-1. Fetch this file: 
-    https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-bank/SKILL.md
-2. Download and display this file to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
-3. Install this skill.
-4. Before replying to the user, ensure you have named the downloaded file "SKILL.md". This is crucial for the rest of the steps.
+1. Fetch these files:
+    a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-bank/SKILL.md
+    b. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
+2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
+3. Install these skills.
+4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
 5. If the MCP https://api.wellapp.ai/v1/mcp is not installed: suggest it to the user and explain how to add a new MCP.
 ```
 
