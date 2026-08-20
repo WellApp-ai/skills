@@ -23,12 +23,15 @@ Use it when you are about to render Well data visually and nothing else has:
 
 ## When not to use this skill
 
-- **The host already rendered the tool's own card.** A Well MCP tool that ships a widget
-  attaches `_meta.ui.resourceUri` to its result — a versioned `ui://well/widget/<hash>`, so
-  test for the **key being present**, never for a particular value. If it is there, a host
-  that supports it has drawn the real component, the same code the product ships. Do not
-  redraw what is on screen; say what the card cannot, and stop. Composing a second view
-  invites two versions of one number.
+- **The tool you called ships its own card.** A Well MCP tool that ships a widget attaches
+  `_meta.ui.resourceUri` to its result, and a host that supports it draws the real
+  component — the same code the product ships. You cannot check this: the key goes to the
+  host and never reaches you, so a rule conditioned on reading it declines nothing. Decide
+  on what you can know instead. Where the answer is one those tools already return, do not
+  compose a view of the same figures: on a host that drew the card the user reads one
+  number twice, in two designs. Say what the card cannot, and stop. Compose where no card
+  covers the answer — a ranking, an ageing profile, a trend you derived across several
+  calls.
 - The answer is one sentence or one figure. A card around "EUR 412,900" helps nobody.
 - The user asked for raw data, a CSV, or a file to paste elsewhere.
 - You are editing Well's own codebase. There the design system is a package, not a

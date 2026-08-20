@@ -102,10 +102,12 @@ Return:
 - If step 7's fallback was used, the fallback answer and link, clearly labeled as a fallback.
 
 **How this reaches the user.** A Well MCP tool that ships a widget attaches
-`_meta.ui.resourceUri` to its result. If the result you received carries that key and your
-host renders it, the product has already drawn this answer — add only what the card cannot
-say, and do not restate what it shows. Otherwise prose is the default; if a visual genuinely
-reads better and the `well-design-system` skill is available, use it.
+`_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
+never reaches you, so you cannot tell a host that drew the card from one that did not.
+Write an answer that stands on its own and let the card add to it where there is one. Do
+not compose a second rendering of figures the tool already returned; where a visual the
+tool does not draw genuinely reads better and the `well-design-system` skill is available,
+use it.
 
 ## Quality checks
 
