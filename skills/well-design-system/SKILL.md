@@ -183,7 +183,9 @@ Before returning the view, verify:
 - Cards use `rounded-[14px]`, `bg-bg-subtle`, and a single `border-border-low`.
 - Every caveat the tool surfaced — `partial`, `excluded`, `hints`, staleness — appears in
   the view. A card that renders a partial number as a clean one is worse than prose.
-- You did not redraw something the host already rendered from the tool's own UI resource.
+- You did not compose a view of figures a tool's own card already draws — the cost-structure
+  donut, the runway and cash-position cards, the records table's rows. You cannot see whether
+  the host drew one, so decide from the tool you called, not from the result.
 
 ## Examples
 

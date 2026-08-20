@@ -82,7 +82,7 @@ All three ship with the `well-skills` plugin. This skill is also installable on 
 Return:
 
 - The window covered (start date to end date).
-- The time-series data points: date, balance, currency — as a simple table by default. When the tool result carried `_meta.ui.resourceUri` and your host rendered it, the product has already drawn this — add only what the card cannot say rather than restating it. Otherwise judge the form yourself: a line or area chart is the natural fit for a trend over time, so reach for it when the host supports it and prose alone would read worse. Do not stop to ask table-or-chart first.
+- The time-series data points: date, balance, currency — as a simple table by default. `well_query_records` ships its own card, and that card renders these rows — so do not restate them in prose. It draws no chart, so the form is yours to judge on its merits: a line or area chart is the natural fit for a trend over time, so reach for it when the host supports it and prose alone would read worse. Do not stop to ask table-or-chart first.
 - The overall direction (up/down/flat) and the magnitude of change over the window.
 - An explicit one-line statement that no future projection was made — this is historical fact only.
 - A one-line note on which account(s) fed the series and any currency handling applied.
