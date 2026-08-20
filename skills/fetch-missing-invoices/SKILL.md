@@ -172,7 +172,7 @@ Every step reports itself in one to three plain sentences as it runs — no yaml
 - **Workspace and period** — the pinned workspace (country, base currency when set) and the period label with its fiscal coordinates and whether the months are complete.
 - **Coverage** — which of bank / accounting / invoicing were connected at their cards, the bank state the bank step ended on, and that the gap list covers categorized expense transactions only. Label a narrowed picture as narrowed, and say plainly when a missing bank feed is what narrowed it.
 - **Missing invoices** — counterparty counts per mode (agent / connect / upload) and the base-currency total over the rows that carry an amount.
-- **Categorization delta** — only when step 6 ran: coverage before → after and how many changes the user confirmed, or one line that the step was unavailable or everything was already categorized.
+- **Categorization delta** — only when step 6 ran: the coverage its one read showed, and whether the card was left open for the user's own picks. Count changes only for a proposal the user confirmed — the card's own saves are never re-read, so claim no after figure for them. When the step was unavailable, or everything was already categorized, say that in one line instead.
 - **Preview** — the per-agent demo-mode lines (or one summary line when the cards are on screen), plus the upload line and the connect line.
 - **The no-launch sentence**, on its own.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. Skip it rather than force it in.
