@@ -178,6 +178,15 @@ Every step reports itself in one to three plain sentences as it runs — no yaml
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. Skip it rather than force it in.
 - One closing line: connecting the providers behind the `connect` rows turns manual uploads into gaps Well can fetch itself, and the Well app runs the real fetch.
 
+**How this reaches the user.** A Well MCP tool that ships a widget attaches
+`_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
+never reaches you, so you cannot tell a host that drew a card from one that did not — which
+is why every step's card-pointing line has to read sensibly even where no card appeared.
+Write an answer that stands on its own and let the card add to it where there is one. Do
+not compose a second rendering of rows the tool already returned; where a visual the tool
+does not draw genuinely reads better and the `well-design-system` skill is available, use
+it.
+
 ## Quality checks
 
 Before finishing, verify:

@@ -239,6 +239,14 @@ Do not return:
 - An agent for a provider that is not in the preview or in `agent_candidates`.
 - An agent named for a provider Well never matched — the `"unknown"` group is not an agent.
 
+**How this reaches the user.** A Well MCP tool that ships a widget attaches
+`_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
+never reaches you, so you cannot tell a host that drew the preview cards from one that did
+not. Write an answer that stands on its own and let the cards add to it where there are
+some. Do not compose a second rendering of agents the tool already returned; where a visual
+the tool does not draw genuinely reads better and the `well-design-system` skill is
+available, use it.
+
 ## Quality checks
 
 Before finishing, verify:
