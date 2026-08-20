@@ -8,7 +8,7 @@ description: Raise category coverage on the counterparties (suppliers and custom
 
 ## Purpose
 
-The counterparties card is the categorization tool — not the model. One `well_list_counterparties` call renders the card; every row carries a category select fed by Well's shared catalog; each pick the user makes in a row's select writes that company's category immediately, through the card's own `well_update_company` call. This skill's whole job is that one read, one coverage line, and one card-pointing line — then the turn ends. It proposes nothing, enriches nothing, and asks for no confirmation, unless the user explicitly asks it to propose. The categorization step of Well's fetch-missing-invoices flow — it runs after `define-period` and its result is what `show-missing-invoices` reads next — and a standalone clean-up skill on its own.
+The counterparties card is the categorization tool — not the model. One `well_list_counterparties` call renders the card; every row carries a category select fed by Well's shared catalog; each pick the user makes in a row's select writes that company's category immediately, through the card's own `well_update_company` call. This skill's whole job is that one read, one coverage line, one card-pointing line, and — on a standalone ask with the next skill installed — one pointer line, then the turn ends. It proposes nothing, enriches nothing, and asks for no confirmation, unless the user explicitly asks it to propose. The categorization step of Well's fetch-missing-invoices flow — it runs after `define-period` and its result is what `show-missing-invoices` reads next — and a standalone clean-up skill on its own.
 
 ## When to use this skill
 
@@ -77,12 +77,12 @@ Call each tool once per step. The card refreshes itself — never re-call a tool
    - Auth error on the first call → no Well connection yet: start the Well connector's OAuth/DCR flow, then retry the same call yourself in the same turn and continue.
 
 3. **List the counterparties — one call, one card.** Call `well_list_counterparties` once, with `workspace_id` and the one scope. A transient failure → retry once; a second failure → step 6.
-   - Nothing to categorize — every row already carries a category, or the result holds no rows → say one short sentence: "Every counterparty in this scope already carries a category." No card renders, so expect none and do not wait for one. Hand off `resolution: unchanged` with `coverage_before` as read — there is no coverage left to raise — and when a flow called this skill, return control to it immediately, in the same turn.
+   - Nothing to categorize — every row already carries a category, or the result holds no rows → say one short sentence: "Every counterparty in this scope already carries a category." Add the pointer line only where the pointer rule in `Output requirements` applies. No card renders, so expect none and do not wait for one. Hand off `resolution: unchanged` with `coverage_before` as read — there is no coverage left to raise — and when a flow called this skill, return control to it immediately, in the same turn.
 
 4. **Point at the card and end the turn.** The card is on screen with a category select on every row. Say at most three plain sentences and stop:
    - One coverage line, shaped by the scope you passed. The `periods` scope returns both sides, so state how many counterparties are categorized out of the total. The `uncategorized_only` scope returns the uncategorized side alone, so state that count and nothing more: `total` is how many counterparties carry no category, never how many exist. Never build a ratio the read does not hold. On either scope, name the biggest uncategorized counterparty by `base_total_amount` (a `null` amount is "amount unavailable" — never converted, never summed across currencies). On `uncategorized_only`, add the cap: the tool returns at most 50 rows against the real `total` — "173 have no category; the card shows the 50 largest" — so a capped list never reads as the whole set. Fold the connector disclosure into this same line: name which connected side the list rests on.
    - One card line: choosing a category in a row's select saves it immediately — there is nothing else to send.
-   - One pointer line, the third sentence at most: the next step per `Output requirements`. Inside a flow, hand control back instead.
+   - One pointer line, the third sentence at most, on a standalone ask with `show-missing-invoices` installed: the next step per `Output requirements`. Inside a flow, hand control back to the caller instead; with no next skill installed, stop after the card line.
    - Nothing else. No proposal list, no per-row commentary, no "shall I apply", no restating rows the card shows, no re-read to report a delta — the card shows its own saves. Never branch on whether a card appeared: you cannot tell a host that drew it from one that did not, because the key announcing the card goes to the host and never reaches you. Write the coverage line so it stands on its own, and let the selects add to it wherever the host drew them.
 
 5. **Propose only when the user explicitly asks.** This mode never starts on its own — a thin list, a big row count, or the user's silence is not a request. When the user asks you to propose ("propose categories for me", "categorize them for me", "which category would you pick?"):
@@ -97,7 +97,7 @@ Call each tool once per step. The card refreshes itself — never re-call a tool
 
 Return:
 
-- On the card path, the whole answer is one to three plain sentences: the coverage line (with the cap disclosure on the workspace-wide scope), the card-pointing line — picks save immediately, nothing else to send — and the pointer line. When step 3 found nothing to categorize, the whole answer is its one sentence, plus the pointer line when the user asked on their own; a calling flow gets control back in the same turn instead.
+- On the card path, the whole answer is one to three plain sentences: the coverage line (with the cap disclosure on the workspace-wide scope), the card-pointing line — picks save immediately, nothing else to send — and, where the pointer rule below applies, the pointer line. When step 3 found nothing to categorize, the whole answer is its one sentence, and the pointer line may follow it under the same rule; a calling flow gets control back in the same turn instead.
 - The hand-off, kept for the calling flow and never printed: `workspace_id`; the `scope`; `coverage_before` as the read supports it — categorized out of the total on a `periods` scope, the uncategorized count alone on an `uncategorized_only` scope; `resolution` — `rendered` (the card is on screen and picks save as they are made), `updated` (an on-request proposal pass wrote at least one confirmed row), `unchanged` (nothing to categorize, or the user declined every proposal), `read_only`, or `unavailable`. `changed` — the companies a proposal pass wrote, each with the category it received — and `skipped_by_user` exist only after a proposal pass. These keys are reasoning vocabulary for you and the calling flow; the hand-off travels as plain conversation, and the next skill re-reads what it needs from its own tool calls.
 - Connector coverage in plain words, folded into the coverage line rather than added as a sentence of its own: the list holds only the counterparties the connected tools brought in. Bank data is what makes settled spend visible at all; an accounting or invoicing tool widens the list. Say which side the list rests on, and point at `connect-tools` when the bank side is missing — a coverage figure read over a partial list is not the whole picture.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. Skip it rather than force it in.
@@ -114,7 +114,7 @@ Do not return:
 - A capped workspace-wide list presented as the whole set.
 - A claim that categorizing changed how Well retrieves invoices today.
 - A counterparty list rebuilt from `companies` or `transactions` when `well_list_counterparties` was unavailable.
-- Anything beyond the one sentence when the scope had nothing to categorize.
+- Anything beyond the one sentence, and the pointer line the rule above allows, when the scope had nothing to categorize.
 
 ## Quality checks
 
@@ -122,15 +122,15 @@ Before finishing, verify:
 
 - Exactly one read ran: one `well_list_counterparties` call with `workspace_id` and one scope (the caller's `periods`, at most 12, or `uncategorized_only: true` — never both). No re-read to check progress or report a delta.
 - No `well_query_records`, no `well_get_entity`, no `well_get_schema`, and no read of any kind beyond the one list call — no row enrichment, no side lookups, no catalog fetch. No `well_invoke_connector_tool`, no other create / update / delete tool, no close, lock, or posting tool.
-- On the card path the answer ended the turn at one coverage line, one card-pointing line, and one pointer line — no proposals, no per-row commentary, no confirmation question, no rows restated.
+- On the card path the answer ended the turn at one coverage line, one card-pointing line, and the pointer line where the pointer rule applies — no proposals, no per-row commentary, no confirmation question, no rows restated.
 - The coverage line named which connected side the counterparty list rests on, and pointed at `connect-tools` when the bank side was missing.
-- The answer closed on a one-line pointer to the next step when the user asked on their own, and handed control back to the caller inside a flow.
+- The pointer rule was applied as written: one pointer line on a standalone ask with `show-missing-invoices` installed, control back to the caller inside a flow, and a stop after the card line otherwise.
 - The model proposed only after an explicit user request, from the rows' names and domains plus `meta.categoryCatalog` already in hand, wrote only after a yes, honored partial yeses, recorded declines in `skipped_by_user`, treated the categories array as a replace-set, never retried a failed write silently — and then deferred back to the card.
 - `workspace_id` came from the caller or this conversation's own pin; a leftover session pin or period selection from another conversation was ignored and never mentioned.
 - The coverage figure matched the scope: categorized out of the total on `periods`, the uncategorized count alone on `uncategorized_only`, and no ratio the read did not hold. On the workspace-wide scope, the 50-row cap and the real `total` were both stated; every `null` `base_total_amount` was "amount unavailable"; no amounts were converted or summed across currencies; the rows were used as returned.
 - Every proposed category came from `meta.categoryCatalog` by `category_id`; no category was invented and no unplaceable row got a guessed match.
 - If `well_list_counterparties` was absent, the run ended at `unavailable` with nothing rebuilt from raw queries; if `well_update_company` had no `relationships.categories`, the proposal mode ended at `read_only` before any proposal.
-- When the read showed nothing to categorize, the answer was the one sentence, the hand-off was `resolution: unchanged`, no card was expected, and a calling flow got control back in the same turn.
+- When the read showed nothing to categorize, the answer was the one sentence — plus the pointer line where the pointer rule applies — the hand-off was `resolution: unchanged`, no card was expected, and a calling flow got control back in the same turn.
 - The answer claims no retrieval improvement (`suggested_retrieval` is provider-matched today), and no yaml, JSON, or fenced code block appears anywhere.
 
 ## Examples
@@ -157,7 +157,7 @@ Do not. No `well_get_entity` per row, no `well_query_records` for context, no pr
 
 ### Expected behavior
 
-Run the standalone scope: `well_list_counterparties({ workspace_id, uncategorized_only: true })`. State the uncategorized count and the cap, never a ratio — "173 counterparties have no category, read from the connected bank feed; the card shows the 50 largest. Pick a category on a row and it saves immediately. Once the gaps are closed: which invoices are missing for this month?" — and end the turn. Do not report "0 of 173 categorized": this scope never returns the categorized side, so the total number of counterparties is unknown here. Hand off `scope: { uncategorized_only: true }`, `resolution: rendered`.
+Run the standalone scope: `well_list_counterparties({ workspace_id, uncategorized_only: true })`. State the uncategorized count and the cap, never a ratio — "173 counterparties have no category, read from the connected bank feed; the card shows the 50 largest. Pick a category on a row and it saves immediately. Once the gaps are closed: which invoices are missing for this month?" — and end the turn. The third sentence is the pointer line, so it appears here because `show-missing-invoices` is installed; without it the answer stops at the card line. Do not report "0 of 173 categorized": this scope never returns the categorized side, so the total number of counterparties is unknown here. Hand off `scope: { uncategorized_only: true }`, `resolution: rendered`.
 
 ### Example request
 
