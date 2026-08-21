@@ -62,15 +62,16 @@ Know these before writing a workflow step that looks similar — the logic is ce
 | Brick | Owns |
 |---|---|
 | `define-workspace` | The MCP-server check, the OAuth/DCR flow, and pinning exactly one workspace. Supplies `workspace_id` to everything downstream. |
-| `connect-tools` | Whether a connection is real: `workspace_connectors` rows filtered on `connector.direction: input`, matched on `connector.data_domains`, with `last_successful_sync_at` — not a bare `status: enabled` — deciding connected. Plus install links. |
+| `connect-tools` | Whether a connection is real: `well_list_connectors` catalog rows filtered on `direction: input`, matched on `data_domains`, with `last_successful_sync_at` — not a bare `connection_status: enabled` — deciding connected. Plus install links. |
 | `resolve-own-company` | The three-way unresolved test (relation null / field **absent from the schema** / more than one candidate), the never-infer rule, and two-directional containment on normalized names for duplicate records. |
 | `normalize-currency` | The never-blend invariant, and rate selection: `exchange_rates` read, most-recent-rate-at-or-before the as-of date, never a later one, pair-direction checked. |
 
 ## Before you push
 
-`make validate` is the gate, and it runs on push via `.githooks/pre-push` (set up once with `make install`). It runs two checks, and the distinction matters:
+`make validate` is the gate, and it runs on push via `.githooks/pre-push` (set up once with `make install`). It runs three checks, and the distinction matters:
 
-- **`claude plugin validate . --strict`** confirms the marketplace manifest is well-formed. It checks only that a frontmatter block *exists* — never that the block parses as YAML.
+- **`claude plugin validate . --strict`** confirms the marketplace manifest is well-formed. It never reads the skills, so it passes even when a skill carries no frontmatter at all.
+- **`claude plugin validate ./skills --strict`** confirms every skill carries a frontmatter block. It checks only that the block *exists* — never that the block parses as YAML.
 - **`node scripts/check-skill-frontmatter.js`** enforces the one YAML rule that actually bites: an unquoted value containing a bare `:` is read by YAML as the start of a nested mapping, so the skill loads with **empty metadata, silently** — no name, no description, undiscoverable, and nothing anywhere reports an error. Per that script's own header, this broke `company-profile` and `missing-receipts` in #8.
 
 So running `claude plugin validate` alone is not the gate. Run `make validate`, and read the exit status unpiped (`make validate > /dev/null 2>&1; echo $?`), since a pipe reports its last stage.
