@@ -49,8 +49,11 @@ The calling skill or the user provides:
   are what this skill previews. Without it, and without the preview tool below, there is nothing to
   preview: say so, hand off `resolution: unavailable`, and stop. Never report that state as
   `nothing_to_do` — the period may hold plenty to fetch; the preview simply could not be built.
-- `workspace_id` — required. Comes from `define-workspace` or the session pin, used silently; never
-  resolved or asked for in text here.
+- `workspace_id` — required. Comes from `define-workspace`, or from the session pin
+  (`well_list_workspaces`' `session.pinned_workspace_id`) used silently only when THIS conversation
+  established it. Hosts share one MCP session across conversations, so a pin this conversation never
+  made is another conversation's leftover: ignore it, never mention it, and run `define-workspace`
+  instead. Never resolved or asked for in text here.
 - A period selection written server-side — required, but **not passed to the tool**: the user's
   click on the period card (or `define-period`) already wrote it, and the preview tool reads it on
   its own. The `define-period` hand-off's `period_label` is narration context only.
@@ -121,11 +124,12 @@ Call each list or read tool once per step. The widget cards refresh themselves �
    A run derived entirely from the `show-missing-invoices` hand-off calls nothing, so neither check
    blocks it.
 
-2. **Confirm the workspace and the selection.** Require `workspace_id` — from the caller or the
-   session pin, used silently. If it is missing, run `define-workspace`; if the preview tool answers
-   that no period selection exists yet, run `define-period` (its picker writes the selection) and
-   re-call — never pin either one here and never guess a month. Pass `workspace_id` explicitly on
-   any call you make.
+2. **Confirm the workspace and the selection.** Require `workspace_id` — from the caller, or a
+   session pin used silently when this conversation established it. Missing workspace, or a pin left
+   by another conversation → run `define-workspace` and never reuse or mention that leftover pin. If
+   the preview tool answers that no period selection exists yet, run `define-period` (its picker
+   writes the selection) and re-call — never pin either one here and never guess a month. Pass
+   `workspace_id` explicitly on any call you make.
 
 3. **Build the preview.**
    - Tool present → call `well_preview_invoice_fetch({ workspace_id })` — no periods argument; the
@@ -256,15 +260,24 @@ Do not return:
 - An agent for a provider that is not in the preview or in `agent_candidates`.
 - An agent named for a provider Well never matched — the `"unknown"` group is not an agent.
 
+**How this reaches the user.** A Well MCP tool that ships a widget attaches
+`_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
+never reaches you, so you cannot tell a host that drew the preview cards from one that did
+not. Write an answer that stands on its own and let the cards add to it where there are
+some. Do not compose a second rendering of agents the tool already returned; where a visual
+the tool does not draw genuinely reads better and the `well-design-system` skill is
+available, use it.
+
 ## Quality checks
 
 Before finishing, verify:
 
 - No write tool was called: no `well_invoke_connector_tool`, no `well_create_*`, no
   `well_update_*`, no `well_delete_*`, no connector action.
-- `workspace_id` came from the caller or the session pin, the period came from the server-held
-  selection (the preview call carried no periods argument), and neither was resolved or guessed
-  here.
+- `workspace_id` came from the caller, or from a session pin this conversation established — no
+  leftover pin from another conversation was reused or mentioned. The period came from the
+  server-held selection (the preview call carried no periods argument), and neither was resolved or
+  guessed here.
 - The preview came from `well_preview_invoice_fetch` when it exists, and from the
   `show-missing-invoices` hand-off's `agent_candidates` when it does not — never from a guess about
   which providers a workspace uses.
