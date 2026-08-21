@@ -10,6 +10,8 @@ description: Check which data sources a Well workspace has connected — bank ac
 
 Answer "does this workspace have the connections this job needs?" and close the gap. One tool does the whole job: `well_list_connectors` returns Well's connector catalog with every one of the workspace's connections represented on its own catalog row, and in an MCP-Apps host that result renders as the connect picker card. Read the state per kind — bank, accounting, invoicing — from those rows, let the card carry the connect links, and hand a typed coverage result to the calling flow. As a flow step this is **always a user stop**: the card renders — green or not — with a per-row **Connect** button on each tile and one **Continue** button. The Continue click writes an acknowledgment server-side (`well_switch_workspace` with `ack: "connectors"`) and prefills "Continue" in the user's composer; the user sends it, and that message is how the flow moves on. Step two of Well's fetch-missing-invoices flow, ahead of the dedicated `connect-bank` step where that skill is installed.
 
+**The card names its own scope.** A call scoped with `kind` gets that scope's wording — the bank, the accounting tool, or the invoicing tool by name — and an unscoped call keeps the generic wording for the whole catalog. Both states carry the workspace attribution strip, so the user sees which workspace they are connecting. Say the scope in your own line too, and never restate the card's title.
+
 ## When to use this skill
 
 Use this skill when:
@@ -27,7 +29,7 @@ Do not use this skill when:
 - The ask is only about the bank ("connect my Qonto", "is my bank connected?") **and** the `connect-bank` skill is installed — it scopes the catalog to banks and returns one state instead of three. When it is not installed, answer here instead: scope this run to `kinds: [bank]` rather than sending the user to a skill they do not have.
 - The user wants a figure (cash, runway, spend) — the data skills run this check internally.
 - The user wants to disconnect a tool, force a re-sync, or run an action on a connected provider (`well_invoke_connector_tool`) — out of scope; point them to the Well app.
-- The user wants Well to fetch invoices from a portal — that is the deploy-agents step of the flow, after this one.
+- The user wants Well to fetch invoices from a portal — that is the deploy-agents step of the flow, after this one, and the Well app is what runs the collection.
 
 ## Inputs
 
@@ -62,7 +64,7 @@ It ships with the `well-skills` plugin. This skill is also installable on its ow
 - `workspace_connector_id` — the connected instance's id, or null. `is_preselected` — Well recommends connecting this one now, and the picker card pre-checks exactly these rows.
 - `install_url` — a one-click link that starts the connection in Well from any state: it signs the user in, opens the bank login or the provider's OAuth, and covers a reconnect as well as a first install. Null only when the row is not `available`.
 
-Inputs: `kind` — one of `bank`, `accounting`, `invoicing` — filters the catalog to that kind server-side. When the job covers exactly one kind, pass `kind`; when it covers two or three, make **one unscoped call** grouped by `data_domains` — one call renders one card, and a turn never renders two. `q` name-searches the full catalog (a specific bank, a specific portal). `limit` and `offset` page it.
+Inputs: `kind` — one of `bank`, `accounting`, `invoicing` — filters the catalog to that kind server-side and picks the card's wording. When the job covers exactly one kind, pass `kind`; when it covers two or three, make **one unscoped call** grouped by `data_domains` — one call renders one card, and a turn never renders two. An unscoped call gets the generic wording, so name the three kinds in your own coverage line. `q` name-searches the full catalog (a specific bank, a specific portal). `limit` and `offset` page it.
 
 The click-chain tools:
 
@@ -100,7 +102,7 @@ Call each list or read tool once per step, and render at most one widget card pe
    - Only **error** rows → **error**. Name the connector and offer its `install_url` as a reconnect, not a first install.
    - No qualifying row → **missing**, including a `to_configure` row the user started but never finished authorizing.
 
-4. **State the coverage once, then end the turn on the card.** Say one line per requested kind — what is connected, what is missing or in error, and why it matters for the job (`purpose`) — then one closing line: connect what is missing with the card's Connect buttons if you want, then click Continue. Do not restate the rows or re-render them as a list or table: the card carries the tiles and the install links. Even when every kind is green, the card stays on screen for the user to see and confirm the state, and the turn still ends here. Nothing else in the turn.
+4. **State the coverage once, then end the turn on the card.** Say one line per requested kind — what is connected, what is missing or in error, and why it matters for the job (`purpose`) — then one closing line: connect what is missing with the card's Connect buttons if you want, then click Continue. Do not restate the rows or re-render them as a list or table: the card carries the tiles, the install links, its own scope title and the workspace strip. Even when every kind is green, the card stays on screen for the user to see and confirm the state, and the turn still ends here. Nothing else in the turn.
    - When the user asked about connections standalone (nothing follows), the coverage line ends the turn — the card is on screen, and there is nothing to chain.
    - In a text-only host, name at most three connectors per missing kind — `is_preselected` rows first, then the user's provider hints via `q` — each with its `install_url`, and treat the user's next message as the answer.
    - If the user names a provider that is not in the default view, search it with `q` before saying Well does not support it. A row whose `status` is not `available` is not connectable today — say so and offer the nearest available alternative from the catalog rather than a dead link.
@@ -151,7 +153,7 @@ Before finishing, verify:
 
 - If `well_*` tools were absent, the user was pointed at `https://api.wellapp.ai/v1/mcp` instead of a tool error.
 - `well_list_connectors` was the only connector read called — no `well_query_records` on `workspace_connectors`, no `well_invoke_connector_tool`, no provider-specific tool. A `well_list_workspaces` call, if any, only resynced this conversation's pin and queue — or resolved the workspace in step 2's inline fallback — and fed nothing into the coverage decision.
-- One kind meant one scoped call; two or three kinds meant one unscoped call — one card per turn, never two.
+- One kind meant one scoped call; two or three kinds meant one unscoped call — one card per turn, never two. The coverage line named the kinds in scope rather than restating the card's own title.
 - `workspace_id` came from `define-workspace`, the caller, a session pin this conversation established, or step 2's inline fallback when `define-workspace` was absent — outside that fallback the workspace was not resolved or asked for in text here, and no leftover pin from another conversation was reused or mentioned.
 - Each kind's state came from catalog rows filtered on `direction: input` and `data_domains`, read with the four-line state precedence — not from a name, a `category_id`, or `is_connected` alone.
 - A `need_reconnect` / `degraded` / `suspended` row was reported as `error` even when it had synced before, and an errored connector was named even when another connector covered the same kind.
@@ -191,7 +193,7 @@ The card still renders and the step still stops. Say "Bank, accounting, and invo
 
 ### Expected behavior
 
-The question names one kind, so scope to it: `well_list_connectors({ workspace_id, kind: "accounting" })` — one scoped call, not a full catalog read. "Accounting: error — Pennylane is authenticated but its last sync failed; reconnect it from the card." Standalone ask, nothing follows: stop after the coverage line, no acknowledgment needed. Hand off with `coverage: none` (no requested kind is delivering data) and the reconnect link; do not touch bank or invoicing.
+The question names one kind, so scope to it: `well_list_connectors({ workspace_id, kind: "accounting" })` — one scoped call, not a full catalog read. The card then names the accounting scope itself. "Accounting: error — Pennylane is authenticated but its last sync failed; reconnect it from the card." Standalone ask, nothing follows: stop after the coverage line, no acknowledgment needed. Hand off with `coverage: none` (no requested kind is delivering data) and the reconnect link; do not touch bank or invoicing.
 
 ### Example request
 
