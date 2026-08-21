@@ -1,6 +1,8 @@
 # dist/
 
-Auto-generated. Each `.zip` and `.skill` here is a zip of the matching `skills/<name>/` folder, rebuilt by the [`.githooks/pre-commit`](../.githooks/pre-commit) hook whenever a commit touches `skills/*/SKILL.md`. The `.skill` file is the same contents, stored uncompressed and renamed — double-click to install in Claude Desktop.
+Auto-generated. Each `.zip` and `.skill` here is built from the matching `skills/<name>/` folder by [`scripts/build-dist.sh`](../scripts/build-dist.sh) — run `make build`, or the script directly; the [`.githooks/pre-commit`](../.githooks/pre-commit) hook runs it whenever a commit touches `skills/`. The `.skill` file is the same contents, stored uncompressed and renamed — double-click to install in Claude Desktop.
+
+A skill that keeps step bricks under `references/` ships none of them as separate files: the build inlines each one into the packaged `SKILL.md` as a `## Step reference: <name>` section and rewrites the pointers that named it. Claude Desktop prints one "skill loaded" status line per file the model reads, so a shipped skill must need exactly one read. Verify an archive with `unzip -l`: it must hold exactly one `.md` file.
 
 That hook only runs if you've set it up once: `make install`.
 

@@ -11,7 +11,7 @@
 
 ## What it does
 
-Every grounded answer rests on what is connected. This skill reads the live connection state of a workspace — which bank accounts, accounting software, and invoicing or payment portals are connected, still running their first sync, or in error — and, for whatever is missing, hands your AI assistant Well's one-click install links (in Claude Desktop, the connect card itself). Once a connection lands it re-checks on its own and moves the flow forward, then reports a plain coverage line: bank connected, accounting needs a reconnect, invoicing missing. It is steps two and three of Well's fetch-missing-invoices flow and the connector check every Well data skill relies on.
+Every grounded answer rests on what is connected. This skill reads the live connection state of a workspace from Well's connector catalog in one call — which bank accounts, accounting software, and invoicing or payment portals are connected, still running their first sync, or in error — and, for whatever is missing, hands your AI assistant Well's one-click install links (in Claude Desktop, the connect card itself, never a table of records). Once a connection lands it re-checks on its own and moves the flow forward, then reports a plain coverage line: bank connected, accounting needs a reconnect, invoicing missing. It is step two of Well's fetch-missing-invoices flow, ahead of the dedicated `connect-bank` step where that skill is installed, and the connector check every Well data skill relies on.
 
 ## Required data in Well
 
@@ -28,7 +28,7 @@ This skill delegates one setup step to a Well atomic skill rather than repeating
 
 - **[`define-workspace`](define-workspace.md)** — pins which Well workspace the connections are checked for.
 
-Install it alongside this one. The skill still runs without it — step 2 falls back to resolving the workspace inline — but with it installed you get one consistent workspace flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install both together; if you download the `.skill` file on its own, grab `define-workspace` as well.
+Install it alongside this one. This skill takes its `workspace_id` and does not resolve the workspace itself, so the pair belongs together. The **Claude Code plugin** and **Codex plugin** paths below install both together; if you download the `.skill` file on its own, grab `define-workspace` as well.
 
 ---
 

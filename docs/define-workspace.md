@@ -11,7 +11,7 @@
 
 ## What it does
 
-Most founders run more than one legal entity in Well — a French SAS and a US Inc., a holding and an operating company. Before any question about invoices, cash, or a period makes sense, your AI assistant has to know which one you mean. This skill reads the workspaces your Well connection is authorized on, resolves a single one — silently when there is only one, from your hint when it matches ("use my US entity"), or from a one-line pick on the workspace card otherwise — and hands the choice on so every later call stays inside that workspace. It is the first brick of Well's fetch-missing-invoices and close-books flows, and the step every other Well skill runs before it reads a number.
+Most founders run more than one legal entity in Well — a French SAS and a US Inc., a holding and an operating company. Before any question about invoices, cash, or a period makes sense, your AI assistant has to know which one you mean. This skill reads the workspaces your Well connection is authorized on, resolves a single one — or several: pick more than one entity and every skill that follows runs once per workspace, in your order, never mixing their data — silently when there is only one, from your hint when it matches ("use my US entity"), or from a one-line pick on the workspace card otherwise — then pins it as your connection's standing default and hands the choice on, so every later call stays inside that workspace. It is the first brick of Well's fetch-missing-invoices and close-books flows, and the step every other Well skill runs before it reads a number.
 
 ## Required data in Well
 
