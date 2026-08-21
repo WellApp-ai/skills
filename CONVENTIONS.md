@@ -6,7 +6,7 @@ Every rule below exists because a reviewer caught it, usually more than once.
 
 ## A skill that depends on another declares it in three places
 
-The atomic bricks — `define-workspace`, `connect-tools`, `resolve-own-company`, `normalize-currency` — are invoked by other skills rather than duplicated into them. When a skill starts depending on one, say so in **all three** of:
+The atomic bricks — `define-workspace`, `connect-tools`, `define-period`, `resolve-own-company`, `normalize-currency` — are invoked by other skills rather than duplicated into them. When a skill starts depending on one, say so in **all three** of:
 
 1. **`requires:`** in the SKILL.md frontmatter — `requires: [define-workspace, connect-tools]`.
 2. **A `**Composed skills.**` block** in the SKILL.md body, inside the Tooling section, naming each brick and what it supplies.
@@ -31,17 +31,17 @@ Derive all four from the actual bullet count rather than editing by hand, then c
 
 ## Reuse the README's install copy — never rewrite it
 
-The canonical template for a docs page's AI-assisted block is **any of the fifteen pages that already share it** — [`docs/expense-breakdown.md`](docs/expense-breakdown.md) is as good a reference as any. Those fifteen blocks are byte-identical: five steps, opening `1. Fetch these files:` with lettered sub-items. To add a dependency, extend step 1 with the next letter and change nothing else.
+The canonical template for a docs page's AI-assisted block is **any of the twenty pages that already share it** — [`docs/expense-breakdown.md`](docs/expense-breakdown.md) is as good a reference as any. Those twenty blocks are byte-identical: five steps, opening `1. Fetch these files:` with lettered sub-items. To add a dependency, extend step 1 with the next letter and change nothing else.
 
 **Do not copy the block out of [`README.md`](README.md#assisted-by-ai-recommended).** It looks like the same thing and is not: it installs *every* skill at once, so it runs to six steps and carries two that a single-skill page must never import — a "create a summary table" step, and a clause about keeping the design-system's two `.css` files in `assets/`. The README block is where the multi-file *shape* came from, but its wording has since diverged, and copying it verbatim into a docs page would change the established install flow.
 
 Do not write new prose for it either. That copy is tuned for install UX, and rewriting it reintroduces untested wording — one attempt added an "each must land in its own skill folder named after that skill" instruction that was never true and had to be reverted.
 
-Two pages differ legitimately. [`docs/define-workspace.md`](docs/define-workspace.md) depends on nothing, so it uses the singular `1. Fetch this file:` with no sub-items. [`docs/well-design-system.md`](docs/well-design-system.md) ships stylesheets rather than a lone `SKILL.md`, so it fetches assets separately and says where to put them.
+Three pages differ legitimately. [`docs/define-workspace.md`](docs/define-workspace.md) and [`docs/fetch-missing-invoices.md`](docs/fetch-missing-invoices.md) depend on nothing — the first is the root brick, the second carries the whole flow in one file — so each uses the singular `1. Fetch this file:` with no sub-items; those two blocks are byte-identical to each other. [`docs/well-design-system.md`](docs/well-design-system.md) ships stylesheets rather than a lone `SKILL.md`, so it fetches assets separately and says where to put them.
 
 ## Never blind find-and-replace a shared phrase
 
-`delegates N setup steps` currently appears across **15** docs pages at four different values of N — 3 pages at one, 3 at two, 4 at three, 5 at four. Only the pages whose dependency count actually changed may be touched. A repo-wide substitution to fix five pages will silently make ten wrong, and nothing validates prose.
+`delegates N setup steps` currently appears across **20** docs pages at four different values of N — 6 pages at one, 5 at two, 4 at three, 5 at four. Only the pages whose dependency count actually changed may be touched. A repo-wide substitution to fix five pages will silently make ten wrong, and nothing validates prose.
 
 The same applies to `Install all N alongside this one`, `install all N+1 together`, and `grab those N as well`.
 
@@ -51,7 +51,7 @@ The same applies to `Install all N alongside this one`, `install all N+1 togethe
 
 ## Sweep after any merge — concurrent PRs drift
 
-A PR that adds a convention to every skill and a PR that adds a new skill will not know about each other. PR #22 added the `**How this reaches the user.**` widget-disclosure block to every skill that existed at the time, and merged twelve minutes before PR #21 added `normalize-currency` — so the newest skill shipped without the newest convention, and `main` inherited a gap neither PR was wrong about. Today 16 of the 17 skills carry that block; `well-design-system` is exempt, being the visual skill it points at.
+A PR that adds a convention to every skill and a PR that adds a new skill will not know about each other. PR #22 added the `**How this reaches the user.**` widget-disclosure block to every skill that existed at the time, and merged twelve minutes before PR #21 added `normalize-currency` — so the newest skill shipped without the newest convention, and `main` inherited a gap neither PR was wrong about. Today 22 of the 23 skills carry that block; `well-design-system` is exempt, being the visual skill it points at.
 
 After merging either kind of change, sweep the convention across every skill rather than trusting the PR that introduced it.
 

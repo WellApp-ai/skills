@@ -55,15 +55,21 @@ This repo packages that judgment as **Agent Skills** — playbooks any AI assist
 | `payment-invoice-lookup` | "What happened with this payment?" — match a payment to its invoice, or list every unreconciled one. | [View details →](docs/payment-invoice-lookup.md) |
 | `missing-receipts` | "Which expenses are missing receipts?" — invoices with no source document attached, for compliance. | [View details →](docs/missing-receipts.md) |
 | `draft-invoice` | "Draft an invoice for this client" — creates a real invoice record in Well, with an attached PDF, from a chat description. | [View details →](docs/draft-invoice.md) |
+| `fetch-missing-invoices` | "Fetch the invoices I'm missing" — the whole month-end sweep in one prompt: workspace, connections, bank, month, the gap list, then a preview of the agents that would fetch them. | [View details →](docs/fetch-missing-invoices.md) |
+| `show-missing-invoices` | "What am I missing for March?" — settled spend with no supplier invoice, one row per supplier, each row saying how the gap can be closed. | [View details →](docs/show-missing-invoices.md) |
+| `deploy-agents` | "Go get those invoices" — a preview of which invoice-fetching agents Well would launch, per provider, before any of them runs. | [View details →](docs/deploy-agents.md) |
 
 ## Utils
 
-These aren't skills you ask for directly — the skills above invoke them automatically to handle a setup step. Listed here for reference, or if you want to see exactly how that step works.
+These are the setup steps the skills above invoke automatically to get what they need. Several also stand on their own when you ask for them directly. Listed here for reference, or if you want to see exactly how that step works.
 
 | Skill | Description | Details |
 |---|---|---|
 | `define-workspace` | "Which entity are we talking about?" — pins the one Well workspace a conversation works in and hands it to every skill that follows. | [View details →](docs/define-workspace.md) |
 | `connect-tools` | "What's connected to Well?" — bank, accounting, and invoicing sources: connected, still syncing, in error, or missing, with one-click connect links. | [View details →](docs/connect-tools.md) |
+| `connect-bank` | "Connect my bank" — the dedicated bank step: which banks are live, syncing, or expired, and a one-click link to get the feed in. | [View details →](docs/connect-bank.md) |
+| `define-period` | "Which month are we working on?" — pins the calendar month or months, translates them into the workspace's fiscal year and period, and says whether the selection holds activity. | [View details →](docs/define-period.md) |
+| `categorize-counterparties` | "Which suppliers have no category?" — the companies behind your spend on a card, uncategorized ones first, each one categorized by picking from Well's catalog on its row. | [View details →](docs/categorize-counterparties.md) |
 | `resolve-own-company` | "Which company here is ours?" — resolves the own-company pointer that decides payable from receivable, and folds in an entity's duplicate records. | [View details →](docs/resolve-own-company.md) |
 | `normalize-currency` | "What is this worth in one currency?" — converts multi-currency amounts into one total carrying its rate and date, or a clean per-currency breakdown, never a blended figure. | [View details →](docs/normalize-currency.md) |
 | `well-design-system` | Style a view you compose for Well data — tokens, card anatomy, and a precompiled stylesheet — so it looks like Well rather than a generic page. | [View details →](docs/well-design-system.md) |
@@ -95,13 +101,19 @@ Install the following official skills from Well. Instructions:
     j. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/payment-invoice-lookup/SKILL.md
     k. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/missing-receipts/SKILL.md
     l. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/draft-invoice/SKILL.md
-    m. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
-    n. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
-    o. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/resolve-own-company/SKILL.md
-    p. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/normalize-currency/SKILL.md
-    q. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/well-design-system/SKILL.md
-    r. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/well-design-system/assets/well.css
-    s. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/well-design-system/assets/well-tokens.css
+    m. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/fetch-missing-invoices/SKILL.md
+    n. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/show-missing-invoices/SKILL.md
+    o. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/deploy-agents/SKILL.md
+    p. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
+    q. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
+    r. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-bank/SKILL.md
+    s. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-period/SKILL.md
+    t. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/categorize-counterparties/SKILL.md
+    u. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/resolve-own-company/SKILL.md
+    v. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/normalize-currency/SKILL.md
+    w. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/well-design-system/SKILL.md
+    x. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/well-design-system/assets/well.css
+    y. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/well-design-system/assets/well-tokens.css
 2. Download and display the SKILL.md files to the user. Each must be named "SKILL.md" — no prefix, no suffix, exact name.
    The two `.css` files are assets, not skills: keep their own names and place them in `assets/` beside the well-design-system SKILL.md, and do not display them.
 3. Create a summary table with skill names and descriptions extracted from the frontmatter
@@ -178,6 +190,9 @@ Download the `.skill` file and double-click it to install — Claude Desktop ins
 | `payment-invoice-lookup` | Match a payment to its invoice, or list every unreconciled one. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/payment-invoice-lookup.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/payment-invoice-lookup.zip) |
 | `missing-receipts` | Invoices with no source document attached, for compliance. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/missing-receipts.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/missing-receipts.zip) |
 | `draft-invoice` | Create a real invoice record in Well, with an attached PDF, from a chat description. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/draft-invoice.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/draft-invoice.zip) |
+| `fetch-missing-invoices` | Walk the whole missing-invoice flow end to end, from workspace to a preview of the agents that would fetch. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/fetch-missing-invoices.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/fetch-missing-invoices.zip) |
+| `show-missing-invoices` | Settled spend for a period that still has no supplier invoice, one row per supplier, with how each gap can be closed. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/show-missing-invoices.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/show-missing-invoices.zip) |
+| `deploy-agents` | Preview the invoice-fetching agents Well would launch for a period, without launching any. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/deploy-agents.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/deploy-agents.zip) |
 
 **Utils** — each `.skill`/`.zip` above only bundles its own folder, so a util it depends on isn't included; download and install the util separately alongside it.
 
@@ -185,6 +200,9 @@ Download the `.skill` file and double-click it to install — Claude Desktop ins
 |---|---|---|
 | `define-workspace` | Pin the one Well workspace a conversation works in and hand it to every skill that follows. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/define-workspace.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/define-workspace.zip) |
 | `connect-tools` | Check bank, accounting, and invoicing connections and connect the missing ones in one click. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/connect-tools.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/connect-tools.zip) |
+| `connect-bank` | Get the bank feed into a workspace in one click, and report whether it is live, syncing, or expired. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/connect-bank.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/connect-bank.zip) |
+| `define-period` | Pin the calendar month or months, derive the fiscal year and period, and report whether the selection holds activity. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/define-period.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/define-period.zip) |
+| `categorize-counterparties` | Categorize the companies behind a workspace's spend from Well's shared catalog, on a card where every pick saves as you make it. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/categorize-counterparties.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/categorize-counterparties.zip) |
 | `resolve-own-company` | Work out which company in the workspace is yours, and fold in its duplicate records. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/resolve-own-company.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/resolve-own-company.zip) |
 | `normalize-currency` | Convert amounts across currencies into one auditable total, or report them per currency. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/normalize-currency.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/normalize-currency.zip) |
 | `well-design-system` | Style a composed view with Well tokens and card anatomy. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/well-design-system.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/well-design-system.zip) |
