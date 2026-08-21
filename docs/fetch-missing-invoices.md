@@ -38,7 +38,7 @@ Install the following official skill from Well.
 
 **Instructions**:
 
-1. Fetch this file: 
+1. Fetch this file:
     https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/fetch-missing-invoices/SKILL.md
 2. Download and display this file to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
 3. Install this skill.
