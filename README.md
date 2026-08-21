@@ -65,14 +65,14 @@ These are the setup steps the skills above invoke automatically to get what they
 
 | Skill | Description | Details |
 |---|---|---|
-| `define-workspace` | "Which entity are we talking about?" — pins the one Well workspace a conversation works in and hands it to every skill that follows. | [View details →](docs/define-workspace.md) |
-| `connect-tools` | "What's connected to Well?" — bank, accounting, and invoicing sources: connected, still syncing, in error, or missing, with one-click connect links. | [View details →](docs/connect-tools.md) |
+| `define-workspace` | Pins the one Well workspace a conversation works in and hands it to every skill that follows. | [View details →](docs/define-workspace.md) |
+| `connect-tools` | Checks bank, accounting, and invoicing sources: connected, still syncing, in error, or missing, with one-click connect links. | [View details →](docs/connect-tools.md) |
 | `connect-bank` | "Connect my bank" — the dedicated bank step: which banks are live, syncing, or expired, and a one-click link to get the feed in. | [View details →](docs/connect-bank.md) |
 | `define-period` | "Which month are we working on?" — pins the calendar month or months, translates them into the workspace's fiscal year and period, and says whether the selection holds activity. | [View details →](docs/define-period.md) |
 | `categorize-counterparties` | "Which suppliers have no category?" — the companies behind your spend on a card, uncategorized ones first, each one categorized by picking from Well's catalog on its row. | [View details →](docs/categorize-counterparties.md) |
-| `resolve-own-company` | "Which company here is ours?" — resolves the own-company pointer that decides payable from receivable, and folds in an entity's duplicate records. | [View details →](docs/resolve-own-company.md) |
-| `normalize-currency` | "What is this worth in one currency?" — converts multi-currency amounts into one total carrying its rate and date, or a clean per-currency breakdown, never a blended figure. | [View details →](docs/normalize-currency.md) |
-| `well-design-system` | Style a view you compose for Well data — tokens, card anatomy, and a precompiled stylesheet — so it looks like Well rather than a generic page. | [View details →](docs/well-design-system.md) |
+| `resolve-own-company` | Resolves the own-company pointer that decides payable from receivable, and folds in an entity's duplicate records. | [View details →](docs/resolve-own-company.md) |
+| `normalize-currency` | Converts multi-currency amounts into one total carrying its rate and date, or a clean per-currency breakdown, never a blended figure. | [View details →](docs/normalize-currency.md) |
+| `well-design-system` | Styles a view you compose for Well data — tokens, card anatomy, and a precompiled stylesheet — so it looks like Well rather than a generic page. | [View details →](docs/well-design-system.md) |
 
 ---
 

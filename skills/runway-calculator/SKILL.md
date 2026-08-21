@@ -143,4 +143,4 @@ Run `define-workspace`, then `connect-tools`, note how fresh the connected data 
 
 ### Expected behavior
 
-Detect the missing/insufficient connector during step 2, via `connect-tools`' `coverage`, present install links for bank/accounting connectors instead of guessing a number, and stop.
+Detect the missing/insufficient connector during step 2, via `connect-tools`' `coverage: none`; `connect-tools` has already put the install links on screen, so acknowledge that rather than presenting a second set, say plainly that runway can't be computed yet instead of guessing a number, and stop.

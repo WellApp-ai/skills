@@ -47,8 +47,9 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 - `well_query_records` — read `workspaces` (for `own_company`) and search `companies` for a possible receiver match.
 - `well_get_schema` — call this before querying `invoices` or `companies` for the first time in a session; field names and semantics are workspace/connector-dependent, never assume them.
 - `well_create_invoice_from_data` — the write tool. Exact input schema (verified against source, use these field names as-is):
-  - `issuer`: `{ name (required), domain?, tax_id? }`
-  - `receiver`: `{ name (required), domain?, tax_id? }`
+  - `issuer`: `{ name (required), domain?, tax_id?, company_id? }`
+  - `receiver`: `{ name (required), domain?, tax_id?, company_id? }`
+  - `company_id` binds to an existing, already-confirmed `companies` row by id — set it whenever step 2 confirmed a match, rather than leaving the tool to re-resolve the company by name/domain/tax_id at write time, which risks minting a duplicate `companies` row or attaching the invoice to the wrong one.
   - `reference_number` (required, string)
   - `issue_date` (required, ISO `YYYY-MM-DD`)
   - `due_date` (optional, ISO `YYYY-MM-DD`)
@@ -80,8 +81,8 @@ Both ship with the `well-skills` plugin. This skill is also installable on its o
    - **If `define-workspace` isn't installed** — this skill also ships on its own — do the same three moves inline: with no `well_*` tool in your toolset, tell the user a Well connection is mandatory at `https://api.wellapp.ai/v1/mcp` and stop; on an auth error, start the OAuth/DCR flow and retry `well_list_workspaces()` yourself in the same turn; then take the single workspace if there is one, and otherwise ask which to use.
 
 2. **Gather every required field — never invent one.** Call `well_get_schema({ root: "invoices" })` and `well_get_schema({ root: "companies" })` before relying on assumptions about either.
-   - **Issuer**: invoke the `resolve-own-company` skill with the pinned `workspace_id` and `mode: suggest` — it reads `workspaces.own_company` and hands back a default without running the full resolution ceremony, because the user confirms the issuer on the draft anyway. Offer that company as the likely issuer and let the user confirm or override it; never assume it silently. If the skill isn't installed, read `workspaces.own_company` directly for the same suggestion, and if it's null or absent from the schema, just ask who the issuer is rather than inferring it from the workspace's name.
-   - **Receiver**: search `companies` (`well_query_records`, `_ilike` on `name`) for a possible match to the client's name. If found, offer to reuse its `domain`/`tax_id_value`, but only if the user confirms it's the right company — never silently substitute an unconfirmed match. If no match, take the name fresh from the user.
+   - **Issuer**: invoke the `resolve-own-company` skill with the pinned `workspace_id` and `mode: suggest` — it reads `workspaces.own_company` and hands back a default without running the full resolution ceremony, because the user confirms the issuer on the draft anyway. Offer that company as the likely issuer and let the user confirm or override it; never assume it silently. Once confirmed, pass its hand-off's `own_company_id` as `issuer.company_id` so the write binds to that exact row instead of re-resolving by name/domain/tax_id. If the skill isn't installed, read `workspaces.own_company` directly for the same suggestion (and the same `company_id` binding), and if it's null or absent from the schema, just ask who the issuer is rather than inferring it from the workspace's name — in that case omit `company_id` and let the write create a fresh company from `name`.
+   - **Receiver**: search `companies` (`well_query_records`, `_ilike` on `name`) for a possible match to the client's name. If found, offer to reuse its `domain`/`tax_id_value`, but only if the user confirms it's the right company — never silently substitute an unconfirmed match. Once confirmed, pass that row's `id` as `receiver.company_id` so the write binds to it instead of re-resolving by name at write time. If no match, take the name fresh from the user and omit `company_id` — the write creates a new company.
    - **Reference number**: ask if the user hasn't given one. Never invent a numbering scheme; if they have no preference, suggest a simple placeholder (e.g. today's date plus a sequence marker) and let them confirm or supply their own.
    - **Issue date**: default to today if unspecified, but say plainly that a default was used.
    - **Due date**: ask only if payment terms matter to the user; otherwise omit it.
@@ -136,6 +137,7 @@ Before finishing, verify:
 - `well_get_schema` was called for `invoices` and `companies` before relying on assumptions about either.
 - No monetary amount, price, tax id, or date was fabricated — every one came from the user or was explicitly stated as a default (e.g. today's date) and confirmed.
 - The receiver company match (if any) was confirmed by the user, not silently substituted.
+- Whenever the issuer or receiver was confirmed against an existing `companies` row, its id rode along as `company_id` on the write, rather than letting the tool re-resolve the company by name/domain/tax_id.
 - At least one real line item with a real `unit_price` was gathered — a total-only request was never collapsed into a single invented line.
 - The user explicitly confirmed the complete draft before `well_create_invoice_from_data` was called.
 - `well_create_invoice_document` was called with the new `invoice_id` right after a successful create, never before, and never retried silently on failure.

@@ -32,7 +32,7 @@ Do not use this skill when:
 The user may provide:
 
 - A workspace hint — an id, a workspace name, or the company behind it — if they manage more than one. Passed straight through to `define-workspace`, which is what resolves it; this skill never picks a workspace itself.
-- The home/reporting currency to measure exposure against — default to asking the user if it's ambiguous, or inferring it from the workspace's own data (see step 4) and stating which approach was used.
+- The home/reporting currency to measure exposure against — default to asking the user if it's ambiguous, or inferring it from the workspace's own data (see step 5) and stating which approach was used.
 - An as-of date for the exchange rates — default to today.
 
 ## Tooling
@@ -67,14 +67,14 @@ All three ship with the `well-skills` plugin. This skill is also installable on 
 
 3. **Verify the data itself has landed.** `connect-tools` reports connections, not rows — a connector can be connected and still have delivered nothing this skill can use. Spot-check what this skill actually reads: a 1-row `well_query_records` read on `invoices` and on `accounts`. Zero rows on both means there is no exposure to measure yet — say so and stop rather than reporting zero exposure as a clean bill of health.
 
-4. **Determine the home/reporting currency.** There is no single confirmed "home currency" field on `workspaces` — either ask the user directly, or infer it as the most common `local_currency`/`accounts.currency` across the workspace's own invoice and account data. Whichever approach is used, state it plainly in the output; never silently assume USD or any other default.
-
-5. **Query outstanding invoices and current cash balances.** Call `well_get_schema({ root: "invoices" })`, `well_get_schema({ root: "accounts" })`, and `well_get_schema({ root: "account_balances" })` before querying each for the first time this session.
+4. **Query outstanding invoices and current cash balances.** Call `well_get_schema({ root: "invoices" })`, `well_get_schema({ root: "accounts" })`, and `well_get_schema({ root: "account_balances" })` before querying each for the first time this session.
    - Invoices: query `invoices` where `payment_status` is `unpaid` or `partial`, regardless of whether the workspace is issuer or receiver — exposure means "money we're owed or owe in a foreign currency," not one side only. Include `local_currency`, `grand_total`, `balance_due`, `issuer.name`, `receiver.name`.
    - Cash: query `accounts` joined to `account_balances` where `balance_at_to IS NULL` (the current-balance row) — never join to `ledger_accounts` for this. Group by `accounts.currency`.
-   - Group both result sets by currency, and separate out everything that is **not** the home currency from step 4 — that's the exposure set.
+   - Group both result sets by currency.
 
-6. **Convert each non-home currency to the home currency — run `normalize-currency`.** Invoke the `normalize-currency` skill with the pinned `workspace_id`, the exposure subtotal per non-home currency (tagged by currency), `target_currency` set to the home currency from step 4, `as_of` (default today), and `mode: convert`. That skill owns the `exchange_rates` read, the most-recent-rate-at-or-before-`as_of` fallback, the never-a-future-rate rule, and the pair-direction check — the rate logic this step used to carry alone.
+5. **Determine the home/reporting currency, then separate out the exposure set.** Check `identity.base_currency` from `define-workspace`'s hand-off first — `normalize-currency` already treats it as its own canonical fallback target, so it's the right default here too. If it's set, use it. If it's null (accounting settings not yet configured on this workspace) or `define-workspace` isn't installed, either ask the user directly, or infer it as the most common currency across step 4's invoice/account groups. Whichever approach is used, state it plainly in the output; never silently assume USD or any other default. Once determined, separate out everything in step 4's groups that is **not** the home currency — that's the exposure set.
+
+6. **Convert each non-home currency to the home currency — run `normalize-currency`.** Invoke the `normalize-currency` skill with the pinned `workspace_id`, the exposure subtotal per non-home currency (tagged by currency), `target_currency` set to the home currency from step 5, `as_of` (default today), and `mode: convert`. That skill owns the `exchange_rates` read, the most-recent-rate-at-or-before-`as_of` fallback, the never-a-future-rate rule, and the pair-direction check — the rate logic this step used to carry alone.
    - Use its `per_currency` rows for the per-currency exposure lines and its `converted_total` for the single home-currency figure. A workspace with exactly one foreign currency still needs converting — `mode: convert` makes that explicit, and the brick does not shortcut a lone non-target currency. Every rate and rate date it returns belongs in the output; an exposure number without its rate is not auditable.
    - `partial: true` means a currency had no rate in Well. That currency is still real exposure — report it in its own currency, name it as unconverted, and say the home-currency total excludes it. Dropping it understates exposure, which is the one direction this skill must never err in.
    - **If `normalize-currency` isn't installed**, do it inline: call `well_get_schema({ root: "exchange_rates" })`, look up each pair as of the as-of date, fall back to the most recent rate at or before it and state which date was used, never use a later rate, and check pair direction before dividing rather than multiplying.
@@ -127,7 +127,7 @@ Before finishing, verify:
 
 ### Expected behavior
 
-Run `define-workspace`, then `connect-tools`, and spot-check that rows have landed; determine the home currency (asking the user or inferring it and stating which), pull unpaid/partial invoices and current account balances grouped by currency, hand the per-currency subtotals to `normalize-currency` with `mode: convert` and use the rates it returns, and present a table showing each foreign currency's original amount, converted amount, rate/rate_date used, and share of total exposure, plus a total exposure figure and as-of date.
+Run `define-workspace`, then `connect-tools`, and spot-check that rows have landed; pull unpaid/partial invoices and current account balances grouped by currency; determine the home currency (from `identity.base_currency`, or by asking the user or inferring it from those groups, stating which); separate out the non-home-currency groups as the exposure set; hand the per-currency subtotals to `normalize-currency` with `mode: convert` and use the rates it returns, and present a table showing each foreign currency's original amount, converted amount, rate/rate_date used, and share of total exposure, plus a total exposure figure and as-of date.
 
 ### Example request
 
