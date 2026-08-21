@@ -122,6 +122,14 @@ Do not return:
 - A claim that a sync was triggered. This skill establishes the connection; Well syncs on its own.
 - A flow continuation that skipped the Continue click — as a flow step, the acknowledgment (clicked or typed) is the gate, a connected bank included.
 
+**How this reaches the user.** A Well MCP tool that ships a widget attaches
+`_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
+never reaches you, so you cannot tell a host that drew the bank card from one that did not.
+Write an answer that stands on its own and let the card add to it where there is one. Do
+not compose a second rendering of connections the tool already returned; where a visual the
+tool does not draw genuinely reads better and the `well-design-system` skill is available,
+use it.
+
 ## Quality checks
 
 Before finishing, verify:
