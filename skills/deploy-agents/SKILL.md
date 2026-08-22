@@ -94,10 +94,17 @@ involved, and it is optional:
   period selection the user's click (or `define-period`) already wrote. An error comes back only
   when no selection exists yet: run `define-period`, then re-call. A period pair is passed
   explicitly only on an older server that holds no session selection — the degrade path, never the
-  default. Output: the period fields, `agents` (each with `provider_name`, `provider_id` or null,
+  default. Output: the period fields — `periods_requested`, `periods_covered` (each month as
+  `calendar_year`, `calendar_month` and `period_label`, oldest first) and `months` (each month's own
+  `counts`) on every success, plus `calendar_year`, `calendar_month`, `fiscal_year`, `fiscal_period`
+  and `period_label` **only when the selection held exactly one month**, so a selection spanning
+  several months carries no single label to quote — `agents` (each with `provider_name`,
+  `provider_id` or null,
   `domain` — the provider's bare host, e.g. `aws.amazon.com`, null when unmatched or absent from the
-  catalog — `logo_url`, `counterparties` — each `name`, `tx_count`, `base_total_amount` —
-  `tx_count`, and `base_total_amount` or null), `upload_rows`, `connect_rows`, `counts`,
+  catalog — `logo_url`, `counterparties` — each `name`, its own month (`calendar_year`,
+  `calendar_month`, `period_label`), `tx_count`, `base_total_amount` —
+  `tx_count`, and `base_total_amount` or null), `upload_rows` and `connect_rows` (their rows carry
+  the same month tag), `counts`,
   `acquisition_url` — the acquisition link for the previewed providers' hosts —
   `scoped_to_selected_counterparties`, `mode: "preview"`, `nothing_launched: true`, and `hints`. It
   is a read: it computes the plan and returns it. Carry `provider_id`, `domain`,
@@ -173,7 +180,10 @@ Call each list or read tool once per step. The widget cards refresh themselves �
      and `domain` included. Do not recompute or re-sort them. **`scoped_to_selected_counterparties:
      true` means the result IS the picked set**: the server filtered every route to the recorded
      pick, and naming a period does not widen it. Say the plan covers the picked vendors only, and
-     narrow nothing further.
+     narrow nothing further. One agent covers one supplier portal however many months the selection
+     held, so never split or restate an agent per month: each counterparty under it names its own
+     month, `months` carries each month's own route counts, and a selection spanning several months
+     is named from `periods_covered` rather than under one label the result does not carry.
    - **Flag absent → the result covers the whole period, not the pick.** The server held no pick for
      this workspace, so the routes carry every gap of the months read. Narrow it from the
      `show-missing-invoices` hand-off's `agent_candidates` instead — those carry a `company_id` per
@@ -289,7 +299,9 @@ Return:
   open, and that Well cannot collect these invoices yet — the acquisition page lists the picked
   vendors and does nothing else.
 - The hand-off, kept for the calling flow and never printed: `workspace_id` — the one this skill
-  ran on, the same value every hand-off in this flow opens with; the period; `run_mode: preview`;
+  ran on, the same value every hand-off in this flow opens with; the period — the single-month
+  fields when the result carried them, `periods_covered` plus the per-month `months` counts when it
+  did not, so the caller is never told one month for a preview spanning several; `run_mode: preview`;
   `nothing_launched: true`; `selection` — the picked vendors as they arrived, `company_id` plus
   `matched_connector_service_id` or null, so a later step routes on identifiers and never on a
   vendor's name; the `agents` — each with its `provider_name`, `provider_id`, its `domain` or null,
@@ -368,6 +380,9 @@ Before finishing, verify:
   sent back to `show-missing-invoices` for a fresh click.
 - The scope line came from `scoped_to_selected_counterparties`: the picked vendors only when it was
   true, the whole period when it was absent and no hand-off narrowed the result.
+- A preview spanning several months named every month from `periods_covered`, quoted no single
+  `period_label` (the result carries none then) and composed no range label, kept one agent per
+  portal across the months, and handed off `periods_covered` and the per-month `months` counts.
 - One line per agent, in the user's language, each saying nothing has started, written whatever the
   host drew and never expanded into the row detail the card carries.
 - The turn ended on the card with one line asking the user to confirm the vendors and deploy — or,
