@@ -65,7 +65,7 @@ Each entry in `rows` is **one counterparty in one month**, already grouped by th
 
 `dropped_groups` (`bank_internal`, `unknown`, `unnamed_company`) counts the **groups** the server could not turn into a row — one count per group, never a transaction count. The three counters do not mean the same thing, so never sum them into one figure:
 
-- `bank_internal` — a party-less bank operation. No supplier can invoice it, so it is not a gap.
+- `bank_internal` — party-less bank operations. No supplier can invoice them, so they are not gaps. This kind is a SINGLETON bucket: one month's party-less operations are one group however many they are, and a read over several months counts the months that held any. So never quote this counter as a quantity of operations.
 - `unknown` — the server resolved no counterparty for the spend.
 - `unnamed_company` — the counterparty carries no usable name or key, so the card cannot render it.
 
@@ -95,7 +95,7 @@ Call each list or read tool once per step. The widget cards refresh themselves �
    - An error saying no period selection exists yet → run `define-period` (its picker renders and waits for the click), then re-call once the selection is written. Do not guess a month to fill the argument.
    - `success: false` or a transient failure → retry once. A second failure → step 8.
    - `row_count: 0` → nothing to tick, but read `dropped_groups` before you call the period complete. An empty row list is not by itself a complete period.
-     - `unknown` plus `unnamed_company` is 0 → no supplier invoice is missing for the period. Say so plainly. Name the `bank_internal` count in the same line when it is non-zero: those bank operations have no supplier to invoice them.
+     - `unknown` plus `unnamed_company` is 0 → no supplier invoice is missing for the period. Say so plainly. Name a non-zero `bank_internal` in the same line WITHOUT its number — say the period also holds bank operations with no counterparty, which no supplier can invoice.
      - `unknown` plus `unnamed_company` is above 0 → say Well could not attribute that many groups of the period's categorized spend to a named counterparty. Say this list shows none of them and cannot chase them. Never call the period complete, and claim nothing over those groups.
      - Either way, add the coverage caveat below and hand off `resolution: empty` with an empty selection.
 
@@ -214,7 +214,7 @@ The tool returns `row_count: 0`, `transaction_count: 0`, `dropped_groups: { bank
 
 ### Expected behavior
 
-One group is a real gap this list cannot show, so do not call the period complete. "No supplier invoice can be listed for **March 2026**, but Well could not attribute one group of the period's categorized spend to a named counterparty — this list shows none of it and cannot chase it. One bank operation has no counterparty, so no supplier invoice exists to collect there. Spend that is not categorized yet cannot appear here either." Hand off `resolution: empty` with zeroed counts, an empty `selection` and `selection_state: none` (and `workspace_id` still set), and offer `categorize-counterparties` to widen the coverage. Nothing is on the card to tick, so ask for no click.
+One group is a real gap this list cannot show, so do not call the period complete. "No supplier invoice can be listed for **March 2026**, but Well could not attribute one group of the period's categorized spend to a named counterparty — this list shows none of it and cannot chase it. The period also holds bank operations with no counterparty, and no supplier can invoice those. Spend that is not categorized yet cannot appear here either." Hand off `resolution: empty` with zeroed counts, an empty `selection` and `selection_state: none` (and `workspace_id` still set), and offer `categorize-counterparties` to widen the coverage. Nothing is on the card to tick, so ask for no click.
 
 ### Example request
 
