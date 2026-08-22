@@ -240,7 +240,7 @@ Before finishing, verify:
 
 **No pick yet.** At the missing-invoices card the next message is "what now?": one wait-read (`kind: "counterparties"`) — `selected` → step 8 previews the picked vendors; `no_selection_yet` → one line asking for the tick and the Continue click ends the turn. "Keep for later" writes nothing: say the list stays available and stop.
 
-**A pick from the month before.** The user picked five vendors for March, then says "actually, do April": step 4 writes April, step 5 renders April's card, and the March pick is not April's (rule 9). Ask for the tick and the Continue click on the April card, and preview nothing until it arrives — an `already_set` wait-read here answers with the March pick.
+**A pick from the month before.** The user picked five vendors for March, then says "actually, do April": step 4 writes April, step 5 renders April's card, and the March pick is not April's (rule 9). Ask for the tick and the Continue click on the April card, and preview nothing until it arrives — a wait-read here answers `no_selection_yet`, because the month change already dropped the March pick.
 
 **Text-only host.** No card is drawn at step 5, so the rows are listed in text and the flow asks which vendors to chase. The user names three; match them against the listed rows, write the pick with `well_switch_workspace({ workspace_id, counterparties })` from each row's `company_id` and `matched_connector_service_id`, then preview those three at step 8 and give the acquisition link instead of a Deploy pointer.
 
