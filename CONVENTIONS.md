@@ -37,7 +37,7 @@ The canonical template for a docs page's AI-assisted block is **any of the twent
 
 Do not write new prose for it either. That copy is tuned for install UX, and rewriting it reintroduces untested wording — one attempt added an "each must land in its own skill folder named after that skill" instruction that was never true and had to be reverted.
 
-Three pages differ legitimately. [`docs/define-workspace.md`](docs/define-workspace.md) and [`docs/fetch-missing-invoices.md`](docs/fetch-missing-invoices.md) depend on nothing — the first is the root brick, the second carries the whole flow in one file — so each uses the singular `1. Fetch this file:` with no sub-items; those two blocks are byte-identical to each other.
+Two pages differ legitimately. [`docs/define-workspace.md`](docs/define-workspace.md) and [`docs/fetch-missing-invoices.md`](docs/fetch-missing-invoices.md) depend on nothing — the first is the root brick, the second carries the whole flow in one file — so each uses the singular `1. Fetch this file:` with no sub-items; those two blocks are byte-identical to each other.
 
 ## Never blind find-and-replace a shared phrase
 

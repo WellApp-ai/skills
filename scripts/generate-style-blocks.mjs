@@ -73,27 +73,57 @@ function block(t) {
 
 const check = process.argv.includes("--check");
 const rendered = block(tokens());
-let stale = 0;
 
+/**
+ * Locate the one generated block in a file.
+ *
+ * Exactly one: a duplicated block — the shape a bad merge leaves behind — would
+ * otherwise be half-maintained, because slicing on the first marker rewrites the
+ * first copy and reports success while a second stale copy sits below it. That
+ * silently breaks the guarantee this script exists to provide.
+ */
+function locate(skill, source) {
+  const opens = [...source.matchAll(new RegExp(escape(BEGIN), "g"))];
+  const closes = [...source.matchAll(new RegExp(escape(END), "g"))];
+  if (opens.length !== 1 || closes.length !== 1) {
+    throw new Error(
+      `${skill}: expected exactly one generated block, found ${opens.length} opening and ` +
+        `${closes.length} closing marker(s). Delete the duplicate and re-run.`,
+    );
+  }
+  const from = opens[0].index;
+  const to = closes[0].index;
+  if (to < from) throw new Error(`${skill}: the closing marker precedes the opening one`);
+  return { from, to: to + END.length };
+}
+
+const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+// Read and validate every file before writing any. A per-file validate-then-write
+// leaves a half-converted tree when a later file is malformed: the earlier skills
+// are already rewritten on disk when the throw lands.
+const planned = [];
 for (const skill of COMPOSING_SKILLS) {
   const path = join(ROOT, "skills", skill, "SKILL.md");
   const source = readFileSync(path, "utf8");
-  const from = source.indexOf(BEGIN);
-  const to = source.indexOf(END);
-  if (from === -1 || to === -1) throw new Error(`${skill}: no generated block — expected ${BEGIN}`);
-  const current = source.slice(from, to + END.length);
-  if (current === rendered) continue;
-  stale += 1;
-  if (check) {
-    console.error(`stale style block: skills/${skill}/SKILL.md`);
-    continue;
-  }
-  writeFileSync(path, source.slice(0, from) + rendered + source.slice(to + END.length));
-  console.log(`rewrote skills/${skill}/SKILL.md`);
+  const { from, to } = locate(skill, source);
+  const stale = source.slice(from, to) !== rendered;
+  planned.push({ skill, path, source, from, to, stale });
 }
 
-if (check && stale) {
-  console.error(`\n${stale} style block(s) behind design-system/well-tokens.css. Run \`make refresh\`.`);
-  process.exit(1);
+const stale = planned.filter((p) => p.stale);
+
+if (check) {
+  for (const { skill } of stale) console.error(`stale style block: skills/${skill}/SKILL.md`);
+  if (stale.length) {
+    console.error(`\n${stale.length} style block(s) behind design-system/well-tokens.css. Run \`make refresh\`.`);
+    process.exit(1);
+  }
+  console.log("style blocks current");
+} else {
+  for (const { path, source, from, to, skill } of stale) {
+    writeFileSync(path, source.slice(0, from) + rendered + source.slice(to));
+    console.log(`rewrote skills/${skill}/SKILL.md`);
+  }
+  if (!stale.length) console.log("style blocks already current");
 }
-if (!check && !stale) console.log("style blocks already current");

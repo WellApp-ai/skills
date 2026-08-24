@@ -86,12 +86,12 @@ jobs:
           # queue grows by one PR per release instead of the newest superseding the
           # last. The version stays in the title, the body, and the commit.
           BRANCH="bot/refresh-design-system"
-          TITLE="chore(well-design-system): refresh the kit from design-tokens@${VERSION}"
+          TITLE="chore(design-system): refresh the tokens from design-tokens@${VERSION}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
           git add -A
-          git commit -m "chore(well-design-system): refresh the kit from @wellapp-ai/design-tokens@${VERSION}"
+          git commit -m "chore(design-system): refresh the tokens from @wellapp-ai/design-tokens@${VERSION}"
           # A lease needs a value to hold the remote to, and a fresh checkout that
           # never fetched this branch has none — git rejects an unqualified
           # --force-with-lease as stale info exactly when the branch already exists,
@@ -106,7 +106,7 @@ jobs:
           {
             echo "The published \`@wellapp-ai/design-tokens\` no longer matches \`design-system/well-tokens.css\` or the token blocks generated from it."
             echo
-            echo "Regenerated with \`make refresh\`, which also rebuilt every \`dist/\` archive so the packaged skills carry the new stylesheet."
+            echo "Regenerated with \`make refresh\`, which rewrote the token blocks in the three composing skills and rebuilt every \`dist/\` archive."
             echo
             echo "Opened by \`.github/workflows/refresh-design-system.yml\`. A later run replaces this branch rather than opening a second PR."
           } > /tmp/pr-body.md

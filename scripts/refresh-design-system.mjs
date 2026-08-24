@@ -101,13 +101,15 @@ const result = withSource((src) => {
 if (check) {
   if (result.stale.length) {
     console.error(`Design-system kit is stale: ${result.stale.join(", ")}`);
-    console.error("Run: node scripts/refresh-design-system.mjs && make build");
+    console.error("Run: make refresh");
     process.exit(1);
   }
   console.log(`Design-system kit matches the ${result.local ? "local build" : "published package"}.`);
 } else if (result.stale.length) {
   console.log(`Refreshed: ${result.stale.join(", ")}.`);
-  console.log("Now run `make build` so the archives carry the new stylesheet.");
+  // `make build` alone would package the old token blocks: the values live inside the
+  // composing skills, and only generate-style-blocks.mjs rewrites them.
+  console.log("Now run `make refresh` so the composing skills and the archives carry the new values.");
 } else {
   console.log("Design-system kit was already up to date; nothing copied.");
 }

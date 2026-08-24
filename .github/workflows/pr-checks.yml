@@ -1,0 +1,54 @@
+name: PR checks
+
+# The repo had no pull_request CI at all: `make validate` runs only in the pre-push hook,
+# and the token drift check only on the weekly refresh cron. A PR that hand-edits
+# design-system/well-tokens.css or one of the generated blocks could therefore merge and
+# stay wrong for up to a week. These two checks need no registry credential, so they run
+# on every PR; the half that reads GitHub Packages stays in the refresh workflow.
+
+on:
+  pull_request:
+
+concurrency:
+  group: pr-checks-${{ github.head_ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Skill frontmatter parses
+        run: node scripts/check-skill-frontmatter.js
+
+      - name: Token blocks match design-system/well-tokens.css
+        run: node scripts/generate-style-blocks.mjs --check
+
+      # Every skill the plugin distributes must exist, and every skill directory must be
+      # distributed. A directory added without its manifest entry ships to nobody.
+      - name: Distributed skills match the directory
+        run: |
+          node -e '
+            const { readdirSync, existsSync } = require("node:fs");
+            const listed = require("./.claude-plugin/plugin.json").skills;
+            if (!Array.isArray(listed)) throw new Error("plugin.json skills is no longer an array");
+            const missing = listed.filter((p) => !existsSync(p));
+            const dirs = readdirSync("skills", { withFileTypes: true })
+              .filter((d) => d.isDirectory())
+              .map((d) => `./skills/${d.name}`);
+            const unlisted = dirs.filter((d) => !listed.includes(d));
+            if (missing.length || unlisted.length) {
+              if (missing.length) console.error("listed but absent:", missing.join(", "));
+              if (unlisted.length) console.error("present but undistributed:", unlisted.join(", "));
+              process.exit(1);
+            }
+            console.log(`${listed.length} skills listed and present`);
+          '
