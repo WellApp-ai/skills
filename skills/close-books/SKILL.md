@@ -44,9 +44,8 @@ The user provides, or will be asked for:
 
 - The month to close — a calendar month that has already ended (e.g. "March 2026", "last month").
 - Confirmation of the workspace's own company, when it is not already set (see workflow step 3).
-- A yes at each consequential step: resolving a task, retrying reconciliation, queuing a vendor
-  invoice fetch, preparing the package, and — outside this skill, in the Well app — accepting the
-  final approval.
+- A yes before retrying reconciliation or queuing a vendor invoice fetch, and — outside this skill,
+  in the Well app — accepting the final approval.
 
 ## Tooling
 
