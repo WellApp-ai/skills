@@ -28,7 +28,14 @@ jobs:
   refresh:
     runs-on: ubuntu-latest
     steps:
+      # Pinned, because the refresh branch is shared and this job force-pushes it.
+      # An unpinned checkout takes whatever ref triggered the run, so validating a
+      # workflow change by dispatching it against a feature branch rebuilt the bot's
+      # branch from that branch — carrying an unmerged commit into the refresh PR.
+      # The kit this job refreshes is always main's, whatever ref invoked it.
       - uses: actions/checkout@v4
+        with:
+          ref: main
 
       - uses: actions/setup-node@v4
         with:
