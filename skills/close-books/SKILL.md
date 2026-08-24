@@ -129,6 +129,10 @@ the next step is decided by server truth, not by memory.
 3. **Resolve the own company — run `resolve-own-company`** in `mode: strict`, with the pinned
    `workspace_id`, `purpose: "to close this workspace's books"`, and
    `consequence: "the close cannot start and invoice polarity is wrong"`.
+   - **If `resolve-own-company` isn't installed**, do it inline: call
+     `well_get_schema({ root: "workspaces" })` and read `workspaces.own_company`, treating null,
+     absent-from-the-schema, and ambiguous alike as unresolved; never infer it from the workspace's
+     name, logo, slug, or email domain.
    - Resolved → carry its `own_company_id` and continue.
    - Unresolved → `well_start_close` will refuse. If `well_set_own_company` is in your toolset,
      show the user the candidate companies (`well_query_records` on `companies`, or a company they
