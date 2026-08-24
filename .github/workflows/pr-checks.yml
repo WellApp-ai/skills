@@ -10,7 +10,10 @@ on:
   pull_request:
 
 concurrency:
-  group: pr-checks-${{ github.head_ref }}
+  # Keyed on the PR number, not `github.head_ref`. The head ref is a bare branch name with
+  # no repository qualifier, so two forks that both push `patch-1` share one group — and
+  # `cancel-in-progress` would then kill one PR's run because an unrelated PR pushed.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 permissions:
