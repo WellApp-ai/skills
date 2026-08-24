@@ -19,6 +19,10 @@ concurrency:
 permissions:
   contents: write
   pull-requests: write
+  # The design-tokens package grants this repository Actions read access, so the
+  # job's own GITHUB_TOKEN can pull it. Without this scope the token carries no
+  # package rights and npm fails at the registry.
+  packages: read
 
 jobs:
   refresh:
@@ -30,23 +34,23 @@ jobs:
         with:
           node-version: 22
 
-      # Fail loudly rather than letting the refresh no-op into a green run that proves
-      # nothing. An absent token is a configuration error, not "the kit is current".
-      - name: Require the registry token
-        env:
-          PACKAGES_READ_TOKEN: ${{ secrets.PACKAGES_READ_TOKEN }}
-        run: |
-          if [ -z "$PACKAGES_READ_TOKEN" ]; then
-            echo "::error::PACKAGES_READ_TOKEN is not set. Add a PAT with read:packages as a repository secret."
-            exit 1
-          fi
-
       - name: Authenticate to GitHub Packages
         env:
-          PACKAGES_READ_TOKEN: ${{ secrets.PACKAGES_READ_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           printf '@wellapp-ai:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=%s\n' \
-            "$PACKAGES_READ_TOKEN" > ~/.npmrc
+            "$GITHUB_TOKEN" > ~/.npmrc
+
+      # The registry answers 401 for an unauthenticated read and 404 when the token
+      # carries no rights to the package, so a lost grant surfaces here as a named
+      # failure rather than three steps later as an npm error about a tarball.
+      - name: Verify the package is readable
+        run: |
+          if ! npm view @wellapp-ai/design-tokens version \
+                 --registry=https://npm.pkg.github.com > /dev/null 2>&1; then
+            echo "::error::Cannot read @wellapp-ai/design-tokens. Confirm the package still grants Actions read access to this repository (package settings -> Manage Actions access)."
+            exit 1
+          fi
 
       - name: Refresh the kit and rebuild the archives
         run: make refresh
