@@ -2,10 +2,11 @@
 /**
  * Refreshes the design-system kit from the published token package.
  *
- * The stylesheet under skills/well-design-system/assets/ is a copy of what
- * @wellapp-ai/design-tokens builds, so it goes stale whenever a token changes or a class
- * is added to @wellapp/ui or @wellapp/ai-elements. Copying it by hand is how a copy drifts
- * without anyone noticing, which is the failure the token package itself exists to end.
+ * The token file under design-system/ is a copy of what @wellapp-ai/design-tokens builds,
+ * so it goes stale whenever a token moves. It is not shipped as a skill: the values are
+ * generated into the skills that compose a visual, by scripts/generate-style-blocks.mjs.
+ * Copying it by hand is how a copy drifts without anyone noticing, which is the failure
+ * the token package itself exists to end.
  *
  *   node scripts/refresh-design-system.mjs           # refresh from the published package
  *   node scripts/refresh-design-system.mjs --check   # fail if the copy is stale
@@ -26,8 +27,8 @@ import { fileURLToPath } from "node:url";
 const PACKAGE = "@wellapp-ai/design-tokens";
 // Resolved against this file, not the shell's cwd: running from scripts/ used to create a
 // shadow assets tree there and report success while the real assets stayed stale.
-const TARGET = resolve(dirname(fileURLToPath(import.meta.url)), "../skills/well-design-system/assets");
-const FILES = ["well.css", "well-tokens.css"];
+const TARGET = resolve(dirname(fileURLToPath(import.meta.url)), "../design-system");
+const FILES = ["well-tokens.css"];
 
 const args = process.argv.slice(2);
 const check = args.includes("--check");

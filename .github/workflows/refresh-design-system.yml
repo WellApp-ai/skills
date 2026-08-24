@@ -1,10 +1,10 @@
 name: Refresh the design-system kit
 
-# skills/well-design-system/assets holds a copy of what @wellapp-ai/design-tokens builds,
-# so it goes stale whenever a token moves or a class is added to @wellapp/ui or
-# @wellapp/ai-elements. This pulls the published package weekly and opens a PR when the
-# copy no longer matches. It opens a PR rather than pushing: the archives under dist/ are
-# binary, and a human should see what changed before it ships to installers.
+# design-system/well-tokens.css holds a copy of what @wellapp-ai/design-tokens builds, and
+# the skills that compose a visual carry those values inline. Both go stale whenever a
+# token moves. This pulls the published package weekly and opens a PR when they no longer
+# match. It opens a PR rather than pushing: the archives under dist/ are binary, and a
+# human should see what changed before it ships to installers.
 
 on:
   schedule:
@@ -104,7 +104,7 @@ jobs:
             git push -u origin "$BRANCH"
           fi
           {
-            echo "The published \`@wellapp-ai/design-tokens\` no longer matches the copy under \`skills/well-design-system/assets\`."
+            echo "The published \`@wellapp-ai/design-tokens\` no longer matches \`design-system/well-tokens.css\` or the token blocks generated from it."
             echo
             echo "Regenerated with \`make refresh\`, which also rebuilt every \`dist/\` archive so the packaged skills carry the new stylesheet."
             echo

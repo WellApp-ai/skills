@@ -37,7 +37,7 @@ The canonical template for a docs page's AI-assisted block is **any of the twent
 
 Do not write new prose for it either. That copy is tuned for install UX, and rewriting it reintroduces untested wording — one attempt added an "each must land in its own skill folder named after that skill" instruction that was never true and had to be reverted.
 
-Three pages differ legitimately. [`docs/define-workspace.md`](docs/define-workspace.md) and [`docs/fetch-missing-invoices.md`](docs/fetch-missing-invoices.md) depend on nothing — the first is the root brick, the second carries the whole flow in one file — so each uses the singular `1. Fetch this file:` with no sub-items; those two blocks are byte-identical to each other. [`docs/well-design-system.md`](docs/well-design-system.md) ships stylesheets rather than a lone `SKILL.md`, so it fetches assets separately and says where to put them.
+Three pages differ legitimately. [`docs/define-workspace.md`](docs/define-workspace.md) and [`docs/fetch-missing-invoices.md`](docs/fetch-missing-invoices.md) depend on nothing — the first is the root brick, the second carries the whole flow in one file — so each uses the singular `1. Fetch this file:` with no sub-items; those two blocks are byte-identical to each other.
 
 ## Never blind find-and-replace a shared phrase
 
@@ -51,7 +51,7 @@ The same applies to `Install all N alongside this one`, `install all N+1 togethe
 
 ## Sweep after any merge — concurrent PRs drift
 
-A PR that adds a convention to every skill and a PR that adds a new skill will not know about each other. PR #22 added the `**How this reaches the user.**` widget-disclosure block to every skill that existed at the time, and merged twelve minutes before PR #21 added `normalize-currency` — so the newest skill shipped without the newest convention, and `main` inherited a gap neither PR was wrong about. Today 22 of the 23 skills carry that block; `well-design-system` is exempt, being the visual skill it points at.
+A PR that adds a convention to every skill and a PR that adds a new skill will not know about each other. PR #22 added the `**How this reaches the user.**` widget-disclosure block to every skill that existed at the time, and merged twelve minutes before PR #21 added `normalize-currency` — so the newest skill shipped without the newest convention, and `main` inherited a gap neither PR was wrong about. All 23 skills carry that block today. The `well-design-system` skill that used to be the exception is gone: the design system is Well's brand rather than a capability a user installs, so its tokens are now generated into the three skills that compose a visual and it is not distributed.
 
 After merging either kind of change, sweep the convention across every skill rather than trusting the PR that introduced it.
 
