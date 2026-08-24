@@ -34,9 +34,10 @@ so a download installs a self-contained skill.
 They are a copy of what `@wellapp-ai/design-tokens` builds, so they can fall behind it.
 `make refresh-check` fails when they have, and a weekly workflow
 (`.github/workflows/refresh-design-system.yml`) opens a PR when the published package moves.
-That workflow reads GitHub Packages, so it needs a `PACKAGES_READ_TOKEN` repository secret
-— a PAT with `read:packages`. Without it the run fails loudly rather than reporting a
-current kit it never checked.
+That workflow reads GitHub Packages, which authenticates every read. It uses the job's own
+`GITHUB_TOKEN`: the `design-tokens` package grants this repository Actions read access, so
+no personal token is involved and nothing expires. If that grant is ever withdrawn the run
+fails on a named step rather than reporting a current kit it never checked.
 
 ## Required data in Well
 
