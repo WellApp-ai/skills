@@ -44,8 +44,9 @@ The user provides, or will be asked for:
 
 - The month to close — a calendar month that has already ended (e.g. "March 2026", "last month").
 - Confirmation of the workspace's own company, when it is not already set (see workflow step 3).
-- A yes at each consequential step: resolving a task, preparing the package, and — outside this
-  skill, in the Well app — accepting the final approval.
+- A yes at each consequential step: resolving a task, retrying reconciliation, queuing a vendor
+  invoice fetch, preparing the package, and — outside this skill, in the Well app — accepting the
+  final approval.
 
 ## Tooling
 
@@ -81,7 +82,8 @@ user to add it at that URL, then retry. The close tools, and what each one does:
     the vendor. It hands work to a browser agent that visits vendor portals, so **confirm with the
     user before calling it** — mirror the caution `fetch-missing-invoices` applies.
   - `well_retry_close_reconciliation` — re-run reconciliation for invoices the ladder flags as
-    unmatched.
+    unmatched. A state-changing orchestration action, not a read — **confirm with the user before
+    calling it**, the same as the other consequential remediation tools here.
   - `well_set_own_company` — set the workspace's own company (see step 3). A consequential,
     accounting-critical write — only call it on an explicit user confirmation, never silently.
 - `well_get_schema` — call before reading any records root for the first time in a session; field
@@ -163,8 +165,8 @@ the next step is decided by server truth, not by memory.
      after the user agrees**, `well_enqueue_close_invoice_fetch` to queue the vendor-portal fetch.
      It runs in the background; say so, and that the invoices land later. If those tools are absent,
      point at the `fetch-missing-invoices` skill or the Well app.
-   - Invoices flagged unmatched → `well_retry_close_reconciliation`. If it is absent, point at the
-     Well app.
+   - Invoices flagged unmatched → **only after the user agrees**, `well_retry_close_reconciliation`.
+     If it is absent, point at the Well app.
    - Uncategorised transactions → point at the `categorize-counterparties` skill or the Well app;
      this skill does not categorise.
    - A blocker with no MCP remediation available → name it, say where in Well to clear it, and stop
@@ -204,9 +206,9 @@ Return:
   `well_get_close_state`, never invented.
 - The current blockers, each named with what clears it and where (a tool here, a sibling skill, or
   the Well app). When the list changes after a resolution, report the new state from a fresh read.
-- Before each consequential write (resolving a task, enqueuing a vendor fetch, preparing the
-  package), a clear statement of what it does, and — for the vendor fetch — an explicit
-  confirmation first.
+- Before each consequential write (resolving a task, retrying reconciliation, enqueuing a vendor
+  fetch, preparing the package), a clear statement of what it does, and — for retrying
+  reconciliation and the vendor fetch — an explicit confirmation first.
 - After the package is prepared and the offer is minted: that the close is ready for approval, and
   the one action left for the user — accept the approval in Well. State plainly that you cannot lock
   the period yourself; a human approval is required by design.
@@ -246,6 +248,8 @@ Before finishing, verify:
   elsewhere.
 - `well_enqueue_close_invoice_fetch` was called only after an explicit user yes, because it hands
   work to a browser agent.
+- `well_retry_close_reconciliation` was called only after an explicit user yes, because it is a
+  state-changing orchestration action, not a read.
 - `well_prepare_close_package` was called only at zero blockers, and `well_prepare_close_period`
   was understood to mint an offer, not to close the period.
 - The period lock was handed to the user as a first-party approval in Well; no attempt was made to
