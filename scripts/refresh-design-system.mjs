@@ -2,10 +2,11 @@
 /**
  * Refreshes the design-system kit from the published token package.
  *
- * The stylesheet under skills/well-design-system/assets/ is a copy of what
- * @wellapp-ai/design-tokens builds, so it goes stale whenever a token changes or a class
- * is added to @wellapp/ui or @wellapp/ai-elements. Copying it by hand is how a copy drifts
- * without anyone noticing, which is the failure the token package itself exists to end.
+ * The token file under design-system/ is a copy of what @wellapp-ai/design-tokens builds,
+ * so it goes stale whenever a token moves. It is not shipped as a skill: the values are
+ * generated into the skills that compose a visual, by scripts/generate-style-blocks.mjs.
+ * Copying it by hand is how a copy drifts without anyone noticing, which is the failure
+ * the token package itself exists to end.
  *
  *   node scripts/refresh-design-system.mjs           # refresh from the published package
  *   node scripts/refresh-design-system.mjs --check   # fail if the copy is stale
@@ -26,8 +27,8 @@ import { fileURLToPath } from "node:url";
 const PACKAGE = "@wellapp-ai/design-tokens";
 // Resolved against this file, not the shell's cwd: running from scripts/ used to create a
 // shadow assets tree there and report success while the real assets stayed stale.
-const TARGET = resolve(dirname(fileURLToPath(import.meta.url)), "../skills/well-design-system/assets");
-const FILES = ["well.css", "well-tokens.css"];
+const TARGET = resolve(dirname(fileURLToPath(import.meta.url)), "../design-system");
+const FILES = ["well-tokens.css"];
 
 const args = process.argv.slice(2);
 const check = args.includes("--check");
@@ -100,13 +101,15 @@ const result = withSource((src) => {
 if (check) {
   if (result.stale.length) {
     console.error(`Design-system kit is stale: ${result.stale.join(", ")}`);
-    console.error("Run: node scripts/refresh-design-system.mjs && make build");
+    console.error("Run: make refresh");
     process.exit(1);
   }
   console.log(`Design-system kit matches the ${result.local ? "local build" : "published package"}.`);
 } else if (result.stale.length) {
   console.log(`Refreshed: ${result.stale.join(", ")}.`);
-  console.log("Now run `make build` so the archives carry the new stylesheet.");
+  // `make build` alone would package the old token blocks: the values live inside the
+  // composing skills, and only generate-style-blocks.mjs rewrites them.
+  console.log("Now run `make refresh` so the composing skills and the archives carry the new values.");
 } else {
   console.log("Design-system kit was already up to date; nothing copied.");
 }
