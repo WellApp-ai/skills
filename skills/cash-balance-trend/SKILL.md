@@ -33,7 +33,7 @@ The user may provide:
 
 - A workspace hint — an id, a workspace name, or the company behind it — if they manage more than one. Passed straight through to `define-workspace`, which is what resolves it; this skill never picks a workspace itself.
 - The time window to trend over — default to the trailing 3 full months if unspecified.
-- A target currency — the series is always in the workspace base currency `well_get_cash_position` returns. If the user asks for another, say the trend is reported in the base currency rather than reconverting it: `normalize-currency` hard-excludes re-deriving this total, because a second conversion disagrees with what the Well app shows here, build the series from its `converted` entries, and report its rates and rate dates alongside the total.
+- A target currency — the series is always in the workspace base currency `well_get_cash_position` returns. If the user asks for another, say the trend is reported in the base currency rather than reconverting it: a second conversion disagrees with what the Well app shows, which `normalize-currency` names as a hard exclusion for exactly this total.
 
 ## Tooling
 
@@ -84,7 +84,7 @@ Both ship with the `well-skills` plugin. This skill is also installable on its o
 Return:
 
 - The window covered (start date to end date).
-- The time-series data points: month, balance, currency — always as a simple table. `well_get_cash_position`'s card draws the shape of the series but carries no values and no axis, so the numbers only exist if you write them. It draws no chart, so the form is yours to judge on its merits: a line or area chart is the natural fit for a trend over time, so reach for it when the host supports it and prose alone would read worse. Do not stop to ask table-or-chart first.
+- The time-series data points: month, balance, currency — always as a simple table. `well_get_cash_position`'s card draws the shape of the series but carries no values and no axis, so the numbers only exist if you write them. Do not compose a chart of your own: the card already charts this series.
 - The overall direction (up/down/flat) and the magnitude of change over the window.
 - An explicit one-line statement that no future projection was made — this is historical fact only.
 - A one-line note on which account(s) fed the series, read from `well_get_cash_position`'s `accounts`, and the currency it is reported in. Those are the accounts contributing today, not necessarily every month in the series.

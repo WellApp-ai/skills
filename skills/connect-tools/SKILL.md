@@ -89,7 +89,9 @@ The click-chain tools:
 
 ## Workflow
 
-Call each list or read tool once per step, and render at most one widget card per turn. The cards refresh themselves. The Continue click executes server-side and prefills "Continue" in the user's composer — rendering the card therefore ends the turn, and the sent message is how the flow moves on.
+Call each list or read tool once per step. In `flow_step` mode render at most one widget card per turn — the cards refresh themselves and a second one competes with the picker for the click the step is waiting on.
+
+In `internal_check` that invariant does not hold and cannot: `well_list_connectors` is a UI tool, so an MCP-Apps host draws the picker whenever the coverage read runs, and the calling data skill then draws its own result card in the same turn. Two cards is the cost of reading coverage inline; the alternative is the turn boundary this mode exists to remove. Do not add a third — the coverage read and the caller's own answer are the two, and nothing else in that turn renders. The cards refresh themselves. The Continue click executes server-side and prefills "Continue" in the user's composer — rendering the card therefore ends the turn, and the sent message is how the flow moves on.
 
 1. **Confirm the MCP server is configured.** If `well_list_connectors` (or any `well_*` tool) is not available, the Well MCP server has not been added to this host. Tell the user a Well connection is mandatory — endpoint `https://api.wellapp.ai/v1/mcp` — because connections are made and tracked in Well. Stop until it is there.
 
