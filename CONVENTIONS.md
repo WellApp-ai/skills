@@ -37,7 +37,7 @@ The canonical template for a docs page's AI-assisted block is **any of the twent
 
 Do not write new prose for it either. That copy is tuned for install UX, and rewriting it reintroduces untested wording — one attempt added an "each must land in its own skill folder named after that skill" instruction that was never true and had to be reverted.
 
-One page differs legitimately. [`docs/define-workspace.md`](docs/define-workspace.md) is the root brick and depends on nothing, so it uses the singular `1. Fetch this file:` with no sub-items. [`docs/fetch-missing-invoices.md`](docs/fetch-missing-invoices.md) used to share that shape and no longer does: the flow now composes the six bricks it runs, so its page carries a `## Composes onto` section and the lettered install list like every other dependent page.
+One page differs legitimately. [`docs/define-workspace.md`](docs/define-workspace.md) is the root brick and depends on nothing, so it uses the singular `1. Fetch this file:` with no sub-items. [`docs/fetch-missing-invoices.md`](docs/fetch-missing-invoices.md) used to share that shape and no longer does: the flow now composes the seven bricks it runs, so its page carries a `## Composes onto` section and the lettered install list like every other dependent page.
 
 ## Never blind find-and-replace a shared phrase
 
