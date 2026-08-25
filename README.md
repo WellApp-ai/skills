@@ -76,6 +76,16 @@ These are the setup steps the skills above invoke automatically to get what they
 
 ---
 
+## Working on this repo
+
+`make install` points git at `.githooks/`, whose `pre-push` runs `make validate`. That
+needs the `claude` CLI at **2.1.233 or newer**: before that version
+`claude plugin validate ./skills` reports a missing plugin manifest, which describes the
+CLI rather than this repository. `make validate` checks the version first and says so.
+
+In an environment with no CLI — a CI runner, a container — use `make validate SKIP_CLAUDE=1`
+to run the checks that need only node.
+
 ## Installation
 
 ### Assisted by AI (Recommended)
