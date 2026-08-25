@@ -1,6 +1,8 @@
 #!/bin/sh
-# Rebuild dist/*.skill and dist/*.zip whenever a commit touches skills/, and
-# stage the rebuilt archives into the same commit — see dist/README.md.
-if git diff --cached --name-only | grep -q '^skills/'; then
-	make build && git add dist/
+# Rebuild dist/*.skill and dist/*.zip whenever a commit touches skills/, atoms/,
+# or templates/ — an atom or template edit needs recompiling into every
+# skills/*/SKILL.md that uses it, not just the file that was actually edited —
+# and stage the rebuilt files into the same commit. See dist/README.md.
+if git diff --cached --name-only | grep -qE '^(skills|atoms|templates)/'; then
+	make build && git add skills/ atoms/ dist/
 fi

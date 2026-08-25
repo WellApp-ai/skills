@@ -1,17 +1,24 @@
 /**
- * Compiles atomic/<brick>/CONTENT.md into a dev-only atomic/<brick>/SKILL.md test
+ * Compiles atoms/<brick>/CONTENT.md into a dev-only atoms/<brick>/SKILL.md test
  * artifact, and templates/<name>.hbs.md into the shipped skills/<name>/SKILL.md.
  *
- * Each atomic brick's CONTENT.md body is registered as one Handlebars partial,
- * named after the brick. A consumer template calls it inline with hash args
+ * Each atom's CONTENT.md body is registered as one Handlebars partial, named
+ * after the atom. A consumer template calls it inline with hash args
  * (`{{> define-workspace purpose="..."}}`) — no separate data file. `strict: true`
  * makes a missing property throw instead of rendering blank, so a typo'd or
  * forgotten property fails loud at compile time rather than shipping a silently
  * incomplete skill.
  *
- * Run through `make compile` (or `node scripts/compile-atomic-skills.mjs`).
- * `--check` fails instead of writing, for CI and `make validate`. `--watch`
- * recompiles on every source change (never watches its own output paths).
+ * The `styling` atom is the one exception: its content comes entirely from
+ * design-system/well-tokens.css, not from a consumer's hash args, so it's
+ * pre-rendered once against the parsed tokens and registered as a plain string
+ * partial. This replaces the old scripts/generate-style-blocks.mjs, which
+ * rewrote a marker-delimited region of each skill's SKILL.md in place — one
+ * mechanism now, not two.
+ *
+ * Run through `make compile` (or `node scripts/compile-atoms.mjs`). `--check`
+ * fails instead of writing, for CI and `make validate`. `--watch` recompiles on
+ * every source change (never watches its own output paths).
  */
 import Handlebars from "handlebars";
 import { existsSync, readdirSync, readFileSync, watch, writeFileSync } from "node:fs";
@@ -19,9 +26,23 @@ import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const ATOMIC_DIR = join(ROOT, "atomic");
+const ATOMS_DIR = join(ROOT, "atoms");
 const TEMPLATES_DIR = join(ROOT, "templates");
 const SKILLS_DIR = join(ROOT, "skills");
+const TOKENS_CSS = join(ROOT, "design-system/well-tokens.css");
+
+/** Roles a composed view actually needs, in the order it needs them. */
+const STYLE_ROLES = [
+  ["Page background", "well-bg"],
+  ["Card surface", "well-bg-subtle"],
+  ["Border", "well-border"],
+  ["Primary text", "well-text"],
+  ["Secondary text", "well-text-2"],
+  ["Accent", "well-accent"],
+  ["Positive", "well-success"],
+  ["Negative", "well-danger"],
+];
+const STYLE_SERIES = ["well-cat-1", "well-cat-2", "well-cat-3", "well-cat-4", "well-cat-5", "well-cat-6"];
 
 Handlebars.registerHelper("list", (value) =>
   String(value ?? "")
@@ -61,53 +82,63 @@ function stripPlaceholdersBlock(frontmatterText) {
   return frontmatterText.replace(/\n?placeholders:\n(?:[ \t]+.*\n?)*/, "\n").trim();
 }
 
-function brickNames() {
-  return readdirSync(ATOMIC_DIR, { withFileTypes: true })
+function atomNames() {
+  return readdirSync(ATOMS_DIR, { withFileTypes: true })
     .filter((e) => e.isDirectory())
     .map((e) => e.name);
 }
 
+function parseTokens() {
+  const css = readFileSync(TOKENS_CSS, "utf8");
+  const out = new Map();
+  for (const [, name, value] of css.matchAll(/--(well-[a-z0-9-]+)\s*:\s*([^;]+);/g)) {
+    out.set(name, value.trim());
+  }
+  return out;
+}
+
+/** Builds the `styling` atom's render context from design-system/well-tokens.css. */
+function stylingContext() {
+  const tokens = parseTokens();
+  const need = (name) => {
+    const value = tokens.get(name);
+    if (!value) throw new Error(`design-system/well-tokens.css no longer defines --${name}`);
+    return value;
+  };
+  return {
+    roles: STYLE_ROLES.map(([label, name]) => ({ label, value: need(name) })),
+    seriesJoined: STYLE_SERIES.map((name) => `\`${need(name)}\``).join(", "),
+    radius: need("well-radius"),
+    gap: need("well-gap"),
+  };
+}
+
 function registerPartials() {
-  for (const brick of brickNames()) {
-    const path = join(ATOMIC_DIR, brick, "CONTENT.md");
-    const { body } = splitFrontmatter(readFileSync(path, "utf8"), `atomic/${brick}/CONTENT.md`);
-    Handlebars.registerPartial(brick, Handlebars.compile(body, { strict: true, noEscape: true }));
+  for (const atom of atomNames()) {
+    const path = join(ATOMS_DIR, atom, "CONTENT.md");
+    const { body } = splitFrontmatter(readFileSync(path, "utf8"), `atoms/${atom}/CONTENT.md`);
+    const compiled = Handlebars.compile(body, { strict: true, noEscape: true });
+    if (atom === "styling") {
+      // No consumer-supplied properties — pre-render once against the real
+      // tokens and register the plain string, so every {{> styling}} call
+      // gets identical, already-resolved output regardless of context.
+      Handlebars.registerPartial(atom, compiled(stylingContext()));
+    } else {
+      Handlebars.registerPartial(atom, compiled);
+    }
   }
 }
 
 function renderDevArtifacts() {
-  return brickNames().map((brick) => {
-    const label = `atomic/${brick}/SKILL.md`;
-    const path = join(ATOMIC_DIR, brick, "CONTENT.md");
-    const { frontmatter, body } = splitFrontmatter(readFileSync(path, "utf8"), `atomic/${brick}/CONTENT.md`);
-    const context = parsePlaceholders(frontmatter);
+  return atomNames().map((atom) => {
+    const label = `atoms/${atom}/SKILL.md`;
+    const path = join(ATOMS_DIR, atom, "CONTENT.md");
+    const { frontmatter, body } = splitFrontmatter(readFileSync(path, "utf8"), `atoms/${atom}/CONTENT.md`);
+    const context = atom === "styling" ? stylingContext() : parsePlaceholders(frontmatter);
     const rendered = Handlebars.compile(body, { strict: true, noEscape: true })(context);
     const content = `---\n${stripPlaceholdersBlock(frontmatter)}\n---\n${rendered}`;
-    return { path: join(ATOMIC_DIR, brick, "SKILL.md"), content, label };
+    return { path: join(ATOMS_DIR, atom, "SKILL.md"), content, label };
   });
-}
-
-// scripts/generate-style-blocks.mjs owns this exact marker pair inside
-// fx-exposure/rank-clients-by-ltv — it rewrites the region in place on the
-// committed skills/*/SKILL.md. This compiler renders those same files wholesale
-// from their template, so a naive overwrite would erase that generator's work
-// (and --check would then flag the file as permanently stale, since the
-// template always renders the region empty). Preserve whatever's already on
-// disk in that region across every render.
-const STYLE_BLOCK_BEGIN = "<!-- generated: well tokens — edit design-system/well-tokens.css, then `make refresh` -->";
-const STYLE_BLOCK_END = "<!-- /generated -->";
-
-function preserveStyleBlock(rendered, existingPath) {
-  const renderedStart = rendered.indexOf(STYLE_BLOCK_BEGIN);
-  if (renderedStart === -1 || !existsSync(existingPath)) return rendered;
-  const renderedEnd = rendered.indexOf(STYLE_BLOCK_END, renderedStart);
-  if (renderedEnd === -1) return rendered;
-  const existing = readFileSync(existingPath, "utf8");
-  const existingStart = existing.indexOf(STYLE_BLOCK_BEGIN);
-  const existingEnd = existing.indexOf(STYLE_BLOCK_END, existingStart);
-  if (existingStart === -1 || existingEnd === -1) return rendered;
-  const existingRegion = existing.slice(existingStart, existingEnd + STYLE_BLOCK_END.length);
-  return rendered.slice(0, renderedStart) + existingRegion + rendered.slice(renderedEnd + STYLE_BLOCK_END.length);
 }
 
 function renderConsumers() {
@@ -117,10 +148,9 @@ function renderConsumers() {
     .map((file) => {
       const name = basename(file, ".hbs.md");
       const label = `skills/${name}/SKILL.md`;
-      const outPath = join(SKILLS_DIR, name, "SKILL.md");
       const source = readFileSync(join(TEMPLATES_DIR, file), "utf8");
       const rendered = Handlebars.compile(source, { strict: true, noEscape: true })({});
-      return { path: outPath, content: preserveStyleBlock(rendered, outPath), label };
+      return { path: join(SKILLS_DIR, name, "SKILL.md"), content: rendered, label };
     });
 }
 
@@ -136,7 +166,7 @@ function runOnce({ check }) {
       process.exitCode = 1;
       return;
     }
-    console.log("atomic skills current");
+    console.log("atoms current");
     return;
   }
 
@@ -149,7 +179,7 @@ function runOnce({ check }) {
       wrote++;
     }
   }
-  if (!wrote) console.log("atomic skills already current");
+  if (!wrote) console.log("atoms already current");
 }
 
 const check = process.argv.includes("--check");
@@ -176,11 +206,11 @@ if (watchMode) {
   };
   // Watch only the source globs — never the generated SKILL.md output paths,
   // or the compiler's own writes would re-trigger itself.
-  watch(ATOMIC_DIR, { recursive: true }, (_event, filename) => {
+  watch(ATOMS_DIR, { recursive: true }, (_event, filename) => {
     if (filename && filename.endsWith("CONTENT.md")) rerun();
   });
   watch(TEMPLATES_DIR, { recursive: true }, (_event, filename) => {
     if (filename && filename.endsWith(".hbs.md")) rerun();
   });
-  console.log("watching atomic/**/CONTENT.md and templates/*.hbs.md ...");
+  console.log("watching atoms/**/CONTENT.md and templates/*.hbs.md ...");
 }

@@ -201,7 +201,6 @@ style it with the tokens under **Styling a composed view** below.
 
 ## Styling a composed view
 
-<!-- generated: well tokens — edit design-system/well-tokens.css, then `make refresh` -->
 
 Well renders dark. A view you compose should read as the same product, not as a page
 that happens to hold the same numbers.
@@ -222,8 +221,6 @@ Corners `12px`, gap `12px`, body text 14px, numbers tabular.
 A card is a header, then the body, then an action row — the counter first and the
 primary action last. State every figure in text as well as in the drawing: a chart the
 host cannot render must not take the answer with it.
-
-<!-- /generated -->
 
 ## Quality checks
 

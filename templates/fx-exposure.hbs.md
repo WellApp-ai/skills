@@ -92,8 +92,7 @@ style it with the tokens under **Styling a composed view** below.
 
 ## Styling a composed view
 
-<!-- generated: well tokens — edit design-system/well-tokens.css, then `make refresh` -->
-<!-- /generated -->
+{{> styling}}
 
 ## Quality checks
 
