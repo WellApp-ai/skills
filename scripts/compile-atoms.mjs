@@ -1,6 +1,6 @@
 /**
  * Compiles atoms/<brick>/CONTENT.md into a dev-only atoms/<brick>/SKILL.md test
- * artifact, and templates/<name>.hbs.md into the shipped skills/<name>/SKILL.md.
+ * artifact, and src/<name>.hbs.md into the shipped skills/<name>/SKILL.md.
  *
  * Each atom's CONTENT.md body is registered as one Handlebars partial, named
  * after the atom. A consumer template calls it inline with hash args
@@ -27,7 +27,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ATOMS_DIR = join(ROOT, "atoms");
-const TEMPLATES_DIR = join(ROOT, "templates");
+const SRC_DIR = join(ROOT, "src");
 const SKILLS_DIR = join(ROOT, "skills");
 const TOKENS_CSS = join(ROOT, "design-system/well-tokens.css");
 
@@ -142,13 +142,13 @@ function renderDevArtifacts() {
 }
 
 function renderConsumers() {
-  if (!existsSync(TEMPLATES_DIR)) return [];
-  return readdirSync(TEMPLATES_DIR)
+  if (!existsSync(SRC_DIR)) return [];
+  return readdirSync(SRC_DIR)
     .filter((f) => f.endsWith(".hbs.md"))
     .map((file) => {
       const name = basename(file, ".hbs.md");
       const label = `skills/${name}/SKILL.md`;
-      const source = readFileSync(join(TEMPLATES_DIR, file), "utf8");
+      const source = readFileSync(join(SRC_DIR, file), "utf8");
       const rendered = Handlebars.compile(source, { strict: true, noEscape: true })({});
       return { path: join(SKILLS_DIR, name, "SKILL.md"), content: rendered, label };
     });
@@ -209,8 +209,8 @@ if (watchMode) {
   watch(ATOMS_DIR, { recursive: true }, (_event, filename) => {
     if (filename && filename.endsWith("CONTENT.md")) rerun();
   });
-  watch(TEMPLATES_DIR, { recursive: true }, (_event, filename) => {
+  watch(SRC_DIR, { recursive: true }, (_event, filename) => {
     if (filename && filename.endsWith(".hbs.md")) rerun();
   });
-  console.log("watching atoms/**/CONTENT.md and templates/*.hbs.md ...");
+  console.log("watching atoms/**/CONTENT.md and src/*.hbs.md ...");
 }

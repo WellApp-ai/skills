@@ -18,7 +18,7 @@ validate:
 	node scripts/check-skill-frontmatter.js
 	node scripts/compile-atoms.mjs --check
 
-# atoms/<name>/CONTENT.md and templates/<name>.hbs.md are the source; this renders
+# atoms/<name>/CONTENT.md and src/<name>.hbs.md are the source; this renders
 # them into atoms/<name>/SKILL.md (a dev-only test artifact) and skills/<name>/SKILL.md
 # (what ships). Templates live outside skills/, so this never touches what `build` zips.
 # The `styling` atom also folds in what used to be scripts/generate-style-blocks.mjs —
