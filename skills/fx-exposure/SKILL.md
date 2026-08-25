@@ -99,9 +99,9 @@ Return:
 `_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
 never reaches you, so you cannot tell a host that drew the card from one that did not.
 Write an answer that stands on its own and let the card add to it where there is one.
-What you must not add is a second chart of what a card already charts; where a visual
-the tool does not draw genuinely reads better, compose one and style it with the tokens
-under **Styling a composed view** below.
+State the figures in text regardless — you cannot know whether anything drew them. What you must not add is a second rendering of what a card already
+shows; where a visual the tool does not draw genuinely reads better, compose one and
+style it with the tokens under **Styling a composed view** below.
 
 ## Styling a composed view
 
