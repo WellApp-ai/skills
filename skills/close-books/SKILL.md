@@ -1,6 +1,6 @@
 ---
 name: close-books
-requires: [define-workspace, connect-tools, resolve-own-company]
+requires: [define-workspace, connect-tools, resolve-own-company, accounting-settings]
 description: Drive a month-end close for a Well workspace to the point of approval — start the close for a named month, read what is blocking it, clear the blockers one at a time, prepare the close package, and mint the approval offer the user accepts in the Well app. Use when the user asks to "close the books", "close last month", "run the month-end close", "close March", "finish the close", or "what's left to close the period". This is a WRITE flow — it advances a real close run and can resolve tasks, so it shows the state before every step and asks first before retrying reconciliation or queuing a vendor invoice fetch, the two that need an explicit yes. It never locks the period itself; the final approval is a first-party click in Well by design. Requires a connected Well workspace with its bank and accounting tools synced; if none, it walks the user through connecting first.
 ---
 
@@ -88,7 +88,7 @@ user to add it at that URL, then retry. The close tools, and what each one does:
 - `well_get_schema` — call before reading any records root for the first time in a session; field
   names are workspace- and connector-dependent, never assume them.
 
-**Composed skills.** Three atomic Well skills own the setup this flow depends on — invoke them,
+**Composed skills.** Four atomic Well skills own the setup this flow depends on — invoke them,
 don't reimplement them:
 
 - `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there is no
@@ -99,8 +99,11 @@ don't reimplement them:
   bank data, so an unsynced accounting or bank tool is a blocker to surface before starting.
 - `resolve-own-company` — resolves which company is the workspace's own legal entity. The close
   refuses to start until this is set, and the answer decides invoice polarity.
+- `accounting-settings` — sets the workspace's `fiscal_year_start_month`, which the server derives
+  the close's fiscal period from and which locks once the period closes. The close reads it; when it
+  is unset or the user says it is wrong, this flow confirms it here rather than guessing (step 4).
 
-All three ship with the `well-skills` plugin. This skill is also installable on its own, so the
+All four ship with the `well-skills` plugin. This skill is also installable on its own, so the
 workflow carries an inline fallback for each when it is absent.
 
 ## Workflow
@@ -145,6 +148,15 @@ the next step is decided by server truth, not by memory.
    the user means if one exists. Otherwise confirm the month with the user — a calendar month that
    has already ended — and call `well_start_close` with `scope: { calendar_year, calendar_month }`.
    This is the one place you name a month; from here on, echo the server's fiscal scope verbatim.
+   - **Before naming the month, confirm the fiscal year start is set.** The server derives the
+     close's fiscal period from the workspace's `fiscal_year_start_month`, and once the period
+     closes that start month locks — so a wrong or unset value mis-files the close. Read it from
+     `well_list_workspaces` (`identity.fiscal_year_start_month`); a null value means the server is
+     defaulting to January. If it is unset, or the user says it is wrong, run `accounting-settings`
+     to set it on their explicit confirmation before starting — never guess it. (If
+     `accounting-settings` isn't installed and `well_upsert_accounting_settings` is in your toolset,
+     set it inline after an explicit yes; if neither is available, point the user at the Well app.)
+     This is a setup precondition, not the month selection — you still name the calendar month here.
    - A current or future month → `well_start_close` refuses. Name the last complete month instead
      and let the user confirm; never pin a future month.
    - Own company not set → it refuses with `own_company_unconfirmed`. Go back to step 3.
