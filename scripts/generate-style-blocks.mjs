@@ -10,7 +10,7 @@
  * Run through `make refresh` (or `node scripts/generate-style-blocks.mjs`).
  * `--check` fails instead of writing, for CI and `make refresh-check`.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -18,7 +18,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const TOKENS = join(ROOT, "design-system/well-tokens.css");
 
 /** The skills that compose a chart of their own. Everything else states figures. */
-const COMPOSING_SKILLS = ["cash-balance-trend", "fx-exposure", "rank-clients-by-ltv"];
+const COMPOSING_SKILLS = ["fx-exposure", "rank-clients-by-ltv"];
 
 const BEGIN = "<!-- generated: well tokens — edit design-system/well-tokens.css, then `make refresh` -->";
 const END = "<!-- /generated -->";
@@ -114,9 +114,22 @@ for (const skill of COMPOSING_SKILLS) {
 const stale = planned.filter((p) => p.stale);
 
 if (check) {
+  // A skill dropped from COMPOSING_SKILLS keeps any block it already carries, and the loop
+  // above would never look at it again. Catch the orphan rather than maintaining it forever.
+  const orphans = readdirSync(join(ROOT, "skills"), { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && !COMPOSING_SKILLS.includes(entry.name))
+    .filter((entry) => readFileSync(join(ROOT, "skills", entry.name, "SKILL.md"), "utf8").includes(BEGIN));
+  for (const { name } of orphans) {
+    console.error(`orphaned style block: skills/${name}/SKILL.md is not in COMPOSING_SKILLS`);
+  }
   for (const { skill } of stale) console.error(`stale style block: skills/${skill}/SKILL.md`);
-  if (stale.length) {
-    console.error(`\n${stale.length} style block(s) behind design-system/well-tokens.css. Run \`make refresh\`.`);
+  if (stale.length || orphans.length) {
+    if (stale.length) {
+      console.error(`\n${stale.length} style block(s) behind design-system/well-tokens.css. Run \`make refresh\`.`);
+    }
+    if (orphans.length) {
+      console.error(`\n${orphans.length} skill(s) carry a block nothing maintains. Delete the block, or add the skill back.`);
+    }
     process.exit(1);
   }
   console.log("style blocks current");
