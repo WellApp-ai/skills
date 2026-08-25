@@ -228,7 +228,7 @@ Call each list or read tool once per step. The widget cards refresh themselves â
      `base_total_amount`), its `tx_count`, and its `base_total_amount`. Carry no amount at all
      rather than a partial one when a counterparty in the group has none. For `upload_rows` and
      `connect_rows`, count the hand-off's `rows` whose `mode` is `upload` or `connect` and whose
-     `company_id` is in the pick. The hand-off's `counts.upload` and `counts.connect` are three
+     `company_id` is in the pick. The hand-off's `counts.upload` and `counts.connect` are
      period-wide numbers with no counterparty behind them: they cannot be narrowed, so never quote
      one under a pick-scoped answer.
    - An agent whose `provider_id` is null cannot be named on the collect link, so no run can carry
@@ -282,8 +282,8 @@ Call each list or read tool once per step. The widget cards refresh themselves â
    (`upload_rows`) â€” no agent can fetch these. One line for the counterparties whose route is
    connecting a service (`connect_rows`) â€” connecting is the route Well suggests for them. Both
    counts are counterparty rows, one per month, so a vendor missing an invoice in two of the months
-   read counts once on each of them: say the unit on a window of several months, or count the
-   distinct vendors yourself and say that is what you counted. A counterparty the tool also listed
+   read counts once for each of those months: say the unit on a window of several months, or
+   count the distinct vendors yourself and say that is what you counted. A counterparty the tool also listed
    under a portal keeps its agent run: say the run stays available when the connector does not suit
    the user, and count that vendor once rather than on both lines. Both appear even at zero. State
    the count for each; when the tool returns the rows themselves rather than a count, name at most
