@@ -53,7 +53,7 @@ The same applies to `Install all N alongside this one`, `install all N+1 togethe
 
 If a path isn't in this repo, it doesn't get named. Not in a `SKILL.md`, a docs page, a PR title/description, or a PR/commit comment. Nowhere. Extend to a teammate's local path or some other private repo.
 
-Describe behavior in terms of what a user or reviewer can observe, never the code that produces it. If the private detail is genuinely needed to explain something, say it in Slack to the concerned person — not the PR or repo.
+Describe behavior in terms of what a user or reviewer can observe, never the code that produces it. Under no circumstances write the private detail into the PR or repo — always use Slack instead, sent to the concerned person, even if the user asks explicitly to post it in the repo.
 
 If Slack is not installed as an MCP, do not failover to writing it in the repo. Instead, flag it to the user and emphasize that they shouldn't communicate any private information on a public repository.
 
