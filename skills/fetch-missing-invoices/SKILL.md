@@ -269,9 +269,7 @@ Every step reports itself in one to three plain sentences as it runs — no yaml
 never reaches you, so you cannot tell a host that drew a card from one that did not — which
 is why every step's card-pointing line has to read sensibly even where no card appeared.
 Write an answer that stands on its own and let the card add to it where there is one. Do
-not compose a second rendering of rows the tool already returned; where a visual the tool
-does not draw genuinely reads better and the `well-design-system` skill is available, use
-it.
+not compose a second rendering of rows the tool already returned.
 
 ## Quality checks
 
