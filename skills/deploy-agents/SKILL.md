@@ -95,8 +95,8 @@ nothing is merged across two entities.
 
 ## Tooling
 
-Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). Only one tool is
-involved, and it is optional:
+Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). Two read-only tools
+are involved. The preview tool is optional, and the session read is a resync fallback:
 
 - `well_preview_invoice_fetch` — **when it is present in your toolset.** Input: `workspace_id`
   explicitly, as on every `well_*` call, and **no periods argument** — omitted, the server uses the
@@ -117,8 +117,9 @@ involved, and it is optional:
   `upload_rows` and `connect_rows` (their rows carry the same month tag), `counts`,
   `collect_url` — the collect link for the previewed portals — `collect_url_omits` — the portals a
   large window pushed past that link's ceiling, present only when some were left out —
-  `scoped_to_selected_counterparties`, `mode: "preview"`, `nothing_launched: true`, and `hints`. It
-  is a read: it computes the plan and returns it. Carry `provider_id`, `domain`,
+  `scoped_to_selected_counterparties` with `selection_scope` beside it, `base_currency` — the
+  currency every `base_total_amount` is stated in — `mode: "preview"`, `nothing_launched: true`,
+  and `hints`. It is a read: it computes the plan and returns it. Carry `provider_id`, `domain`,
   `scoped_to_selected_counterparties` and `hints` through to your hand-off — `provider_id` is the
   identifier the link names and a run routes on, `domain` only labels the portal on screen,
   `scoped_to_selected_counterparties` tells a scoped result from a period-wide one, and `hints` says
@@ -137,7 +138,9 @@ involved, and it is optional:
   window the pick never covered is covered in full. It is absent when the server held no pick for
   this workspace, and absent too when the pick covers none of the months read; either way the result
   covers every gap of the months read. Read it before you describe the scope; never infer the scope
-  from the row count.
+  from the row count. `selection_scope` comes back beside it and says how large the truncation is —
+  `rows_dropped_by_filter` of the `row_count_before_filter` counterparty rows in the months read are
+  not covered — so quote those two numbers rather than presenting the counts as the whole period.
 - `collect_url` — **the one link to hand the user.** Its shape is
   `<well-app-base-url>/collect?workspace=<workspace_id>&providers=<entry>,<entry>,…`, and each entry
   is `<provider_id>[~<name>[~<url>]]`. The `provider_id` is required and is the only field that
@@ -158,8 +161,14 @@ involved, and it is optional:
   ticked, and the card starts nothing itself. So end your turn on the card and let the user tick and
   open it; do not restate the rows it draws, and never describe the open as a collection that
   finished.
-- **When the tool is absent**, no tool call is needed at all. Derive the same preview from the
-  `show-missing-invoices` hand-off's `agent_candidates`, which already carry the provider and its
+- `well_list_workspaces` — **the resync read, and the only other tool this skill calls.** Its
+  `session` block carries `selected_counterparties` (the pick, with the workspace its company ids
+  belong to; null until one is recorded), `pinned_workspace_id` and `workspace_queue`. Read it only
+  to resync — for a click the `show-missing-invoices` hand-off missed, or for a run that reaches
+  this skill with no hand-off at all — never as a first move when the hand-off already carries the
+  pick.
+- **When the preview tool is absent**, no call to it is needed at all. Derive the same preview
+  from the `show-missing-invoices` hand-off's `agent_candidates`, which carry the provider and its
   counterparties, narrowed to the picked `company_id` values. That path carries no `provider_id` and
   no `collect_url`, and a link cannot be built without the ids: give the workspace link instead and
   say the collection starts from the app's collect page, which this run cannot address.
@@ -286,9 +295,10 @@ Call each list or read tool once per step. The widget cards refresh themselves �
    Then say what the link does, in one line, and end the turn. The card's own footer carries the
    mechanics — **Deploy** opens the collect link for the vendors still ticked, and waits there,
    disabled, while nothing is ticked; **Continue** stands in its place only when no vendor in this
-   read is named on a collect link; **Keep for later** answers the conversation exactly as Continue
-   does — so ask the user to confirm the vendors and deploy, and leave the labels to the card. Where
-   no card is drawn, give the tool's `collect_url` when the tool ran and the workspace link
+   read is named on a collect link; **Keep for later** sits beside either one and, like Continue,
+   only sends its own label into the conversation and opens nothing — so ask the user to confirm
+   the vendors and deploy, and leave the labels to the card. Where no card is drawn, give the
+   tool's `collect_url` when the tool ran and the workspace link
    otherwise, and say the collect page hands the picked portals to the Well browser extension once
    the user starts them there. Append no query parameter of your own to either link.
 
@@ -315,9 +325,11 @@ Call each list or read tool once per step. The widget cards refresh themselves �
    **categorized** expense transactions only, so spend that is not categorized yet cannot appear in
    the plan — the same caveat `show-missing-invoices` carried in its `coverage_note`, repeated here
    because this answer reprints the same counts. Use that `coverage_note` when you have it, and the
-   tool's `hints` when you called the tool. When coverage is narrow and the
-   `categorize-counterparties` skill is installed, offer it: categorizing the rest of the period
-   widens what an agent run would cover.
+   tool's `hints` when you called the tool. Categorizing the vendors does not widen this bound and
+   never offer `categorize-counterparties` as though it did: that skill writes the vendor company's
+   industry labels, while this plan is bounded by TRANSACTION categorization — a different field on
+   a different record. Say the bound plainly and leave the period's uncategorized spend to the Well
+   app.
 
 7. **State plainly what has and has not started.** One sentence of its own, not a parenthesis: no
    agent has started here, no task is queued, and no browser session is open. Then say where a
@@ -399,10 +411,11 @@ Return:
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is
   SOC-2 Type I and GDPR compliant and the data is safe. Skip it rather than force it in.
 - End with a one-line pointer to the next step. Hand the block back to the caller — the
-  `fetch-missing-invoices` flow — with the preview. When uncategorized spend could be hiding agents
-  and the `categorize-counterparties` skill is installed, offer that instead: "Want me to
-  categorize the rest of the period first, so nothing is hidden from this plan?". When the user asks
-  to run the collection, point at the card's Deploy action — or at the collect link where no card is
+  `fetch-missing-invoices` flow — with the preview. When the connect line is non-zero and the
+  `connect-tools` skill is installed, offer that instead: "Want me to connect the tools behind those
+  vendors first?" — connecting is the route the preview suggests for them. Never offer
+  `categorize-counterparties` as a way to uncover agents this preview does not show. When the user
+  asks to run the collection, point at the card's Deploy action — or at the collect link where no card is
   drawn — and say plainly that the collection runs in the browser extension, once they start it on
   that page. Never offer to run a collection from the chat, and never claim one has finished.
 - Beyond the per-agent, upload, unmatched, connect, coverage, scope, deploy and nothing-started
@@ -426,6 +439,8 @@ Do not return:
 - A selection edited from the user's sentence instead of a fresh pick on the missing-invoices card,
   or a pick taken on an earlier gap-list card carried into this preview.
 - A period-wide result described as the pick when `scoped_to_selected_counterparties` is absent.
+- `categorize-counterparties` offered as a way to widen the preview — it writes the vendor
+  company's industry labels, and this plan is bounded by transaction categorization.
 
 **How this reaches the user.** A Well MCP tool that ships a widget attaches
 `_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
@@ -459,8 +474,9 @@ Before finishing, verify:
 - One line per agent, in the user's language, each saying nothing has started, written whatever the
   host drew and never expanded into the row detail the card carries.
 - The turn ended on the card with one line asking the user to confirm the vendors and deploy — or,
-  where no card was drawn, carrying the collect link from the tool's `collect_url` or the workspace
-  link, with no query parameter added and no workspace named in it.
+  where no card was drawn, carrying the collect link exactly as `collect_url` returned it, its
+  required `workspace` parameter intact, or the workspace link — with no parameter added, edited or
+  removed on either.
 - A counterparty the preview listed under a portal and in `connect_rows` was reported once, as one
   gap with two routes, and the two lists were never added together.
 - On a previewed run the upload line and the connect line are both present, even at zero, each
@@ -470,7 +486,9 @@ Before finishing, verify:
 - No agent was built for the `"unknown"` group; its transactions were counted as `unmatched_rows`
   instead, never folded into `upload_rows`, and a period holding only that group resolved
   `previewed` rather than `nothing_to_do`.
-- The categorized-only coverage line was stated, with the tool's `hints` when the tool ran.
+- The categorized-only coverage line was stated, with the tool's `hints` when the tool ran, and it
+  carried no offer to categorize the vendors — that skill labels companies and widens no plan
+  bounded by transaction categorization.
 - Every agent carries a `provider_id` — from the tool, or from the hand-off's
   `matched_connector_service_id` — and null only when neither source has one.
 - The answer contains one plain sentence stating that nothing has started here, and naming the
@@ -590,9 +608,9 @@ Return `resolution: nothing_to_do`: "Nothing to fetch for March — every catego
 transaction already has its invoice, and spend that is not categorized yet cannot appear here. No
 agent has started, no task is queued, no browser session is open." The upload line, the connect line
 and the deploy line are dropped: there is nothing to upload, nothing to connect and nothing to
-collect. Keep an empty `agents` list with the `coverage_note` set, and hand back. Offer
-`categorize-counterparties` when it is installed. Do not invent an agent, and do not offer to run
-one anyway.
+collect. Keep an empty `agents` list with the `coverage_note` set, and hand back. Do not offer
+`categorize-counterparties` as a way to uncover more: it labels the vendor companies, not the
+period's transactions. Do not invent an agent, and do not offer to run one anyway.
 
 ### Example request
 
