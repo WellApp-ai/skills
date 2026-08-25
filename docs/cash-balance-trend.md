@@ -20,13 +20,12 @@ Ask your AI assistant "is our cash going up or down?" and it pulls your real, sy
 
 ## Composes onto
 
-This skill delegates three setup steps to Well's atomic skills rather than repeating them:
+This skill delegates two setup steps to Well's atomic skills rather than repeating them:
 
 - **[`define-workspace`](define-workspace.md)** — pins which Well workspace the answer is for.
 - **[`connect-tools`](connect-tools.md)** — checks which of your bank / accounting / invoicing sources are connected.
-- **[`normalize-currency`](normalize-currency.md)** — turns amounts in several currencies into one total with its rate and date, so a single-total view carries the rate and date behind it.
 
-Install all three alongside this one. The skill still runs without them: `define-workspace` and `connect-tools` each have an inline fallback, while `normalize-currency` doesn't — without it, the skill reports other currencies as separate series instead of converting them into one total. With all three installed you get one consistent workspace and connection flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install all four together; if you download the `.skill` file on its own, grab those three as well.
+Install both alongside this one. The skill still runs without them: `define-workspace` and `connect-tools` each have an inline fallback. The series itself is already converted to the workspace base currency by `well_get_cash_position`, so no currency skill is involved.
 
 ---
 
@@ -48,7 +47,6 @@ Install the following official skills from Well.
     a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cash-balance-trend/SKILL.md
     b. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
     c. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
-    d. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/normalize-currency/SKILL.md
 2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
 3. Install these skills.
 4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
