@@ -97,7 +97,8 @@ don't reimplement them:
 - `connect-tools` — decides whether the bank and accounting connections are really synced (a fresh
   `last_successful_sync_at`, not a bare `enabled` flag). A close reads posted ledger and settled
   bank data, so an unsynced accounting or bank tool is a blocker to surface before starting.
-- `resolve-own-company` — resolves which company is the workspace's own legal entity. The close
+- `resolve-own-company` — resolves which company is the workspace's own legal entity, and in
+  `persist` mode sets it (`well_set_own_company`) on the user's explicit confirmation. The close
   refuses to start until this is set, and the answer decides invoice polarity.
 - `accounting-settings` — sets the workspace's `fiscal_year_start_month`, which the server derives
   the close's fiscal period from and which locks once the period closes. The close reads it; when it
@@ -128,21 +129,24 @@ the next step is decided by server truth, not by memory.
    isn't installed, read `well_list_connectors` yourself and check for an enabled input connector
    with a recent `last_successful_sync_at` on the bank and accounting domains before continuing.
 
-3. **Resolve the own company — run `resolve-own-company`** in `mode: strict`, with the pinned
-   `workspace_id`, `purpose: "to close this workspace's books"`, and
-   `consequence: "the close cannot start and invoice polarity is wrong"`.
+3. **Resolve the own company — run `resolve-own-company`** in `mode: strict`, `persist: true`, with
+   the pinned `workspace_id`, `purpose: "to close this workspace's books"`, and
+   `consequence: "the close cannot start and invoice polarity is wrong"`. In `persist: true`, when
+   the anchor is unresolved and the user confirms which company is theirs, `resolve-own-company`
+   sets it with `well_set_own_company` itself — the close no longer carries its own copy of that
+   write.
    - **If `resolve-own-company` isn't installed**, do it inline: call
      `well_get_schema({ root: "workspaces" })` and read `workspaces.own_company`, treating null,
      absent-from-the-schema, and ambiguous alike as unresolved; never infer it from the workspace's
-     name, logo, slug, or email domain.
-   - Resolved → carry its `own_company_id` and continue.
-   - Unresolved → `well_start_close` will refuse. If `well_set_own_company` is in your toolset,
-     show the user the candidate companies (`well_query_records` on `companies`, or a company they
-     name / create with `well_create_company`), let them **explicitly confirm** which one is theirs,
-     then call `well_set_own_company` with that `company_id`. This is an accounting-critical write —
-     never pick or set a company silently, and never infer it from the workspace name. If the tool
-     is absent, point the user at `<well-app-base-url>/workspaces/<workspace_id>` to set it in the
-     app, and stop until it is set.
+     name, logo, slug, or email domain. If it is unresolved and `well_set_own_company` is in your
+     toolset, show the candidate companies (`well_query_records` on `companies`, or one the user
+     names / creates with `well_create_company`), take an **explicit confirmation**, then call
+     `well_set_own_company` with that `company_id` — accounting-critical, never silent, never
+     inferred. If the tool is absent, point the user at
+     `<well-app-base-url>/workspaces/<workspace_id>` and stop until it is set.
+   - Resolved, read or written → carry its `own_company_id` and continue.
+   - Still unset → `well_start_close` refuses with `own_company_unconfirmed`; resolve it before
+     starting.
 
 4. **Find or start the close.** Call `well_list_flow_runs` and reuse a live close run for the month
    the user means if one exists. Otherwise confirm the month with the user — a calendar month that
