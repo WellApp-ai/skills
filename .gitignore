@@ -1,4 +1,5 @@
 .DS_Store
 telemetry/
+node_modules/
 # Skill-building related
 CLAUDE.md

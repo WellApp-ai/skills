@@ -1,10 +1,12 @@
-.PHONY: install validate build refresh refresh-check
+.PHONY: install validate compile build refresh refresh-check
 
 install:
 	git config core.hooksPath .githooks
+	npm ci
 
 # SKIP_CLAUDE=1 drops the two `claude` steps for an environment that has no CLI — a CI
-# runner, a container. The frontmatter check runs either way, since it needs only node.
+# runner, a container. The frontmatter and atomic-skill checks run either way, since
+# they need only node.
 validate:
 	@if [ "$(SKIP_CLAUDE)" = "1" ]; then \
 		echo "SKIP_CLAUDE=1 — skipping the claude plugin validation"; \
@@ -14,8 +16,15 @@ validate:
 		claude plugin validate ./skills --strict; \
 	fi
 	node scripts/check-skill-frontmatter.js
+	node scripts/compile-atomic-skills.mjs --check
 
-build:
+# atomic/<brick>/CONTENT.md and templates/<name>.hbs.md are the source; this renders
+# them into atomic/<brick>/SKILL.md (a dev-only test artifact) and skills/<name>/SKILL.md
+# (what ships). Templates live outside skills/, so this never touches what `build` zips.
+compile:
+	node scripts/compile-atomic-skills.mjs
+
+build: compile
 	@bash scripts/build-dist.sh
 
 # design-system/well-tokens.css is a copy of what @wellapp-ai/design-tokens builds; the
