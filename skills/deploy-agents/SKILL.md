@@ -264,8 +264,7 @@ Do not return:
 `_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
 never reaches you, so you cannot tell a host that drew the preview cards from one that
 did not. Write an answer that stands on its own and let the cards add to it where there
-are some. State the agents in text regardless — you cannot know whether anything drew
-them. What you must not add is a second chart of what a card already charts.
+are some. What you must not add is a second chart of what a card already charts.
 
 ## Quality checks
 
