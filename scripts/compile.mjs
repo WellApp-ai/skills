@@ -16,9 +16,9 @@
  * rewrote a marker-delimited region of each skill's SKILL.md in place — one
  * mechanism now, not two.
  *
- * Run through `make compile` (or `node scripts/compile-atoms.mjs`). `--check`
- * fails instead of writing, for CI and `make validate`. `--watch` recompiles on
- * every source change (never watches its own output paths).
+ * Run through `make compile` (or `node scripts/compile.mjs`). `--check` fails
+ * instead of writing, for CI and `make validate`. `--watch` (also `make watch`)
+ * recompiles on every source change, and never watches its own output paths.
  */
 import Handlebars from "handlebars";
 import { existsSync, readdirSync, readFileSync, watch, writeFileSync } from "node:fs";

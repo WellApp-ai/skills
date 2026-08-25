@@ -1,4 +1,4 @@
-.PHONY: install validate compile build refresh refresh-check
+.PHONY: install validate compile watch build refresh refresh-check
 
 install:
 	git config core.hooksPath .githooks
@@ -16,16 +16,25 @@ validate:
 		claude plugin validate ./skills --strict; \
 	fi
 	node scripts/check-skill-frontmatter.js
-	node scripts/compile-atoms.mjs --check
+	node scripts/compile.mjs --check
 
 # atoms/<name>/CONTENT.md and src/<name>.hbs.md are the source; this renders
 # them into atoms/<name>/SKILL.md (a dev-only test artifact) and skills/<name>/SKILL.md
-# (what ships). Templates live outside skills/, so this never touches what `build` zips.
+# (what ships). src/ lives outside skills/, so this never touches what `build` zips.
 # The `styling` atom also folds in what used to be scripts/generate-style-blocks.mjs —
 # its content is generated from design-system/well-tokens.css, not a consumer's args.
 compile:
-	node scripts/compile-atoms.mjs
+	node scripts/compile.mjs
 
+# The local dev loop: recompiles on every atoms/**/CONTENT.md or src/*.hbs.md
+# change, so editing an atom shows its effect on every skill that uses it
+# immediately. Never writes to dist/ — run `make build` once you're done.
+watch:
+	node scripts/compile.mjs --watch
+
+# Rebuilds dist/<name>.{zip,skill} for any skill/atom whose content changed since
+# the last build (build-dist.sh diffs against the existing archive and skips the
+# rest) — `compile` runs first so skills/*/SKILL.md is current before zipping.
 build: compile
 	@bash scripts/build-dist.sh
 
