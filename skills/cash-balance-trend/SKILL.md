@@ -40,7 +40,8 @@ The user may provide:
 This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). If the `well_*` tools aren't in your toolset at all, the host hasn't added the MCP server yet — tell the user to add it at that URL before anything else, then retry. Required tools once it's added:
 
 - `well_list_workspaces` — how `define-workspace` resolves the workspace. Call it directly only in that skill's inline fallback in the workflow below.
-- `well_query_records` — read `accounts`, `account_balances`, `exchange_rates`.
+- `well_get_cash_position` — the trend itself. Its `balance_history` is the workspace's cash at each trailing closed month-end plus today, oldest first, already converted to the base currency. This is the same computation the Well app's own KPI card shows, and in an MCP-Apps host the result renders as a card that draws the series.
+- `well_query_records` — read `accounts` only, and only to say WHICH accounts feed the series. Never rebuild the series from `account_balances`: those rows are one per account per day, so assembling a workspace trend from them means summing across accounts per date over a paged result, and a page is not the answer.
 - `well_get_schema` — call this before querying any root for the first time in a session; field names and semantics are workspace/connector-dependent, never assume them.
 - `well_list_connectors` — how `connect-tools` surfaces install links. Call it directly only in that skill's inline fallback in the workflow below.
 - Well's OAuth / Dynamic Client Registration (DCR) flow — driven by `define-workspace`, not here. Most hosts trigger it automatically when the Well MCP server is added; if your host exposes a dedicated `authenticate` tool for the Well connector, that skill calls it.
@@ -65,13 +66,13 @@ All three ship with the `well-skills` plugin. This skill is also installable on 
    - A kind the user chose to skip comes back under `skipped_by_user` — respect that and don't re-ask for it in this run.
    - **If `connect-tools` isn't installed**, do the connector half inline: keep `workspace_connectors` rows whose `connector.direction` is `input` and whose `connector.data_domains` covers `bank`, treat a set `last_successful_sync_at` as connected, and on a gap hand the user the top 2-3 `install_url` links from `well_list_connectors()` (bank connectors first), re-running this check yourself the moment one lands rather than waiting to be re-prompted.
 
-3. **Verify the data itself has landed.** `connect-tools` reports connections, not rows — a connector can be connected and still have delivered nothing this skill can use. Spot-check what this skill actually reads: a `well_query_records` read on `accounts`, and on `account_balances` for the workspace's own accounts. Zero rows means no balance history has landed yet — say so and stop. And where an account has only one `account_balances` row, that is one snapshot, not a trend: say so plainly for that account rather than fabricating a direction from a single data point.
+3. **Verify the data itself has landed.** `connect-tools` reports connections, not rows — a connector can be connected and still have delivered nothing this skill can use. Call `well_get_cash_position({ workspace_id })`. `unavailable: true` means the amount is a placeholder, not a measurement — say so and stop. An absent `balance_history` means no history has been reconstructed: say so and stop rather than reaching for raw rows. A `balance_history` with one entry is one snapshot, not a trend — say that plainly rather than fabricating a direction from a single point.
 
 4. **Resolve the requested time window.** Default to the trailing 3 full months if the user didn't specify one; state whatever window is used.
 
-5. **Pull the accounts and their balance history.** Call `well_get_schema({ root: "accounts" })` and `well_get_schema({ root: "account_balances" })`. Query `accounts` for the workspace's own accounts (`ownership` indicating workspace-owned, not counterparty), then query `account_balances` for each account across the requested window, ordered by `balance_at_from` ascending. Pull `balance_at_from`, `balance_at_to`, `accounting_balance` (`closing_booked`, `closing_value`, `currency`), and `account.account_name`.
+5. **Read the series.** The `well_get_cash_position` call from step 3 already carries it: `balance_history`, oldest first, each entry `{ month, amount }` in `currency`. A `null` amount is a month no connected account covered — not a zero balance. Do not call `well_query_records` on `account_balances` to rebuild this; the tool has already summed across accounts and converted currencies, which is the part a paged raw read cannot do correctly.
 
-6. **Build the trend series.** Assemble a time-ordered series of `{ date, balance, currency }` points per account, using `balance_at_to` as the point date and `closing_booked` (or `closing_value` if that's what the connector populates) as the balance. If summing across multiple accounts into one line, sum only same-currency accounts per period; report other currencies as separate series, or hand the points to `normalize-currency` tagged by date and account and build the line from its `converted` entries, stating the rates and rate dates it used — never blend currencies silently. If accounts report on different cadences or period boundaries, flag the misalignment in the answer rather than silently interpolating between mismatched dates.
+6. **Trim it to the window.** Keep the entries inside the window from step 4 and say which months you kept. The series ends at today's position, so the last entry is a live figure rather than a closed month-end — state that when you describe the end of the trend. Month-end is the only granularity that exists, so never describe movement inside a month and never present it as a daily series.
 
 7. **Describe the trend, using only real rows.** If the series being described has only one real data point (e.g. a single connected account with only one balance snapshot), report "not enough history for a trend" instead — a lone point has no first-to-last change to compute, and a computed "flat, 0% change" would fabricate a direction step 3 already flagged as unavailable. Otherwise state the direction (up, down, or flat) and the magnitude of change from the first to the last real data point in the window. Never interpolate between snapshots and never extrapolate past the last real `account_balances` row — this skill reports history only.
 
@@ -95,35 +96,9 @@ Return:
 `_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
 never reaches you, so you cannot tell a host that drew the card from one that did not.
 Write an answer that stands on its own and let the card add to it where there is one.
-What you must not add is a second chart of what a card already charts; where a visual
-the tool does not draw genuinely reads better, compose one and style it with the tokens
-under **Styling a composed view** below.
-
-## Styling a composed view
-
-<!-- generated: well tokens — edit design-system/well-tokens.css, then `make refresh` -->
-
-Well renders dark. A view you compose should read as the same product, not as a page
-that happens to hold the same numbers.
-
-| Role | Value |
-| --- | --- |
-| Page background | `#161616` |
-| Card surface | `#1c1c1c` |
-| Border | `#2e2e2e` |
-| Primary text | `#ededed` |
-| Secondary text | `#a0a0a0` |
-| Accent | `#00bfff` |
-| Positive | `#4cc38a` |
-| Negative | `#ff6369` |
-| Series, in order | `#52a9ff`, `#4cc38a`, `#e9a23b`, `#a78bfa`, `#4ec9b0`, `#e36a8a` |
-
-Corners `12px`, gap `12px`, body text 14px, numbers tabular.
-A card is a header, then the body, then an action row — the counter first and the
-primary action last. State every figure in text as well as in the drawing: a chart the
-host cannot render must not take the answer with it.
-
-<!-- /generated -->
+What you must not add is a second chart of what a card already charts — and
+`well_get_cash_position` charts this one, so the series is the card's to draw, not
+yours.
 
 ## Quality checks
 
@@ -132,9 +107,9 @@ Before finishing, verify:
 - If `well_*` tools weren't available at all, the user was pointed at the MCP endpoint (`https://api.wellapp.ai/v1/mcp`) instead of erroring silently.
 - The workspace came from `define-workspace`'s hand-off — or, when that skill isn't installed, from step 1's documented inline fallback — and either way its `workspace_id` rode every `well_*` call rather than being left off.
 - Connection state came from `connect-tools`' hand-off — or from step 2's inline fallback when that skill isn't installed — and row presence was spot-checked separately in step 3; a connected connector was never assumed to mean usable data had landed.
-- `well_get_schema` was called before querying `accounts` or `account_balances` for the first time.
-- Every point in the trend comes from a real `account_balances` row — never fabricated or interpolated.
-- An account with only one `account_balances` row was flagged as "not enough history for a trend" rather than faked into a direction.
+- The series came from `well_get_cash_position`'s `balance_history`, not from a `well_query_records` read of `account_balances`.
+- Every point in the trend is a real `balance_history` entry — never fabricated, never interpolated across a `null` month.
+- A `balance_history` with a single entry was flagged as "not enough history for a trend" rather than faked into a direction.
 - Multi-currency results went through `normalize-currency` when a single total was required — carrying its rates and rate dates — or were kept clearly separate per account. Never blended.
 - Every number carries a currency and a date.
 - Which banking connectors are connected versus missing was stated from `connect-tools`' hand-off, so the user knows whether the picture is complete or partial.

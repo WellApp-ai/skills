@@ -18,7 +18,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const TOKENS = join(ROOT, "design-system/well-tokens.css");
 
 /** The skills that compose a chart of their own. Everything else states figures. */
-const COMPOSING_SKILLS = ["cash-balance-trend", "fx-exposure", "rank-clients-by-ltv"];
+const COMPOSING_SKILLS = ["fx-exposure", "rank-clients-by-ltv"];
 
 const BEGIN = "<!-- generated: well tokens — edit design-system/well-tokens.css, then `make refresh` -->";
 const END = "<!-- /generated -->";
