@@ -49,6 +49,14 @@ The same applies to `Install all N alongside this one`, `install all N+1 togethe
 
 **`cash-position` and `runway-calculator` must never delegate to `normalize-currency`.** `well_get_cash_position` and `well_get_runway` convert currency server-side and return the rate they applied; both skills explicitly forbid re-deriving their tool's output. Converting again produces a second number that disagrees with what the Well app shows for the same workspace. Verify with `grep -c normalize-currency skills/cash-position/SKILL.md` — it should stay `0`.
 
+## Never reference a file outside this repo in anything public-facing
+
+If a path isn't in this repo, it doesn't get named. Not in a `SKILL.md`, a docs page, a PR title/description, or a PR/commit comment. Nowhere. Extend to a teammate's local path or some other private repo.
+
+Describe behavior in terms of what a user or reviewer can observe, never the code that produces it. If the private detail is genuinely needed to explain something, say it in Slack to the concerned person — not the PR or repo.
+
+If Slack is not installed as an MCP, do not failover to writing it in the repo. Instead, flag it to the user and emphasize that they shouldn't communicate any private information on a public repository.
+
 ## Sweep after any merge — concurrent PRs drift
 
 A PR that adds a convention to every skill and a PR that adds a new skill will not know about each other. PR #22 added the `**How this reaches the user.**` widget-disclosure block to every skill that existed at the time, and merged twelve minutes before PR #21 added `normalize-currency` — so the newest skill shipped without the newest convention, and `main` inherited a gap neither PR was wrong about. All 23 skills carry that block today. The `well-design-system` skill that used to be the exception is gone: the design system is Well's brand rather than a capability a user installs, so its tokens are now generated into the three skills that compose a visual and it is not distributed.
