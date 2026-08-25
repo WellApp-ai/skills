@@ -29,20 +29,6 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ATOMS_DIR = join(ROOT, "atoms");
 const SRC_DIR = join(ROOT, "src");
 const SKILLS_DIR = join(ROOT, "skills");
-const TOKENS_CSS = join(ROOT, "design-system/well-tokens.css");
-
-/** Roles a composed view actually needs, in the order it needs them. */
-const STYLE_ROLES = [
-  ["Page background", "well-bg"],
-  ["Card surface", "well-bg-subtle"],
-  ["Border", "well-border"],
-  ["Primary text", "well-text"],
-  ["Secondary text", "well-text-2"],
-  ["Accent", "well-accent"],
-  ["Positive", "well-success"],
-  ["Negative", "well-danger"],
-];
-const STYLE_SERIES = ["well-cat-1", "well-cat-2", "well-cat-3", "well-cat-4", "well-cat-5", "well-cat-6"];
 
 Handlebars.registerHelper("list", (value) =>
   String(value ?? "")
@@ -88,44 +74,63 @@ function atomNames() {
     .map((e) => e.name);
 }
 
-function parseTokens() {
-  const css = readFileSync(TOKENS_CSS, "utf8");
-  const out = new Map();
-  for (const [, name, value] of css.matchAll(/--(well-[a-z0-9-]+)\s*:\s*([^;]+);/g)) {
-    out.set(name, value.trim());
-  }
-  return out;
-}
+// --- the `styling` atom: the one atom whose context is computed, not supplied ---
+//
+// Every other atom's render context comes from either a consumer's hash-args
+// (the real render) or its own `placeholders:` frontmatter (the dev-artifact
+// render). `styling` has no consumer-supplied properties at all — its content
+// is generated wholesale from design-system/well-tokens.css, the same source
+// for both renders. `COMPUTED_CONTEXT` names that one exception once, instead
+// of an `atom === "styling"` check repeated in every function that needs it.
 
-/** Builds the `styling` atom's render context from design-system/well-tokens.css. */
+const TOKENS_CSS = join(ROOT, "design-system/well-tokens.css");
+
+/** Roles a composed view actually needs, in the order it needs them. */
+const STYLING_ROLES = [
+  ["Page background", "well-bg"],
+  ["Card surface", "well-bg-subtle"],
+  ["Border", "well-border"],
+  ["Primary text", "well-text"],
+  ["Secondary text", "well-text-2"],
+  ["Accent", "well-accent"],
+  ["Positive", "well-success"],
+  ["Negative", "well-danger"],
+];
+const STYLING_SERIES = ["well-cat-1", "well-cat-2", "well-cat-3", "well-cat-4", "well-cat-5", "well-cat-6"];
+
 function stylingContext() {
-  const tokens = parseTokens();
+  const css = readFileSync(TOKENS_CSS, "utf8");
+  const tokens = new Map();
+  for (const [, name, value] of css.matchAll(/--(well-[a-z0-9-]+)\s*:\s*([^;]+);/g)) {
+    tokens.set(name, value.trim());
+  }
   const need = (name) => {
     const value = tokens.get(name);
     if (!value) throw new Error(`design-system/well-tokens.css no longer defines --${name}`);
     return value;
   };
   return {
-    roles: STYLE_ROLES.map(([label, name]) => ({ label, value: need(name) })),
-    seriesJoined: STYLE_SERIES.map((name) => `\`${need(name)}\``).join(", "),
+    roles: STYLING_ROLES.map(([label, name]) => ({ label, value: need(name) })),
+    seriesJoined: STYLING_SERIES.map((name) => `\`${need(name)}\``).join(", "),
     radius: need("well-radius"),
     gap: need("well-gap"),
   };
 }
+
+const COMPUTED_CONTEXT = { styling: stylingContext };
+
+// --- compiling atoms and consumers ---
 
 function registerPartials() {
   for (const atom of atomNames()) {
     const path = join(ATOMS_DIR, atom, "CONTENT.md");
     const { body } = splitFrontmatter(readFileSync(path, "utf8"), `atoms/${atom}/CONTENT.md`);
     const compiled = Handlebars.compile(body, { strict: true, noEscape: true });
-    if (atom === "styling") {
-      // No consumer-supplied properties — pre-render once against the real
-      // tokens and register the plain string, so every {{> styling}} call
-      // gets identical, already-resolved output regardless of context.
-      Handlebars.registerPartial(atom, compiled(stylingContext()));
-    } else {
-      Handlebars.registerPartial(atom, compiled);
-    }
+    const computeContext = COMPUTED_CONTEXT[atom];
+    // A computed atom has no consumer-supplied properties, so it's rendered
+    // once here and registered as a plain string — every {{> styling}} call
+    // gets identical, already-resolved output regardless of context.
+    Handlebars.registerPartial(atom, computeContext ? compiled(computeContext()) : compiled);
   }
 }
 
@@ -134,7 +139,8 @@ function renderDevArtifacts() {
     const label = `atoms/${atom}/SKILL.md`;
     const path = join(ATOMS_DIR, atom, "CONTENT.md");
     const { frontmatter, body } = splitFrontmatter(readFileSync(path, "utf8"), `atoms/${atom}/CONTENT.md`);
-    const context = atom === "styling" ? stylingContext() : parsePlaceholders(frontmatter);
+    const computeContext = COMPUTED_CONTEXT[atom];
+    const context = computeContext ? computeContext() : parsePlaceholders(frontmatter);
     const rendered = Handlebars.compile(body, { strict: true, noEscape: true })(context);
     const content = `---\n${stripPlaceholdersBlock(frontmatter)}\n---\n${rendered}`;
     return { path: join(ATOMS_DIR, atom, "SKILL.md"), content, label };
