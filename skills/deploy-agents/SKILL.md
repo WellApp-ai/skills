@@ -53,20 +53,29 @@ Do not use this skill when:
 The calling skill or the user provides:
 
 - The `show-missing-invoices` hand-off — required in practice. Its `agent_candidates` carry the rows
-  this preview is built from. It carries no vendor pick: the pick is read from the session, as the
-  next bullet says. Without the hand-off, and without the preview tool below, there is nothing to
+  this preview is built from, and its `selection` plus `selection_state` carry the vendor pick, as
+  the next bullet says. Without the hand-off, and without the preview tool below, there is nothing to
   preview: say so, hand off `resolution: unavailable`, and stop. Never report that state as
   `nothing_to_do` — the period may hold plenty to fetch; the preview simply could not be built.
-- The vendor selection — the pick the missing-invoices card wrote, read from `well_list_workspaces`'
-  `session.selected_counterparties`. That field is null until a pick is recorded, and each entry
-  under its `counterparties` is a `company_id` plus a `matched_connector_service_id` or null.
-  **Route on those identifiers, never on a vendor's display name.** A null `selected_counterparties`
-  means nothing is picked yet: send the flow back to `show-missing-invoices` for the click rather
-  than previewing every row. The selection names the workspace its company ids belong to, so a pick
-  whose `workspace_id` is not the pinned one is not this pass's pick. **A pick is trustworthy only
-  for the gap-list card now on screen.** A pick taken on an earlier card — before a fresh gap-list
-  read, or before a change of months — names rows the user is no longer looking at, so it is not
-  this pass's pick either. Send the flow back to `show-missing-invoices` for a fresh tick rather
+- The vendor selection — the pick the missing-invoices card wrote. Read it from the
+  `show-missing-invoices` hand-off, which carries it on two fields: `selection` names the picked
+  vendors, each as its `company_id` plus its `matched_connector_service_id` or null, in the order the
+  pick came in; `selection_state` says what that list means.
+  **Route on those identifiers, never on a vendor's display name.**
+    - `written` — the pick is recorded. Preview the `selection`.
+    - `pending` — the card is on screen and nothing is ticked yet. Send the flow back to
+      `show-missing-invoices` for the click rather than previewing every row.
+    - `none` — the gap list was empty or unavailable, so it held nothing to pick. This is not a
+      missing pick and it never asks for a tick: an empty list resolves `nothing_to_do`, an
+      unavailable one resolves `unavailable`.
+  `well_list_workspaces`' `session.selected_counterparties` is the resync fallback, for a click the
+  hand-off missed and for a run that reaches this skill with no hand-off at all. That field is null
+  until a pick is recorded, and each entry under its `counterparties` is a `company_id` plus a
+  `matched_connector_service_id` or null. It also names the workspace its company ids belong to, so a
+  pick whose `workspace_id` is not the pinned one is not this pass's pick. **A pick is trustworthy
+  only for the gap-list card now on screen.** A pick taken on an earlier card — before a fresh
+  gap-list read, or before a change of months — names rows the user is no longer looking at, so it is
+  not this pass's pick either. Send the flow back to `show-missing-invoices` for a fresh tick rather
   than previewing on it.
 - `workspace_id` — required. Comes from `define-workspace`, or from the session pin
   (`well_list_workspaces`' `session.pinned_workspace_id`) used silently only when THIS conversation
@@ -170,8 +179,9 @@ don't reimplement them:
   is what makes the periods argument unnecessary on the preview call.
 - `show-missing-invoices` — lists the transactions with no invoice for that period, on the card the
   user picks the vendors to chase from. Supplies the `agent_candidates` this preview is built from,
-  and is the only source of the preview on the tool-absent path. Its card records the pick in the
-  session; its hand-off does not carry it, so read the pick from `well_list_workspaces`.
+  and is the only source of the preview on the tool-absent path. Its hand-off carries the pick as
+  well — `selection` and `selection_state` — which is what keeps this step from previewing a vendor
+  the user never ticked.
 
 All three ship with the `well-skills` plugin. None has an inline fallback here: this skill resolves
 no workspace of its own, guesses no month, and never rebuilds the gap list, so when one is absent
@@ -197,9 +207,14 @@ Call each list or read tool once per step. The widget cards refresh themselves �
    by another conversation → run `define-workspace` and never reuse or mention that leftover pin. If
    the preview tool answers that no period selection exists yet, run `define-period` (its picker
    writes the selection) and re-call — never pin either one here and never guess a month. Require
-   the vendor pick too: when `well_list_workspaces`' `session.selected_counterparties` is null, or
-   names a workspace other than the pinned one, run `show-missing-invoices` so its card takes the
-   click, and preview nothing meanwhile. Pass `workspace_id` explicitly on any call you make.
+   the vendor pick too, and take it from the `show-missing-invoices` hand-off. `selection_state:
+   written` → preview its `selection`. `pending` → run `show-missing-invoices` so its card takes the
+   click, and preview nothing meanwhile. `none` → the list held nothing to pick, so resolve
+   `nothing_to_do` on an empty list and `unavailable` on an unavailable one, and ask for no tick no
+   card can take. With no hand-off, or to catch a click the hand-off missed, read
+   `well_list_workspaces`' `session.selected_counterparties` instead: a null field, or one naming a
+   workspace other than the pinned one, reads as `pending`. Pass `workspace_id` explicitly on any
+   call you make.
 
 3. **Build the preview, and keep it to the pick.**
    - Tool present → call `well_preview_invoice_fetch({ workspace_id })` — no periods argument; the
@@ -223,7 +238,7 @@ Call each list or read tool once per step. The widget cards refresh themselves �
      period-wide result as the pick.
    - Tool absent → reshape the hand-off's `agent_candidates`, which are already grouped by provider,
      into the `agents` shape below, keeping only the counterparties whose `company_id` is in the
-     session's pick. Match on that id — never on a counterparty or provider name. One candidate
+     pick. Match on that id — never on a counterparty or provider name. One candidate
      group is one agent: its `provider_name`, its `counterparties` (each with `tx_count` and
      `base_total_amount`), its `tx_count`, and its `base_total_amount`. Carry no amount at all
      rather than a partial one when a counterparty in the group has none. For `upload_rows` and
@@ -338,7 +353,8 @@ Return:
   nothing has started yet. Above five agents, the five largest by invoice count plus one line for the
   rest.
 - One line for the counterparties to upload by hand, and one line for the counterparties still to
-  connect — counterparty rows, one per month, not distinct vendors. Both lines appear even when the
+  connect — counterparty rows, one per month, or a distinct-vendor count the line names as such.
+  Both lines appear even when the
   count is zero. A third line, only when `unmatched_rows` is non-zero, for the transactions whose
   provider Well could not identify. A fourth, only when an agent carries no `provider_id` or the
   tool listed it in `collect_url_omits`, for the vendors the collect link cannot name. On
@@ -356,7 +372,7 @@ Return:
   on, the same value every hand-off in this flow opens with; the period — the single-month fields
   when the result carried them, `periods_covered` plus the per-month `months` counts when it did
   not, so the caller is never told one month for a preview spanning several; `run_mode: preview`;
-  `nothing_launched: true`; `selection` — the picked vendors as the session recorded them,
+  `nothing_launched: true`; `selection` — the picked vendors as the hand-off carried them,
   `company_id` plus `matched_connector_service_id` or null, so a later step routes on identifiers
   and never on a vendor's name; the `agents` — each with its `provider_name`, `provider_id`, its
   `domain` or null, its counterparties (name, `tx_count`, `base_total_amount`), its summed
@@ -430,9 +446,10 @@ Before finishing, verify:
 - The preview came from `well_preview_invoice_fetch` when it exists, and from the
   `show-missing-invoices` hand-off's `agent_candidates` when it does not — never from a guess about
   which providers a workspace uses.
-- The pick was in hand before anything was previewed: `session.selected_counterparties` naming the
-  pinned workspace, matched on `company_id`, with a null pick — or a pick belonging to an earlier
-  gap-list card — sent back to `show-missing-invoices` for a fresh click.
+- The pick was in hand before anything was previewed: the `show-missing-invoices` hand-off's
+  `selection`, matched on `company_id`, with `selection_state: pending` — or a pick belonging to an
+  earlier gap-list card — sent back to `show-missing-invoices` for a fresh click, and
+  `selection_state: none` resolved as an empty or unavailable list rather than asked for again.
 - The scope line came from `scoped_to_selected_counterparties`: the picked vendors only, for the
   months the pick was made against, when it was true; the whole period when it was absent and no
   hand-off narrowed the result.
@@ -561,7 +578,7 @@ plain sentence that nothing has started here. Never write "Agent ready for unkno
 ### Example request
 
 The flow calls deploy-agents for a period whose rows all already have an invoice attached —
-`agent_candidates` is empty and there is nothing to upload or connect.
+`agent_candidates` is empty, `selection_state` is `none`, and there is nothing to upload or connect.
 
 ### Expected behavior
 
@@ -580,6 +597,7 @@ the user has ticked nothing yet.
 
 ### Expected behavior
 
-Preview nothing. Say the pick comes first, run `show-missing-invoices` so its card takes the tick
-and the Continue click, and come back once `well_list_workspaces`' `session.selected_counterparties`
-names this workspace. Do not preview every vendor of the period as a stand-in for the pick.
+Preview nothing. The hand-off carries `selection_state: pending`, which is a tick still to come and
+not an empty list. Say the pick comes first, run `show-missing-invoices` so its card takes the tick
+and the Continue click, and come back once its hand-off carries `selection_state: written`. Do not
+preview every vendor of the period as a stand-in for the pick.
