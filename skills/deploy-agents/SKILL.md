@@ -502,8 +502,9 @@ Before finishing, verify:
 The fetch-missing-invoices flow calls deploy-agents with `workspace_id` of Acme SAS, the March 2026
 selection already written by the user's click on the period card, and the `show-missing-invoices`
 hand-off, its `agent_candidates` covering Shopify (3 transactions, 1 counterparty) and Free Pro (2
-transactions), with no `"unknown"` group, plus 4 `upload` rows and one `connect` row on an
-unconnected Stripe account. The session holds a pick of three vendors for this workspace. The user
+transactions, 1 counterparty), with no `"unknown"` group, plus 4 `upload` rows on four other
+counterparties and one `connect` row on an unconnected Stripe account. The session holds a pick of
+three vendors for this workspace: the Shopify counterparty, Free Pro, and Stripe. The user
 writes in French. `well_preview_invoice_fetch` is not in the toolset.
 
 ### Expected behavior
@@ -513,7 +514,7 @@ call nothing. Answer:
 
 > Agent prêt pour Shopify — 3 factures (rien n'est encore lancé)
 > Agent prêt pour Free Pro — 2 factures (rien n'est encore lancé)
-> 4 lignes sont à téléverser à la main : aucun agent ne peut aller les chercher.
+> Aucune ligne à téléverser à la main parmi les fournisseurs retenus.
 > 1 ligne dépend de Stripe, qui n'est pas encore connecté.
 >
 > Ce plan ne couvre que les dépenses déjà catégorisées de la période : ce qui ne l'est pas encore
@@ -528,8 +529,11 @@ call nothing. Answer:
 Then keep the hand-off — `workspace_id`, `run_mode: preview`, `nothing_launched: true`, the
 `selection`, each agent's `provider_id` (the group's `matched_connector_service_id`, or null),
 `collect_url: null`, `coverage_note`, `resolution: previewed` — and hand back to the caller.
-Nothing more is printed. The hand-off carries no `scoped_to_selected_counterparties`: the tool never
-ran, and the pick was applied here.
+Nothing more is printed. The upload line reads zero because no `upload` row names a picked
+counterparty, and it still appears at zero. Leave the hand-off's `counts.upload` out of the answer:
+it is a period-wide number with no counterparty behind it, so no pick-scoped line can be built from
+it. The hand-off carries no `scoped_to_selected_counterparties`: the tool never ran, and the pick
+was applied here.
 
 ### Example request
 
