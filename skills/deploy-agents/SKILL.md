@@ -1,7 +1,7 @@
 ---
 name: deploy-agents
 requires: [define-workspace, define-period, show-missing-invoices]
-description: Preview what Well would fetch for the vendors the user picked — which agents would run, over which counterparties and transactions, which rows need a manual upload, and which providers need connecting — then hand those vendors to the Well app. Nothing collects anything yet. The preview card carries a checkbox per vendor and a select-all, and its primary action opens the collect link for the portals the user ticked. The Well browser extension collects from those portals, and only after the user starts them on that page. Use when the user asks to fetch, collect, or chase the invoices they are missing, says "launch the agents", "go get those invoices", "deploy the collectors", or when the fetch-missing-invoices flow reaches its last step after the missing rows have been listed and picked. Do not use to run a collection from the chat, to invoke a connector's own actions, to create or edit an invoice, to connect a provider, or to list which invoices are missing in the first place.
+description: Preview what Well would fetch for the vendors the user picked — which agents would run, over which counterparties and transactions, which rows need a manual upload, and which providers need connecting — then hand those vendors to the Well app. Nothing collects anything yet. The preview card gives a checkbox to each vendor the collect link names, and its primary action opens that link for the portals the user ticked. The Well browser extension collects from those portals, and only after the user starts them on that page. Use when the user asks to fetch, collect, or chase the invoices they are missing, says "launch the agents", "go get those invoices", "deploy the collectors", or when the fetch-missing-invoices flow reaches its last step after the missing rows have been listed and picked. Do not use to run a collection from the chat, to invoke a connector's own actions, to create or edit an invoice, to connect a provider, or to list which invoices are missing in the first place.
 ---
 
 # Deploy Agents with Well
@@ -52,22 +52,22 @@ Do not use this skill when:
 
 The calling skill or the user provides:
 
-- The `show-missing-invoices` hand-off — required in practice. Its `selection` names the vendors to
-  preview, and its `agent_candidates` carry the rows behind them. Without it, and without the preview
-  tool below, there is nothing to preview: say so, hand off `resolution: unavailable`, and stop.
-  Never report that state as `nothing_to_do` — the period may hold plenty to fetch; the preview
-  simply could not be built.
-- The vendor selection — the pick the missing-invoices card wrote, carried in that hand-off's
-  `selection` and readable from `well_list_workspaces`' `session.selected_counterparties`. Each entry
-  is a `company_id` plus a `matched_connector_service_id` or null. **Route on those identifiers,
-  never on a vendor's display name.** With `selection_state: pending` nothing is picked yet: send the
-  flow back to `show-missing-invoices` for the click rather than previewing every row. The selection
-  belongs to one workspace and a switch to another clears it, so a pick read for a different
-  workspace than the pinned one is not this pass's pick. **A pick is trustworthy only for the
-  gap-list card now on screen.** A pick taken on an earlier card — before a fresh gap-list read, or
-  before a change of months — names rows the user is no longer looking at, so it is not this pass's
-  pick either. Send the flow back to `show-missing-invoices` for a fresh tick rather than previewing
-  on it.
+- The `show-missing-invoices` hand-off — required in practice. Its `agent_candidates` carry the rows
+  this preview is built from. It carries no vendor pick: the pick is read from the session, as the
+  next bullet says. Without the hand-off, and without the preview tool below, there is nothing to
+  preview: say so, hand off `resolution: unavailable`, and stop. Never report that state as
+  `nothing_to_do` — the period may hold plenty to fetch; the preview simply could not be built.
+- The vendor selection — the pick the missing-invoices card wrote, read from `well_list_workspaces`'
+  `session.selected_counterparties`. That field is null until a pick is recorded, and each entry
+  under its `counterparties` is a `company_id` plus a `matched_connector_service_id` or null.
+  **Route on those identifiers, never on a vendor's display name.** A null `selected_counterparties`
+  means nothing is picked yet: send the flow back to `show-missing-invoices` for the click rather
+  than previewing every row. The selection names the workspace its company ids belong to, so a pick
+  whose `workspace_id` is not the pinned one is not this pass's pick. **A pick is trustworthy only
+  for the gap-list card now on screen.** A pick taken on an earlier card — before a fresh gap-list
+  read, or before a change of months — names rows the user is no longer looking at, so it is not
+  this pass's pick either. Send the flow back to `show-missing-invoices` for a fresh tick rather
+  than previewing on it.
 - `workspace_id` — required. Comes from `define-workspace`, or from the session pin
   (`well_list_workspaces`' `session.pinned_workspace_id`) used silently only when THIS conversation
   established it. Hosts share one MCP session across conversations, so a pin this conversation never
@@ -123,10 +123,12 @@ involved, and it is optional:
   tool-absent path derives carry no `suggested_route` — `agent_candidates` groups the agent rows
   alone — so this only applies to a preview the tool returned.
 - `scoped_to_selected_counterparties` — **the field that says what the result covers.** It is
-  present and `true` when the server held a pick for this workspace, and then every route in the
-  result covers the picked vendors only. It is absent when the server held no pick, and then the
-  result covers every gap of the months read. Read it before you describe the scope; never infer the
-  scope from the row count.
+  present and `true` only when the pick bounded at least one month of the window, and then every
+  route covers the picked vendors only for the months the pick was made against — a month of the
+  window the pick never covered is covered in full. It is absent when the server held no pick for
+  this workspace, and absent too when the pick covers none of the months read; either way the result
+  covers every gap of the months read. Read it before you describe the scope; never infer the scope
+  from the row count.
 - `collect_url` — **the one link to hand the user.** Its shape is
   `<well-app-base-url>/collect?workspace=<workspace_id>&providers=<entry>,<entry>,…`, and each entry
   is `<provider_id>[~<name>[~<url>]]`. The `provider_id` is required and is the only field that
@@ -140,10 +142,13 @@ involved, and it is optional:
   One link names at most 25 portals; `collect_url_omits` names the ones it left out, and no run
   reaches them from that link. The page needs the Well browser extension installed and signed in, and
   it says so on screen when it is not.
-- **The preview card, in MCP-Apps hosts.** The result renders the previewed vendors with a checkbox
-  per row and a select-all, and its primary action opens the collect link for the portals still
-  ticked. The card starts nothing itself. So end your turn on the card and let the user tick and open
-  it; do not restate the rows it draws, and never describe the open as a collection that finished.
+- **The preview card, in MCP-Apps hosts.** The result renders the vendors the collect link names
+  with a checkbox per row, and shows the rest as vendors the link cannot take — no checkbox, because
+  a tick there would promise a run the link never carries. A select-all appears only when the link
+  names more than one vendor. The card's primary action opens the collect link for the portals still
+  ticked, and the card starts nothing itself. So end your turn on the card and let the user tick and
+  open it; do not restate the rows it draws, and never describe the open as a collection that
+  finished.
 - **When the tool is absent**, no tool call is needed at all. Derive the same preview from the
   `show-missing-invoices` hand-off's `agent_candidates`, which already carry the provider and its
   counterparties, narrowed to the picked `company_id` values. That path carries no `provider_id` and
@@ -163,9 +168,10 @@ don't reimplement them:
   carries.
 - `define-period` — resolves the month or fiscal period and writes the selection server-side, which
   is what makes the periods argument unnecessary on the preview call.
-- `show-missing-invoices` — lists the transactions with no invoice for that period and takes the
-  user's pick of the vendors to chase. Supplies the `selection` that scopes this preview and the
-  `agent_candidates` behind it, and is the only source of the preview on the tool-absent path.
+- `show-missing-invoices` — lists the transactions with no invoice for that period, on the card the
+  user picks the vendors to chase from. Supplies the `agent_candidates` this preview is built from,
+  and is the only source of the preview on the tool-absent path. Its card records the pick in the
+  session; its hand-off does not carry it, so read the pick from `well_list_workspaces`.
 
 All three ship with the `well-skills` plugin. None has an inline fallback here: this skill resolves
 no workspace of its own, guesses no month, and never rebuilds the gap list, so when one is absent
@@ -190,35 +196,41 @@ Call each list or read tool once per step. The widget cards refresh themselves �
    a session pin used silently when this conversation established it. Missing workspace, or a pin left
    by another conversation → run `define-workspace` and never reuse or mention that leftover pin. If
    the preview tool answers that no period selection exists yet, run `define-period` (its picker
-   writes the selection) and re-call — never pin either one here and never guess a month. Require the
-   vendor pick too: with `selection_state: pending`, or no `selection` at all, run
-   `show-missing-invoices` so its card takes the click, and preview nothing meanwhile. Pass
-   `workspace_id` explicitly on any call you make.
+   writes the selection) and re-call — never pin either one here and never guess a month. Require
+   the vendor pick too: when `well_list_workspaces`' `session.selected_counterparties` is null, or
+   names a workspace other than the pinned one, run `show-missing-invoices` so its card takes the
+   click, and preview nothing meanwhile. Pass `workspace_id` explicitly on any call you make.
 
 3. **Build the preview, and keep it to the pick.**
    - Tool present → call `well_preview_invoice_fetch({ workspace_id })` — no periods argument; the
      server reads the clicked selection — and use its `agents`, `upload_rows`, `connect_rows`,
      `counts`, `scoped_to_selected_counterparties` and `collect_url` as they come, `provider_id`,
-     `domain` and `url` included. Do not recompute or re-sort them. **`scoped_to_selected_counterparties:
-     true` means the result IS the picked set**: the server filtered every route to the recorded
-     pick, and naming a period does not widen it. Say the plan covers the picked vendors only, and
-     narrow nothing further. One agent covers one supplier portal however many months the selection
-     held, so never split or restate an agent per month: each counterparty under it names its own
-     month, `months` carries each month's own route counts, and a selection spanning several months
-     is named from `periods_covered` rather than under one label the result does not carry.
-   - **Flag absent → the result covers the whole period, not the pick.** The server held no pick for
-     this workspace, so the routes carry every gap of the months read. Narrow it from the
-     `show-missing-invoices` hand-off's `agent_candidates` instead — those carry a `company_id` per
-     counterparty, which the tool's rows do not, so they are the only identifier-matched way to reach
-     the picked set. With no hand-off to narrow from, report the plan as covering the whole period
-     and say so; never present a period-wide result as the pick.
-   - Tool absent → reshape the hand-off's `agent_candidates`, which are already grouped by
-     provider, into the `agents` shape below, keeping only the counterparties whose `company_id` is
-     in the `selection`. Match on that id — never on a counterparty or provider name. One candidate
+     `domain` and `url` included. Do not recompute or re-sort them.
+     **`scoped_to_selected_counterparties: true` means the pick already bounded the result**: the
+     server filtered every route to the recorded pick, for the months the pick was made against. Say the
+     plan covers the picked vendors only for those months, and that a month of the window the pick
+     never covered is covered in full. Narrow nothing further. One agent covers one supplier portal
+     however many months the selection held, so never split or restate an agent per month: each
+     counterparty under it names its own month, `months` carries each month's own route counts, and
+     a selection spanning several months is named from `periods_covered` rather than under one label
+     the result does not carry.
+   - **Flag absent → the result covers the whole period, not the pick.** Either the server held no
+     pick for this workspace, or the pick covers none of the months read; both leave every gap of
+     those months in the routes. Narrow it from the `show-missing-invoices` hand-off's
+     `agent_candidates` instead — those carry a `company_id` per counterparty, which the tool's rows
+     do not, so they are the only identifier-matched way to reach the picked set. With no hand-off
+     to narrow from, report the plan as covering the whole period and say so; never present a
+     period-wide result as the pick.
+   - Tool absent → reshape the hand-off's `agent_candidates`, which are already grouped by provider,
+     into the `agents` shape below, keeping only the counterparties whose `company_id` is in the
+     session's pick. Match on that id — never on a counterparty or provider name. One candidate
      group is one agent: its `provider_name`, its `counterparties` (each with `tx_count` and
-     `base_total_amount`), its `tx_count`, and its `base_total_amount`. Carry no amount at all rather
-     than a partial one when a counterparty in the group has none. The hand-off's `counts.upload` and
-     `counts.connect` are `upload_rows` and `connect_rows`, narrowed the same way.
+     `base_total_amount`), its `tx_count`, and its `base_total_amount`. Carry no amount at all
+     rather than a partial one when a counterparty in the group has none. For `upload_rows` and
+     `connect_rows`, count the hand-off's `rows` whose `mode` is `upload` or `connect` and whose
+     `company_id` is in the pick. The hand-off's `counts.upload` and `counts.connect` are three
+     period-wide numbers with no counterparty behind them: they cannot be narrowed, so never quote
+     one under a pick-scoped answer.
    - An agent whose `provider_id` is null cannot be named on the collect link, so no run can carry
      it. Report it as a vendor the link cannot take, and never promise it will be fetched. A null
      `domain` is a missing label and nothing more: that agent still travels on its id. The portals
@@ -257,21 +269,25 @@ Call each list or read tool once per step. The widget cards refresh themselves �
      currencies that were not already converted to the workspace base currency.
 
    Then say what the link does, in one line, and end the turn. The card's own footer carries the
-   mechanics — **Deploy** opens the collect link for the vendors still ticked, **Continue** stands in
-   its place when there is no link to open, and **Keep for later** leaves the card be — so ask the
-   user to confirm the vendors and deploy, and leave the labels to the card. Where no card is drawn,
-   give the tool's `collect_url` when the tool ran and the workspace link otherwise, and say the
-   collect page hands the picked portals to the Well browser extension once the user starts them
-   there. Append no query parameter of your own to either link.
+   mechanics — **Deploy** opens the collect link for the vendors still ticked, and waits there,
+   disabled, while nothing is ticked; **Continue** stands in its place only when no vendor in this
+   read is named on a collect link; **Keep for later** answers the conversation exactly as Continue
+   does — so ask the user to confirm the vendors and deploy, and leave the labels to the card. Where
+   no card is drawn, give the tool's `collect_url` when the tool ran and the workspace link
+   otherwise, and say the collect page hands the picked portals to the Well browser extension once
+   the user starts them there. Append no query parameter of your own to either link.
 
 5. **Then the rows an agent does not fetch on its own — two lines always, a third when it
    applies.** On a previewed run: one line for the rows the user has to upload by hand
-   (`upload_rows`) — no agent can fetch these. One line for the providers that are not connected yet
-   (`connect_rows`) — connecting is the route Well suggests for them. A counterparty the tool also
-   listed under a portal keeps its agent run: say the run stays available when the connector does not
-   suit the user, and count that vendor once rather than on both lines. Both appear even at zero.
-   State the count for each; when the tool returns the rows themselves rather than a count, name at
-   most three and give the total. A third line, only when `unmatched_rows` is non-zero: Well could
+   (`upload_rows`) — no agent can fetch these. One line for the counterparties whose route is
+   connecting a service (`connect_rows`) — connecting is the route Well suggests for them. Both
+   counts are counterparty rows, one per month, so a vendor missing an invoice in two of the months
+   read counts once on each of them: say the unit on a window of several months, or count the
+   distinct vendors yourself and say that is what you counted. A counterparty the tool also listed
+   under a portal keeps its agent run: say the run stays available when the connector does not suit
+   the user, and count that vendor once rather than on both lines. Both appear even at zero. State
+   the count for each; when the tool returns the rows themselves rather than a count, name at most
+   three and give the total. A third line, only when `unmatched_rows` is non-zero: Well could
    not match a provider for those transactions, so no agent covers them. Keep it a line of its own
    with its own count — folding it into `upload_rows` misreports both. On `nothing_to_do` step 3
    already closed the answer, and none of these lines apply. If the user connects a provider or
@@ -321,39 +337,40 @@ Return:
 - One line per agent, in the user's language, each with the provider, the count, and the fact that
   nothing has started yet. Above five agents, the five largest by invoice count plus one line for the
   rest.
-- One line for the rows to upload by hand, and one line for the providers still to connect. Both
-  lines appear even when the count is zero. A third line, only when `unmatched_rows` is non-zero, for
-  the transactions whose provider Well could not identify. A fourth, only when an agent carries no
-  `provider_id` or the tool listed it in `collect_url_omits`, for the vendors the collect link cannot
-  name. On `nothing_to_do` the single nothing-to-fetch sentence replaces all of them.
+- One line for the counterparties to upload by hand, and one line for the counterparties still to
+  connect — counterparty rows, one per month, not distinct vendors. Both lines appear even when the
+  count is zero. A third line, only when `unmatched_rows` is non-zero, for the transactions whose
+  provider Well could not identify. A fourth, only when an agent carries no `provider_id` or the
+  tool listed it in `collect_url_omits`, for the vendors the collect link cannot name. On
+  `nothing_to_do` the single nothing-to-fetch sentence replaces all of them.
 - One line stating that the preview covers categorized expense transactions only.
-- One line stating what the plan covers — the picked vendors only when
-  `scoped_to_selected_counterparties` is true, the whole period when the result carried no pick and
-  no hand-off narrowed it.
+- One line stating what the plan covers — the picked vendors only, for the months the pick was made
+  against, when `scoped_to_selected_counterparties` is true; the whole period when that flag is
+  absent and no hand-off narrowed the result.
 - One line asking the user to confirm the vendors and deploy from the card — or, where no card is
   drawn, carrying the collect link itself.
 - One plain sentence stating that no agent has started here, no task is queued and no browser session
   is open, and naming where a collection does start — the collect page hands the picked portals to
   the Well browser extension, whose side panel reports the runs.
-- The hand-off, kept for the calling flow and never printed: `workspace_id` — the one this skill
-  ran on, the same value every hand-off in this flow opens with; the period — the single-month
-  fields when the result carried them, `periods_covered` plus the per-month `months` counts when it
-  did not, so the caller is never told one month for a preview spanning several; `run_mode: preview`;
-  `nothing_launched: true`; `selection` — the picked vendors as they arrived, `company_id` plus
-  `matched_connector_service_id` or null, so a later step routes on identifiers and never on a
-  vendor's name; the `agents` — each with its `provider_name`, `provider_id`, its `domain` or null,
-  its counterparties (name, `tx_count`, `base_total_amount`), its summed `tx_count`, and its summed
-  amount or null; `upload_rows`, `connect_rows`, and `unmatched_rows`; `collect_url` — the collect
-  link when the tool returned one, else null; `scoped_to_selected_counterparties` — true
-  when the tool scoped the result to the pick, absent otherwise; the `coverage_note` —
-  categorized expense transactions only, plus the tool's `hints` when it ran; and `resolution` —
-  `previewed`, `nothing_to_do`, or `unavailable`. `run_mode` names how this skill ran and is always
-  `preview`; it mirrors the tool's `mode: "preview"` under a different key, because `mode` upstream
-  means a row's `agent | connect | upload` badge. `provider_id` is the identifier the collect link
-  names and a run dispatches on, and `domain` only labels the portal on screen; `provider_id` is null
-  only when neither the tool nor the hand-off carries one.
-  `unmatched_rows` counts the `"unknown"` group's transactions, which no agent covers. On
-  `nothing_to_do`, `agents` is empty and every row count is zero or empty. On `unavailable` —
+- The hand-off, kept for the calling flow and never printed: `workspace_id` — the one this skill ran
+  on, the same value every hand-off in this flow opens with; the period — the single-month fields
+  when the result carried them, `periods_covered` plus the per-month `months` counts when it did
+  not, so the caller is never told one month for a preview spanning several; `run_mode: preview`;
+  `nothing_launched: true`; `selection` — the picked vendors as the session recorded them,
+  `company_id` plus `matched_connector_service_id` or null, so a later step routes on identifiers
+  and never on a vendor's name; the `agents` — each with its `provider_name`, `provider_id`, its
+  `domain` or null, its counterparties (name, `tx_count`, `base_total_amount`), its summed
+  `tx_count`, and its summed amount or null; `upload_rows`, `connect_rows`, and `unmatched_rows`;
+  `collect_url` — the collect link when the tool returned one, else null;
+  `scoped_to_selected_counterparties` — true when the tool scoped the result to the pick, absent
+  otherwise; the `coverage_note` — categorized expense transactions only, plus the tool's `hints`
+  when it ran; and `resolution` — `previewed`, `nothing_to_do`, or `unavailable`. `run_mode` names
+  how this skill ran and is always `preview`; it mirrors the tool's `mode: "preview"` under a
+  different key, because `mode` upstream means a row's `agent | connect | upload` badge.
+  `provider_id` is the identifier the collect link names and a run dispatches on, and `domain` only
+  labels the portal on screen; `provider_id` is null only when neither the tool nor the hand-off
+  carries one. `unmatched_rows` counts the `"unknown"` group's transactions, which no agent covers.
+  On `nothing_to_do`, `agents` is empty and every row count is zero or empty. On `unavailable` —
   neither the preview tool nor a `show-missing-invoices` hand-off was there to build a plan from —
   only `workspace_id`, the period, and `run_mode` are kept, and no counts are claimed. These keys
   are reasoning vocabulary for you and the calling flow; the hand-off travels as plain conversation,
@@ -413,11 +430,12 @@ Before finishing, verify:
 - The preview came from `well_preview_invoice_fetch` when it exists, and from the
   `show-missing-invoices` hand-off's `agent_candidates` when it does not — never from a guess about
   which providers a workspace uses.
-- The pick was in hand before anything was previewed: a `selection` from the caller or the session,
-  matched on `company_id`, with a pending pick — or a pick belonging to an earlier gap-list card —
-  sent back to `show-missing-invoices` for a fresh click.
-- The scope line came from `scoped_to_selected_counterparties`: the picked vendors only when it was
-  true, the whole period when it was absent and no hand-off narrowed the result.
+- The pick was in hand before anything was previewed: `session.selected_counterparties` naming the
+  pinned workspace, matched on `company_id`, with a null pick — or a pick belonging to an earlier
+  gap-list card — sent back to `show-missing-invoices` for a fresh click.
+- The scope line came from `scoped_to_selected_counterparties`: the picked vendors only, for the
+  months the pick was made against, when it was true; the whole period when it was absent and no
+  hand-off narrowed the result.
 - A preview spanning several months named every month from `periods_covered`, quoted no single
   `period_label` (the result carries none then) and composed no range label, kept one agent per
   portal across the months, and handed off `periods_covered` and the per-month `months` counts.
@@ -428,8 +446,10 @@ Before finishing, verify:
   link, with no query parameter added and no workspace named in it.
 - A counterparty the preview listed under a portal and in `connect_rows` was reported once, as one
   gap with two routes, and the two lists were never added together.
-- On a previewed run the upload line and the connect line are both present, even at zero, plus an
-  `unmatched_rows` line of its own when that count is non-zero. On `nothing_to_do` none appear.
+- On a previewed run the upload line and the connect line are both present, even at zero, each
+  counted in counterparty rows — one per month — or in a distinct-vendor count the answer names as
+  such, plus an `unmatched_rows` line of its own when that count is non-zero. On `nothing_to_do`
+  none appear.
 - No agent was built for the `"unknown"` group; its transactions were counted as `unmatched_rows`
   instead, never folded into `upload_rows`, and a period holding only that group resolved
   `previewed` rather than `nothing_to_do`.
@@ -464,15 +484,15 @@ Before finishing, verify:
 
 The fetch-missing-invoices flow calls deploy-agents with `workspace_id` of Acme SAS, the March 2026
 selection already written by the user's click on the period card, and the `show-missing-invoices`
-hand-off: a `selection` of three picked vendors, and `agent_candidates` covering Shopify (3
-transactions, 1 counterparty) and Free Pro (2 transactions), with no `"unknown"` group, plus
-`counts.upload` of 4 and one `connect` row on an unconnected Stripe account. The user writes in
-French. `well_preview_invoice_fetch` is not in the toolset.
+hand-off, its `agent_candidates` covering Shopify (3 transactions, 1 counterparty) and Free Pro (2
+transactions), with no `"unknown"` group, plus 4 `upload` rows and one `connect` row on an
+unconnected Stripe account. The session holds a pick of three vendors for this workspace. The user
+writes in French. `well_preview_invoice_fetch` is not in the toolset.
 
 ### Expected behavior
 
-Keep the candidates whose `company_id` is in the `selection`, derive the preview from them, and call
-nothing. Answer:
+Keep the candidates whose `company_id` is in the session's pick, derive the preview from them, and
+call nothing. Answer:
 
 > Agent prêt pour Shopify — 3 factures (rien n'est encore lancé)
 > Agent prêt pour Free Pro — 2 factures (rien n'est encore lancé)
@@ -502,14 +522,14 @@ Same flow, in a Claude Desktop session where `well_preview_invoice_fetch` **is**
 
 Call `well_preview_invoice_fetch({ workspace_id })` — the server reads the clicked selection. The
 result carries `scoped_to_selected_counterparties: true`, so it already covers the picked vendors
-only. The preview card renders those vendors with their checkboxes, its select-all, its Preview badge
-and its Deploy action. Do not restate the rows. Say one line per agent — provider, count, nothing
-started yet — then the upload line, the connect line, the line saying the plan covers the picked
-vendors only, the coverage line carrying the tool's `hints`, one line asking the user to confirm the
-vendors and deploy, and the plain sentence that nothing has started here and the extension runs the
-collection once the user starts it on the collect page. Carry each agent's `provider_id` and
-`domain`, plus the envelope's `collect_url` and `scoped_to_selected_counterparties`, into the
-hand-off. End the turn there.
+only. The preview card renders the vendors the link names with their checkboxes, its select-all, its
+Preview badge and its Deploy action. Do not restate the rows. Say one line per agent — provider,
+count, nothing started yet — then the upload line, the connect line, the line saying the plan covers
+the picked vendors only, the coverage line carrying the tool's `hints`, one line asking the user to
+confirm the vendors and deploy, and the plain sentence that nothing has started here and the
+extension runs the collection once the user starts it on the collect page. Carry each agent's
+`provider_id` and `domain`, plus the envelope's `collect_url` and
+`scoped_to_selected_counterparties`, into the hand-off. End the turn there.
 
 ### Example request
 
@@ -555,11 +575,11 @@ one anyway.
 
 ### Example request
 
-The flow reaches this skill with no `selection` at all — the missing-invoices card is on screen and
+The flow reaches this skill with no pick recorded — the missing-invoices card is on screen and
 the user has ticked nothing yet.
 
 ### Expected behavior
 
-Preview nothing. Say the pick comes first, run `show-missing-invoices` so its card takes the tick and
-the Continue click, and come back once `selection_state` reads `written`. Do not preview every vendor
-of the period as a stand-in for the pick.
+Preview nothing. Say the pick comes first, run `show-missing-invoices` so its card takes the tick
+and the Continue click, and come back once `well_list_workspaces`' `session.selected_counterparties`
+names this workspace. Do not preview every vendor of the period as a stand-in for the pick.
