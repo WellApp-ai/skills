@@ -89,8 +89,9 @@ Return:
 **How this reaches the user.** A Well MCP tool that ships a widget attaches
 `_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
 never reaches you, so you cannot tell a host that drew the card from one that did not.
-Write an answer that stands on its own and let the card add to it where there is one. Do
-not compose a second rendering of figures the tool already returned.
+Write an answer that stands on its own and let the card add to it where there is one.
+State the figures in text regardless — you cannot know whether anything drew them. What
+you must not add is a second chart of what a card already charts.
 
 ## Quality checks
 

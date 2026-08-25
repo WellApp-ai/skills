@@ -262,9 +262,10 @@ Do not return:
 
 **How this reaches the user.** A Well MCP tool that ships a widget attaches
 `_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
-never reaches you, so you cannot tell a host that drew the preview cards from one that did
-not. Write an answer that stands on its own and let the cards add to it where there are
-some. Do not compose a second rendering of agents the tool already returned.
+never reaches you, so you cannot tell a host that drew the preview cards from one that
+did not. Write an answer that stands on its own and let the cards add to it where there
+are some. State the agents in text regardless — you cannot know whether anything drew
+them. What you must not add is a second chart of what a card already charts.
 
 ## Quality checks
 

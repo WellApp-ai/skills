@@ -8,7 +8,7 @@ description: Check which data sources a Well workspace has connected — bank ac
 
 ## Purpose
 
-Answer "does this workspace have the connections this job needs?" and close the gap. One tool does the whole job: `well_list_connectors` returns Well's connector catalog with every one of the workspace's connections represented on its own catalog row, and in an MCP-Apps host that result renders as the connect picker card. Read the state per kind — bank, accounting, invoicing — from those rows, let the card carry the connect links, and hand a typed coverage result to the calling flow. As a flow step this is **always a user stop**: the card renders — green or not — with a per-row **Connect** button on each tile and one **Continue** button. The Continue click writes an acknowledgment server-side (`well_switch_workspace` with `ack: "connectors"`) and prefills "Continue" in the user's composer; the user sends it, and that message is how the flow moves on. Step two of Well's fetch-missing-invoices flow, ahead of the dedicated `connect-bank` step where that skill is installed.
+Answer "does this workspace have the connections this job needs?" and close the gap. One tool does the whole job: `well_list_connectors` returns Well's connector catalog with every one of the workspace's connections represented on its own catalog row, and in an MCP-Apps host that result renders as the connect picker card. Read the state per kind — bank, accounting, invoicing — from those rows, let the card carry the connect links, and hand a typed coverage result to the calling flow. Run for its own sake — the user asked to connect something, or a flow reached its connect step — this is **always a user stop**: the card renders — green or not — with a per-row **Connect** button on each tile and one **Continue** button. The Continue click writes an acknowledgment server-side (`well_switch_workspace` with `ack: "connectors"`) and prefills "Continue" in the user's composer; the user sends it, and that message is how the flow moves on. Step two of Well's fetch-missing-invoices flow, ahead of the dedicated `connect-bank` step where that skill is installed.
 
 ## When to use this skill
 
@@ -25,7 +25,7 @@ Do not use this skill when:
 
 - The workspace is not resolved yet — run `define-workspace` first and pass its `workspace_id` in.
 - The ask is only about the bank ("connect my Qonto", "is my bank connected?") **and** the `connect-bank` skill is installed — it scopes the catalog to banks and returns one state instead of three. When it is not installed, answer here instead: scope this run to `kinds: [bank]` rather than sending the user to a skill they do not have.
-- The user wants a figure (cash, runway, spend) — the data skills run this check internally.
+- The user wants a figure (cash, runway, spend) — the data skills run this check internally. That internal call reads coverage and returns; it does **not** stop the turn on the card, or "what's my runway" would cost three round-trips to answer.
 - The user wants to disconnect a tool, force a re-sync, or run an action on a connected provider (`well_invoke_connector_tool`) — out of scope; point them to the Well app.
 - The user wants Well to fetch invoices from a portal — that is the deploy-agents step of the flow, after this one.
 
@@ -69,7 +69,9 @@ The click-chain tools:
 - `well_wait_for_selection({ kind: "connect_ack", timeout_s? })` — reads the Continue click (the card calls `well_switch_workspace` with `ack: "connectors"` itself), for when a later message is not the card's "Continue" prefill. Call it only after this conversation has rendered the connect card: reading a click on that card is its one job. Never call it at step start, never before the card exists, and never to probe for an ack — an ack exists only once this conversation's card has been clicked, so the card always comes first, with no tool call before its own read. An already-made ack returns instantly as `{ status: "selected", selection: { acknowledged: true }, already_set: true }`; when nothing is set yet it waits briefly (default 10 seconds) and returns `{ status: "no_selection_yet" }` — a normal result, not an error. Never call it in the turn that renders the card, and never use it as a long wait. If the tool is absent, treat the user's next continue-message as the acknowledgment.
 - `well_list_workspaces` — the one exemption from the connector-listing rule above, with two narrow uses: resyncing this conversation's own state after a stop (its `session` block carries the pinned workspace and the `workspace_queue` a multi-workspace run walks), and resolving the workspace in step 2's inline fallback when `define-workspace` is not installed. It never contributes to the coverage decision, and outside that fallback it never resolves a workspace this conversation did not pin.
 
-**Never call `well_query_records` on `workspace_connectors` in this skill.** That root is for record-level reads — timestamps, filters, joins — and querying it here renders a records table where the connect picker belongs, which is the wrong surface for a connect step and does not carry an install link. Everything this skill needs is on the catalog row. Never call `well_invoke_connector_tool` or any provider-specific tool either: this skill reads connection state, never provider data.
+**Never call `well_query_records` on `workspace_connectors` to BUILD this skill's view.** That root is for record-level reads — timestamps, filters, joins — and querying it here renders a records table where the connect picker belongs, which is the wrong surface for a connect step and does not carry an install link. Everything this skill's view needs is on the catalog row.
+
+**One exception, and it is a workaround.** Before reporting a kind as `none`, confirm it. `well_list_connectors` pages a candidate set ordered on how well a connector MATCHES this workspace, not on whether it is connected, so a live connection can fall outside the page and never appear — a workspace with a bank that synced an hour ago has been reported as having none. When the catalog shows nothing connected for a kind, read `workspace_connectors` for that workspace before you say `none`, and take the connection state you find. Never render that read — it feeds the coverage decision only, and the picker card stays the surface. Remove this once the catalog surfaces a workspace's own connections regardless of match rank; until then, reporting `none` on the catalog alone tells a user to connect what they already have. Never call `well_invoke_connector_tool` or any provider-specific tool either: this skill reads connection state, never provider data.
 
 **How a kind is decided — exact-match on structured fields, never on a name or a category label.** A row counts toward a kind only when its `direction` is `input` and its `data_domains` contains that kind's value: `bank`, `accounting`, or `invoicing`. `category_id` is not a reliable kind (native banks such as Qonto sit under `finance`; only Plaid institutions carry `banks`), and a display name is never a kind. When you pass `kind`, the server has already applied this filter — still drop any `direction: output` row from the coverage decision.
 
@@ -134,21 +136,22 @@ Do not return:
 - A yaml or JSON block, or any fenced code block — the hand-off travels as plain conversation.
 - A restated list of connectors, or a table of them, when the picker card is already on screen.
 - Any figure computed from connector data.
-- Connection state guessed from a connector's display name, or read from a `workspace_connectors` records query.
+- Connection state guessed from a connector's display name, or a `workspace_connectors` read RENDERED as the view. Reading that root to confirm a `none` before reporting it is the documented exception above; showing its records table instead of the picker is not.
 - A flow continuation that skipped the Continue click — as a flow step, the acknowledgment (clicked or typed) is the gate, green coverage included.
 
 **How this reaches the user.** A Well MCP tool that ships a widget attaches
 `_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
 never reaches you, so you cannot tell a host that drew the card from one that did not.
-Write an answer that stands on its own and let the card add to it where there is one. Do
-not compose a second rendering of figures the tool already returned.
+Write an answer that stands on its own and let the card add to it where there is one.
+State the figures in text regardless — you cannot know whether anything drew them. What
+you must not add is a second chart of what a card already charts.
 
 ## Quality checks
 
 Before finishing, verify:
 
 - If `well_*` tools were absent, the user was pointed at `https://api.wellapp.ai/v1/mcp` instead of a tool error.
-- `well_list_connectors` was the only connector read called — no `well_query_records` on `workspace_connectors`, no `well_invoke_connector_tool`, no provider-specific tool. A `well_list_workspaces` call, if any, only resynced this conversation's pin and queue — or resolved the workspace in step 2's inline fallback — and fed nothing into the coverage decision.
+- `well_list_connectors` built the view, and the only other connector read — if any — was the documented `workspace_connectors` confirmation before reporting a kind as `none`, which fed the coverage decision and was never rendered. No `well_invoke_connector_tool`, no provider-specific tool. A `well_list_workspaces` call, if any, only resynced this conversation's pin and queue — or resolved the workspace in step 2's inline fallback — and fed nothing into the coverage decision.
 - One kind meant one scoped call; two or three kinds meant one unscoped call — one card per turn, never two.
 - `workspace_id` came from `define-workspace`, the caller, a session pin this conversation established, or step 2's inline fallback when `define-workspace` was absent — outside that fallback the workspace was not resolved or asked for in text here, and no leftover pin from another conversation was reused or mentioned.
 - Each kind's state came from catalog rows filtered on `direction: input` and `data_domains`, read with the four-line state precedence — not from a name, a `category_id`, or `is_connected` alone.
