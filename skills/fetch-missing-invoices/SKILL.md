@@ -23,7 +23,7 @@ This skill **composes**: all eight of its steps are atomic Well skills — seven
 
 - The user wants exactly one step on its own — use that step's own skill.
 - The user wants a downloaded document or the status of a running collection. This flow starts nothing itself and receives nothing back: its last card opens the collect link, and the browser extension's side panel is where a run is reported. Point the user there rather than following a run from here.
-- The user wants a figure (`expense-breakdown`, `cash-position`, `bills-due`, `accounts-receivable-aging`), ledger rows with no attachment (`missing-receipts` — this flow starts from settled bank spend), or a period closed, locked, or posted (the Well app).
+- The user wants a figure (`cost-structure`, `cash-position`, `bills-due`, `accounts-receivable-aging`), ledger rows with no attachment (`missing-receipts` — this flow starts from settled bank spend), or a period closed, locked, or posted (the Well app).
 
 ## Inputs
 

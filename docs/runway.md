@@ -5,18 +5,18 @@
   </picture>
 </p>
 
-# Runway Calculator
+# Runway
 
-**Know exactly how many months and days of cash you have left.**
+**Know how many months of cash you have left — and why.**
 
 ## What it does
 
-Nobody should have to build a spreadsheet just to answer "how much runway do we have?" This skill checks your real bank balances against what you've actually been spending, and gives you a plain answer — in months *and* days — plus the exact math behind it, so you can trust the number or double-check it yourself.
+Ask your AI assistant what your runway is, and it divides your real synced cash balances by your actual trailing burn — the same computation the Well app itself renders, not an estimate. You get months and days, plus both numbers behind the division, so the figure is something you can challenge rather than take on faith.
 
 ## Required data in Well
 
-- **Banking connector** — *required.* This is where your real cash balance comes from.
-- **Accounting connector or bank transaction history** — *required.* This is how the skill works out your burn rate (how fast you're spending).
+- **Banking connector** — *required.* This is where your real cash balances and outflows come from.
+- **Accounting connector** — optional. Improves coverage where spend runs through your ledger rather than your bank.
 
 ## Composes onto
 
@@ -44,7 +44,7 @@ Install the following official skills from Well.
 **Instructions**:
 
 1. Fetch these files:
-    a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/runway-calculator/SKILL.md
+    a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/runway/SKILL.md
     b. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
     c. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
 2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
@@ -59,14 +59,14 @@ Install the following official skills from Well.
 
 Download the `.skill` file and double-click it — Claude Desktop installs it immediately, no drag-and-drop, no unzipping:
 
-[⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/runway-calculator.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/runway-calculator.zip)
+[⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/runway.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/runway.zip)
 
 #### Advanced
 
 Install directly from **[skills.sh/wellapp-ai](https://www.skills.sh/wellapp-ai)**:
 
 ```bash
-npx skills add wellapp-ai/skills --skill runway-calculator
+npx skills add wellapp-ai/skills --skill runway
 ```
 
 ---

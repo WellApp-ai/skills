@@ -31,7 +31,7 @@ Derive all four from the actual bullet count rather than editing by hand, then c
 
 ## Reuse the README's install copy — never rewrite it
 
-The canonical template for a docs page's AI-assisted block is **any of the twenty pages that already share it** — [`docs/expense-breakdown.md`](docs/expense-breakdown.md) is as good a reference as any. Those twenty blocks are byte-identical: five steps, opening `1. Fetch these files:` with lettered sub-items. To add a dependency, extend step 1 with the next letter and change nothing else.
+The canonical template for a docs page's AI-assisted block is **any of the twenty-three pages that already share it** — [`docs/cash-position.md`](docs/cash-position.md) is as good a reference as any. Those twenty-three blocks are byte-identical: five steps, opening `1. Fetch these files:` with lettered sub-items. To add a dependency, extend step 1 with the next letter and change nothing else.
 
 **Do not copy the block out of [`README.md`](README.md#assisted-by-ai-recommended).** It looks like the same thing and is not: it installs *every* skill at once, so it runs to six steps and carries two that a single-skill page must never import — a "create a summary table" step, and a clause about keeping the design-system's two `.css` files in `assets/`. The README block is where the multi-file *shape* came from, but its wording has since diverged, and copying it verbatim into a docs page would change the established install flow.
 
@@ -41,13 +41,13 @@ One page differs legitimately. [`docs/define-workspace.md`](docs/define-workspac
 
 ## Never blind find-and-replace a shared phrase
 
-`delegates N setup steps` currently appears across **20** docs pages at four different values of N — 6 pages at one, 5 at two, 4 at three, 5 at four. Only the pages whose dependency count actually changed may be touched. A repo-wide substitution to fix five pages will silently make ten wrong, and nothing validates prose.
+`delegates N setup steps` currently appears across **24** docs pages at five different values of N — 7 pages at one, 8 at two, 4 at three, 4 at four, 1 at six. Recount rather than trusting this line: it has gone stale twice, once for a page added and once for a page removed. Only the pages whose dependency count actually changed may be touched. A repo-wide substitution to fix five pages will silently make ten wrong, and nothing validates prose.
 
 The same applies to `Install all N alongside this one`, `install all N+1 together`, and `grab those N as well`.
 
 ## Two standing exemptions
 
-**`cash-position` and `runway-calculator` must never delegate to `normalize-currency`.** `well_get_cash_position` and `well_get_runway` convert currency server-side and return the rate they applied; both skills explicitly forbid re-deriving their tool's output. Converting again produces a second number that disagrees with what the Well app shows for the same workspace. Verify with `grep -c normalize-currency skills/cash-position/SKILL.md` — it should stay `0`.
+**`cash-position` and `runway` must never delegate to `normalize-currency`.** `well_get_cash_position` and `well_get_runway` convert currency server-side and return the rate they applied; both skills explicitly forbid re-deriving their tool's output. Converting again produces a second number that disagrees with what the Well app shows for the same workspace. Verify with `grep -c normalize-currency skills/cash-position/SKILL.md` — it should stay `0`.
 
 ## Never reference a file outside this repo in anything public-facing
 
