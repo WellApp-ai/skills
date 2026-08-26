@@ -43,7 +43,7 @@ This repo packages that judgment as **Agent Skills** — playbooks any AI assist
 
 | Skill | Description | Details |
 |---|---|---|
-| `cash-position` | "How much cash do we have right now?" — a point-in-time snapshot across every connected account. | [View details →](docs/cash-position.md) |
+| `cash-position` | "How much cash do we have right now?" — a point-in-time snapshot across every connected account, plus the trailing month-end balances behind it. | [View details →](docs/cash-position.md) |
 | `avg-burn` | "What's our burn rate?" — the trailing average of real monthly outflows, with the window it was measured over. | [View details →](docs/avg-burn.md) |
 | `runway` | "What's our runway?" — real cash on hand divided by trailing burn, in months and days, with both numbers shown. | [View details →](docs/runway.md) |
 | `cost-structure` | "Where does our money go?" — one month's outflow broken down by category, largest first. | [View details →](docs/cost-structure.md) |
@@ -74,6 +74,7 @@ These are the setup steps the skills above invoke automatically to get what they
 | `define-period` | "Which month are we working on?" — pins the calendar month or months, translates them into the workspace's fiscal year and period, and says whether the selection holds activity. | [View details →](docs/define-period.md) |
 | `categorize-counterparties` | "Which suppliers have no category?" — the companies behind your spend on a card, uncategorized ones first, each one categorized by picking from Well's catalog on its row. | [View details →](docs/categorize-counterparties.md) |
 | `resolve-own-company` | Resolves the own-company pointer that decides payable from receivable, and folds in an entity's duplicate records. | [View details →](docs/resolve-own-company.md) |
+| `accounting-settings` | "Set our fiscal year start to April" — writes the workspace's accounting settings (fiscal year start month, currency, framework, chart of accounts), only what you confirm. | [View details →](docs/accounting-settings.md) |
 | `normalize-currency` | Converts multi-currency amounts into one total carrying its rate and date, or a clean per-currency breakdown, never a blended figure. | [View details →](docs/normalize-currency.md) |
 
 ---
@@ -124,8 +125,9 @@ Install the following official skills from Well. Instructions:
     u. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-bank/SKILL.md
     v. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-period/SKILL.md
     w. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/categorize-counterparties/SKILL.md
-    x. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/resolve-own-company/SKILL.md
-    y. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/normalize-currency/SKILL.md
+    x. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounting-settings/SKILL.md
+    y. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/resolve-own-company/SKILL.md
+    z. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/normalize-currency/SKILL.md
 2. Download and display the SKILL.md files to the user. Each must be named "SKILL.md" — no prefix, no suffix, exact name.
 3. Create a summary table with skill names and descriptions extracted from the frontmatter
 4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
@@ -189,7 +191,7 @@ Download the `.skill` file and double-click it to install — Claude Desktop ins
 
 | Skill | Description | Download |
 |---|---|---|
-| `cash-position` | Point-in-time snapshot of current cash across every connected account. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/cash-position.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/cash-position.zip) |
+| `cash-position` | Point-in-time snapshot of current cash across every connected account, with the trailing balance history behind it. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/cash-position.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/cash-position.zip) |
 | `avg-burn` | The trailing average of real monthly outflows, with the window it covers. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/avg-burn.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/avg-burn.zip) |
 | `runway` | Cash on hand divided by trailing burn, in months and days, with both numbers shown. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/runway.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/runway.zip) |
 | `cost-structure` | One month's outflow broken down by category, largest first. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/cost-structure.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/cost-structure.zip) |
@@ -218,6 +220,7 @@ Download the `.skill` file and double-click it to install — Claude Desktop ins
 | `define-period` | Pin the calendar month or months, derive the fiscal year and period, and report whether the selection holds activity. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/define-period.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/define-period.zip) |
 | `categorize-counterparties` | Categorize the companies behind a workspace's spend from Well's shared catalog, on a card where every pick saves as you make it. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/categorize-counterparties.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/categorize-counterparties.zip) |
 | `resolve-own-company` | Work out which company in the workspace is yours, and fold in its duplicate records. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/resolve-own-company.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/resolve-own-company.zip) |
+| `accounting-settings` | Set the workspace's accounting settings — the fiscal year start month above all — writing only what you confirm. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/accounting-settings.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/accounting-settings.zip) |
 | `normalize-currency` | Convert amounts across currencies into one auditable total, or report them per currency. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/normalize-currency.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/normalize-currency.zip) |
 
 ##### For Advanced Users

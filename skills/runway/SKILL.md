@@ -37,7 +37,7 @@ The user may provide:
 
 - A workspace hint — an id, a workspace name, or the company behind it — if they manage more than one. Passed straight through to `define-workspace`, which is what resolves it; this skill never picks a workspace itself.
 - A reporting period — a calendar year and month — to read the runway as it stood at the end of a past month rather than today. Both or neither: a month with no year, or a year with no month, is refused rather than guessed.
-- A trailing window for the burn, in months. This changes the burn figure this skill reports, NOT the runway figure — see step 4.
+- Nothing else. There is deliberately no burn-window option: the runway figure composes the endpoint's own trailing burn, so a custom window would pair `months` from one window with `avg_burn` from another and the division this skill shows could not reproduce its own headline. A user asking for a different window wants `avg-burn`.
 
 ## Tooling
 
@@ -61,7 +61,8 @@ Both ship with the `well-skills` plugin. This skill is also installable on its o
 1. **Pin the workspace — run `define-workspace`.** Invoke the `define-workspace` skill with `purpose: "to compute your cash runway"` and use its typed hand-off. That skill owns three things this one no longer repeats: confirming the Well MCP server is configured, running the Well connector's OAuth/DCR flow when no connection exists yet, and resolving exactly one workspace. Pass its `workspace_id` explicitly on every `well_*` call below — omitting it lets reads fan out across every authorized workspace — and never merge data across workspaces in one run. If it hands back `resolution: unresolved`, stop: runway can't be computed without a pinned workspace.
    - **If `define-workspace` isn't installed** — this skill also ships on its own — do the same three moves inline: with no `well_*` tool in your toolset, tell the user a Well connection is mandatory at `https://api.wellapp.ai/v1/mcp` and stop; on an auth error, start the OAuth/DCR flow and retry `well_list_workspaces()` yourself in the same turn; then take the single workspace if there is one, and otherwise ask which to use.
 
-2. **Confirm the connections this answer needs — run `connect-tools`.** Invoke the `connect-tools` skill with the pinned `workspace_id`, `kinds: [bank, accounting]`, `required: []`, and the same `purpose`, then read its hand-off instead of querying `workspace_connectors` yourself. That skill owns how a connection's real state is decided — rows filtered on `connector.direction: input` and matched on `connector.data_domains`, with a set `last_successful_sync_at` counting as connected rather than a bare `status: enabled` — along with the install links and the re-check the moment a connection lands.
+2. **Confirm the connections this answer needs — run `connect-tools`.** Invoke the `connect-tools` skill with the pinned `workspace_id`, `kinds: [bank, accounting]`, `required: []`, `mode: internal_check`, and the same `purpose`, then read its hand-off instead of querying `workspace_connectors` yourself. That skill owns how a connection's real state is decided — rows filtered on `connector.direction: input` and matched on `connector.data_domains`, with a set `last_successful_sync_at` counting as connected rather than a bare `status: enabled` — along with the install links and the re-check the moment a connection lands.
+   - **`mode: internal_check` is not optional here.** The default, `flow_step`, renders the connect picker and ENDS THE TURN on a Continue click — right when the user asked to connect something, wrong for a figure they asked for. Omitting it turns a one-round-trip answer into a three-round-trip flow.
    - `coverage: none` → stop; runway can't be computed yet. `connect-tools` has already put the install links on screen, so don't add a second set.
    - Any kind reported `connecting`, or a connected connector whose latest sync is still running → carry on, and carry "the data may still be partial" into the answer.
    - `coverage: partial` → carry on with what is connected, and keep the missing kinds for the coverage disclosure the Output requirements ask for.
@@ -70,13 +71,12 @@ Both ship with the `well-skills` plugin. This skill is also installable on its o
 
 3. **Verify the data itself has landed.** `connect-tools` reports connections, not rows — a connector can be connected and still have delivered nothing this skill can use. Spot-check what this skill actually reads: for each connected connector, the latest `workspace_connector_sync_logs` row's `status` and `completed_at`. Keep those timestamps: the answer has to say how fresh its inputs are, and a connector that hasn't synced in weeks makes the number stale rather than wrong. `well_get_runway` returning `"insufficient_data"` in the next step is the other half of this check.
 
-4. **Get the runway.** Call `well_get_runway()`. Pass `year` and `month` only if the user named a past period, and `months_back` only if they asked for a different burn window. It returns `cash` (amount + currency), `avg_burn` (amount + currency + trailing window), `months`, and a `status`:
+4. **Get the runway.** Call `well_get_runway()`. Pass `year` and `month` only if the user named a past period. The tool takes no burn-window option. It returns `cash` (amount + currency), `avg_burn` (amount + currency + trailing window), `months`, and a `status`:
    - `"ok"` → a real months figure — proceed to step 5.
    - `"capped"` → runway exceeds 36 months; report as "more than 36 months," not the raw number.
    - `"infinite"` → cash is positive and the workspace isn't burning (net inflow); say so explicitly — this is "not applicable / cash-flow positive," not a divide-by-zero.
    - `"insufficient_data"` → not enough connected cash/transaction data to compute. Treat this the same as step 7's fallback below — don't retry the same call expecting a different answer.
    - `partial: true` means some accounts or transactions were excluded from the computation (e.g. a missing FX rate) — surface the `excluded` counts and any `hints` as a caveat rather than presenting the number as unconditionally complete.
-   - **`months_back` changes `avg_burn` and not `months`.** The runway figure always composes the endpoint's own trailing burn, so a widened window can report a burn that does not divide into the months shown. If the user asked for a wider window, say which of the two numbers it moved rather than letting them appear to disagree.
 
 5. **Compute months + days.** The tool returns `months` as a single decimal figure (e.g. `7.3`), not pre-split into months/days:
    - `whole_months = floor(months)`; remaining days = `(months - whole_months) * 30.44` (average days per month).
@@ -103,8 +103,8 @@ Return:
 **How this reaches the user.** A Well MCP tool that ships a widget attaches
 `_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
 never reaches you, so you cannot tell a host that drew the card from one that did not.
-Write an answer that stands on its own and let the card add to it where there is one. Do
-not compose a second rendering of figures the tool already returned.
+Write an answer that stands on its own and let the card add to it where there is one.
+State the figures in text regardless — you cannot know whether anything drew them. What you must not add is a second rendering of what a card already shows.
 
 ## Quality checks
 
@@ -117,7 +117,6 @@ Before finishing, verify:
 - Cash-flow-positive (`"infinite"`) and capped (`"capped"`) workspaces are reported with their dedicated phrasing, not as a division error or a raw number past 36 months.
 - The final answer states runway in **both months and days**, and shows the division behind it.
 - The trailing window used for burn (`avg_burn.trailing_months`) is stated, not left implicit.
-- If a `months_back` was passed, the answer says it moved the burn figure and not the runway figure.
 - Data staleness (`as_of`) is surfaced when it's more than a few days old.
 - If `partial: true`, the `excluded` counts and any `hints` were disclosed rather than silently absorbed into the number.
 - No forecast series, no spend breakdown, and no trend was composed here — each was pointed at by name instead.
@@ -140,7 +139,7 @@ Run `define-workspace`, then `connect-tools`, note how fresh the connected data 
 
 ### Expected behavior
 
-Call `well_get_runway({ year: 2026, month: 3, months_back: 6 })`. Report the runway as it stood at the end of that month, and state plainly that the six-month window changed the burn figure reported — not the runway figure, which composes the endpoint's own trailing burn. Two numbers that appear to disagree are a real property of the request, not a rendering fault, and saying so is the point.
+Two questions, and only the first is this skill's. Call `well_get_runway({ year: 2026, month: 3 })` for the runway as it stood at that month's end. For the six-month burn, call `avg-burn` — and say why the two are separate: this runway divides by the endpoint's own trailing burn, so quoting a six-month average as its divisor would print a division that cannot reproduce the headline above it.
 
 ### Example request
 

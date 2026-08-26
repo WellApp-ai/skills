@@ -66,7 +66,7 @@ Call each list or read tool once per step, and render at most one widget card pe
    - Several workspaces and a hint → match the hint exactly on `workspace_id`; otherwise case-insensitively on `workspace_name`, `identity.registered_name`, `identity.trade_name`, or — for a country hint such as "my US entity" — on `identity.country` (ISO code). Exactly one match → use it, `resolution: hint_matched`, say which one you matched, and call `well_switch_workspace({ workspace_id })` so a later call cannot fall back to a sibling entity. A failed or absent switch is not a stop — continue on the explicit argument. Zero or several matches → fall to step 4; never pick the closest name.
    - **A hint that names several entities** ("FR and US", "Acme SAS and Acme Inc.", "both my companies") is a sequence, not an ambiguity. Split it into its fragments, match each one exactly as above, and keep the user's order. Every fragment matching exactly one workspace, and at least two distinct workspaces matched → call `well_switch_workspace({ workspace_ids: [...] })` once, in that order — the first is pinned, the rest become the session's `workspace_queue` — and set `resolution: multi_picked`. Every fragment resolving to the same single workspace → one entity, `resolution: hint_matched`. Any fragment matching zero or several workspaces → fall to step 4 and let the user pick; never resolve part of a compound hint and drop the rest silently.
 
-4. **Otherwise, end the turn on the card.** The `well_list_workspaces` result already rendered the picker (one tile per workspace, multi-select, the token's default marked). Do not restate the workspaces under it and do not ask "which workspace?" in text — the card is the question. End the turn with one short line: pick the workspace on the card — one tile or several — then send the message it prepares. Use `purpose` to say why when the caller gave one. Nothing else in the turn.
+4. **Otherwise, end the turn on the card.** The `well_list_workspaces` result already rendered the picker (one tile per workspace, multi-select, the token's default marked). Do not restate the workspaces under it and do not ask "which workspace?" in text — the card is the question. End the turn with one short line that **names the entities**: "pick the workspace on the card — Acme Inc. (US) or Acme SAS (FR) — then send the message it prepares". Naming them inline is not the restated list this step forbids, and it is what makes the line survive a host that drew no card: you cannot tell which host you are in, so the sentence has to carry the options either way. Use `purpose` to say why when the caller gave one. Nothing else in the turn.
    - The **Use** click pins the choice server-side and prefills "Continue in <name>" in the composer; a multi-tile pick prefills "Continue in <first> — then <n2>, <n3>". The user sends it with Enter.
    - In a text-only host (no cards, and usually no wait tool), list each workspace on one line — name, country, base currency, "(default)" on the primary — and ask one line. This is the only host where a typed question stands in for the picker.
    - Do not default to the primary workspace on the user's behalf. `is_primary` is a fact to display, not a choice to make.
@@ -105,8 +105,8 @@ Do not return:
 **How this reaches the user.** A Well MCP tool that ships a widget attaches
 `_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
 never reaches you, so you cannot tell a host that drew the card from one that did not.
-Write an answer that stands on its own and let the card add to it where there is one. Do
-not compose a second rendering of figures the tool already returned.
+Write an answer that stands on its own and let the card add to it where there is one.
+State the pinned workspace in text regardless — you cannot know whether anything drew it. What you must not add is a second rendering of what a card already shows.
 
 ## Quality checks
 

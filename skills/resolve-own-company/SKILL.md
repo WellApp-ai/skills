@@ -1,7 +1,7 @@
 ---
 name: resolve-own-company
 requires: [define-workspace]
-description: Resolve which company in a Well workspace is the user's own legal entity — the `own_company` pointer that decides which side of an invoice is a payable and which is a receivable — fold in its duplicate records, and hand the confirmed identity off as a typed result. Use when a Well skill needs to tell its own invoices from a counterparty's, when the user asks "which company is mine", or when `workspaces.own_company` is null, missing from the schema, or ambiguous. Do not use to pick the workspace, to look up an arbitrary company by name, to merge company records in Well, or to compute any financial figure.
+description: Resolve which company in a Well workspace is the user's own legal entity — the `own_company` pointer that decides which side of an invoice is a payable and which is a receivable — fold in its duplicate records, and hand the confirmed identity off as a typed result; and, when asked to persist it, set the anchor via `well_set_own_company` on the user's explicit confirmation. Use when a Well skill needs to tell its own invoices from a counterparty's, when the user asks "which company is mine" or "set our company to X", or when `workspaces.own_company` is null, missing from the schema, or ambiguous. Setting the anchor is an accounting-critical, admin-only write, taken only on an explicit confirmation and never inferred. Do not use to pick the workspace, to look up an arbitrary company by name, to merge or edit duplicate company records in Well, or to compute any financial figure.
 ---
 
 # Resolve Own Company with Well
@@ -29,7 +29,7 @@ Do not use this skill when:
 - The user wants an arbitrary company looked up by name, not their own entity — query `companies` directly, or use `company-profile` for a full view.
 - The user wants duplicate company records actually merged in Well — this skill proposes aliases for one run; it never writes. Point them at the Well app.
 - The user wants a figure — the data skills call this internally.
-- The user wants to set `own_company` permanently — no MCP tool writes it; only the picker in the Well app does.
+- The user wants `own_company` set permanently — that is now this skill's job in `persist` mode (`well_set_own_company`, on an explicit confirmation), not a reason to route away. Only when that tool is absent from the toolset can nothing write it; point the user at the picker in the Well app then.
 
 ## Inputs
 
@@ -42,6 +42,7 @@ The calling skill provides:
 - `fold_aliases` — whether to fold the own company's duplicate records. Default `true`; `false` in `suggest` mode.
 - `fold_counterparties` — also propose alias sets among the *other* companies, for callers that group invoices by counterparty. Default `false`.
 - `on_decline` — what the caller can still do if the user will not confirm (e.g. "report gross unpaid invoices, labeled as unsplit"). Quoted back to the user so declining is an informed choice.
+- `persist` — whether to **set** the own company permanently, via `well_set_own_company`, when the user confirms it — instead of holding the answer for this run only. Default `false`, so the common read path never writes. A caller that owns the setup — `close-books` — passes `true` so the confirmed company is written once and not re-asked every run. Ignored in `suggest` mode, which only offers a default.
 
 ## Tooling
 
@@ -49,8 +50,10 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 - `well_get_schema` — call on `workspaces` **before** reading `own_company`, and on `companies` before the alias query. The schema read is not a formality here: whether the field exists at all is one of the three unresolved states, and you cannot distinguish "null" from "absent" without it.
 - `well_query_records` — read `workspaces` (for `own_company`) and `companies` (for the alias candidates).
+- `well_set_own_company` — **only in `persist` mode, and only on an explicit user confirmation.** Sets the workspace's own-company anchor to a company that already exists in the workspace (its `company_id`). It is accounting-critical — it overwrites the workspace's legal identity on its accounting settings, and only a workspace owner or admin may call it — so never call it on a guess, and never to move an anchor the user did not name. `well_start_close` hard-gates on this anchor.
+- `well_create_company` — only when the user's own company is not yet a record in the workspace and they ask to create it, before setting it as the anchor. Never create one silently.
 
-Never call `well_update_company` or `well_delete_company` from this skill. Folding an alias is a within-run decision about how to *compare* names; merging records is a destructive write on the user's data, and the two are not the same operation.
+Never call `well_update_company` or `well_delete_company` from this skill. Folding an alias is a within-run decision about how to *compare* names; merging or editing records is a different, destructive write on the user's data. Setting the own-company anchor with `well_set_own_company` is neither of those — it writes one pointer the user explicitly confirmed, and only when `persist` asks for it.
 
 **Composed skills.** One atomic Well skill owns the step before this one — invoke it, don't reimplement it:
 
@@ -72,9 +75,10 @@ It ships with the `well-skills` plugin. This skill is also installable on its ow
 
 4. **Resolved cleanly → take it.** One unambiguous company from the schema field → `resolution: schema_field`, unless the caller passed `mode: suggest`, in which case → `resolution: suggested`, offered as an overridable default rather than a stated fact. Either way say which company in one line, do not ask for confirmation, and skip to step 7.
 
-5. **Unresolved → ask once.** Query `companies` for the workspace and ask which one is theirs, with the list on screen so the user picks rather than recalls. Say why, using `purpose` and `consequence` ("I need to know which company is yours, or I'll swap your payables and receivables"). The answer holds **for this run only** → `resolution: user_confirmed`.
-   - No MCP tool persists `own_company`. If the user wants it set permanently, point them at `<well-app-base-url>/workspaces/<workspace_id>`, where the own-company picker writes it, and say plainly that until then every run asks again.
-   - If the user declines, return `resolution: unresolved` and quote the caller's `on_decline` so they know what they still get. Never fall back to a guess.
+5. **Unresolved → ask once.** Query `companies` for the workspace and ask which one is theirs, with the list on screen so the user picks rather than recalls. Say why, using `purpose` and `consequence` ("I need to know which company is yours, or I'll swap your payables and receivables"). Then, on the user's explicit confirmation of one company:
+   - **`persist` mode, and `well_set_own_company` in the toolset** → set the anchor: `well_set_own_company({ company_id })` with the company they named. If their company is not yet a record in the workspace and they ask to create it, `well_create_company` first, then set that id. This is an accounting-critical, admin-only write — take it only on the explicit yes, never on a guess; if the caller is not an admin the tool refuses, so surface that plainly rather than retrying. On success → `resolution: user_confirmed`, `persisted: true` (the anchor is now stored, not just held for the run).
+   - **Read path, or the write tool is absent** → the answer holds **for this run only** → `resolution: user_confirmed`, `persisted: false`. If the user wants it set permanently but `well_set_own_company` is not available, point them at `<well-app-base-url>/workspaces/<workspace_id>`, where the own-company picker writes it, and say plainly that until then every run asks again.
+   - If the user declines, return `resolution: unresolved` and quote the caller's `on_decline` so they know what they still get. Never fall back to a guess, and never write an anchor the user did not name.
 
 6. **Fold in duplicate company records** (when `fold_aliases`). One legal entity often has several `companies` rows differing only by a legal-form prefix or suffix (`EI-`, `SARL`, `SAS`, `SA`, `Ltd`, `GmbH`), punctuation, or accents — and invoices booked under the alias drop out of the caller's answer entirely. Query `companies` and compare each name against the resolved own company after normalizing **both sides identically**:
 
@@ -106,7 +110,7 @@ Return:
   persisted: <true|false>
   ```
 
-  `identity_set` is what the caller compares invoice ids against — the own company plus every confirmed alias, and the only key a caller needs for the common case. `persisted` is `true` whenever the value came from the schema field — `resolution: schema_field` or `resolution: suggested`, since both read the same stored setting — and `false` for `user_confirmed`, which holds for this run only. On `unresolved`, every key but `workspace_id` is null or empty.
+  `identity_set` is what the caller compares invoice ids against — the own company plus every confirmed alias, and the only key a caller needs for the common case. `persisted` is `true` whenever the anchor is stored server-side — `resolution: schema_field` and `resolution: suggested` (both read the stored setting), and a `resolution: user_confirmed` answer that was written with `well_set_own_company` in `persist` mode — and `false` for a `user_confirmed` answer that held for this run only. On `unresolved`, every key but `workspace_id` is null or empty.
 - On `unresolved`, the caller's `on_decline` restated, so the user knows what the answer will still contain.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. Skip it rather than force it in.
 - Hand control back to the skill that called this one. When the user asked on their own, stop after the identity line.
@@ -121,8 +125,8 @@ Do not return:
 **How this reaches the user.** A Well MCP tool that ships a widget attaches
 `_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
 never reaches you, so you cannot tell a host that drew the card from one that did not.
-Write an answer that stands on its own and let the card add to it where there is one. Do
-not compose a second rendering of figures the tool already returned.
+Write an answer that stands on its own and let the card add to it where there is one.
+State the company in text regardless — you cannot know whether anything drew it. What you must not add is a second rendering of what a card already shows.
 
 ## Quality checks
 
@@ -134,9 +138,10 @@ Before finishing, verify:
 - All three unresolved states were treated as unresolved — null, absent, and ambiguous.
 - The own company was never derived from the workspace's name, title, logo, slug, or email domain.
 - When the field could not be read, the user was asked once with the company list on screen, and told what a wrong pick would break.
-- A `user_confirmed` answer was scoped to this run, `persisted: false`, and the Well app link was offered for setting it permanently.
+- In the read path (no `persist`), a `user_confirmed` answer was scoped to this run, `persisted: false`, and the Well app link was offered for setting it permanently.
+- In `persist` mode, the anchor was written with `well_set_own_company` only on an explicit confirmation of a company the user named, never on a guess; an admin refusal was surfaced, not retried; and `persisted: true` was set only after the write succeeded.
 - Alias candidates were found with both-direction containment on identically normalized names, punctuation folded to spaces — and were proposed, never merged silently.
-- No `well_update_company` or `well_delete_company` call was made.
+- No `well_update_company` or `well_delete_company` call was made, and `well_set_own_company` was called only in `persist` mode on an explicit confirmation.
 - On a decline, `resolution: unresolved` was returned with the caller's `on_decline` restated, and no guess was substituted.
 - The hand-off block carries `identity_set`, `resolution`, and `persisted`.
 
@@ -181,3 +186,11 @@ The user declines to say which company is theirs.
 ### Expected behavior
 
 Return `resolution: unresolved` with every other key null, restate the caller's `on_decline` so the user knows what they still get, and stop. Do not fall back to the closest-matching name.
+
+### Example request
+
+`close-books` calls with `mode: strict`, `persist: true`, and `well_set_own_company` in the toolset. The workspace's `own_company` is null.
+
+### Expected behavior
+
+Treat null as unresolved and ask which company is theirs, with the `companies` list on screen. On the user's explicit confirmation, set it: `well_set_own_company({ company_id })`. Report "Set **Acme SAS** as this workspace's company." and hand off `resolution: user_confirmed`, `persisted: true`. If the user is not a workspace admin, the tool refuses — surface that and stop, rather than retrying or falling back to a run-only answer. Never write a company the user did not name.

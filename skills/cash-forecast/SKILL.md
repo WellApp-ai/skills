@@ -61,7 +61,8 @@ Both ship with the `well-skills` plugin. This skill is also installable on its o
 1. **Pin the workspace — run `define-workspace`.** Invoke the `define-workspace` skill with `purpose: "to project your cash position forward"` and use its typed hand-off. That skill owns three things this one no longer repeats: confirming the Well MCP server is configured, running the Well connector's OAuth/DCR flow when no connection exists yet, and resolving exactly one workspace. Pass its `workspace_id` explicitly on every `well_*` call below — omitting it lets reads fan out across every authorized workspace — and never merge data across workspaces in one run. If it hands back `resolution: unresolved`, stop: there is nothing to project without a pinned workspace.
    - **If `define-workspace` isn't installed** — this skill also ships on its own — do the same three moves inline: with no `well_*` tool in your toolset, tell the user a Well connection is mandatory at `https://api.wellapp.ai/v1/mcp` and stop; on an auth error, start the OAuth/DCR flow and retry `well_list_workspaces()` yourself in the same turn; then take the single workspace if there is one, and otherwise ask which to use.
 
-2. **Confirm the connections this answer needs — run `connect-tools`.** Invoke the `connect-tools` skill with the pinned `workspace_id`, `kinds: [bank]`, `required: [bank]`, and the same `purpose`, then read its hand-off instead of querying `workspace_connectors` yourself. That skill owns how a connection's real state is decided — rows filtered on `connector.direction: input` and matched on `connector.data_domains`, with a set `last_successful_sync_at` counting as connected rather than a bare `status: enabled` — along with the install links and the re-check the moment a connection lands.
+2. **Confirm the connections this answer needs — run `connect-tools`.** Invoke the `connect-tools` skill with the pinned `workspace_id`, `kinds: [bank]`, `required: [bank]`, `mode: internal_check`, and the same `purpose`, then read its hand-off instead of querying `workspace_connectors` yourself. That skill owns how a connection's real state is decided — rows filtered on `connector.direction: input` and matched on `connector.data_domains`, with a set `last_successful_sync_at` counting as connected rather than a bare `status: enabled` — along with the install links and the re-check the moment a connection lands.
+   - **`mode: internal_check` is not optional here.** The default, `flow_step`, renders the connect picker and ENDS THE TURN on a Continue click — right when the user asked to connect something, wrong for a figure they asked for. Omitting it turns a one-round-trip answer into a three-round-trip flow.
    - `coverage: none` → stop; there is no balance history to project from yet. `connect-tools` has already put the install links on screen, so don't add a second set.
    - Any kind reported `connecting`, or a connected connector whose latest sync is still running → carry on, and carry "the data may still be partial" into the answer.
    - `coverage: partial` → carry on with what is connected, and keep the missing kinds for the coverage disclosure the Output requirements ask for.
@@ -70,11 +71,12 @@ Both ship with the `well-skills` plugin. This skill is also installable on its o
 
 3. **Verify the data itself has landed.** `connect-tools` reports connections, not rows — a connector can be connected and still have delivered nothing this skill can use. Spot-check what this skill actually reads: for each connected connector, the latest `workspace_connector_sync_logs` row's `status` and `completed_at`. A forecast is only as good as the balance history behind it, so a stale connector makes the whole series stale rather than just its last point.
 
-4. **Get the series.** Call `well_get_cash_forecast()`. It returns `entries`, oldest first, each `{ month, actuals, projection }` where `month` is `YYYY-MM`:
+4. **Get the series.** Call `well_get_cash_forecast()`. It returns `currency` and `entries`, oldest first, each `{ month, actuals, projection }` where `month` is `YYYY-MM`:
    - `actuals` is the settled cash position at that month's end, and is `null` for future months.
    - `projection` is the worst-case value at that month's end, and is `null` for past months.
    - So the series turns exactly once: actuals up to the present, projection after it. **Do not fill the nulls in, and do not read a null as a zero** — one is "this month has not happened", the other is "the cash was gone".
    - A `projection` of `0` IS data: it is the month the projection reaches zero and clamps there. Report it as depletion, not as a gap.
+   - **`currency` applies to every figure in the series** — the service converts the whole thing to the workspace base currency, so there is one code for all of it. Carry it onto every amount you state. A month-by-month cash figure with no currency is unauditable, and the answer has to stand on its own whether or not the host draws the card.
    - If `hints` are present (a short actuals window, excluded accounts, or a burn-coverage gap), disclose them rather than presenting the series as unconditionally complete.
 
 5. **State the assumption, every time.** The projection assumes **no incoming revenue**. Say it in the same breath as the first projected figure, not in a footnote — a reader who takes the floor for a forecast will make a worse decision than one who has no forecast at all.
@@ -85,7 +87,7 @@ Both ship with the `well-skills` plugin. This skill is also installable on its o
 
 Return:
 
-- The series, month by month, making clear which months are settled and which are projected.
+- The series, month by month, making clear which months are settled and which are projected, with the `currency` on every figure.
 - The month the projection reaches zero, if it does so inside the window.
 - **The no-revenue assumption**, stated alongside the projected figures rather than appended at the end.
 - A freshness/caveat line: any `hints` the tool surfaced.
@@ -108,6 +110,7 @@ Before finishing, verify:
 - The workspace came from `define-workspace`'s hand-off — or, when that skill isn't installed, from step 1's documented inline fallback — and either way its `workspace_id` rode every `well_*` call rather than being left off.
 - Connection state came from `connect-tools`' hand-off — or from step 2's inline fallback when that skill isn't installed — and data freshness was read separately in step 3; a connected connector was never assumed to mean usable data had landed.
 - The series came straight from `well_get_cash_forecast` — never projected from a cash figure and a burn rate.
+- Every figure carries the `currency` the tool returned; no amount was stated bare.
 - Settled months and projected months are distinguishable in the answer; no null was filled in or read as a zero.
 - A `projection` of `0` was reported as depletion, not as missing data.
 - The no-revenue assumption appears beside the projected figures, not only in a closing caveat.

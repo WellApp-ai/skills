@@ -13,14 +13,14 @@
 
 Every "who owes us money" and "what do we owe" answer rests on one pointer: which company in your workspace is your own legal entity. Get it wrong and the answer doesn't look broken — it looks fine and is exactly backwards, with your bills reported as your revenue.
 
-This skill resolves that pointer properly. It reads the own-company setting on your workspace, and when that setting is missing, empty, or points at more than one company, it asks you instead of guessing. It also catches the case where one legal entity has several records in Well — `ACME LTD` and `ACME, LTD`, or a `EI-` prefixed duplicate — and offers to treat them as one identity for the run, so invoices booked under the alias don't silently vanish from your totals.
+This skill resolves that pointer properly. It reads the own-company setting on your workspace, and when that setting is missing, empty, or points at more than one company, it asks you instead of guessing. When you — or a flow like the month-end close — ask it to, it also *sets* your company permanently on your explicit confirmation, so you're not re-asked every run (a workspace owner or admin is required for that write). It also catches the case where one legal entity has several records in Well — `ACME LTD` and `ACME, LTD`, or a `EI-` prefixed duplicate — and offers to treat them as one identity for the run, so invoices booked under the alias don't silently vanish from your totals.
 
 Other Well skills call this one internally; you rarely need to run it yourself.
 
 ## Required data in Well
 
 - **Any connector that has synced companies** — invoicing, accounting, or bank. Without company records there is nothing to resolve against.
-- **The own-company setting on your workspace** — *optional.* If it's set, this skill reads it and doesn't ask. If it isn't, the skill asks you once and uses your answer for that run only. Setting it permanently is done in the Well app; no skill can write it.
+- **The own-company setting on your workspace** — *optional.* If it's set, this skill reads it and doesn't ask. If it isn't, the skill asks you once; when a flow asks it to persist your choice — or you ask it to set your company — it writes the anchor on your explicit confirmation (a workspace owner or admin is required). Otherwise the answer holds for that run only, and you can still set it permanently in the Well app.
 
 ## Composes onto
 
