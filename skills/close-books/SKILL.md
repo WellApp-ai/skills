@@ -1,7 +1,7 @@
 ---
 name: close-books
 requires: [define-workspace, resolve-own-company, connect-bank, connect-tools, accounting-settings, define-period]
-description: Drive a month-end close for a Well workspace to the point of approval — start the close for a named month, read what is blocking it, clear the blockers one at a time, prepare the close package, and mint the approval offer the user accepts in the Well app. Use when the user asks to "close the books", "close last month", "run the month-end close", "close March", "finish the close", or "what's left to close the period". This is a WRITE flow — it advances a real close run and can resolve tasks, so it shows the state before every step and asks first before retrying reconciliation or queuing a vendor invoice fetch, the two that need an explicit yes. It never locks the period itself; the final approval is a first-party click in Well by design. Requires a connected Well workspace with its bank and accounting tools synced; if none, it walks the user through connecting first.
+description: Drive a month-end close for a Well workspace to the point of approval — start the close for a named month, read what is blocking it, clear the blockers one at a time, prepare the close package, and mint the approval offer the user accepts in the Well app. Use when the user asks to "close the books", "close last month", "run the month-end close", "close March", "finish the close", or "what's left to close the period". This is a WRITE flow — it advances a real close run and can resolve tasks, so it shows the state before every step and asks first before retrying reconciliation or queuing a vendor invoice fetch, the two that need an explicit yes. It never locks the period itself; the final approval is a first-party click in Well by design. Requires a connected Well workspace with its bank synced — the only connection the close blocks on; an accounting connection is optional and makes the close richer. If none, it walks the user through connecting first.
 ---
 
 # Close the books with Well
@@ -212,9 +212,10 @@ company, the fiscal year start, and the named month are hard invariants, and the
    is a no-op if the run is already there.
 
 9. **Clear the blockers, one at a time.** `well_get_close_state` returns the blockers; after each
-   resolution, re-read it and let the refreshed ladder decide the next step. Only the missing-invoice
-   kind has close tools that *act* — for the others the close surfaces the blocker and the fix lands
-   on another surface. By kind:
+   resolution, re-read it and let the refreshed ladder decide the next step. Some kinds have a close
+   tool that acts on them — missing invoices, chat-resolvable tasks, and unmatched invoices; others
+   the close only surfaces, and the fix lands on another surface (the bank connection, categorisation).
+   By kind:
    - **Settled spend missing its invoice** → `well_get_close_proof_gaps` to read the gap, then, **only
      after the user agrees**, `well_enqueue_close_invoice_fetch` to queue the vendor-portal fetch. It
      hands work to a browser agent and runs in the background; say so, and that the invoices land

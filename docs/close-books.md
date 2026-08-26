@@ -15,12 +15,12 @@ Tell your AI assistant to close last month and it drives Well's month-end close 
 
 It takes the close right up to the finish line — a prepared close package and an approval waiting for you — and then hands the last step back to you. Locking a period is a one-click approval you give inside the Well app, on purpose: Well requires a person to lock the books, so the assistant prepares everything and you press the button. Once you have, it reads the receipt back to confirm the period is closed.
 
-It only advances a close that's ready to advance. If your bank or accounting tool isn't connected or hasn't finished syncing, it says so and points you at what to connect first, rather than starting a close that can only report problems you can't yet fix.
+It only advances on what's ready. The bank feed is the one connection the close blocks on — if it isn't connected or synced, it says so and points you at what to connect; an accounting connection is optional and just makes the close richer, so it never holds the close up.
 
 ## Required data in Well
 
 - **A Well workspace** — the close runs inside it.
-- **Bank and accounting connected and synced** — a close reads the posted ledger and settled bank transactions, so both sides must be connected and have finished a recent sync. The skill checks this before it starts.
+- **Bank connected and synced** — the close reads settled bank transactions, so the bank feed must be connected and recently synced; it is the one connection the close blocks on. An accounting connection is optional — it makes the close richer but never gates the close.
 - **The workspace's own company set** — Well refuses to start a close until it knows which company is yours. The skill resolves it, and can set it on your explicit confirmation if it isn't set yet.
 - **A month that has already ended** — a close runs on a complete month, never the current or a future one.
 
