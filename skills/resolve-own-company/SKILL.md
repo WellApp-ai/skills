@@ -29,7 +29,7 @@ Do not use this skill when:
 - The user wants an arbitrary company looked up by name, not their own entity — query `companies` directly, or use `company-profile` for a full view.
 - The user wants duplicate company records actually merged in Well — this skill proposes aliases for one run; it never writes. Point them at the Well app.
 - The user wants a figure — the data skills call this internally.
-- The user wants to set `own_company` permanently — no MCP tool writes it; only the picker in the Well app does.
+- The user wants `own_company` set permanently — that is now this skill's job in `persist` mode (`well_set_own_company`, on an explicit confirmation), not a reason to route away. Only when that tool is absent from the toolset can nothing write it; point the user at the picker in the Well app then.
 
 ## Inputs
 

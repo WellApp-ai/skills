@@ -306,10 +306,10 @@ toolset.
 ### Expected behavior
 
 `well_start_close` would refuse with `own_company_unconfirmed`, so resolve the own company first.
-Run `resolve-own-company` (strict); it comes back unresolved. Show the candidate companies, ask the
-user which one is theirs, and only on their explicit yes call `well_set_own_company` with that
-`company_id`. Then start the close for March 2026 and continue the normal flow. Never pick the
-company for them, and never infer it from the workspace name.
+Run `resolve-own-company` in `persist: true` (strict); it comes back unresolved, asks the user which
+company is theirs, and on their explicit yes sets the anchor with `well_set_own_company` itself —
+close-books never writes it. Once it hands back `own_company_id`, start the close for March 2026 and
+continue the normal flow. Never pick the company for them, and never infer it from the workspace name.
 
 ### Example request
 
