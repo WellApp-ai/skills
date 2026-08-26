@@ -1,7 +1,7 @@
 ---
 name: accounting-settings
 requires: [define-workspace]
-description: Set a Well workspace's accounting settings — the fiscal year start month above all, plus the first fiscal year start date, home/base currency, country, accounting framework, and chart-of-accounts confirmation — over Well's MCP server, writing only the value the user confirms and never guessing one. Use when the user asks to "set our fiscal year start", "our accounting year starts in April", "change the reporting currency", "set the accounting framework", "confirm the chart of accounts", "configure accounting settings", or when a close or period-scoped flow needs the fiscal year start confirmed before it derives fiscal periods. This is a WRITE flow — it shows the current setting, asks the user to confirm the new value, then writes it; the fiscal year start is refused when a period is already locked or a close is in progress, and changing it discards regenerable draft journal entries. Requires a connected Well workspace and workspace owner/admin rights; it never touches the workspace's own-company identity — that is `resolve-own-company`.
+description: Set a Well workspace's accounting settings — the fiscal year start month above all, plus the first fiscal year start date, home/base currency, country, accounting framework, and chart-of-accounts confirmation — over Well's MCP server, writing only the value the user confirms, never a guessed one. Use when the user asks to "set our fiscal year start", "our accounting year starts in April", "change the reporting currency", "set the accounting framework", "confirm the chart of accounts", or when a close or period-scoped flow needs the fiscal year start confirmed before it derives fiscal periods. This is a WRITE flow — it shows the current value where it can read one, confirms the new one, then writes; the fiscal year start is refused when a period is locked or a close is in progress, and changing it discards regenerable draft journal entries. Requires a connected Well workspace and owner/admin rights; it never touches the own-company identity — that is `resolve-own-company`.
 ---
 
 # Set accounting settings with Well
@@ -107,7 +107,10 @@ the inline fallback to use when it is absent.
    (and `base_currency` / `country` when relevant) for the pinned workspace, and state it in one
    line: what the setting is now. A null `fiscal_year_start_month` means the workspace has no
    explicit start month and the server defaults to January (month 1) — say that rather than
-   presenting January as a confirmed choice.
+   presenting January as a confirmed choice. Only these three settings have a read surface here —
+   `fiscal_year_start_month`, `base_currency`, and `country`. `first_fiscal_year_start_date`,
+   `accounting_framework`, and `coa_confirmed` are writable, but `well_list_workspaces` does not
+   expose their current values, so you cannot read or show a "current" for them — never claim one.
 
 3. **Take the new value from the user — never guess it.** Resolve a month name to 1-12 (April → 4);
    accept a bare number 1-12; a currency as ISO 4217; a country as ISO 3166 alpha-2; a framework as
@@ -115,10 +118,13 @@ the inline fallback to use when it is absent.
    for the exact value rather than picking one. This is the rule the skill exists to hold: a guessed
    fiscal year start mis-files every future period, and the error is invisible in the output.
 
-4. **Confirm the change explicitly.** Show current → new in one line, and — for a fiscal year start
-   change — state the two consequences before writing: it realigns the fiscal calendar, and it
-   discards the regenerable DRAFT journal entries on the old coordinates. Proceed only on the user's
-   explicit yes. Never write a value the user has not confirmed.
+4. **Confirm the change explicitly.** For a setting with a read surface (`fiscal_year_start_month`,
+   `base_currency`, `country`), show current → new in one line. For `first_fiscal_year_start_date`,
+   `accounting_framework`, and `coa_confirmed` — which have no read surface — state the new value
+   alone and say plainly you cannot show the current one, rather than inventing a "current". For a
+   fiscal year start change, also state the two consequences before writing: it realigns the fiscal
+   calendar, and it discards the regenerable DRAFT journal entries on the old coordinates. Proceed
+   only on the user's explicit yes. Never write a value the user has not confirmed.
 
 5. **Write — `well_upsert_accounting_settings`** with only the confirmed field(s) and the pinned
    `workspace_id`. Then report the new value from the tool's result, not from what you sent.
@@ -137,8 +143,11 @@ the inline fallback to use when it is absent.
 
 Return:
 
-- The current value of the setting, read from `well_list_workspaces`, before any change — and, for a
-  null fiscal year start, that the server defaults to January rather than that January is set.
+- The current value of the setting when it has a read surface (`fiscal_year_start_month`,
+  `base_currency`, `country`), read from `well_list_workspaces`, before any change — and, for a null
+  fiscal year start, that the server defaults to January rather than that January is set. For
+  `first_fiscal_year_start_date`, `accounting_framework`, and `coa_confirmed`, no current value is
+  shown — say it cannot be read rather than claiming one.
 - Before writing a fiscal year start change: a one-line current → new statement, plus the two
   consequences (calendar realignment, DRAFT entries discarded), and an explicit confirmation.
 - After the write: the new value from the tool result, stated plainly.
@@ -168,8 +177,11 @@ Before finishing, verify:
   a tool error.
 - `workspace_id` came from `define-workspace` (or step 1's inline fallback) and rode every `well_*`
   call.
-- The current setting was read with `well_list_workspaces` and shown before any change; a null
-  fiscal year start was reported as "defaults to January", never as a confirmed January.
+- For a setting with a read surface (`fiscal_year_start_month`, `base_currency`, `country`), the
+  current value was read with `well_list_workspaces` and shown before any change; a null fiscal year
+  start was reported as "defaults to January", never as a confirmed January. For
+  `first_fiscal_year_start_date`, `accounting_framework`, and `coa_confirmed`, no "current" was
+  claimed, since the read does not expose them.
 - The new value came from the user or the calling flow, never inferred; an ambiguous value was
   clarified, not guessed.
 - For a fiscal year start change, the user saw the current → new line and the two consequences, and
