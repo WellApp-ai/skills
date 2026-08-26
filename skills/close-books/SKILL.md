@@ -191,9 +191,12 @@ step is skipped or re-run.
    the month is named (and it locks once the period closes). Read the current value from
    `well_list_workspaces` (`identity.fiscal_year_start_month`); a null value means it falls back to
    January. If it is unset, or the user says it is wrong, run `accounting-settings` to set it on their
-   explicit confirmation — never guess it. If no MCP tool to set the fiscal year is in your toolset,
-   point the user at the Well app to set it, and continue only once it is right. This is a setup
-   precondition, not the month selection — the month is named in step 6.
+   explicit confirmation — never guess it. This is a setup precondition, not the month selection —
+   the month is named in step 6.
+   - **If `accounting-settings` isn't installed**, do it inline: when the value is unset or wrong and
+     `well_upsert_accounting_settings` is in your toolset, set it on the user's explicit confirmation
+     (never guess it); if neither the skill nor that tool is available, point the user at the Well app
+     to set it, and continue only once it is right.
 
 6. **Collect the month and start the close — run `define-period` in `mode: collect`, then
    `well_start_close`.** First reuse a live run: call `well_list_flow_runs` and, if a close run
