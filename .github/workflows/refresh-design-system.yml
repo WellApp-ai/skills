@@ -41,6 +41,8 @@ jobs:
         with:
           node-version: 22
 
+      - run: npm ci
+
       - name: Authenticate to GitHub Packages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
