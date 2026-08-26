@@ -26,14 +26,16 @@ It only advances a close that's ready to advance. If your bank or accounting too
 
 ## Composes onto
 
-This skill delegates four setup steps to Well's atomic skills rather than repeating them:
+This skill delegates six setup steps to Well's atomic skills rather than repeating them:
 
 - **[`define-workspace`](define-workspace.md)** — pins which Well workspace the close runs in.
-- **[`connect-tools`](connect-tools.md)** — checks the bank and accounting tools are connected and actually synced before the close starts.
-- **[`resolve-own-company`](resolve-own-company.md)** — resolves which company is yours, which the close requires before it will start.
+- **[`resolve-own-company`](resolve-own-company.md)** — resolves which company is yours, which the close requires before it will start, and sets it on your explicit confirmation when it isn't set yet.
+- **[`connect-bank`](connect-bank.md)** — gets the bank feed connected and syncing; a missing or unsynced bank is the one connection the close treats as a blocker.
+- **[`connect-tools`](connect-tools.md)** — connects the accounting side for a richer close; the close never blocks on a missing accounting tool.
 - **[`accounting-settings`](accounting-settings.md)** — sets the fiscal year start month the close derives its period from, when it's unset or wrong.
+- **[`define-period`](define-period.md)** — collects the calendar month the close runs on.
 
-Install all four alongside this one. The skill still runs without them — each step falls back inline — but with them installed you get one consistent workspace flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install all five together; if you download the `.skill` file on its own, grab those four as well.
+Install all six alongside this one. The skill still runs without them — each step falls back inline — but with them installed you get one consistent workspace flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install all seven together; if you download the `.skill` file on its own, grab those six as well.
 
 ---
 
@@ -54,9 +56,11 @@ Install the following official skills from Well.
 1. Fetch these files:
     a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/close-books/SKILL.md
     b. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
-    c. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
-    d. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/resolve-own-company/SKILL.md
-    e. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounting-settings/SKILL.md
+    c. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/resolve-own-company/SKILL.md
+    d. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-bank/SKILL.md
+    e. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
+    f. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounting-settings/SKILL.md
+    g. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-period/SKILL.md
 2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
 3. Install these skills.
 4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
