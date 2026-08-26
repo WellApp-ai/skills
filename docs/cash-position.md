@@ -13,6 +13,8 @@
 
 Sometimes you don't need a forecast — you just need the number. Ask your AI assistant what your cash position is, and it pulls your real, current bank balances straight from Well, broken down by account and currency, with an as-of timestamp on every figure. No burn rate, no runway, no projections — just what's actually in the bank today.
 
+It also answers whether cash is rising or falling: the same read carries the trailing month-end balances behind today's figure, so "is our cash going up or down?" is this skill rather than a separate one. For cash projected FORWARD, see [`cash-forecast`](cash-forecast.md).
+
 ## Required data in Well
 
 - **Banking connector** — *required.* This is where your real, current cash balances come from.

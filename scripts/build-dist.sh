@@ -119,3 +119,24 @@ for dir in skills/*/; do
 	rm -rf "$stage"
 	echo "rebuilt dist/$name.{zip,skill}"
 done
+
+# Prune an archive whose source folder is gone.
+#
+# The loop above walks `skills/*/`, so it can only ever ADD or refresh — a skill
+# removed from the tree keeps shipping its last build, byte-identical to whatever
+# was on main, and nothing else in the repo notices: plugin.json is regenerated
+# from the directory, the README is hand-edited, and the symlink mirrors are
+# per-skill. So a stale archive is not a broken link that surfaces somewhere, it is
+# a package that quietly stays installable.
+#
+# This bit a removal PR: a merge restored five archives for three deleted skills
+# because the conflicted `dist/` paths resolved to the branch that still had them,
+# and `make build` afterwards reported success without touching them.
+for archive in dist/*.zip dist/*.skill; do
+	[ -e "$archive" ] || continue
+	name=$(basename "$archive"); name=${name%.*}
+	if [ ! -d "skills/$name" ]; then
+		rm -f "$archive"
+		echo "pruned $archive — skills/$name no longer exists"
+	fi
+done

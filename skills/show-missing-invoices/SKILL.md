@@ -30,7 +30,7 @@ Do not use this skill when:
 - The user wants the documents fetched from the suppliers' portals — the next step is `deploy-agents`, which reads this skill's hand-off and previews that fetch, and `connect-tools` comes before it when the pick names a vendor Well carries a connector for. None of those steps collects a document.
 - The user wants invoices already in the ledger that have no source document attached — that is the `missing-receipts` skill; this skill starts from settled bank spend, not from ledger rows.
 - The user wants bills still to be paid (`bills-due`) or unpaid customer invoices (`accounts-receivable-aging`) — those are money owed, not documents missing.
-- The user wants how much was spent or on what (`expense-breakdown`) — this skill counts gaps, it is not a spend report.
+- The user wants how much was spent or on what (`cost-structure`) — this skill counts gaps, it is not a spend report.
 
 ## Inputs
 

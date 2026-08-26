@@ -23,9 +23,9 @@ Use this skill when the user asks things like:
 
 Do not use this skill when:
 
-- The user wants a ranked "biggest expenses / who do we owe most" view across all vendors — use `expense-breakdown` instead.
+- The user wants a ranked "biggest expenses / who do we owe most" view across all vendors — use `bills-due` instead, which lists unpaid bills with their amounts.
 - The user wants an AR-aging view across ALL customers, not one named company — use `accounts-receivable-aging` instead (this skill is about one company, not a portfolio ranking).
-- The user wants a pure cash/runway answer — use `runway-calculator` instead.
+- The user wants a pure cash/runway answer — use `runway` instead.
 
 ## Inputs
 
