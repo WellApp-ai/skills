@@ -25,7 +25,7 @@ Do not use this skill when:
 
 - The workspace is not resolved yet — run `define-workspace` first and pass its `workspace_id` in.
 - The user wants an accounting tool or an invoicing / payment portal connected, or all three kinds checked at once — that is the `connect-tools` skill.
-- The user wants a figure computed from bank data (cash, runway, burn, spend) — `cash-position`, `runway-calculator`, and `expense-breakdown` run their own connector check internally.
+- The user wants a figure computed from bank data (cash, runway, burn, spend) — `cash-position`, `runway`, `avg-burn`, and `cost-structure` run their own connector check internally.
 - The user wants to disconnect an account, force a re-sync, or run an action on a connected bank (`well_invoke_connector_tool`) — out of scope; point them to the Well app.
 - The user wants the bank's transactions listed or reconciled — this skill establishes the connection, it never reads provider data.
 

@@ -31,7 +31,7 @@ Derive all four from the actual bullet count rather than editing by hand, then c
 
 ## Reuse the README's install copy — never rewrite it
 
-The canonical template for a docs page's AI-assisted block is **any of the twenty pages that already share it** — [`docs/expense-breakdown.md`](docs/expense-breakdown.md) is as good a reference as any. Those twenty blocks are byte-identical: five steps, opening `1. Fetch these files:` with lettered sub-items. To add a dependency, extend step 1 with the next letter and change nothing else.
+The canonical template for a docs page's AI-assisted block is **any of the twenty-three pages that already share it** — [`docs/cash-position.md`](docs/cash-position.md) is as good a reference as any. Those twenty-three blocks are byte-identical: five steps, opening `1. Fetch these files:` with lettered sub-items. To add a dependency, extend step 1 with the next letter and change nothing else.
 
 **Do not copy the block out of [`README.md`](README.md#assisted-by-ai-recommended).** It looks like the same thing and is not: it installs *every* skill at once, so it runs to six steps and carries two that a single-skill page must never import — a "create a summary table" step, and a clause about keeping the design-system's two `.css` files in `assets/`. The README block is where the multi-file *shape* came from, but its wording has since diverged, and copying it verbatim into a docs page would change the established install flow.
 
@@ -47,7 +47,7 @@ The same applies to `Install all N alongside this one`, `install all N+1 togethe
 
 ## Two standing exemptions
 
-**`cash-position` and `runway-calculator` must never delegate to `normalize-currency`.** `well_get_cash_position` and `well_get_runway` convert currency server-side and return the rate they applied; both skills explicitly forbid re-deriving their tool's output. Converting again produces a second number that disagrees with what the Well app shows for the same workspace. Verify with `grep -c normalize-currency skills/cash-position/SKILL.md` — it should stay `0`.
+**`cash-position` and `runway` must never delegate to `normalize-currency`.** `well_get_cash_position` and `well_get_runway` convert currency server-side and return the rate they applied; both skills explicitly forbid re-deriving their tool's output. Converting again produces a second number that disagrees with what the Well app shows for the same workspace. Verify with `grep -c normalize-currency skills/cash-position/SKILL.md` — it should stay `0`.
 
 ## Sweep after any merge — concurrent PRs drift
 

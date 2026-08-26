@@ -152,7 +152,7 @@ Read the schema, read the field, take it without asking: "Working as **Acme SAS*
 
 ### Example request
 
-`expense-breakdown` calls with `consequence: "swaps payables for receivables"`, `on_decline: "report gross unpaid invoices, labeled as unsplit"`. The workspace's schema does **not** expose `workspaces.own_company` at all, and `companies` holds both `DA SILVA MARLY JOAO` and `EI-DA SILVA MARLY JOAO`.
+`bills-due` calls with `consequence: "swaps payables for receivables"`, `on_decline: "report gross unpaid invoices, labeled as unsplit"`. The workspace's schema does **not** expose `workspaces.own_company` at all, and `companies` holds both `DA SILVA MARLY JOAO` and `EI-DA SILVA MARLY JOAO`.
 
 ### Expected behavior
 

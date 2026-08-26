@@ -17,8 +17,12 @@ import { fileURLToPath } from "node:url";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const TOKENS = join(ROOT, "design-system/well-tokens.css");
 
-/** The skills that compose a chart of their own. Everything else states figures. */
-const COMPOSING_SKILLS = ["cash-balance-trend", "fx-exposure", "rank-clients-by-ltv"];
+/**
+ * The skills that compose a chart of their own — the ones whose tool ships no
+ * widget, so there is nothing already on screen to duplicate. Everything else
+ * states figures and lets the product's own card draw them.
+ */
+const COMPOSING_SKILLS = ["fx-exposure", "rank-clients-by-ltv"];
 
 const BEGIN = "<!-- generated: well tokens — edit design-system/well-tokens.css, then `make refresh` -->";
 const END = "<!-- /generated -->";

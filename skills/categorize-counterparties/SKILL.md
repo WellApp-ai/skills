@@ -24,7 +24,7 @@ Use this skill when:
 Do not use this skill when:
 
 - The user wants to categorize or recategorize an individual **transaction**, or a batch of transactions. Those carry Well's `transaction` category type; this skill only ever touches the `company` type, on a company record. Point them at the Well app.
-- The user wants a figure — how much was spent, on what, per category. That is `expense-breakdown`; this skill counts coverage, it is not a spend report.
+- The user wants a figure — how much was spent, on what, per category. That is `cost-structure`; this skill counts coverage, it is not a spend report.
 - The user wants to connect a bank, accounting tool, or invoicing portal — that is `connect-tools`.
 - The user asks for one specific month, and that month is not resolved yet. A period-scoped run takes its `periods` from `define-period`; this skill resolves no month itself. The standalone ask is exempt: with no period at all, the run goes workspace-wide with `uncategorized_only: true`.
 - The user wants the missing invoices themselves listed (`show-missing-invoices`), or Well to go and fetch them (`deploy-agents`).

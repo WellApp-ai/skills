@@ -22,7 +22,7 @@ This skill is **self-contained**: each step below carries everything the flow ne
 
 - The user wants exactly one step on its own — use that step's own skill.
 - The user wants a collection actually run, a downloaded document, or the status of a running agent. No version of this flow launches anything; point them to the Well app.
-- The user wants a figure (`expense-breakdown`, `cash-position`, `bills-due`, `accounts-receivable-aging`), ledger rows with no attachment (`missing-receipts` — this flow starts from settled bank spend), or a period closed, locked, or posted (the Well app).
+- The user wants a figure (`cost-structure`, `cash-position`, `bills-due`, `accounts-receivable-aging`), ledger rows with no attachment (`missing-receipts` — this flow starts from settled bank spend), or a period closed, locked, or posted (the Well app).
 
 ## Inputs
 

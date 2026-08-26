@@ -27,7 +27,7 @@ Do not use this skill when:
 
 - The user wants to know who currently owes money (unpaid invoices) — use `accounts-receivable-aging` instead; this skill only counts **paid** invoices (realized revenue), not outstanding balances.
 - The user wants a deep dive on one specific customer's full history, not a ranking across all customers — use the sibling `company-profile` skill instead.
-- The user wants spend/expenses (money going out, not coming in) — use `expense-breakdown` instead.
+- The user wants spend/expenses (money going out, not coming in) — use `cost-structure` instead.
 
 ## Inputs
 
