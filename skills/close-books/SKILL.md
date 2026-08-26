@@ -132,6 +132,13 @@ order (workspace, own company, bank, accounting, fiscal year, month); server-sid
 company, the fiscal year start, and the named month are hard invariants, and they all matter
 **before** `well_start_close`.
 
+**This flow owns the order; the composed bricks do not.** Each brick ends its turn with its own
+"next step" suggestion, tuned for a standalone run or another flow — `define-workspace` points at
+`connect-tools`, `connect-bank` (with `define-period` installed) points at picking a month,
+`connect-tools` points back at the bank check. Those hints are superseded here: after any brick hands
+back, always continue to the **next numbered step below**, never to where the brick pointed — so no
+step is skipped or re-run.
+
 1. **Pin the workspace — run `define-workspace`.** Invoke it with
    `purpose: "to close this workspace's books"` and take its typed hand-off. Pass its
    `workspace_id` explicitly on every `well_*` call below, and never merge data across workspaces
@@ -171,12 +178,13 @@ company, the fiscal year start, and the named month are hard invariants, and the
    `well_list_connectors` yourself and check for an enabled bank connector with a recent
    `last_successful_sync_at`.
 
-4. **Connect the accounting side — run `connect-tools`.** Walk this for parity with the app and for
-   richer posted-ledger data. **The server never treats a missing accounting tool as a close
-   blocker** — posting runs on the standard chart of accounts — so never gate the close on it:
-   surface what is connected, note anything missing, and continue regardless. If `connect-tools`
-   isn't installed, read `well_list_connectors` and report the accounting/invoicing coverage without
-   blocking.
+4. **Connect the accounting side — run `connect-tools` scoped to accounting and invoicing.** Pass
+   `kinds: [accounting, invoicing]` so it does not re-check the bank — step 3 already covered that.
+   Walk this for parity with the app and for richer posted-ledger data. **The server never treats a
+   missing accounting tool as a close blocker** — posting runs on the standard chart of accounts — so
+   never gate the close on it: surface what is connected, note anything missing, and continue
+   regardless. If `connect-tools` isn't installed, read `well_list_connectors` and report the
+   accounting/invoicing coverage without blocking.
 
 5. **Set the fiscal year start — run `accounting-settings`.** The close derives the fiscal period from
    `fiscal_year_start_month`, and an unset value falls back to January, so it must be right **before**
