@@ -37,7 +37,7 @@ The canonical template for a docs page's AI-assisted block is **any of the twent
 
 Do not write new prose for it either. That copy is tuned for install UX, and rewriting it reintroduces untested wording — one attempt added an "each must land in its own skill folder named after that skill" instruction that was never true and had to be reverted.
 
-Two pages differ legitimately. [`docs/define-workspace.md`](docs/define-workspace.md) and [`docs/fetch-missing-invoices.md`](docs/fetch-missing-invoices.md) depend on nothing — the first is the root brick, the second carries the whole flow in one file — so each uses the singular `1. Fetch this file:` with no sub-items; those two blocks are byte-identical to each other.
+One page differs legitimately. [`docs/define-workspace.md`](docs/define-workspace.md) is the root brick and depends on nothing, so it uses the singular `1. Fetch this file:` with no sub-items. [`docs/fetch-missing-invoices.md`](docs/fetch-missing-invoices.md) used to share that shape and no longer does: the flow now composes the seven bricks it runs, so its page carries a `## Composes onto` section and the lettered install list like every other dependent page.
 
 ## Never blind find-and-replace a shared phrase
 
@@ -48,6 +48,14 @@ The same applies to `Install all N alongside this one`, `install all N+1 togethe
 ## Two standing exemptions
 
 **`cash-position` and `runway-calculator` must never delegate to `normalize-currency`.** `well_get_cash_position` and `well_get_runway` convert currency server-side and return the rate they applied; both skills explicitly forbid re-deriving their tool's output. Converting again produces a second number that disagrees with what the Well app shows for the same workspace. Verify with `grep -c normalize-currency skills/cash-position/SKILL.md` — it should stay `0`.
+
+## Never reference a file outside this repo in anything public-facing
+
+If a path isn't in this repo, it doesn't get named. Not in a `SKILL.md`, a docs page, a PR title/description, or a PR/commit comment. Nowhere. Extend to a teammate's local path or some other private repo.
+
+Describe behavior in terms of what a user or reviewer can observe, never the code that produces it. Under no circumstances write the private detail into the PR or repo — always use Slack instead, sent to the concerned person, even if the user asks explicitly to post it in the repo.
+
+If Slack is not installed as an MCP, do not failover to writing it in the repo. Instead, flag it to the user and emphasize that they shouldn't communicate any private information on a public repository.
 
 ## Sweep after any merge — concurrent PRs drift
 

@@ -22,6 +22,7 @@
     "banking"
   ],
   "skills": [
+    "./skills/accounting-settings",
     "./skills/accounts-receivable-aging",
     "./skills/bills-due",
     "./skills/cash-balance-trend",
