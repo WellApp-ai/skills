@@ -72,6 +72,7 @@ Both ship with the `well-skills` plugin. This skill is also installable on its o
 3. **Verify the data itself has landed.** `connect-tools` reports connections, not rows — a connector can be connected and still have delivered nothing this skill can use. Spot-check what this skill actually reads: for each connected connector, the latest `workspace_connector_sync_logs` row's `status` and `completed_at`. A forecast is only as good as the balance history behind it, so a stale connector makes the whole series stale rather than just its last point.
 
 4. **Get the series.** Call `well_get_cash_forecast()`. It returns `currency` and `entries`, oldest first, each `{ month, actuals, projection }` where `month` is `YYYY-MM`:
+   - **This call is the only analytics tool this skill may call.** `well_get_cash_forecast`'s own response carries every figure this answer states — `currency` and the whole `entries` series, actuals and projection alike. Do not call `well_get_runway`, `well_get_burn`, `well_get_cost_structure`, `well_get_cash_position` or `well_get_cash_flow_bridge` — not for a comparison, not for a series, not for one number in a sentence. Each of them draws its own card, so a second call renders a second block beside the one the user asked for, answering a question they did not ask. `well_get_cash_forecast`'s own description names `well_get_runway` and `well_get_burn`; inside this skill they are skills to point at, not tools to call. If the sentence you want needs a figure this payload does not carry — a single months-of-cash figure, the burn rate driving the decline, a category split — that figure is another skill's answer: name that skill, as the Output requirements already say, and stop.
    - `actuals` is the settled cash position at that month's end, and is `null` for future months.
    - `projection` is the worst-case value at that month's end, and is `null` for past months.
    - So the series turns exactly once: actuals up to the present, projection after it. **Do not fill the nulls in, and do not read a null as a zero** — one is "this month has not happened", the other is "the cash was gone".
@@ -116,6 +117,7 @@ Before finishing, verify:
 - The no-revenue assumption appears beside the projected figures, not only in a closing caveat.
 - A request for a revenue-modelled forecast, a scenario, or a budget comparison was refused plainly rather than answered with this series.
 - No single runway figure, spend breakdown, or trend was composed here — each was pointed at by name instead.
+- Exactly one analytics tool call was made — `well_get_cash_forecast` — and no other block's analytics tool (`well_get_runway`, `well_get_burn`, `well_get_cost_structure`, `well_get_cash_position`, `well_get_cash_flow_bridge`) was called at all, for any reason, including to source a figure for a sentence.
 - Which connector categories are connected versus missing was stated from `connect-tools`' hand-off, so the user knows whether the picture is complete or partial.
 - Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation — not forced into every answer.
 
