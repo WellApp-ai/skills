@@ -5,11 +5,11 @@
 
 It lives here rather than under `skills/` on purpose. A design system is Well's brand, not
 a capability a user installs: shipping it as a skill put it in the catalogue as a peer of
-`runway-calculator`, where it answers no question anyone would ask. It also advertised a
+`runway`, where it answers no question anyone would ask. It also advertised a
 dependency on twenty skills when only three of them could act on it.
 
 So the values are generated into the skills that actually compose a visual — today
-`cash-balance-trend`, `fx-exposure`, and `rank-clients-by-ltv` — by
+`fx-exposure` and `rank-clients-by-ltv`, the two whose tool ships no widget of its own — by
 `scripts/generate-style-blocks.mjs`, between markers under each one's
 `## Styling a composed view`.
 

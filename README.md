@@ -43,10 +43,12 @@ This repo packages that judgment as **Agent Skills** — playbooks any AI assist
 
 | Skill | Description | Details |
 |---|---|---|
-| `expense-breakdown` | "Where does our money go?" — top expense categories and the biggest outstanding bills, from the ledger and invoices. | [View details →](docs/expense-breakdown.md) |
-| `runway-calculator` | "What's our runway?" — real cash on hand vs. trailing burn, stated in months and days, with the full formula shown. | [View details →](docs/runway-calculator.md) |
-| `cash-position` | "How much cash do we have right now?" — a point-in-time snapshot across every connected account. | [View details →](docs/cash-position.md) |
-| `cash-balance-trend` | "Is our cash going up or down?" — a historical trend from real balance snapshots, never a forecast. | [View details →](docs/cash-balance-trend.md) |
+| `cash-position` | "How much cash do we have right now?" — a point-in-time snapshot across every connected account, plus the trailing month-end balances behind it. | [View details →](docs/cash-position.md) |
+| `avg-burn` | "What's our burn rate?" — the trailing average of real monthly outflows, with the window it was measured over. | [View details →](docs/avg-burn.md) |
+| `runway` | "What's our runway?" — real cash on hand divided by trailing burn, in months and days, with both numbers shown. | [View details →](docs/runway.md) |
+| `cost-structure` | "Where does our money go?" — one month's outflow broken down by category, largest first. | [View details →](docs/cost-structure.md) |
+| `cash-forecast` | "What will our cash look like?" — settled month-end balances, then a worst-case projection that assumes no revenue. | [View details →](docs/cash-forecast.md) |
+| `cash-flow-waterfall` | "Why did our balance change?" — a bridge from the opening cash position to the closing one. | [View details →](docs/cash-flow-waterfall.md) |
 | `accounts-receivable-aging` | "Who owes us money, and since when?" — outstanding customer invoices bucketed by days overdue. | [View details →](docs/accounts-receivable-aging.md) |
 | `bills-due` | "What bills are due, and when?" — accounts payable sorted by due date with a running cash-out total. | [View details →](docs/bills-due.md) |
 | `rank-clients-by-ltv` | "Who are our best customers?" — customers ranked by total paid revenue to date. | [View details →](docs/rank-clients-by-ltv.md) |
@@ -71,7 +73,8 @@ These are the setup steps the skills above invoke automatically to get what they
 | `connect-bank` | "Connect my bank" — the dedicated bank step: which banks are live, syncing, or expired, and a one-click link to get the feed in. | [View details →](docs/connect-bank.md) |
 | `define-period` | "Which month are we working on?" — pins the calendar month or months, translates them into the workspace's fiscal year and period, and says whether the selection holds activity. | [View details →](docs/define-period.md) |
 | `categorize-counterparties` | "Which suppliers have no category?" — the companies behind your spend on a card, uncategorized ones first, each one categorized by picking from Well's catalog on its row. | [View details →](docs/categorize-counterparties.md) |
-| `resolve-own-company` | Resolves the own-company pointer that decides payable from receivable, and folds in an entity's duplicate records. | [View details →](docs/resolve-own-company.md) |
+| `confirm-my-company` | Resolves the own-company pointer that decides payable from receivable, and folds in an entity's duplicate records. | [View details →](docs/confirm-my-company.md) |
+| `accounting-settings` | "Set our fiscal year start to April" — writes the workspace's accounting settings (fiscal year start month, currency, framework, chart of accounts), only what you confirm. | [View details →](docs/accounting-settings.md) |
 | `normalize-currency` | Converts multi-currency amounts into one total carrying its rate and date, or a clean per-currency breakdown, never a blended figure. | [View details →](docs/normalize-currency.md) |
 
 ---
@@ -99,29 +102,32 @@ Paste this into any AI agent — Claude, Codex, Cursor, OpenCode, and others —
 Install the following official skills from Well. Instructions:
 
 1. Fetch these files:
-    a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/expense-breakdown/SKILL.md
-    b. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/runway-calculator/SKILL.md
-    c. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cash-position/SKILL.md
-    d. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cash-balance-trend/SKILL.md
-    e. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounts-receivable-aging/SKILL.md
-    f. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/bills-due/SKILL.md
-    g. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/rank-clients-by-ltv/SKILL.md
-    h. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/fx-exposure/SKILL.md
-    i. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/company-profile/SKILL.md
-    j. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/payment-invoice-lookup/SKILL.md
-    k. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/missing-receipts/SKILL.md
-    l. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/draft-invoice/SKILL.md
-    m. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/fetch-missing-invoices/SKILL.md
-    n. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/show-missing-invoices/SKILL.md
-    o. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/deploy-agents/SKILL.md
-    p. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/close-books/SKILL.md
-    q. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
-    r. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
-    s. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-bank/SKILL.md
-    t. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-period/SKILL.md
-    u. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/categorize-counterparties/SKILL.md
-    v. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/resolve-own-company/SKILL.md
-    w. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/normalize-currency/SKILL.md
+    a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cash-position/SKILL.md
+    b. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/avg-burn/SKILL.md
+    c. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/runway/SKILL.md
+    d. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cost-structure/SKILL.md
+    e. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cash-forecast/SKILL.md
+    f. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cash-flow-waterfall/SKILL.md
+    g. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounts-receivable-aging/SKILL.md
+    h. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/bills-due/SKILL.md
+    i. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/rank-clients-by-ltv/SKILL.md
+    j. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/fx-exposure/SKILL.md
+    k. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/company-profile/SKILL.md
+    l. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/payment-invoice-lookup/SKILL.md
+    m. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/missing-receipts/SKILL.md
+    n. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/draft-invoice/SKILL.md
+    o. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/fetch-missing-invoices/SKILL.md
+    p. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/show-missing-invoices/SKILL.md
+    q. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/deploy-agents/SKILL.md
+    r. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/close-books/SKILL.md
+    s. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
+    t. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
+    u. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-bank/SKILL.md
+    v. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-period/SKILL.md
+    w. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/categorize-counterparties/SKILL.md
+    x. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounting-settings/SKILL.md
+    y. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/confirm-my-company/SKILL.md
+    z. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/normalize-currency/SKILL.md
 2. Download and display the SKILL.md files to the user. Each must be named "SKILL.md" — no prefix, no suffix, exact name.
 3. Create a summary table with skill names and descriptions extracted from the frontmatter
 4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
@@ -185,10 +191,12 @@ Download the `.skill` file and double-click it to install — Claude Desktop ins
 
 | Skill | Description | Download |
 |---|---|---|
-| `expense-breakdown` | Break down where a company's money goes — top expense categories and biggest outstanding bills. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/expense-breakdown.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/expense-breakdown.zip) |
-| `runway-calculator` | Calculate true cash runway in months and days from real balances and trailing burn. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/runway-calculator.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/runway-calculator.zip) |
-| `cash-position` | Point-in-time snapshot of current cash across every connected account. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/cash-position.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/cash-position.zip) |
-| `cash-balance-trend` | Historical cash balance trend from real balance snapshots. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/cash-balance-trend.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/cash-balance-trend.zip) |
+| `cash-position` | Point-in-time snapshot of current cash across every connected account, with the trailing balance history behind it. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/cash-position.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/cash-position.zip) |
+| `avg-burn` | The trailing average of real monthly outflows, with the window it covers. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/avg-burn.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/avg-burn.zip) |
+| `runway` | Cash on hand divided by trailing burn, in months and days, with both numbers shown. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/runway.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/runway.zip) |
+| `cost-structure` | One month's outflow broken down by category, largest first. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/cost-structure.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/cost-structure.zip) |
+| `cash-forecast` | Settled month-end balances, then a worst-case projection that assumes no revenue. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/cash-forecast.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/cash-forecast.zip) |
+| `cash-flow-waterfall` | A bridge from the opening cash position to the closing one, with total inflows and outflows. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/cash-flow-waterfall.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/cash-flow-waterfall.zip) |
 | `accounts-receivable-aging` | Outstanding customer invoices bucketed by days overdue. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/accounts-receivable-aging.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/accounts-receivable-aging.zip) |
 | `bills-due` | Accounts payable sorted by due date with a running cash-out total. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/bills-due.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/bills-due.zip) |
 | `rank-clients-by-ltv` | Customers ranked by total paid revenue to date. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/rank-clients-by-ltv.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/rank-clients-by-ltv.zip) |
@@ -211,7 +219,8 @@ Download the `.skill` file and double-click it to install — Claude Desktop ins
 | `connect-bank` | Get the bank feed into a workspace in one click, and report whether it is live, syncing, or expired. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/connect-bank.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/connect-bank.zip) |
 | `define-period` | Pin the calendar month or months, derive the fiscal year and period, and report whether the selection holds activity. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/define-period.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/define-period.zip) |
 | `categorize-counterparties` | Categorize the companies behind a workspace's spend from Well's shared catalog, on a card where every pick saves as you make it. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/categorize-counterparties.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/categorize-counterparties.zip) |
-| `resolve-own-company` | Work out which company in the workspace is yours, and fold in its duplicate records. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/resolve-own-company.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/resolve-own-company.zip) |
+| `confirm-my-company` | Work out which company in the workspace is yours, and fold in its duplicate records. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/confirm-my-company.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/confirm-my-company.zip) |
+| `accounting-settings` | Set the workspace's accounting settings — the fiscal year start month above all — writing only what you confirm. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/accounting-settings.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/accounting-settings.zip) |
 | `normalize-currency` | Convert amounts across currencies into one auditable total, or report them per currency. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/normalize-currency.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/normalize-currency.zip) |
 
 ##### For Advanced Users

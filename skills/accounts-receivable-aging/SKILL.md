@@ -1,6 +1,6 @@
 ---
 name: accounts-receivable-aging
-requires: [define-workspace, connect-tools, resolve-own-company, normalize-currency]
+requires: [define-workspace, connect-tools, confirm-my-company, normalize-currency]
 description: Answer "who owes us money, and since when?" using Well's MCP financial graph — every outstanding customer invoice bucketed into standard aging bands (current, 1-30, 31-60, 61-90, 90+ days overdue), backed by real invoice data rather than guesswork. Use when the user asks "who owes us money", "accounts receivable aging", "AR aging", "outstanding receivables", "which customers haven't paid", "who's late paying us", or "overdue invoices owed to us". Requires a connected Well workspace with invoicing data and a resolvable `own_company`; if either is missing, this skill walks the user through connecting one or confirming their company first.
 ---
 
@@ -8,7 +8,7 @@ description: Answer "who owes us money, and since when?" using Well's MCP financ
 
 ## Purpose
 
-Use Well's MCP tools to answer "who owes us money, and since when?" — every unpaid or partially-paid invoice this workspace has issued to a customer, bucketed by how overdue it is. This is the receivable mirror of `expense-breakdown`'s accounts-payable view (what this workspace owes others); this skill covers the opposite direction, backed by Well's synced invoice data, not a guess.
+Use Well's MCP tools to answer "who owes us money, and since when?" — every unpaid or partially-paid invoice this workspace has issued to a customer, bucketed by how overdue it is. This is the receivable mirror of `bills-due` (what this workspace owes others); this skill covers the opposite direction, backed by Well's synced invoice data, not a guess.
 
 ## When to use this skill
 
@@ -23,8 +23,8 @@ Use this skill when the user asks things like:
 
 Do not use this skill when:
 
-- The user wants to know who **they** owe (accounts payable) — use `expense-breakdown` (covers accounts payable) or the sibling `bills-due` skill (a date-sorted AP planning view) instead.
-- The user wants a cash/runway answer — use `runway-calculator` instead.
+- The user wants to know who **they** owe (accounts payable) — use the sibling `bills-due` skill (a date-sorted AP planning view) instead.
+- The user wants a cash/runway answer — use `runway` instead.
 - The user wants a deep dive on one specific customer's full history, not an aging summary across all customers — use the sibling `company-profile` skill instead.
 
 ## Inputs
@@ -49,7 +49,7 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 
 - `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there's no connection yet, and pins exactly one workspace. Supplies the `workspace_id` that every later call carries.
 - `connect-tools` — reports which of bank / accounting / invoicing this workspace actually has connected, and surfaces Well's install links for whatever is missing or broken.
-- `resolve-own-company` — works out which company in the workspace is the user's own legal entity, folds in its duplicate records, and hands back the `identity_set` that decides which side of an invoice is a payable.
+- `confirm-my-company` — works out which company in the workspace is the user's own legal entity, folds in its duplicate records, and hands back the `identity_set` that decides which side of an invoice is a payable.
 - `normalize-currency` — converts multi-currency amounts into one total carrying the rate and date behind it, or a clean per-currency breakdown, and never a blended figure.
 
 All four ship with the `well-skills` plugin. This skill is also installable on its own, so steps 1 and 2 of the workflow each carry the inline fallback to use when they're absent.
@@ -68,14 +68,14 @@ All four ship with the `well-skills` plugin. This skill is also installable on i
 
 3. **Verify the data itself has landed.** `connect-tools` reports connections, not rows — a connector can be connected and still have delivered nothing this skill can use. Spot-check what this skill actually reads: a 1-row `well_query_records` read on `invoices`. Zero rows means the workspace has no invoices synced yet — say so and stop, rather than reporting an empty aging table as a clean one.
 
-4. **Resolve your own company — run `resolve-own-company`.** Invoke the `resolve-own-company` skill with the pinned `workspace_id`, `purpose: "to tell the invoices you issued from the ones you received"`, `consequence: "turns payables into receivables"`, and `on_decline: "state plainly that receivables can't be isolated from the full invoice list until it's set"`. That skill owns the three-way unresolved test (the relation is null, the field is absent from the schema entirely, or it resolves to more than one company), the never-infer rule, and the both-direction normalized containment that folds a legal entity's duplicate `companies` rows into one identity. Use its `identity_set` — the own company plus every confirmed alias — for every issuer/receiver comparison below.
+4. **Resolve your own company — run `confirm-my-company`.** Invoke the `confirm-my-company` skill with the pinned `workspace_id`, `purpose: "to tell the invoices you issued from the ones you received"`, `consequence: "turns payables into receivables"`, and `on_decline: "state plainly that receivables can't be isolated from the full invoice list until it's set"`. That skill owns the three-way unresolved test (the relation is null, the field is absent from the schema entirely, or it resolves to more than one company), the never-infer rule, and the both-direction normalized containment that folds a legal entity's duplicate `companies` rows into one identity. Use its `identity_set` — the own company plus every confirmed alias — for every issuer/receiver comparison below.
    - `resolution: unresolved` means the user declined to confirm. Say plainly that receivables can't be isolated from the full invoice list until it's set, and stop rather than aging both sides together.
-   - **If `resolve-own-company` isn't installed**, do it inline: call `well_get_schema({ root: "workspaces" })` and read `workspaces.own_company`, treating null, absent-from-the-schema, and ambiguous alike as unresolved; ask which company is theirs rather than inferring it from the workspace's name, logo, slug, or email domain; then propose duplicate `companies` rows as aliases by comparing identically normalized names (Unicode NFD, strip combining marks, lowercase, punctuation to single spaces, collapse whitespace) with containment tested in **both** directions, folding only on an explicit yes.
+   - **If `confirm-my-company` isn't installed**, do it inline: call `well_get_schema({ root: "workspaces" })` and read `workspaces.own_company`, treating null, absent-from-the-schema, and ambiguous alike as unresolved; ask which company is theirs rather than inferring it from the workspace's name, logo, slug, or email domain; then propose duplicate `companies` rows as aliases by comparing identically normalized names (Unicode NFD, strip combining marks, lowercase, punctuation to single spaces, collapse whitespace) with containment tested in **both** directions, folding only on an explicit yes.
 
-5. **Query outstanding receivables.** Call `well_get_schema({ root: "invoices" })` (always, even if queried earlier in the session for a different purpose — this skill relies on `payment_status`, a separate dimension from lifecycle `status`, and field behavior can vary by connector). Query `invoices` where `issuer_company_id` matches the `identity_set` from `resolve-own-company` and `payment_status` is `unpaid` or `partial`. Include `receiver.name`, `grand_total`, `balance_due`, `local_currency`, `due_date`, `issue_date`, `invoice_number`.
+5. **Query outstanding receivables.** Call `well_get_schema({ root: "invoices" })` (always, even if queried earlier in the session for a different purpose — this skill relies on `payment_status`, a separate dimension from lifecycle `status`, and field behavior can vary by connector). Query `invoices` where `issuer_company_id` matches the `identity_set` from `confirm-my-company` and `payment_status` is `unpaid` or `partial`. Include `receiver.name`, `grand_total`, `balance_due`, `local_currency`, `due_date`, `issue_date`, `invoice_number`.
    - Some connectors emit rows carrying `status: paid` alongside `payment_status: unpaid`. That combination is normal for those sources, not a data fault — `payment_status` is authoritative. Note the mismatch once in a clause if it's widespread, rather than discrediting the whole aging over it.
    - **Don't let an equality filter hide rows — and don't over-collect either.** A filter on `issuer_company_id` silently drops invoices where it is `null`. Query that bucket separately, then split it on the *receiver* before aging anything, because a null issuer alone does not make a row a receivable:
-     - **Receiver is the own-company identity** → an invoice *addressed to* the workspace that lost its issuer. That is a bill owed, not money owed to us. Leave it out of the aging and point the user at `bills-due` or `expense-breakdown`.
+     - **Receiver is the own-company identity** → an invoice *addressed to* the workspace that lost its issuer. That is a bill owed, not money owed to us. Leave it out of the aging and point the user at `bills-due`.
      - **Receiver is an external company** → genuinely unresolved, and a receivable on the balance of evidence. Age it as a labeled row ("unattributed — issuer not recorded") inside the buckets: a large unattributed receivable sitting in 90+ is exactly what this skill exists to surface.
      - **Receiver is null too** → nothing places this row on either side. Report it as a separate unsplit line with a count and total, outside the buckets and outside the total outstanding.
    - **Invoices whose issuer and receiver are the same company** are owed by nobody. Keep them out of the aging and out of the total outstanding, and note them once as a data-quality issue worth fixing in Well.
@@ -96,7 +96,7 @@ Return:
 - Aging buckets (current, 1-30, 31-60, 61-90, 90+) each listing customer name, amount, currency, due date, and days overdue per invoice (or per customer if a customer-level summary was requested).
 - A total outstanding receivables figure, with currency.
 - A one-line note on how "days overdue" was computed — `due_date`, or `issue_date` fallback if any invoices lacked a due date.
-- Whether the picture is complete: which relevant connector categories (invoicing/accounting) are connected versus still missing — read off `connect-tools`' `coverage` and `skipped_by_user` hand-off, not an inline connector read of your own — and whether the workspace's own company is set, read off `resolve-own-company`'s hand-off, so the user knows whether this reflects their full receivables or a partial view gated by what's connected today.
+- Whether the picture is complete: which relevant connector categories (invoicing/accounting) are connected versus still missing — read off `connect-tools`' `coverage` and `skipped_by_user` hand-off, not an inline connector read of your own — and whether the workspace's own company is set, read off `confirm-my-company`'s hand-off, so the user knows whether this reflects their full receivables or a partial view gated by what's connected today.
 - A one-line pointer to `company-profile` for a deep dive on any single overdue customer's full history.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 8's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
@@ -114,8 +114,8 @@ Before finishing, verify:
 - If `well_*` tools weren't available at all, the user was pointed at the MCP endpoint (`https://api.wellapp.ai/v1/mcp`) instead of erroring silently.
 - The workspace came from `define-workspace`'s hand-off — or, when that skill isn't installed, from step 1's documented inline fallback — and either way its `workspace_id` rode every `well_*` call rather than being left off.
 - Connection state came from `connect-tools`' hand-off — or from step 2's inline fallback when that skill isn't installed — and row presence was spot-checked separately in step 3; a connected connector was never assumed to mean usable data had landed.
-- The own company came from `resolve-own-company`'s hand-off — its `identity_set`, not a value resolved here — and on `resolution: unresolved` the documented fallback ran rather than a guess.
-- Duplicate company records were folded by `resolve-own-company`, which proposes them for an explicit yes; none were merged silently here, and no `well_update_company`/`well_delete_company` call was made.
+- The own company came from `confirm-my-company`'s hand-off — its `identity_set`, not a value resolved here — and on `resolution: unresolved` the documented fallback ran rather than a guess.
+- Duplicate company records were folded by `confirm-my-company`, which proposes them for an explicit yes; none were merged silently here, and no `well_update_company`/`well_delete_company` call was made.
 - Null-`issuer_company_id` invoices were split on the receiver before aging: own-company receiver routed to payables and excluded, external receiver aged as a labeled row, both-null reported as a separate unsplit line outside the total outstanding.
 - Invoices whose issuer equals their receiver were kept out of the aging and out of the total outstanding.
 - `well_get_schema` was called on `invoices` before querying it, even if it was queried earlier for a different purpose.

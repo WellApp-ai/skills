@@ -24,7 +24,7 @@ Use this skill when:
 Do not use this skill when:
 
 - The user wants to connect a bank, accounting tool, or invoicing portal — that is the `connect-tools` skill (the next brick of the flow), or `connect-bank` for a bank-only ask, when they are installed.
-- The user wants a number (runway, cash, expenses) — the data skills (`runway-calculator`, `cash-position`, `expense-breakdown`, …) already run this step internally; use them directly.
+- The user wants a number (runway, cash, expenses) — the data skills (`runway`, `cash-position`, `cost-structure`, …) already run this step internally; use them directly.
 - The user wants to confirm or edit the company behind a workspace (registered name, tax id, child entities) — that happens in the Well app, not here.
 - The user wants to create a workspace — Well's OAuth / sign-in flow creates the first workspace; this skill only reads what already exists.
 
@@ -106,7 +106,7 @@ Do not return:
 `_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
 never reaches you, so you cannot tell a host that drew the card from one that did not.
 Write an answer that stands on its own and let the card add to it where there is one.
-State the pinned workspace in text regardless — you cannot know whether anything drew them. What you must not add is a second rendering of what a card already shows.
+State the pinned workspace in text regardless — you cannot know whether anything drew it. What you must not add is a second rendering of what a card already shows.
 
 ## Quality checks
 

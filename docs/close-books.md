@@ -15,24 +15,27 @@ Tell your AI assistant to close last month and it drives Well's month-end close 
 
 It takes the close right up to the finish line — a prepared close package and an approval waiting for you — and then hands the last step back to you. Locking a period is a one-click approval you give inside the Well app, on purpose: Well requires a person to lock the books, so the assistant prepares everything and you press the button. Once you have, it reads the receipt back to confirm the period is closed.
 
-It only advances a close that's ready to advance. If your bank or accounting tool isn't connected or hasn't finished syncing, it says so and points you at what to connect first, rather than starting a close that can only report problems you can't yet fix.
+It only advances on what's ready. The bank feed is the one connection the close blocks on — if it isn't connected or synced, it says so and points you at what to connect; an accounting connection is optional and just makes the close richer, so it never holds the close up.
 
 ## Required data in Well
 
 - **A Well workspace** — the close runs inside it.
-- **Bank and accounting connected and synced** — a close reads the posted ledger and settled bank transactions, so both sides must be connected and have finished a recent sync. The skill checks this before it starts.
+- **Bank connected and synced** — the close reads settled bank transactions, so the bank feed must be connected and recently synced; it is the one connection the close blocks on. An accounting connection is optional — it makes the close richer but never gates the close.
 - **The workspace's own company set** — Well refuses to start a close until it knows which company is yours. The skill resolves it, and can set it on your explicit confirmation if it isn't set yet.
 - **A month that has already ended** — a close runs on a complete month, never the current or a future one.
 
 ## Composes onto
 
-This skill delegates three setup steps to Well's atomic skills rather than repeating them:
+This skill delegates six setup steps to Well's atomic skills rather than repeating them:
 
 - **[`define-workspace`](define-workspace.md)** — pins which Well workspace the close runs in.
-- **[`connect-tools`](connect-tools.md)** — checks the bank and accounting tools are connected and actually synced before the close starts.
-- **[`resolve-own-company`](resolve-own-company.md)** — resolves which company is yours, which the close requires before it will start.
+- **[`confirm-my-company`](confirm-my-company.md)** — resolves which company is yours, which the close requires before it will start, and sets it on your explicit confirmation when it isn't set yet.
+- **[`connect-bank`](connect-bank.md)** — gets the bank feed connected and syncing; a missing or unsynced bank is the one connection the close treats as a blocker.
+- **[`connect-tools`](connect-tools.md)** — connects the accounting side for a richer close; the close never blocks on a missing accounting tool.
+- **[`accounting-settings`](accounting-settings.md)** — sets the fiscal year start month the close derives its period from, when it's unset or wrong.
+- **[`define-period`](define-period.md)** — collects the calendar month the close runs on.
 
-Install all three alongside this one. The skill still runs without them — each step falls back inline — but with them installed you get one consistent workspace flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install all four together; if you download the `.skill` file on its own, grab those three as well.
+Install all six alongside this one. The skill still runs without them — each step falls back inline — but with them installed you get one consistent workspace flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install all seven together; if you download the `.skill` file on its own, grab those six as well.
 
 ---
 
@@ -53,8 +56,11 @@ Install the following official skills from Well.
 1. Fetch these files:
     a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/close-books/SKILL.md
     b. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
-    c. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
-    d. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/resolve-own-company/SKILL.md
+    c. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/confirm-my-company/SKILL.md
+    d. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-bank/SKILL.md
+    e. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
+    f. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounting-settings/SKILL.md
+    g. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-period/SKILL.md
 2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
 3. Install these skills.
 4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
