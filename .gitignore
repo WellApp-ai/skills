@@ -3,3 +3,7 @@ telemetry/
 node_modules/
 # Skill-building related
 CLAUDE.md
+
+# atoms/<name>/SKILL.md is a dev-only test artifact compiled from CONTENT.md —
+# `make compile` regenerates it, never installed by end users, never shipped.
+atoms/*/SKILL.md

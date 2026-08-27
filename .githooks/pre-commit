@@ -3,20 +3,22 @@
 # or src/ — an atom or src edit needs recompiling into every
 # skills/*/SKILL.md that uses it, not just the file that was actually edited —
 # and stage the rebuilt files into the same commit. See dist/README.md.
+#
+# atoms/*/SKILL.md is gitignored (a dev-only test artifact, never shipped),
+# so it can't be staged and never appears in the staleness check below —
+# only skills/*/SKILL.md, the shipped output, needs the hand-edit guard.
 if git diff --cached --name-only | grep -qE '^(skills|atoms|src)/'; then
-	# A skills/<name>/SKILL.md or atoms/<name>/SKILL.md compiled from a
-	# src/*.hbs.md or atoms/*/CONTENT.md source that this commit doesn't touch
-	# can only be stale because someone hand-edited the generated file directly
-	# — `make build` below would silently overwrite that edit and stage the
-	# overwrite. Catch it here and fail loud instead, before anything is lost.
+	# A skills/<name>/SKILL.md compiled from a src/*.hbs.md source that this
+	# commit doesn't touch can only be stale because someone hand-edited the
+	# generated file directly — `make build` below would silently overwrite
+	# that edit and stage the overwrite. Catch it here and fail loud instead,
+	# before anything is lost.
 	staged=$(git diff --cached --name-only)
 	stale=$(node scripts/compile.mjs --check 2>&1 | grep '^stale: ' | sed 's/^stale: //')
 	for generated in $stale; do
 		case "$generated" in
 			skills/*/SKILL.md)
 				source="src/$(echo "$generated" | cut -d/ -f2).hbs.md" ;;
-			atoms/*/SKILL.md)
-				source="atoms/$(echo "$generated" | cut -d/ -f2)/CONTENT.md" ;;
 			*) continue ;;
 		esac
 		if ! echo "$staged" | grep -qx "$source"; then
@@ -25,5 +27,5 @@ if git diff --cached --name-only | grep -qE '^(skills|atoms|src)/'; then
 			exit 1
 		fi
 	done
-	make build && git add skills/ atoms/ dist/
+	make build && git add skills/ dist/
 fi

@@ -162,10 +162,15 @@ function renderConsumers() {
 
 function runOnce({ check }) {
   registerPartials();
-  const outputs = [...renderDevArtifacts(), ...renderConsumers()];
+  // renderDevArtifacts() still runs in check mode — a CONTENT.md that fails to
+  // compile (bad frontmatter, an undefined strict-mode prop) throws here and
+  // fails CI either way. What it does NOT do below is get compared against
+  // disk: atoms/*/SKILL.md is gitignored, so a fresh checkout never has one.
+  const devArtifacts = renderDevArtifacts();
+  const consumerArtifacts = renderConsumers();
 
   if (check) {
-    const stale = outputs.filter((o) => !existsSync(o.path) || readFileSync(o.path, "utf8") !== o.content);
+    const stale = consumerArtifacts.filter((o) => !existsSync(o.path) || readFileSync(o.path, "utf8") !== o.content);
     for (const o of stale) console.error(`stale: ${o.label}`);
     if (stale.length) {
       console.error(`\n${stale.length} file(s) behind their source. Run \`make compile\`.`);
@@ -176,6 +181,7 @@ function runOnce({ check }) {
     return;
   }
 
+  const outputs = [...devArtifacts, ...consumerArtifacts];
   let wrote = 0;
   for (const o of outputs) {
     const current = existsSync(o.path) ? readFileSync(o.path, "utf8") : null;

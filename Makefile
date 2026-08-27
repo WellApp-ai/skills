@@ -19,8 +19,12 @@ validate:
 	node scripts/compile.mjs --check
 
 # atoms/<name>/CONTENT.md and src/<name>.hbs.md are the source; this renders
-# them into atoms/<name>/SKILL.md (a dev-only test artifact) and skills/<name>/SKILL.md
-# (what ships). src/ lives outside skills/, so this never touches what `build` zips.
+# them into atoms/<name>/SKILL.md (a dev-only test artifact, gitignored — load
+# it into Claude to test one atom in isolation, then discard it) and
+# skills/<name>/SKILL.md (what ships). src/ lives outside skills/, so this
+# never touches what `build` zips. `validate`/`--check` only enforces
+# skills/*/SKILL.md staying current — the atom artifact is never committed,
+# so there's nothing on disk to compare it against in a fresh checkout.
 # The `styling` atom also folds in what used to be scripts/generate-style-blocks.mjs —
 # its content is generated from design-system/well-tokens.css, not a consumer's args.
 compile:
