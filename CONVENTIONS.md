@@ -6,7 +6,7 @@ Every rule below exists because a reviewer caught it, usually more than once.
 
 ## A skill that depends on another declares it in three places
 
-The atomic bricks — `define-workspace`, `connect-tools`, `define-period`, `resolve-own-company`, `normalize-currency` — are invoked by other skills rather than duplicated into them. When a skill starts depending on one, say so in **all three** of:
+The atomic bricks — `define-workspace`, `connect-tools`, `define-period`, `confirm-my-company`, `normalize-currency` — are invoked by other skills rather than duplicated into them. When a skill starts depending on one, say so in **all three** of:
 
 1. **`requires:`** in the SKILL.md frontmatter — `requires: [define-workspace, connect-tools]`.
 2. **A `**Composed skills.**` block** in the SKILL.md body, inside the Tooling section, naming each brick and what it supplies.
@@ -71,7 +71,7 @@ Know these before writing a workflow step that looks similar — the logic is ce
 |---|---|
 | `define-workspace` | The MCP-server check, the OAuth/DCR flow, and pinning exactly one workspace. Supplies `workspace_id` to everything downstream. |
 | `connect-tools` | Whether a connection is real: `well_list_connectors` catalog rows filtered on `direction: input`, matched on `data_domains`, with `last_successful_sync_at` — not a bare `connection_status: enabled` — deciding connected. Plus install links. |
-| `resolve-own-company` | The three-way unresolved test (relation null / field **absent from the schema** / more than one candidate), the never-infer rule, and two-directional containment on normalized names for duplicate records. |
+| `confirm-my-company` | The three-way unresolved test (relation null / field **absent from the schema** / more than one candidate), the never-infer rule, and two-directional containment on normalized names for duplicate records. |
 | `normalize-currency` | The never-blend invariant, and rate selection: `exchange_rates` read, most-recent-rate-at-or-before the as-of date, never a later one, pair-direction checked. |
 
 ## Before you push

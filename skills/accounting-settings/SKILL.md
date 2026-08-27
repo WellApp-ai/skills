@@ -1,7 +1,7 @@
 ---
 name: accounting-settings
 requires: [define-workspace]
-description: Set a Well workspace's accounting settings — the fiscal year start month above all, plus the first fiscal year start date, home/base currency, country, accounting framework, and chart-of-accounts confirmation — over Well's MCP server, writing only the value the user confirms, never a guessed one. Use when the user asks to "set our fiscal year start", "our accounting year starts in April", "change the reporting currency", "set the accounting framework", "confirm the chart of accounts", or when a close or period-scoped flow needs the fiscal year start confirmed before it derives fiscal periods. This is a WRITE flow — it shows the current value where it can read one, confirms the new one, then writes; the fiscal year start is refused when a period is locked or a close is in progress, and changing it discards regenerable draft journal entries. Requires a connected Well workspace and owner/admin rights; it never touches the own-company identity — that is `resolve-own-company`.
+description: Set a Well workspace's accounting settings — the fiscal year start month above all, plus the first fiscal year start date, home/base currency, country, accounting framework, and chart-of-accounts confirmation — over Well's MCP server, writing only the value the user confirms, never a guessed one. Use when the user asks to "set our fiscal year start", "our accounting year starts in April", "change the reporting currency", "set the accounting framework", "confirm the chart of accounts", or when a close or period-scoped flow needs the fiscal year start confirmed before it derives fiscal periods. This is a WRITE flow — it shows the current value where it can read one, confirms the new one, then writes; the fiscal year start is refused when a period is locked or a close is in progress, and changing it discards regenerable draft journal entries. Requires a connected Well workspace and owner/admin rights; it never touches the own-company identity — that is `confirm-my-company`.
 ---
 
 # Set accounting settings with Well
@@ -13,7 +13,7 @@ every fiscal coordinate — over Well's MCP server. The one that matters most is
 start month**: the server derives each month's fiscal period from it, so an unset or wrong start
 month silently mis-files every close. This skill reads the current value, asks the user for the new
 one, and writes exactly what they confirm — it never infers a start month, a currency, or a
-framework, and it never changes the workspace's legal identity (that is `resolve-own-company`).
+framework, and it never changes the workspace's legal identity (that is `confirm-my-company`).
 
 The write is deliberate and gated. Changing the fiscal year start realigns the whole fiscal
 calendar, so the server **refuses it once a period is locked or a close is in progress**, and when
@@ -41,7 +41,7 @@ Do not use this skill when:
 - The user wants to know *which month* a job works on, not to change a durable setting — that is
   `define-period`. This skill sets the fiscal year *start*; it never picks the working period.
 - The user wants to set which company the workspace *is* — its legal identity, tax id, registered
-  name — that is `resolve-own-company` and `well_set_own_company`. This skill never writes identity.
+  name — that is `confirm-my-company` and `well_set_own_company`. This skill never writes identity.
 - The user wants to reopen or unlock a period so the start month can change — no MCP tool does that;
   point them at the Well app.
 - The workspace is not resolved yet — run `define-workspace` first.

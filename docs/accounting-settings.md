@@ -24,7 +24,7 @@ close is in progress, and warns you that the regenerable draft entries on the ol
 discarded — the skill says all of this before it writes.
 
 It sets accounting *configuration* only. It never changes which company your workspace *is* — that's
-[`resolve-own-company`](resolve-own-company.md) — and it never picks which month a job works on —
+[`confirm-my-company`](confirm-my-company.md) — and it never picks which month a job works on —
 that's [`define-period`](define-period.md).
 
 ## Required data in Well
