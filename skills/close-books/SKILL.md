@@ -358,6 +358,10 @@ Before finishing, verify:
 - The flow never rolled straight from the setup steps into `well_start_close`: starting the close rode
   an explicit user go-ahead — the month picker's confirmation, or an explicit yes when the month came
   only from a hint — never a silent continuation past the accounting or fiscal step.
+- Before that go-ahead, each candidate month's run-free readiness from step 6 — its `close_status` /
+  `close_reason` and `missing_invoice_count` / `unposted_invoice_count`, surfaced by `define-period`'s
+  `show_close_readiness: true` — was shown to the user, stated as the coarse readiness and never as the
+  full blocker ladder, which only `well_get_close_state` carries once the run has started.
 - The fiscal year start was confirmed (step 5) before the month was named, so it was not left to fall
   back to January; when no MCP tool to set the fiscal year was available, the user was pointed at the
   Well app rather than left on the default.
