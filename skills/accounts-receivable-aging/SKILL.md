@@ -8,7 +8,7 @@ description: Answer "who owes us money, and since when?" using Well's MCP financ
 
 ## Purpose
 
-Use Well's MCP tools to answer "who owes us money, and since when?" — every unpaid or partially-paid invoice this workspace has issued to a customer, bucketed by how overdue it is. This is the receivable mirror of `expense-breakdown`'s accounts-payable view (what this workspace owes others); this skill covers the opposite direction, backed by Well's synced invoice data, not a guess.
+Use Well's MCP tools to answer "who owes us money, and since when?" — every unpaid or partially-paid invoice this workspace has issued to a customer, bucketed by how overdue it is. This is the receivable mirror of `bills-due` (what this workspace owes others); this skill covers the opposite direction, backed by Well's synced invoice data, not a guess.
 
 ## When to use this skill
 
@@ -23,8 +23,8 @@ Use this skill when the user asks things like:
 
 Do not use this skill when:
 
-- The user wants to know who **they** owe (accounts payable) — use `expense-breakdown` (covers accounts payable) or the sibling `bills-due` skill (a date-sorted AP planning view) instead.
-- The user wants a cash/runway answer — use `runway-calculator` instead.
+- The user wants to know who **they** owe (accounts payable) — use the sibling `bills-due` skill (a date-sorted AP planning view) instead.
+- The user wants a cash/runway answer — use `runway` instead.
 - The user wants a deep dive on one specific customer's full history, not an aging summary across all customers — use the sibling `company-profile` skill instead.
 
 ## Inputs
@@ -75,7 +75,7 @@ All four ship with the `well-skills` plugin. This skill is also installable on i
 5. **Query outstanding receivables.** Call `well_get_schema({ root: "invoices" })` (always, even if queried earlier in the session for a different purpose — this skill relies on `payment_status`, a separate dimension from lifecycle `status`, and field behavior can vary by connector). Query `invoices` where `issuer_company_id` matches the `identity_set` from `confirm-my-company` and `payment_status` is `unpaid` or `partial`. Include `receiver.name`, `grand_total`, `balance_due`, `local_currency`, `due_date`, `issue_date`, `invoice_number`.
    - Some connectors emit rows carrying `status: paid` alongside `payment_status: unpaid`. That combination is normal for those sources, not a data fault — `payment_status` is authoritative. Note the mismatch once in a clause if it's widespread, rather than discrediting the whole aging over it.
    - **Don't let an equality filter hide rows — and don't over-collect either.** A filter on `issuer_company_id` silently drops invoices where it is `null`. Query that bucket separately, then split it on the *receiver* before aging anything, because a null issuer alone does not make a row a receivable:
-     - **Receiver is the own-company identity** → an invoice *addressed to* the workspace that lost its issuer. That is a bill owed, not money owed to us. Leave it out of the aging and point the user at `bills-due` or `expense-breakdown`.
+     - **Receiver is the own-company identity** → an invoice *addressed to* the workspace that lost its issuer. That is a bill owed, not money owed to us. Leave it out of the aging and point the user at `bills-due`.
      - **Receiver is an external company** → genuinely unresolved, and a receivable on the balance of evidence. Age it as a labeled row ("unattributed — issuer not recorded") inside the buckets: a large unattributed receivable sitting in 90+ is exactly what this skill exists to surface.
      - **Receiver is null too** → nothing places this row on either side. Report it as a separate unsplit line with a count and total, outside the buckets and outside the total outstanding.
    - **Invoices whose issuer and receiver are the same company** are owed by nobody. Keep them out of the aging and out of the total outstanding, and note them once as a data-quality issue worth fixing in Well.

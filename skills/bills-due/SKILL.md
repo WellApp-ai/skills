@@ -23,9 +23,9 @@ Use this skill when the user asks things like:
 
 Do not use this skill when:
 
-- The user wants bills ranked by **size**, not by date — "which vendors/bills are the biggest" is amount-ranked with no date sequencing or running total. Use `expense-breakdown`'s accounts-payable view instead; this skill exists specifically for date-ordered cash-flow planning, not "who do we owe the most."
+- The user wants bills ranked by **size**, not by date — "which vendors/bills are the biggest" is amount-ranked with no date sequencing or running total. No skill covers that framing today, so rank this skill's own rows by amount and say you did, rather than presenting the date-ordered buckets as an answer to it.
 - The user is asking who owes **them** money (receivables, not payables) — use `accounts-receivable-aging` instead.
-- The user wants cash-on-hand or runway, not a bills list — use `runway-calculator` instead.
+- The user wants cash-on-hand or runway, not a bills list — use `runway` instead.
 - The user wants a deep dive on one specific vendor — use `company-profile` instead.
 
 ## Inputs
@@ -97,7 +97,7 @@ Return:
 - Bills grouped into overdue / due this week / due this month / due later, each bill showing vendor name, amount, currency, and due date.
 - A running cumulative total per bucket (and, if useful, at key dates within a bucket), so the user can see cash outflow building up over time.
 - Whether the picture is complete: which relevant connector categories (invoicing/bills, and banking or accounting to confirm what's actually been paid) are connected versus still missing, so the user knows whether this calendar reflects every bill they owe or a partial view gated by what's connected today. Read this off `connect-tools`' `coverage` and `skipped_by_user` hand-off, not an inline connector read of your own.
-- A one-line pointer to `expense-breakdown` for the biggest-bills (amount-ranked) framing, noting that this skill is date-ordered cash-planning rather than amount-ranked.
+- A one-line note that this list is date-ordered cash planning rather than amount-ranked, so a reader after "who do we owe the most" knows to ask for it re-sorted.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 8's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
 

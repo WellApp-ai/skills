@@ -25,7 +25,7 @@ Do not use this skill when:
 
 - The user wants a single invoice's currency in isolation — a plain lookup is enough; use `company-profile` or a direct query instead.
 - The user wants a cash position without any currency-risk framing — use the sibling `cash-position` skill instead; this skill specifically layers exchange-rate conversion and risk framing on top.
-- The user wants runway or burn rate — use `runway-calculator` instead.
+- The user wants runway or burn rate — use `runway` or `avg-burn` instead.
 
 ## Inputs
 

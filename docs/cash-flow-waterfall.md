@@ -5,18 +5,17 @@
   </picture>
 </p>
 
-# Cash Balance Trend
+# Cash Flow Bridge
 
-**See whether your cash is going up or down — as a real history, not a guess.**
+**See how last month's balance became this one.**
 
 ## What it does
 
-Ask your AI assistant "is our cash going up or down?" and it pulls your real, synced bank balances over time — not a single snapshot, and never a forecast — and shows you exactly how your cash has moved: the dates, the balances, the currency, and the direction. If you want to know what's coming next, that's a different question (see the runway skill); this one only tells you what already happened.
+Ask your AI assistant why your balance changed, and it bridges the gap: opening position, total in, total out, closing position. Where the flows don't fully account for the movement between the two measured anchors, it tells you the residual instead of quietly adjusting a number to make the bridge balance.
 
 ## Required data in Well
 
-- **Banking connector** — *required.* This is where your real historical cash balances come from.
-- **More than one synced balance period per account** — *required for a trend.* A freshly connected account with only one snapshot has nothing to trend yet; the skill will say so plainly instead of guessing a direction.
+- **Banking connector** — *required.* Both ends of the bridge are measured bank balances.
 
 ## Composes onto
 
@@ -25,7 +24,7 @@ This skill delegates two setup steps to Well's atomic skills rather than repeati
 - **[`define-workspace`](define-workspace.md)** — pins which Well workspace the answer is for.
 - **[`connect-tools`](connect-tools.md)** — checks which of your bank / accounting / invoicing sources are connected.
 
-Install both alongside this one. The skill still runs without them: `define-workspace` and `connect-tools` each have an inline fallback. The series itself is already converted to the workspace base currency by `well_get_cash_position`, so no currency skill is involved.
+Install both alongside this one. The skill still runs without them — each step falls back to resolving things inline — but with them installed you get one consistent workspace and connection flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install all three together; if you download the `.skill` file on its own, grab those two as well.
 
 ---
 
@@ -44,7 +43,7 @@ Install the following official skills from Well.
 **Instructions**:
 
 1. Fetch these files:
-    a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cash-balance-trend/SKILL.md
+    a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cash-flow-waterfall/SKILL.md
     b. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
     c. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
 2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
@@ -59,14 +58,14 @@ Install the following official skills from Well.
 
 Download the `.skill` file and double-click it — Claude Desktop installs it immediately, no drag-and-drop, no unzipping:
 
-[⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/cash-balance-trend.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/cash-balance-trend.zip)
+[⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/cash-flow-waterfall.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/cash-flow-waterfall.zip)
 
 #### Advanced
 
 Install directly from **[skills.sh/wellapp-ai](https://www.skills.sh/wellapp-ai)**:
 
 ```bash
-npx skills add wellapp-ai/skills --skill cash-balance-trend
+npx skills add wellapp-ai/skills --skill cash-flow-waterfall
 ```
 
 ---
