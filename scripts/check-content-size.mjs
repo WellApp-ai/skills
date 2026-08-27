@@ -1,19 +1,28 @@
 /**
  * Ballpark size warning for skills/*\/SKILL.md and atoms/*\/CONTENT.md.
  *
- * Nothing else in this repo measures content length, and a skill built from
- * several inlined atoms (see CONVENTIONS.md's Atoms section) can grow long
- * without anyone noticing until someone happens to read the whole thing.
- * Tokens are estimated at ~4 characters each — a standard rough ratio for
- * English prose, not a real tokenizer — because a real one would need a
- * dependency this check isn't worth adding. This is a warning, never a
- * failure: it does not affect `make validate`'s exit code.
+ * This is a hygiene ceiling, not a quality-degradation claim — no source
+ * ties a specific token count to measured LLM output quality at the sizes
+ * these files actually reach. Research turned up one real, Claude-specific
+ * cliff ("Prompt Design at Scale," arXiv 2607.19257: adherence to a stacked
+ * rule-set collapses with instruction *count*, not token length — ~62% at 20
+ * instructions, ~17% at 40), but that paper's N counted a synthetic prompt
+ * built with exactly one isolated instruction per line. A naive keyword-line
+ * count against this repo's actual prose (which routinely packs 2-3
+ * imperative words into one ordinary, non-bloated sentence) flagged all 26
+ * of 26 skills — not a usable signal, so that approach was tried and
+ * dropped rather than shipped as if it were evidence-backed when the
+ * counting method didn't actually match what the paper measured.
  *
- * An atom gets a stricter budget than a skill, not the same one: it is
- * inlined verbatim into every skill that composes it, so its size is paid
- * by each of them, not once. Budgeted at 10% of a skill's own allowance —
- * a skill composing more than a couple of atoms at 100% each would blow its
- * own budget before writing a word of its own logic.
+ * So: token count stays as a plain, non-empirical ceiling for keeping a file
+ * reviewable and roughly bounded — 30,000 tokens for a skill (~3% of
+ * Claude's 1M-token context), estimated at ~4 characters each (a rough
+ * ratio, not a real tokenizer). An atom gets 10% of that: it's inlined
+ * verbatim into every skill that composes it, so its size is paid by each
+ * of them, not once — a skill composing a few atoms at full skill-sized
+ * budgets each would blow its own budget before writing a line of its own
+ * logic. This is a warning, never a failure: it does not affect `make
+ * validate`'s exit code.
  *
  * Run through `make validate` (or `node scripts/check-content-size.mjs`).
  */
@@ -26,7 +35,7 @@ const SKILLS_DIR = join(ROOT, "skills");
 const ATOMS_DIR = join(ROOT, "atoms");
 
 const CHARS_PER_TOKEN = 4;
-const SKILL_BUDGET_TOKENS = 8000;
+const SKILL_BUDGET_TOKENS = 30000;
 const ATOM_BUDGET_RATIO = 0.1;
 const ATOM_BUDGET_TOKENS = Math.round(SKILL_BUDGET_TOKENS * ATOM_BUDGET_RATIO);
 
