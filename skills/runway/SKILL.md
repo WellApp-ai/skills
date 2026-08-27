@@ -78,6 +78,7 @@ Both ship with the `well-skills` plugin. This skill is also installable on its o
    - `"infinite"` → cash is positive and the workspace isn't burning (net inflow); say so explicitly — this is "not applicable / cash-flow positive," not a divide-by-zero.
    - `"insufficient_data"` → not enough connected cash/transaction data to compute. Treat this the same as step 7's fallback below — don't retry the same call expecting a different answer.
    - `partial: true` means some accounts or transactions were excluded from the computation (e.g. a missing FX rate) — surface the `excluded` counts and any `hints` as a caveat rather than presenting the number as unconditionally complete.
+   - `change` / `trend` are present only when a prior-month baseline exists, and they describe the **runway itself** — `change` is the signed month-over-month percentage change in the months figure, not in cash and not in burn. `trend` is good/bad polarity rather than raw sign, so a shortening runway is `"down"`. If you state the percentage, say what it is a change in; never attach it to the burn or cash figure sitting beside it.
 
 5. **Compute months + days.** The tool returns `months` as a single decimal figure (e.g. `7.3`), not pre-split into months/days:
    - `whole_months = floor(months)`; remaining days = `(months - whole_months) * 30.44` (average days per month).
@@ -118,6 +119,7 @@ Before finishing, verify:
 - Cash-flow-positive (`"infinite"`) and capped (`"capped"`) workspaces are reported with their dedicated phrasing, not as a division error or a raw number past 36 months.
 - The final answer states runway in **both months and days**, and shows the division behind it.
 - The trailing window used for burn (`avg_burn.trailing_months`) is stated, not left implicit.
+- If `change` was stated, it was named as a change in the runway itself — never attached to the burn or cash figure beside it — and `trend` was read as good/bad polarity rather than as the raw direction of the number.
 - Data staleness (`as_of`) is surfaced when it's more than a few days old.
 - If `partial: true`, the `excluded` counts and any `hints` were disclosed rather than silently absorbed into the number.
 - No forecast series, no spend breakdown, and no trend was composed here — each was pointed at by name instead.
