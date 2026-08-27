@@ -30,6 +30,7 @@
     "./skills/categorize-counterparties",
     "./skills/close-books",
     "./skills/company-profile",
+    "./skills/confirm-my-company",
     "./skills/connect-bank",
     "./skills/connect-tools",
     "./skills/define-period",
@@ -43,7 +44,6 @@
     "./skills/normalize-currency",
     "./skills/payment-invoice-lookup",
     "./skills/rank-clients-by-ltv",
-    "./skills/resolve-own-company",
     "./skills/runway-calculator",
     "./skills/show-missing-invoices"
   ],

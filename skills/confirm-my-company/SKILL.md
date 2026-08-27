@@ -1,10 +1,10 @@
 ---
-name: resolve-own-company
+name: confirm-my-company
 requires: [define-workspace]
 description: Resolve which company in a Well workspace is the user's own legal entity — the `own_company` pointer that decides which side of an invoice is a payable and which is a receivable — fold in its duplicate records, and hand the confirmed identity off as a typed result; and, when asked to persist it, set the anchor via `well_set_own_company` on the user's explicit confirmation. Use when a Well skill needs to tell its own invoices from a counterparty's, when the user asks "which company is mine" or "set our company to X", or when `workspaces.own_company` is null, missing from the schema, or ambiguous. Setting the anchor is an accounting-critical, admin-only write, taken only on an explicit confirmation and never inferred. Do not use to pick the workspace, to look up an arbitrary company by name, to merge or edit duplicate company records in Well, or to compute any financial figure.
 ---
 
-# Resolve Own Company with Well
+# Confirm My Company with Well
 
 ## Purpose
 
