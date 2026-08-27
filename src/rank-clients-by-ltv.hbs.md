@@ -58,7 +58,7 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 
 3. **Verify the data itself has landed.** `connect-tools` reports connections, not rows — a connector can be connected and still have delivered nothing this skill can use. Spot-check what this skill actually reads: a 1-row `well_query_records` read on `invoices`. Zero rows means the workspace has no invoices synced yet — say so and stop, rather than presenting an empty ranking as a real one.
 
-4. **Resolve your own company.** {{> confirm-my-company purpose="to count only the invoices you issued" consequence="ranks the wrong side of the invoice" foldCounterparties=true onDecline="state plainly that the ranking can't isolate this workspace's own paid invoices until it's set"}}
+4. **Resolve your own company.** {{> confirm-my-company purpose="to count only the invoices you issued" consequence="ranks the wrong side of the invoice" foldAliases=true foldCounterparties=true onDecline="state plainly that the ranking can't isolate this workspace's own paid invoices until it's set"}}
    - `resolution: unresolved` means the user declined to confirm. Say plainly that the ranking can't isolate this workspace's own paid invoices until it's set, and stop rather than ranking both sides together.
 
 5. **Resolve the time window.** Default to **all-time** (this is a cumulative "to date" ranking). If the user names a window (e.g. "this year"), use it and filter on `issue_date`. State explicitly which window was used in the output either way.

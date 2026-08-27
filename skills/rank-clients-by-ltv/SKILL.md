@@ -138,6 +138,7 @@ Unresolved → ask once. Query `companies` for the workspace and ask which one i
 The answer holds for this run only → `resolution: user_confirmed`, `persisted: false`. If the user wants it set permanently, point them at `<well-app-base-url>/workspaces/<workspace_id>`, where the picker in the Well app writes it.
 If the user declines, return `resolution: unresolved` and restate "state plainly that the ranking can't isolate this workspace's own paid invoices until it's set" so they know what they still get — never fall back to a guess.
 
+Fold in duplicate company records: one legal entity often has several `companies` rows differing only by a legal-form prefix/suffix, punctuation, or accents. Normalize both sides identically — Unicode NFD, strip combining marks, lowercase, replace punctuation/separators with a space, collapse whitespace, trim — then treat a pair as a candidate when *either* normalized name contains the other (containment is directional: test both ways, or an alias like an `EI-` prefix is missed one direction). Propose the candidates, take an explicit yes before treating the confirmed set as one identity, and flag the duplicate as worth fixing in Well. Never merge silently.
 Run the same both-direction, normalized comparison among the *other* companies too, and propose those alias sets as well — an unmerged counterparty alias splits one party's invoices across two rows and understates them.
 
 Emit the hand-off:
