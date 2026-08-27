@@ -185,12 +185,11 @@ step is skipped or re-run.
      friction this skips. The gate lives here, in the close flow; `connect-bank` itself stays
      idempotent and unchanged.
    - **Bank missing, in error, or needs reconnect** → run `connect-bank` (its default `flow_step`)
-     with the pinned `workspace_id`, `required: false`, `purpose: "to close this workspace's books"`,
-     and close-context card wording (see step 4). Its card renders and the turn ends on the user's
-     Continue; take its typed `state` when the flow resumes. The bank is the only connection the close
-     treats as a blocker, but it does not gate the *start* — an unsynced bank is a blocker to clear
-     later, never a start refusal. No close tool repairs a bank connection; connecting or fixing it
-     happens on the connector surface.
+     with the pinned `workspace_id`, `required: false`, and `purpose: "to close this workspace's
+     books"`. Its card renders and the turn ends on the user's Continue; take its typed `state` when
+     the flow resumes. The bank is the only connection the close treats as a blocker, but it does not
+     gate the *start* — an unsynced bank is a blocker to clear later, never a start refusal. No close
+     tool repairs a bank connection; connecting or fixing it happens on the connector surface.
    - If `connect-tools` isn't installed for the coverage read, read
      `well_list_connectors({ kind: bank })` yourself for the bank row; if `connect-bank` isn't
      installed either, report the bank state from that row without blocking.
