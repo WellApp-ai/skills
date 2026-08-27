@@ -37,6 +37,11 @@ Handlebars.registerHelper("list", (value) =>
     .filter(Boolean),
 );
 
+// For a `mode`-style string-enum prop, where a caller's value picks between
+// more than two mutually exclusive prose branches — `{{#if}}` alone only
+// tests truthiness, not which value.
+Handlebars.registerHelper("eq", (a, b) => a === b);
+
 function splitFrontmatter(source, label) {
   const match = source.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
   if (!match) throw new Error(`${label}: missing frontmatter block`);
