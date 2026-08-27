@@ -99,35 +99,11 @@ Return:
 `_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
 never reaches you, so you cannot tell a host that drew the card from one that did not.
 Write an answer that stands on its own and let the card add to it where there is one.
-State the figures in text regardless — you cannot know whether anything drew them. What you must not add is a second rendering of what a card already
-shows; where a visual the tool does not draw genuinely reads better, compose one and
-style it with the tokens under **Styling a composed view** below.
+State the figures in text regardless — you cannot know whether anything drew them. What
+you must not add is a second rendering of what a card already shows. This skill has no
+tool of its own yet, so answer in prose and a markdown table — do not compose a styled
+visual; Well's own surfaces own how Well data is drawn.
 
-## Styling a composed view
-
-<!-- generated: well tokens — edit design-system/well-tokens.css, then `make refresh` -->
-
-Well renders dark. A view you compose should read as the same product, not as a page
-that happens to hold the same numbers.
-
-| Role | Value |
-| --- | --- |
-| Page background | `#161616` |
-| Card surface | `#1c1c1c` |
-| Border | `#2e2e2e` |
-| Primary text | `#ededed` |
-| Secondary text | `#a0a0a0` |
-| Accent | `#00bfff` |
-| Positive | `#4cc38a` |
-| Negative | `#ff6369` |
-| Series, in order | `#52a9ff`, `#4cc38a`, `#e9a23b`, `#a78bfa`, `#4ec9b0`, `#e36a8a` |
-
-Corners `12px`, gap `12px`, body text 14px, numbers tabular.
-A card is a header, then the body, then an action row — the counter first and the
-primary action last. State every figure in text as well as in the drawing: a chart the
-host cannot render must not take the answer with it.
-
-<!-- /generated -->
 
 ## Quality checks
 
