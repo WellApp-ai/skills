@@ -184,7 +184,7 @@ Verify before moving on: the single-currency shortcut was taken only when that c
 Return:
 
 - The home/reporting currency and how it was determined (asked vs. inferred from workspace data).
-- A per-currency exposure table: original amount, converted home-currency amount, the rate and rate_date used, and % of total exposure. `well_query_records` ships its own card, and that card renders these rows — so do not restate them in prose. It draws no chart, so the form is yours to judge on its merits: a pie or donut chart is the natural fit for a composition at a point in time, so reach for it when the host supports it and prose alone would read worse. Do not stop to ask table-or-chart first.
+- A per-currency exposure table: original amount, converted home-currency amount, the rate and rate_date used, and % of total exposure. `well_query_records` ships its own card, and that card renders these rows — so do not restate them in prose. It draws no chart, and neither do you: this skill has no tool of its own, so the answer is the table and the prose around it.
 - The as-of date the exposure and rates were computed against.
 - Whether the picture is complete: which relevant connector categories (banking for cash exposure, invoicing/bills for receivable and payable exposure) are connected versus still missing — with only one of the two connected, say plainly that this is cash-only or invoice-only exposure rather than their full currency risk.
 - A one-line pointer to `cash-position` for the plain cash total without the currency-risk framing.

@@ -25,8 +25,6 @@ validate:
 # never touches what `build` zips. `validate`/`--check` only enforces
 # skills/*/SKILL.md staying current — the atom artifact is never committed,
 # so there's nothing on disk to compare it against in a fresh checkout.
-# The `styling` atom also folds in what used to be scripts/generate-style-blocks.mjs —
-# its content is generated from design-system/well-tokens.css, not a consumer's args.
 compile:
 	node scripts/compile.mjs
 
