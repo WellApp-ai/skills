@@ -15,14 +15,15 @@
  * counting method didn't actually match what the paper measured.
  *
  * So: token count stays as a plain, non-empirical ceiling for keeping a file
- * reviewable and roughly bounded — 30,000 tokens for a skill (~3% of
- * Claude's 1M-token context), estimated at ~4 characters each (a rough
- * ratio, not a real tokenizer). An atom gets 10% of that: it's inlined
- * verbatim into every skill that composes it, so its size is paid by each
- * of them, not once — a skill composing a few atoms at full skill-sized
- * budgets each would blow its own budget before writing a line of its own
- * logic. This is a warning, never a failure: it does not affect `make
- * validate`'s exit code.
+ * reviewable and roughly bounded — 50,000 tokens for a skill (~5% of
+ * Claude's 1M-token context, a round number chosen as a common-sense outer
+ * bound rather than derived from any measured degradation point), estimated
+ * at ~4 characters each (a rough ratio, not a real tokenizer). An atom gets
+ * 10% of that: it's inlined verbatim into every skill that composes it, so
+ * its size is paid by each of them, not once — a skill composing a few
+ * atoms at full skill-sized budgets each would blow its own budget before
+ * writing a line of its own logic. This is a warning, never a failure: it
+ * does not affect `make validate`'s exit code.
  *
  * Run through `make validate` (or `node scripts/check-content-size.mjs`).
  */
@@ -35,7 +36,7 @@ const SKILLS_DIR = join(ROOT, "skills");
 const ATOMS_DIR = join(ROOT, "atoms");
 
 const CHARS_PER_TOKEN = 4;
-const SKILL_BUDGET_TOKENS = 30000;
+const SKILL_BUDGET_TOKENS = 50000;
 const ATOM_BUDGET_RATIO = 0.1;
 const ATOM_BUDGET_TOKENS = Math.round(SKILL_BUDGET_TOKENS * ATOM_BUDGET_RATIO);
 
