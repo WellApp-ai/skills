@@ -88,7 +88,7 @@ user to add it at that URL, then retry. The close tools, and what each one does:
 - `well_get_schema` — call before reading any records root for the first time in a session; field
   names are workspace- and connector-dependent, never assume them.
 
-**Composed skills.** Six atomic Well skills own the setup this flow walks — invoke them in the order
+**Composed skills.** Seven atomic Well skills own the setup this flow walks — invoke them in the order
 below, don't reimplement them. The order mirrors the Well app's close flow so the chat and the app
 feel like one product. Only three things must be true **before `well_start_close`** — the own company
 is set, the fiscal year start is set, and the calendar month is named. The rest is ordered for parity

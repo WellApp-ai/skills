@@ -66,7 +66,7 @@ One page differs legitimately. [`docs/define-workspace.md`](docs/define-workspac
 
 ## Never blind find-and-replace a shared phrase
 
-`delegates N setup steps` currently appears across **24** docs pages at five different values of N — 7 pages at one, 8 at two, 4 at three, 4 at four, 1 at six. Recount rather than trusting this line: it has gone stale twice, once for a page added and once for a page removed. Only the pages whose dependency count actually changed may be touched. A repo-wide substitution to fix five pages will silently make ten wrong, and nothing validates prose.
+`delegates N setup steps` currently appears across **25** docs pages at five different values of N — 8 pages at one, 8 at two, 4 at three, 4 at four, 1 at seven. Recount rather than trusting this line: it has gone stale twice, once for a page added and once for a page removed. Only the pages whose dependency count actually changed may be touched. A repo-wide substitution to fix five pages will silently make ten wrong, and nothing validates prose.
 
 The same applies to `Install all N alongside this one`, `install all N+1 together`, and `grab those N as well`.
 
