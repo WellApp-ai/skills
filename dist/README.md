@@ -6,4 +6,4 @@ A skill that keeps step bricks under `references/` ships none of them as separat
 
 That hook only runs if you've set it up once: `make install`.
 
-Don't edit these files directly — edit the source under [`skills/`](../skills/) instead. Repo conventions for doing that live in [`CONVENTIONS.md`](../CONVENTIONS.md). Download links and descriptions live in the [root README](../README.md#claude-desktop).
+Don't edit these files directly — edit the source under [`skills/`](../skills/) instead. **Exception:** a skill compiled from an atoms template (check for a matching `src/<name>.hbs.md`) is generated too — edit the `.hbs.md` source, not `skills/<name>/SKILL.md`; the pre-commit hook rejects a commit that hand-edits a compiled skill's output without touching its source. Repo conventions for doing that live in [`CONVENTIONS.md`](../CONVENTIONS.md). Download links and descriptions live in the [root README](../README.md#claude-desktop).
