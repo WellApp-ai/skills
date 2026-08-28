@@ -95,14 +95,11 @@ Return:
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 8's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
 
-**How this reaches the user.** A Well MCP tool that ships a widget attaches
-`_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
-never reaches you, so you cannot tell a host that drew the card from one that did not.
-Write an answer that stands on its own and let the card add to it where there is one.
-State the figures in text regardless — you cannot know whether anything drew them. What
-you must not add is a second rendering of what a card already shows. This skill has no
-tool of its own yet, so answer in prose and a markdown table — do not compose a styled
-visual; Well's own surfaces own how Well data is drawn.
+**How this reaches the user.** This skill has no Well MCP tool of its own, so no card is
+drawn for it on any host — the widget-disclosure reasoning the tool-backed skills carry
+does not apply here. Answer in prose and a markdown table, and state every figure in the
+text. Do not compose a styled visual: Well's own surfaces own how Well data is drawn, and
+this answer is not one of them.
 
 
 ## Quality checks
