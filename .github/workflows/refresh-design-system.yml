@@ -1,0 +1,120 @@
+name: Refresh the design-system kit
+
+# design-system/well-tokens.css holds a copy of what @wellapp-ai/design-tokens builds, and
+# the skills that compose a visual carry those values inline. Both go stale whenever a
+# token moves. This pulls the published package weekly and opens a PR when they no longer
+# match. It opens a PR rather than pushing: the archives under dist/ are binary, and a
+# human should see what changed before it ships to installers.
+
+on:
+  schedule:
+    # Monday morning, after any weekend release has published.
+    - cron: "0 7 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: refresh-design-system
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  # The design-tokens package grants this repository Actions read access, so the
+  # job's own GITHUB_TOKEN can pull it. Without this scope the token carries no
+  # package rights and npm fails at the registry.
+  packages: read
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      # Pinned, because the refresh branch is shared and this job force-pushes it.
+      # An unpinned checkout takes whatever ref triggered the run, so validating a
+      # workflow change by dispatching it against a feature branch rebuilt the bot's
+      # branch from that branch — carrying an unmerged commit into the refresh PR.
+      # The kit this job refreshes is always main's, whatever ref invoked it.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm ci
+
+      - name: Authenticate to GitHub Packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '@wellapp-ai:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=%s\n' \
+            "$GITHUB_TOKEN" > ~/.npmrc
+
+      # The registry answers 401 for an unauthenticated read and 404 when the token
+      # carries no rights to the package, so a lost grant surfaces here as a named
+      # failure rather than three steps later as an npm error about a tarball.
+      - name: Verify the package is readable
+        run: |
+          if ! npm view @wellapp-ai/design-tokens version \
+                 --registry=https://npm.pkg.github.com > /dev/null 2>&1; then
+            echo "::error::Cannot read @wellapp-ai/design-tokens. Confirm the package still grants Actions read access to this repository (package settings -> Manage Actions access)."
+            exit 1
+          fi
+
+      - name: Refresh the kit and rebuild the archives
+        run: make refresh
+
+      # `make refresh` already rebuilt; this proves the committed state is what the
+      # published package produces, so a PR is never opened on a half-applied refresh.
+      - name: Verify the kit now matches
+        run: make refresh-check
+
+      - name: Validate
+        run: node scripts/check-skill-frontmatter.js
+
+      - name: Open or update the refresh PR
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "Design-system kit is current; nothing to open."
+            exit 0
+          fi
+          VERSION=$(npm view @wellapp-ai/design-tokens version --registry=https://npm.pkg.github.com)
+          # One branch for every refresh, not one per version. A per-version branch
+          # leaves an unreviewed refresh open when the next release lands, so the
+          # queue grows by one PR per release instead of the newest superseding the
+          # last. The version stays in the title, the body, and the commit.
+          BRANCH="bot/refresh-design-system"
+          TITLE="chore(design-system): refresh the tokens from design-tokens@${VERSION}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add -A
+          git commit -m "chore(design-system): refresh the tokens from @wellapp-ai/design-tokens@${VERSION}"
+          # A lease needs a value to hold the remote to, and a fresh checkout that
+          # never fetched this branch has none — git rejects an unqualified
+          # --force-with-lease as stale info exactly when the branch already exists,
+          # which is every run after the first unreviewed refresh. Fetch it, then
+          # name the observed SHA. When the branch is absent the push creates it and
+          # there is nothing to protect.
+          if git fetch --quiet origin "$BRANCH" 2>/dev/null; then
+            git push -u origin "$BRANCH" --force-with-lease="$BRANCH:$(git rev-parse FETCH_HEAD)"
+          else
+            git push -u origin "$BRANCH"
+          fi
+          {
+            echo "The published \`@wellapp-ai/design-tokens\` no longer matches \`design-system/well-tokens.css\` or the token blocks generated from it."
+            echo
+            echo "Regenerated with \`make refresh\`, which rewrote the token blocks in the three composing skills and rebuilt every \`dist/\` archive."
+            echo
+            echo "Opened by \`.github/workflows/refresh-design-system.yml\`. A later run replaces this branch rather than opening a second PR."
+          } > /tmp/pr-body.md
+          NUMBER=$(gh pr list --head "$BRANCH" --state open --json number -q '.[].number' | head -1)
+          if [ -n "$NUMBER" ]; then
+            gh pr edit "$NUMBER" --title "$TITLE" --body-file /tmp/pr-body.md
+          else
+            gh pr create --base main --head "$BRANCH" --title "$TITLE" --body-file /tmp/pr-body.md
+          fi

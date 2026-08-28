@@ -27,8 +27,13 @@ jobs:
         with:
           node-version: 22
 
+      - run: npm ci
+
       - name: Skill frontmatter parses
         run: node scripts/check-skill-frontmatter.js
+
+      - name: Atoms and compiled skills are current
+        run: node scripts/compile.mjs --check
 
       # Every skill the plugin distributes must exist, and every skill directory must be
       # distributed. A directory added without its manifest entry ships to nobody.
