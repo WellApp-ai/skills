@@ -9,13 +9,6 @@
  * forgotten property fails loud at compile time rather than shipping a silently
  * incomplete skill.
  *
- * The `styling` atom is the one exception: its content comes entirely from
- * design-system/well-tokens.css, not from a consumer's hash args, so it's
- * pre-rendered once against the parsed tokens and registered as a plain string
- * partial. This replaces the old scripts/generate-style-blocks.mjs, which
- * rewrote a marker-delimited region of each skill's SKILL.md in place — one
- * mechanism now, not two.
- *
  * Run through `make compile` (or `node scripts/compile.mjs`). `--check` fails
  * instead of writing, for CI and `make validate`. `--watch` (also `make watch`)
  * recompiles on every source change, and never watches its own output paths.
@@ -79,50 +72,6 @@ function atomNames() {
     .map((e) => e.name);
 }
 
-// --- the `styling` atom: the one atom whose context is computed, not supplied ---
-//
-// Every other atom's render context comes from either a consumer's hash-args
-// (the real render) or its own `placeholders:` frontmatter (the dev-artifact
-// render). `styling` has no consumer-supplied properties at all — its content
-// is generated wholesale from design-system/well-tokens.css, the same source
-// for both renders. `COMPUTED_CONTEXT` names that one exception once, instead
-// of an `atom === "styling"` check repeated in every function that needs it.
-
-const TOKENS_CSS = join(ROOT, "design-system/well-tokens.css");
-
-/** Roles a composed view actually needs, in the order it needs them. */
-const STYLING_ROLES = [
-  ["Page background", "well-bg"],
-  ["Card surface", "well-bg-subtle"],
-  ["Border", "well-border"],
-  ["Primary text", "well-text"],
-  ["Secondary text", "well-text-2"],
-  ["Accent", "well-accent"],
-  ["Positive", "well-success"],
-  ["Negative", "well-danger"],
-];
-const STYLING_SERIES = ["well-cat-1", "well-cat-2", "well-cat-3", "well-cat-4", "well-cat-5", "well-cat-6"];
-
-function stylingContext() {
-  const css = readFileSync(TOKENS_CSS, "utf8");
-  const tokens = new Map();
-  for (const [, name, value] of css.matchAll(/--(well-[a-z0-9-]+)\s*:\s*([^;]+);/g)) {
-    tokens.set(name, value.trim());
-  }
-  const need = (name) => {
-    const value = tokens.get(name);
-    if (!value) throw new Error(`design-system/well-tokens.css no longer defines --${name}`);
-    return value;
-  };
-  return {
-    roles: STYLING_ROLES.map(([label, name]) => ({ label, value: need(name) })),
-    seriesJoined: STYLING_SERIES.map((name) => `\`${need(name)}\``).join(", "),
-    radius: need("well-radius"),
-    gap: need("well-gap"),
-  };
-}
-
-const COMPUTED_CONTEXT = { styling: stylingContext };
 
 // --- compiling atoms and consumers ---
 
@@ -131,11 +80,7 @@ function registerPartials() {
     const path = join(ATOMS_DIR, atom, "CONTENT.md");
     const { body } = splitFrontmatter(readFileSync(path, "utf8"), `atoms/${atom}/CONTENT.md`);
     const compiled = Handlebars.compile(body, { strict: true, noEscape: true });
-    const computeContext = COMPUTED_CONTEXT[atom];
-    // A computed atom has no consumer-supplied properties, so it's rendered
-    // once here and registered as a plain string — every {{> styling}} call
-    // gets identical, already-resolved output regardless of context.
-    Handlebars.registerPartial(atom, computeContext ? compiled(computeContext()) : compiled);
+    Handlebars.registerPartial(atom, compiled);
   }
 }
 
@@ -144,8 +89,7 @@ function renderDevArtifacts() {
     const label = `atoms/${atom}/SKILL.md`;
     const path = join(ATOMS_DIR, atom, "CONTENT.md");
     const { frontmatter, body } = splitFrontmatter(readFileSync(path, "utf8"), `atoms/${atom}/CONTENT.md`);
-    const computeContext = COMPUTED_CONTEXT[atom];
-    const context = computeContext ? computeContext() : parsePlaceholders(frontmatter);
+    const context = parsePlaceholders(frontmatter);
     const rendered = Handlebars.compile(body, { strict: true, noEscape: true })(context);
     const content = `---\n${stripPlaceholdersBlock(frontmatter)}\n---\n${rendered}`;
     return { path: join(ATOMS_DIR, atom, "SKILL.md"), content, label };

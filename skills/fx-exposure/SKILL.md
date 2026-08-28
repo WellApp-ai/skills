@@ -184,43 +184,18 @@ Verify before moving on: the single-currency shortcut was taken only when that c
 Return:
 
 - The home/reporting currency and how it was determined (asked vs. inferred from workspace data).
-- A per-currency exposure table: original amount, converted home-currency amount, the rate and rate_date used, and % of total exposure. `well_query_records` ships its own card, and that card renders these rows — so do not restate them in prose. It draws no chart, so the form is yours to judge on its merits: a pie or donut chart is the natural fit for a composition at a point in time, so reach for it when the host supports it and prose alone would read worse. Do not stop to ask table-or-chart first.
+- A per-currency exposure table: original amount, converted home-currency amount, the rate and rate_date used, and % of total exposure. `well_query_records` ships its own card, and that card renders these rows — so do not restate them in prose. It draws no chart, and neither do you: this skill has no tool of its own, so the answer is the table and the prose around it.
 - The as-of date the exposure and rates were computed against.
 - Whether the picture is complete: which relevant connector categories (banking for cash exposure, invoicing/bills for receivable and payable exposure) are connected versus still missing — with only one of the two connected, say plainly that this is cash-only or invoice-only exposure rather than their full currency risk.
 - A one-line pointer to `cash-position` for the plain cash total without the currency-risk framing.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. Skip it rather than force it in.
 - If step 8's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
 
-**How this reaches the user.** A Well MCP tool that ships a widget attaches
-`_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
-never reaches you, so you cannot tell a host that drew the card from one that did not.
-Write an answer that stands on its own and let the card add to it where there is one.
-State the figures in text regardless — you cannot know whether anything drew them. What you must not add is a second rendering of what a card already
-shows; where a visual the tool does not draw genuinely reads better, compose one and
-style it with the tokens under **Styling a composed view** below.
-
-## Styling a composed view
-
-
-Well renders dark. A view you compose should read as the same product, not as a page
-that happens to hold the same numbers.
-
-| Role | Value |
-| --- | --- |
-| Page background | `#161616` |
-| Card surface | `#1c1c1c` |
-| Border | `#2e2e2e` |
-| Primary text | `#ededed` |
-| Secondary text | `#a0a0a0` |
-| Accent | `#00bfff` |
-| Positive | `#4cc38a` |
-| Negative | `#ff6369` |
-| Series, in order | `#52a9ff`, `#4cc38a`, `#e9a23b`, `#a78bfa`, `#4ec9b0`, `#e36a8a` |
-
-Corners `12px`, gap `12px`, body text 14px, numbers tabular.
-A card is a header, then the body, then an action row — the counter first and the
-primary action last. State every figure in text as well as in the drawing: a chart the
-host cannot render must not take the answer with it.
+**How this reaches the user.** This skill has no Well MCP tool of its own, so no card is
+drawn for it on any host — the widget-disclosure reasoning the tool-backed skills carry
+does not apply here. Answer in prose and a markdown table, and state every figure in the
+text. Do not compose a styled visual: Well's own surfaces own how Well data is drawn, and
+this answer is not one of them.
 
 ## Quality checks
 
