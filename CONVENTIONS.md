@@ -84,7 +84,7 @@ If Slack is not installed as an MCP, do not failover to writing it in the repo. 
 
 ## Sweep after any merge — concurrent PRs drift
 
-A PR that adds a convention to every skill and a PR that adds a new skill will not know about each other. PR #22 added the `**How this reaches the user.**` widget-disclosure block to every skill that existed at the time, and merged twelve minutes before PR #21 added `normalize-currency` — so the newest skill shipped without the newest convention, and `main` inherited a gap neither PR was wrong about. All 23 skills carry that block today. The `well-design-system` skill that used to be the exception is gone: the design system is Well's brand rather than a capability a user installs, so its tokens are now generated into the three skills that compose a visual and it is not distributed.
+A PR that adds a convention to every skill and a PR that adds a new skill will not know about each other. PR #22 added the `**How this reaches the user.**` widget-disclosure block to every skill that existed at the time, and merged twelve minutes before PR #21 added `normalize-currency` — so the newest skill shipped without the newest convention, and `main` inherited a gap neither PR was wrong about. All 23 skills carry that block today. The `well-design-system` skill that used to be the exception is gone, and so is the token generation that replaced it: every FP&A figure now has its own Well MCP tool and card, and a skill without a tool answers in prose and a markdown table rather than composing a styled visual of its own.
 
 After merging either kind of change, sweep the convention across every skill rather than trusting the PR that introduced it.
 

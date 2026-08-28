@@ -97,7 +97,7 @@ All four ship with the `well-skills` plugin. This skill is also installable on i
 Return:
 
 - The time window used (all-time by default), stated explicitly.
-- A ranked table: customer name, total paid revenue, currency, and share of total paid revenue across all ranked customers. `well_query_records` ships its own card, and that card renders these rows — so do not restate them in prose. It draws no chart, so the form is yours to judge on its merits: a horizontal bar chart is the natural fit for a comparison across customers, so reach for it when the host supports it and prose alone would read worse. Do not stop to ask table-or-chart first. Back any visual with the exact figures.
+- A ranked table: customer name, total paid revenue, currency, and share of total paid revenue across all ranked customers. `well_query_records` ships its own card, and that card renders these rows — so do not restate them in prose. It draws no chart, and neither do you: this skill has no tool of its own, so the answer is the table and the prose around it.
 - The as-of date the ranking was computed against.
 - An explicit one-line caveat: this is realized paid-invoice revenue to date, not a predictive customer-lifetime-value model.
 - Whether the picture is complete: which relevant connector categories (invoicing/accounting) are connected versus still missing — read off `connect-tools`' `coverage` and `skipped_by_user` hand-off, not an inline connector read of your own — and whether the workspace's own company is set, read off `confirm-my-company`'s hand-off, so the user knows whether this ranking reflects their full revenue history or a partial view gated by what's connected today.
@@ -105,36 +105,11 @@ Return:
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 9's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
 
-**How this reaches the user.** A Well MCP tool that ships a widget attaches
-`_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
-never reaches you, so you cannot tell a host that drew the card from one that did not.
-Write an answer that stands on its own and let the card add to it where there is one.
-State the figures in text regardless — you cannot know whether anything drew them. What you must not add is a second rendering of what a card already
-shows; where a visual the tool does not draw genuinely reads better, compose one and
-style it with the tokens under **Styling a composed view** below.
-
-## Styling a composed view
-
-
-Well renders dark. A view you compose should read as the same product, not as a page
-that happens to hold the same numbers.
-
-| Role | Value |
-| --- | --- |
-| Page background | `#161616` |
-| Card surface | `#1c1c1c` |
-| Border | `#2e2e2e` |
-| Primary text | `#ededed` |
-| Secondary text | `#a0a0a0` |
-| Accent | `#00bfff` |
-| Positive | `#4cc38a` |
-| Negative | `#ff6369` |
-| Series, in order | `#52a9ff`, `#4cc38a`, `#e9a23b`, `#a78bfa`, `#4ec9b0`, `#e36a8a` |
-
-Corners `12px`, gap `12px`, body text 14px, numbers tabular.
-A card is a header, then the body, then an action row — the counter first and the
-primary action last. State every figure in text as well as in the drawing: a chart the
-host cannot render must not take the answer with it.
+**How this reaches the user.** This skill has no Well MCP tool of its own, so no card is
+drawn for it on any host — the widget-disclosure reasoning the tool-backed skills carry
+does not apply here. Answer in prose and a markdown table, and state every figure in the
+text. Do not compose a styled visual: Well's own surfaces own how Well data is drawn, and
+this answer is not one of them.
 
 ## Quality checks
 

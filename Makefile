@@ -1,4 +1,4 @@
-.PHONY: install validate compile watch build refresh refresh-check
+.PHONY: install validate compile watch build
 
 install:
 	git config core.hooksPath .githooks
@@ -25,8 +25,6 @@ validate:
 # never touches what `build` zips. `validate`/`--check` only enforces
 # skills/*/SKILL.md staying current — the atom artifact is never committed,
 # so there's nothing on disk to compare it against in a fresh checkout.
-# The `styling` atom also folds in what used to be scripts/generate-style-blocks.mjs —
-# its content is generated from design-system/well-tokens.css, not a consumer's args.
 compile:
 	node scripts/compile.mjs
 
@@ -41,14 +39,3 @@ watch:
 # rest) — `compile` runs first so skills/*/SKILL.md is current before zipping.
 build: compile
 	@bash scripts/build-dist.sh
-
-# design-system/well-tokens.css is a copy of what @wellapp-ai/design-tokens builds; the
-# `styling` atom (compile) generates the values from it into the skills that compose a
-# visual. The design system is not itself a skill — it is Well's brand, not a capability
-# a user installs. Reads npm.pkg.github.com and needs a token.
-refresh:
-	node scripts/refresh-design-system.mjs
-	$(MAKE) build
-
-refresh-check:
-	node scripts/refresh-design-system.mjs --check
