@@ -89,7 +89,7 @@ Call each list or read tool once per step, and render at most one widget card pe
 
 4. **State the bank once, then end the turn on the card.** One line: the bank's state and why it matters for the job (`purpose`) — for a missing-invoice or close job, that settled bank spend is what the gaps are measured against — then one closing line: connect the bank from the card if it is missing, then click Continue. Do not restate the banks or re-render them as a list or table: the card carries the tiles and the install links. Even a cleanly connected bank shows its card and stops here, so the user sees and confirms the feed the flow is about to measure against. Nothing else in the turn.
    - When the user asked about the bank standalone (nothing follows), the bank line ends the turn — the card is on screen, and there is nothing to chain.
-   - In a text-only host, give the `install_url` for at most three banks — the user's hint first (found with `q` when it is outside the default view), then the `is_preselected` rows — and treat the user's next message as the answer.
+   - In a text-only host, give the `install_url` for at most three banks — the user's hint first (found with `q` when it is outside the default view), then the `is_preselected` rows — and treat the user's next message as the answer. A named bank carrying no `install_url` — an available institution the catalog holds without a slug — needs its own `q` call to get one. This step's `kind: "bank"` read carries no `install_all_url`, so call `well_list_connectors({ workspace_id, kind: "bank", q })` with a `q` narrow enough that the whole result fits one link, and hand the user that call's `install_all_url`. Never offer such a row a link from this step's own result, and never build one yourself. Nothing renders in a text-only host, so the second read costs no second card.
    - If the user names a bank that is not in the default view, search it with `q` before saying Well cannot connect it. A row whose `status` is not `available` is not connectable today — say so and offer the nearest available bank connector rather than a dead link.
 
 5. **Resolve the next message after the card.** In this order, and never by re-asking:
@@ -142,6 +142,7 @@ Before finishing, verify:
 - A typed "I connected it" got one fresh read in that turn, and nothing was re-asked in text.
 - The bank state was stated once; the banks were not narrated or re-tabulated when the card was on screen.
 - A bank the user named was searched with `q` before any "Well cannot connect it" claim.
+- In a text-only host, every bank the answer offered carried a real link: an `install_url` where the row had one, and a narrowed `q` call's `install_all_url` where the row was an available institution without a slug. No bank was named with no link, and no link was built by hand.
 - On a transient failure the call was retried once; a second failure returned `resolution: unavailable` with `state: null` and the workspace link, not a guess.
 - The hand-off facts cover `state`, `connectors`, `install_url`, `skipped_by_user`, and `resolution`, the bank-only coverage was said in plain words, and no yaml, JSON, or fenced code block appears anywhere in the answer.
 - The listing call carried `kind: "bank"`, and a card that visibly showed non-bank tools was treated as an unscoped call and redone scoped.
