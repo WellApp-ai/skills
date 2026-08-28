@@ -8,22 +8,25 @@
 # so it can't be staged and never appears in the staleness check below —
 # only skills/*/SKILL.md, the shipped output, needs the hand-edit guard.
 if git diff --cached --name-only | grep -qE '^(skills|atoms|src)/'; then
-	# A skills/<name>/SKILL.md compiled from a src/*.hbs.md source that this
-	# commit doesn't touch can only be stale because someone hand-edited the
-	# generated file directly — `make build` below would silently overwrite
-	# that edit and stage the overwrite. Catch it here and fail loud instead,
-	# before anything is lost.
+	# A skills/<name>/SKILL.md can go stale two ways: its own src/*.hbs.md
+	# changed, or an atoms/*/CONTENT.md it composes changed — both expected,
+	# and both fixed by the rebuild below. A hand-edit is different: someone
+	# opened the generated file itself and staged that edit. Neither src nor
+	# atoms changing ever touches skills/*/SKILL.md on disk by itself, so the
+	# reliable hand-edit signal is whether the generated file itself is in
+	# the staged set — not whether its source template is. Catch that case
+	# here and fail loud before `make build` silently overwrites it.
 	staged=$(git diff --cached --name-only)
 	stale=$(node scripts/compile.mjs --check 2>&1 | grep '^stale: ' | sed 's/^stale: //')
 	for generated in $stale; do
 		case "$generated" in
-			skills/*/SKILL.md)
-				source="src/$(echo "$generated" | cut -d/ -f2).hbs.md" ;;
+			skills/*/SKILL.md) ;;
 			*) continue ;;
 		esac
-		if ! echo "$staged" | grep -qx "$source"; then
-			echo "error: $generated is generated from $source, which this commit doesn't touch." >&2
-			echo "It looks like $generated was hand-edited directly — edit $source instead, then run \`make compile\`." >&2
+		if echo "$staged" | grep -qx "$generated"; then
+			source="src/$(echo "$generated" | cut -d/ -f2).hbs.md"
+			echo "error: $generated doesn't match what compiling $source (and the atoms/ it composes) produces." >&2
+			echo "It looks like $generated was hand-edited directly — edit $source or the relevant atoms/*/CONTENT.md instead, then run \`make compile\`." >&2
 			exit 1
 		fi
 	done
