@@ -207,7 +207,7 @@ Before finishing, verify:
 
 ### Example request
 
-The fetch-missing-invoices flow calls connect-tools with `workspace_id` of Acme SAS, `kinds: [bank, accounting, invoicing]`, `purpose: "to fetch the invoices missing for March"`. The catalog comes back with a Qonto row — `direction: input`, `data_domains: ["bank"]`, `connection_status: enabled`, `last_successful_sync_at` set — and no other connected row.
+A month-end flow calls connect-tools with `workspace_id` of Acme SAS, `kinds: [bank, accounting, invoicing]`, `purpose: "to fetch the invoices missing for March"`. The catalog comes back with a Qonto row — `direction: input`, `data_domains: ["bank"]`, `connection_status: enabled`, `last_successful_sync_at` set — and no other connected row.
 
 ### Expected behavior
 

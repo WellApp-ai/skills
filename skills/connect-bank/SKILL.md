@@ -17,7 +17,7 @@ Use this skill when:
 - The user asks to connect or link a bank account ("connect my Qonto", "link my business account", "add my bank so you can see my spend").
 - The user asks whether the bank is connected, why transactions are missing, or why the bank shows an error or needs a reconnect.
 - A calling skill or flow (fetch missing invoices, close the books, a cash skill) needs settled bank spend in the workspace before it can continue.
-- The fetch-missing-invoices flow reaches its bank step — it always does, whatever `connect-tools` reported.
+- The fetch-missing-invoices flow reaches its bank step, which it does whenever the months that flow works on hold no bank transaction.
 
 ## When not to use this skill
 

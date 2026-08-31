@@ -8,7 +8,7 @@ description: Pin the calendar month or months — and the fiscal coordinates beh
 
 ## Purpose
 
-Fix which month or months a job works on, and make that selection live **server-side**, where the period-scoped tools read it. The period picker card's **Use** click writes the selection itself (it calls `well_switch_workspace` with `periods`) and prefills a confirmation — "Work on <Month Year> and <Month Year>" — in the user's composer; the user sends it, and that message is how the skill resumes. A typed month is written the same way the click writes it, by calling `well_switch_workspace({ periods })` directly. Once the selection is written, the later reads (`well_list_missing_invoices`, `well_preview_invoice_fetch`) are called **without** a periods argument — the server holds the user's selection. Read only otherwise: derive each month's fiscal coordinate, check for activity, and hand off. In Well's fetch-missing-invoices flow it runs after `define-workspace`, `connect-tools` and `connect-bank`.
+Fix which month or months a job works on, and make that selection live **server-side**, where the period-scoped tools read it. The period picker card's **Use** click writes the selection itself (it calls `well_switch_workspace` with `periods`) and prefills a confirmation — "Work on <Month Year> and <Month Year>" — in the user's composer; the user sends it, and that message is how the skill resumes. A typed month is written the same way the click writes it, by calling `well_switch_workspace({ periods })` directly. Once the selection is written, the later reads (`well_list_missing_invoices`, `well_preview_invoice_fetch`) are called **without** a periods argument — the server holds the user's selection. Read only otherwise: derive each month's fiscal coordinate, check for activity, and hand off. In Well's fetch-missing-invoices flow it runs straight after `define-workspace`, and that flow's bank step runs after it.
 
 **Two modes.** The default (`mode: select`) is everything above: the selection is written server-side and the period-scoped reads that follow omit their periods argument. A caller that *starts a run* from the month — a month-end close, where naming the calendar month **is** starting the close, so the month names the run directly — invokes `mode: collect` instead. In `collect` this skill collects **exactly one** calendar month through the same picker UX, treats the picker purely as month collection, and hands the raw `calendar_year` + `calendar_month` back for the caller to pass to its start tool. It is not the commit: the card's own **Use** click may still write a selection incidentally, but in `collect` that write is never the deliverable and is never relied on. The caller commits the period by starting its run.
 
@@ -168,7 +168,7 @@ Before finishing, verify:
 
 ### Example request
 
-The fetch-missing-invoices flow calls define-period with the Acme SAS `workspace_id`, `fiscal_year_start_month: 1`, `bank_state: connected`, `hint: "March"`, `purpose: "to fetch the invoices missing for that month"`. Today is 12 April 2026.
+The fetch-missing-invoices flow calls define-period with the Acme SAS `workspace_id`, `fiscal_year_start_month: 1`, `hint: "March"`, `purpose: "to fetch the invoices missing for that month"`. Today is 12 April 2026.
 
 ### Expected behavior
 
