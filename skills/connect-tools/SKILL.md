@@ -151,11 +151,11 @@ In `internal_check` that invariant does not hold and cannot: `well_list_connecto
 
 Return:
 
-- One line per requested kind: `bank`, `accounting`, `invoicing` — its state and the connector name(s) behind it (e.g. "Bank: connected — Qonto. Accounting: error — Pennylane needs a reconnect. Invoicing: missing.").
+- One line per requested kind: `bank`, `accounting`, `invoicing` — its state and the connector name(s) behind it (e.g. "Bank: connected to Qonto. Accounting: error, Pennylane needs a reconnect. Invoicing: missing.").
 - The hand-off, kept for the calling flow and never printed: `workspace_id`; per requested kind its `state` (`connected`, `connecting`, `error`, or `missing`), the connectors behind it, and the `install_url` to act on; `coverage`; `ack` — `true` once the Continue click (or a typed continue) arrived, `false` while the step still waits; `skipped_by_user`; and `required` echoed from the caller. `coverage` is `complete` when every requested kind is `connected` or `connecting`, `none` when NO requested kind is `connected` or `connecting` — a workspace whose every kind is in `error` is delivering no data, so it is `none`, not `partial` — and `partial` otherwise. Only the requested kinds count. The connectors behind a kind include any errored connector named alongside a connected one. `install_url` belongs to the row that kind's line names: the errored row on `error` — or on `connected` when an errored connector sits beside the live one — the first `available` `is_preselected` row on `missing`, and null when the kind is cleanly `connected` or `connecting`. Carry the result's `install_all_url` and `install_all_omitted` once beside the per-kind lines, never per kind, because both describe the whole result. Carry `install_all_url` only where your answer named every connector that link installs; where the result reached past them, carry the per-kind `install_url` links and no batch link, so the caller cannot offer a set it never described. Where you do carry it, it is the link the caller offers for every missing kind at once; the per-kind `install_url` then stays a reconnect, and the `install_all_omitted` rows keep their own. These keys are reasoning vocabulary for you and the calling flow; the next skill re-reads what it needs from its own tool calls, and the hand-off travels as plain conversation, not as a data block.
 - Connector coverage in plain words: this skill's coverage line IS the disclosure — say which of bank / accounting / invoicing are connected versus still missing so the calling flow and the user know whether what follows rests on a full picture.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. Skip it rather than force it in.
-- End with a one-line pointer to the next step, and the scope this run reported decides which one. On a `picked_vendors` run the connect step already follows the vendor pick, so the pointer goes forward, never back to a step that already ran: when the `deploy-agents` skill is installed, "Next: what Well would fetch for those vendors." On any other scope, when the `connect-bank` skill is installed: "Next: the bank feed gets its own check — that is what the missing-invoice list is measured against." Otherwise, when `define-period` is installed: "Which month or period should we work on?". Otherwise hand control back to the skill that called this one, or, when the user asked about connections on their own, stop after the coverage line.
+- End with a one-line pointer to the next step, and the scope this run reported decides which one. On a `picked_vendors` run the connect step already follows the vendor pick, so the pointer goes forward, never back to a step that already ran: when the `deploy-agents` skill is installed, "Next: what Well would fetch for those vendors." On any other scope, when the `connect-bank` skill is installed: "Next: the bank feed gets its own check. That is what the missing-invoice list is measured against." Otherwise, when `define-period` is installed: "Which month or period should we work on?". Otherwise hand control back to the skill that called this one, or, when the user asked about connections on their own, stop after the coverage line.
 - The whole answer stays a few plain sentences a non-technical user understands: what is connected, what is missing, and the next step. Never print yaml, JSON, or a fenced code block to the user.
 
 Do not return:
@@ -211,7 +211,7 @@ The fetch-missing-invoices flow calls connect-tools with `workspace_id` of Acme 
 
 ### Expected behavior
 
-One unscoped `well_list_connectors` call renders the card. Say: "Bank: connected — Qonto. Accounting and invoicing: not connected yet; I need them to know which March invoices are missing. Connect them from the card if you like, then click Continue." and end the turn. The user connects Pennylane from the card, clicks Continue, and sends the prefilled "Continue": that is the acknowledgment — move on to the bank step in one sentence, with no verification call. The hand-off keeps the coverage the card was read with; Pennylane's fresh connection shows up in the later steps' own reads.
+One unscoped `well_list_connectors` call renders the card. Say: "Bank: connected to Qonto. Accounting and invoicing: not connected yet; I need them to know which March invoices are missing. Connect them from the card if you like, then click Continue." and end the turn. The user connects Pennylane from the card, clicks Continue, and sends the prefilled "Continue": that is the acknowledgment — move on to the bank step in one sentence, with no verification call. The hand-off keeps the coverage the card was read with; Pennylane's fresh connection shows up in the later steps' own reads.
 
 ### Example request
 
@@ -219,7 +219,7 @@ Everything is already connected — bank, accounting, and invoicing all green.
 
 ### Expected behavior
 
-The card still renders and the step still stops. Say "Bank, accounting, and invoicing are all connected — that's everything this job needs. Click Continue when you're ready." and end the turn. Move on only when the "Continue" prefill (or a typed continue) arrives. Do not skip ahead because the coverage is green.
+The card still renders and the step still stops. Say "Bank, accounting, and invoicing are all connected. That's everything this job needs. Click Continue when you're ready." and end the turn. Move on only when the "Continue" prefill (or a typed continue) arrives. Do not skip ahead because the coverage is green.
 
 ### Example request
 
@@ -227,7 +227,7 @@ The card still renders and the step still stops. Say "Bank, accounting, and invo
 
 ### Expected behavior
 
-The question names one kind, so scope to it: `well_list_connectors({ workspace_id, kind: "accounting" })` — one scoped call, not a full catalog read. The card then names the accounting scope itself. "Accounting: error — Pennylane is authenticated but its last sync failed; reconnect it from the card." Standalone ask, nothing follows: stop after the coverage line, no acknowledgment needed. Hand off with `coverage: none` (no requested kind is delivering data) and the reconnect link; do not touch bank or invoicing.
+The question names one kind, so scope to it: `well_list_connectors({ workspace_id, kind: "accounting" })` — one scoped call, not a full catalog read. The card then names the accounting scope itself. "Accounting: error, Pennylane is authenticated but its last sync failed; reconnect it from the card." Standalone ask, nothing follows: stop after the coverage line, no acknowledgment needed. Hand off with `coverage: none` (no requested kind is delivering data) and the reconnect link; do not touch bank or invoicing.
 
 ### Example request
 
@@ -235,7 +235,7 @@ The question names one kind, so scope to it: `well_list_connectors({ workspace_i
 
 ### Expected behavior
 
-That row is a push-back destination, not the accounting data source. Report "Accounting: missing — Pennylane is set up for exporting entries, but its accounting sync is not connected", find the `input` row for Pennylane in the same result (or with `q: "pennylane"`), and let the card carry its install link. Do not report accounting as connected.
+That row is a push-back destination, not the accounting data source. Report "Accounting: missing. Pennylane is set up for exporting entries, but its accounting sync is not connected", find the `input` row for Pennylane in the same result (or with `q: "pennylane"`), and let the card carry its install link. Do not report accounting as connected.
 
 ### Example request
 
@@ -276,3 +276,24 @@ The same text-only host, after the user ticked Stripe, Shopify and Pennylane on 
 ### Expected behavior
 
 Name all three — Stripe, Shopify and Pennylane — and hand the one `install_all_url`. Every connector that link installs is a connector the answer names and the user chose, which is what earns the batch link. Do not print the rows' own `install_url` links beside it. Name any `install_all_omitted` row separately with its own `install_url`, because the batch link does not reach it. A `q` search earns the link the same way: where the user names one accounting tool, `well_list_connectors({ workspace_id, kind: "accounting", q: "Pennylane" })` returns the rows the answer names, and that call's `install_all_url` installs nothing wider.
+
+## Voice
+
+<!-- voice:begin -->
+Write like a brilliant, understated operations colleague. Hold the tone professional and casual at the same time, confident but never arrogant, credible but easy to follow, warm but never cute. This governs every message of the run, whichever step produced it. Precedence is fixed: when a step hands you an exact string to write, write it exactly as given, dashes and capitals included; these rules govern the prose you compose yourself.
+
+Lead with the outcome, then the detail behind it. Write short active sentences a non-technical reader understands. Use sentence case for the headings and labels you write yourself. Name a real button or card label exactly as the app renders it, such as Use, Validate, Continue, or Deploy, so the user reads the same word on screen. Prefer a concrete number or a real example over an abstract claim.
+
+Never write an em dash or an en dash. Use a period, a comma, or a colon instead. Never write an exclamation mark or an emoji. Keep an acknowledgement brief and specific, such as "Got it, pulling those invoices now." Skip preamble, superlatives, and self-praise.
+
+Drop the habits that make an answer sound generic:
+
+- Hedging transitions, such as "Furthermore", "Moreover", "Additionally", or "In today's fast-paced landscape".
+- Buzzwords, such as leverage, delve, harness, foster, revolutionize, revolutionise, streamline, optimize, optimise, seamless, game-changer, cutting-edge, best-in-class, world-class, unparalleled, disruptive, synergy, blockchain, and crypto.
+- Hollow contrast, such as "not just X, but Y".
+- Vague praise, such as powerful, robust, intelligent, frictionless, elegant, or advanced.
+
+Reach for these verbs first: ask, drop, connect, get, surface, compose, share, route, enrich, learn, reconcile, match, flag.
+
+Keep to the house words in what you write to the user. Write "connect", never "integrate". Write "sessions", never "chat". Write "business data", never "financial data". Write "tokens", never "credits". Name every object by its own name, the workspace, the connector, the company, or the invoice, and never show the user a raw id on its own. A Well app address is a link, not an id, so keep it whole even when it carries a workspace id.
+<!-- voice:end -->
