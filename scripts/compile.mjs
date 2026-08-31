@@ -7,12 +7,15 @@
  * install routes: the dist archive, the raw.githubusercontent fetch the docs
  * pages describe, and the marketplace plugin. The append first removes the copy
  * of the rendered block already in the file, so it is idempotent and an atom
- * edit propagates to every skill on the next compile. It removes only a block
- * this compiler wrote: a Voice section holding anything else is left on disk and
- * reported, because the appended section is always last and its region runs to
- * end of file, so a silent removal would destroy whatever a maintainer added
- * below it. Both compile and `--check` then assert every shipped skill carries
- * the block exactly once, whichever path composed it.
+ * edit propagates to every skill on the next compile. Ownership is explicit,
+ * never inferred: the compiler wraps every body it renders in the
+ * `<!-- voice:begin -->` / `<!-- voice:end -->` markers, on the template path as
+ * well, and replaces only what sits between them. A Voice section without those
+ * markers is left on disk and reported, because the appended section is always
+ * last and its region runs to end of file, so a silent removal would destroy
+ * whatever a maintainer added below it. Both compile and `--check` then assert
+ * every shipped skill carries the block exactly once, whichever path composed
+ * it.
  *
  * Each atom's CONTENT.md body is registered as one Handlebars partial, named
  * after the atom. A consumer template calls it inline with hash args
@@ -36,6 +39,8 @@ const SRC_DIR = join(ROOT, "src");
 const SKILLS_DIR = join(ROOT, "skills");
 const VOICE_ATOM = "voice";
 const VOICE_HEADING = "## Voice";
+const VOICE_BEGIN = "<!-- voice:begin -->";
+const VOICE_END = "<!-- voice:end -->";
 
 Handlebars.registerHelper("list", (value) =>
   String(value ?? "")
@@ -89,6 +94,13 @@ function registerPartials() {
     const path = join(ATOMS_DIR, atom, "CONTENT.md");
     const { body } = splitFrontmatter(readFileSync(path, "utf8"), `atoms/${atom}/CONTENT.md`);
     const compiled = Handlebars.compile(body, { strict: true, noEscape: true });
+    // The voice partial carries the ownership markers too, so a template that
+    // composes the atom itself emits the same bytes the append writes, and the
+    // block count below still matches on both paths.
+    if (atom === VOICE_ATOM) {
+      Handlebars.registerPartial(atom, (context) => `\n${wrapVoiceBody(compiled(context).trim())}\n`);
+      continue;
+    }
     Handlebars.registerPartial(atom, compiled);
   }
 }
@@ -118,24 +130,38 @@ function renderConsumers() {
     });
 }
 
-// The house tone, rendered from its atom and normalised to the exact shape the
-// `{{> voice}}` partial produces, so both composition paths emit the same bytes.
-function renderVoiceSection() {
+// The markers that say which bytes the compiler owns. They render as nothing, so
+// a reader of the shipped skill sees the tone prose alone.
+function wrapVoiceBody(body) {
+  return `${VOICE_BEGIN}\n${body}\n${VOICE_END}`;
+}
+
+// The house tone, rendered from its atom.
+function renderVoiceBody() {
   const path = join(ATOMS_DIR, VOICE_ATOM, "CONTENT.md");
   const { body } = splitFrontmatter(readFileSync(path, "utf8"), `atoms/${VOICE_ATOM}/CONTENT.md`);
-  const rendered = Handlebars.compile(body, { strict: true, noEscape: true })({}).trim();
-  return `\n${VOICE_HEADING}\n\n${rendered}\n`;
+  return Handlebars.compile(body, { strict: true, noEscape: true })({}).trim();
+}
+
+// The rendered tone in the exact shape the `{{> voice}}` partial produces, so
+// both composition paths emit the same bytes.
+function renderVoiceSection(voiceBody) {
+  return `\n${VOICE_HEADING}\n\n${wrapVoiceBody(voiceBody)}\n`;
 }
 
 // Split a hand-written skill into the prose the compiler keeps and the "## Voice"
 // sections it owns, wherever they sit. A section runs from its heading to the
-// next "## " heading or to end of file.
+// next "## " heading or to end of file. A "## " line inside a fenced code block
+// is sample text, not a heading, so the fence state gates the match here and in
+// every other heading scan.
 function splitVoiceSections(content) {
   const kept = [];
   const sections = [];
   let open = null;
+  let inFence = false;
   for (const line of content.split("\n")) {
-    if (/^## /.test(line)) {
+    if (/^```/.test(line)) inFence = !inFence;
+    if (!inFence && /^## /.test(line)) {
       if (open) {
         sections.push(open.join("\n"));
         open = null;
@@ -156,31 +182,36 @@ function voiceSectionBody(section) {
   return section.split("\n").slice(1).join("\n").trim();
 }
 
-// Which Voice bodies on disk this compiler wrote, and may therefore replace.
-// Two things qualify. The body it renders right now, the steady state. And a
-// body two or more skills carry, because the append writes identical bytes into
-// every hand-written skill, so a shared body is the output of an earlier compile
-// run — that is how an edit to the atom propagates, and matching the current
-// rendering alone would never allow it. A body only one skill carries is
-// something else: content a maintainer put there, which the append would drop.
-function compilerWrittenBodies(files, currentBody) {
-  const counts = new Map();
-  for (const { bodies } of files) {
-    for (const body of new Set(bodies)) counts.set(body, (counts.get(body) ?? 0) + 1);
-  }
-  const written = new Set([currentBody]);
-  for (const [body, count] of counts) if (count > 1) written.add(body);
-  return written;
+// Whether this compiler wrote the Voice body on disk, and may therefore replace
+// it. The markers it wraps every rendered body in are the proof, so an older
+// render is still recognised and an atom edit propagates without a prompt. An
+// unmarked body is recognised only when it matches the current rendering byte
+// for byte, which is the state of every skill compiled before the markers
+// existed; replacing that loses nothing. Anything else belongs to a maintainer.
+function isCompilerWritten(body, voiceBody) {
+  const lines = body.split("\n");
+  const marked = lines[0].trim() === VOICE_BEGIN && lines[lines.length - 1].trim() === VOICE_END;
+  return marked || body === voiceBody;
 }
 
 // The first line of an unrecognised section that the current rendering does not
 // hold, so the error names the actual content at risk rather than the tone prose
-// wrapped around it.
-function unrecognisedLine(body, currentBody) {
-  const known = new Set(currentBody.split("\n").map((line) => line.trim()));
+// or the markers wrapped around it.
+function unrecognisedLine(body, voiceBody) {
+  const known = new Set([...voiceBody.split("\n").map((line) => line.trim()), VOICE_BEGIN, VOICE_END]);
   const lines = body.split("\n").map((line) => line.trim());
   const found = lines.find((line) => line && !known.has(line)) ?? lines.find(Boolean) ?? "";
   return found.length > 80 ? `${found.slice(0, 77)}...` : found;
+}
+
+function countVoiceHeadings(content) {
+  let inFence = false;
+  let count = 0;
+  for (const line of content.split("\n")) {
+    if (/^```/.test(line)) inFence = !inFence;
+    else if (!inFence && line.trim() === VOICE_HEADING) count++;
+  }
+  return count;
 }
 
 // Count what each skill is about to ship: the rendered block, and the heading
@@ -195,7 +226,7 @@ function voiceCoverageErrors(artifacts, voiceSection) {
   const errors = [];
   for (const { label, content } of artifacts) {
     const blocks = content.split(voiceSection).length - 1;
-    const headings = content.split("\n").filter((line) => line.trim() === VOICE_HEADING).length;
+    const headings = countVoiceHeadings(content);
     if (blocks !== 1)
       errors.push(
         `${label}: carries the voice atom ${blocks} time(s), expected exactly 1. A template writes "${VOICE_HEADING}" and "{{> voice}}" on consecutive lines, with no blank line between them.`,
@@ -209,9 +240,9 @@ function voiceCoverageErrors(artifacts, voiceSection) {
 // every other skills/<name>/SKILL.md is hand-written, so the compiler owns its
 // Voice section. The skip is derived from the source file's existence, never
 // from whether the output happens to carry the heading already. A skill whose
-// Voice section holds content this compiler did not write yields an error and no
-// artifact, so the run stops before anything overwrites that content.
-function renderVoiceAppends(voiceSection) {
+// Voice section holds unmarked content yields an error and no artifact, so the
+// run stops before anything overwrites that content.
+function renderVoiceAppends(voiceSection, voiceBody) {
   if (!existsSync(SKILLS_DIR)) return { artifacts: [], errors: [] };
   const files = readdirSync(SKILLS_DIR, { withFileTypes: true })
     .filter((e) => e.isDirectory())
@@ -223,15 +254,13 @@ function renderVoiceAppends(voiceSection) {
       return { path, label: `skills/${name}/SKILL.md`, base, bodies: sections.map(voiceSectionBody) };
     });
 
-  const currentBody = voiceSectionBody(voiceSection);
-  const written = compilerWrittenBodies(files, currentBody);
   const artifacts = [];
   const errors = [];
   for (const { path, label, base, bodies } of files) {
-    const foreign = bodies.filter((body) => !written.has(body));
+    const foreign = bodies.filter((body) => !isCompilerWritten(body, voiceBody));
     if (foreign.length) {
       errors.push(
-        `${label}: the "${VOICE_HEADING}" section holds content this compiler did not write, starting at "${unrecognisedLine(foreign[0], currentBody)}". The voice append would drop it, so the file was left alone. Move that content above the "${VOICE_HEADING}" heading, then run \`make compile\` again.`,
+        `${label}: the "${VOICE_HEADING}" section holds content this compiler does not own, starting at "${unrecognisedLine(foreign[0], voiceBody)}". The compiler replaces only what sits between "${VOICE_BEGIN}" and "${VOICE_END}", so the file was left alone. Either a maintainer wrote that content, and it belongs above the "${VOICE_HEADING}" heading; or the markers were stripped from an older render, and the whole section can go. Fix whichever it is, then run \`make compile\` again.`,
       );
       continue;
     }
@@ -247,8 +276,9 @@ function runOnce({ check }) {
   // fails CI either way. What it does NOT do below is get compared against
   // disk: atoms/*/SKILL.md is gitignored, so a fresh checkout never has one.
   const devArtifacts = renderDevArtifacts();
-  const voiceSection = renderVoiceSection();
-  const appends = renderVoiceAppends(voiceSection);
+  const voiceBody = renderVoiceBody();
+  const voiceSection = renderVoiceSection(voiceBody);
+  const appends = renderVoiceAppends(voiceSection, voiceBody);
   const consumerArtifacts = [...renderConsumers(), ...appends.artifacts];
 
   // Checked before anything is written, so a skill that lost its Voice section,
