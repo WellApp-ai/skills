@@ -29,6 +29,8 @@ A skill that says `requires: [define-workspace]` leaves it to the model, at run 
 - **`src/<name>.hbs.md`** — a consuming skill's own source, written as prose with `{{> atom-name prop="value"}}` calls where it needs an atom.
 - **`skills/<name>/SKILL.md`** — `src/<name>.hbs.md` with every `{{> atom-name ...}}` call resolved into the atom's real content. This is what ships. Never hand-edit it — edit the `src/*.hbs.md` or `atoms/*/CONTENT.md` it came from and run `make compile`.
 
+**The `voice` atom is the one atom every skill carries.** `make compile` appends its rendered content to every `skills/<name>/SKILL.md` that has no `src/<name>.hbs.md`, and a skill that does have one composes `{{> voice}}` in its own template. Both paths emit the same bytes, so the house tone reaches all three install routes: the `dist/` archive, the `raw.githubusercontent.com` fetch the docs pages describe, and the marketplace plugin. `dist/` stays a copy of `skills/` plus each skill's inlined step references. Never hand-write or hand-edit a `## Voice` section — edit [`atoms/voice/CONTENT.md`](atoms/voice/CONTENT.md) and run `make compile`, and `compile.mjs --check` in `make validate` catches any skill left behind.
+
 `fx-exposure` (PR #61) is the one worked example so far — see `src/fx-exposure.hbs.md` next to `skills/fx-exposure/SKILL.md`.
 
 **When building or extending anything here:**
@@ -110,5 +112,3 @@ Know these before writing a workflow step that looks similar — the logic is ce
 So running `claude plugin validate` alone is not the gate. Run `make validate`, and read the exit status unpiped (`make validate > /dev/null 2>&1; echo $?`), since a pipe reports its last stage.
 
 Any commit touching `skills/*/SKILL.md` must carry the rebuilt `dist/<name>.{zip,skill}`. The pre-commit hook does it; `make build` does it by hand. See [`dist/README.md`](dist/README.md).
-
-Every packaged `SKILL.md` carries a `## Voice` section that [`scripts/build-dist.sh`](scripts/build-dist.sh) appends from [`atoms/voice/CONTENT.md`](atoms/voice/CONTENT.md) at build time, so `dist/` diverges from `skills/` by design: a skill compiled from `src/*.hbs.md` composes the atom itself and the build leaves it alone, every other skill gets the section only in its archive.

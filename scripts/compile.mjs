@@ -2,6 +2,13 @@
  * Compiles atoms/<brick>/CONTENT.md into a dev-only atoms/<brick>/SKILL.md test
  * artifact, and src/<name>.hbs.md into the shipped skills/<name>/SKILL.md.
  *
+ * It also appends the rendered `voice` atom to every skills/<name>/SKILL.md that
+ * has no src/<name>.hbs.md of its own, so the house tone reaches all three
+ * install routes: the dist archive, the raw.githubusercontent fetch the docs
+ * pages describe, and the marketplace plugin. The append replaces the previous
+ * section rather than adding a second one, so it is idempotent and an atom edit
+ * propagates to every skill on the next compile.
+ *
  * Each atom's CONTENT.md body is registered as one Handlebars partial, named
  * after the atom. A consumer template calls it inline with hash args
  * (`{{> define-workspace purpose="..."}}`) — no separate data file. `strict: true`
@@ -22,6 +29,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ATOMS_DIR = join(ROOT, "atoms");
 const SRC_DIR = join(ROOT, "src");
 const SKILLS_DIR = join(ROOT, "skills");
+const VOICE_ATOM = "voice";
 
 Handlebars.registerHelper("list", (value) =>
   String(value ?? "")
@@ -104,6 +112,46 @@ function renderConsumers() {
     });
 }
 
+// The house tone, rendered from its atom and normalised to the exact shape the
+// `{{> voice}}` partial produces, so both composition paths emit the same bytes.
+function renderVoiceSection() {
+  const path = join(ATOMS_DIR, VOICE_ATOM, "CONTENT.md");
+  const { body } = splitFrontmatter(readFileSync(path, "utf8"), `atoms/${VOICE_ATOM}/CONTENT.md`);
+  const rendered = Handlebars.compile(body, { strict: true, noEscape: true })({}).trim();
+  return `\n## Voice\n\n${rendered}\n`;
+}
+
+// Cut a trailing "## Voice" section so the next one replaces it. A heading that
+// still has another heading under it belongs to the skill's own prose, not to a
+// previous append, so leave that file alone and let --check report it.
+function stripVoiceSection(content) {
+  const heading = "\n## Voice\n";
+  const idx = content.lastIndexOf(heading);
+  if (idx === -1) return content;
+  if (/^#{1,6} /m.test(content.slice(idx + heading.length))) return content;
+  return content.slice(0, idx);
+}
+
+// A skill with a src/<name>.hbs.md composes the voice atom in its own template;
+// every other skills/<name>/SKILL.md is hand-written, so the compiler owns its
+// Voice section. The skip is derived from the source file's existence, never
+// from whether the output happens to carry the heading already.
+function renderVoiceAppends() {
+  if (!existsSync(SKILLS_DIR)) return [];
+  const voiceSection = renderVoiceSection();
+  return readdirSync(SKILLS_DIR, { withFileTypes: true })
+    .filter((e) => e.isDirectory())
+    .map((e) => e.name)
+    .filter((name) => !existsSync(join(SRC_DIR, `${name}.hbs.md`)))
+    .map((name) => {
+      const path = join(SKILLS_DIR, name, "SKILL.md");
+      const label = `skills/${name}/SKILL.md`;
+      const current = readFileSync(path, "utf8");
+      const base = stripVoiceSection(current).replace(/\s*$/, "");
+      return { path, content: `${base}\n${voiceSection}`, label };
+    });
+}
+
 function runOnce({ check }) {
   registerPartials();
   // renderDevArtifacts() still runs in check mode — a CONTENT.md that fails to
@@ -111,7 +159,7 @@ function runOnce({ check }) {
   // fails CI either way. What it does NOT do below is get compared against
   // disk: atoms/*/SKILL.md is gitignored, so a fresh checkout never has one.
   const devArtifacts = renderDevArtifacts();
-  const consumerArtifacts = renderConsumers();
+  const consumerArtifacts = [...renderConsumers(), ...renderVoiceAppends()];
 
   if (check) {
     const stale = consumerArtifacts.filter((o) => !existsSync(o.path) || readFileSync(o.path, "utf8") !== o.content);

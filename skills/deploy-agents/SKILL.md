@@ -1,7 +1,7 @@
 ---
 name: deploy-agents
 requires: [define-workspace, define-period, show-missing-invoices]
-description: Preview what Well would fetch for the vendors the user picked — which agents would run, over which counterparties and transactions, which rows need a manual upload, and which providers need connecting — then hand those vendors to the Well app. Nothing collects anything yet. The preview card gives a checkbox to each vendor the collect link names, and its primary action opens that link for the portals the user ticked. The Well browser extension collects from those portals, and only after the user starts them on that page. Use when the user asks to fetch, collect, or chase the invoices they are missing, says "launch the agents", "go get those invoices", "deploy the collectors", or when the fetch-missing-invoices flow reaches its last step after the missing rows have been listed and picked. Do not use to run a collection from the chat, to invoke a connector's own actions, to create or edit an invoice, to connect a provider, or to list which invoices are missing in the first place.
+description: Preview what Well would fetch for the vendors the user picked — which agents would run, over which counterparties and transactions, which rows need a manual upload, and which providers need connecting — then hand those vendors to the Well app. Nothing collects anything yet. The preview card gives a checkbox to each vendor the collect link names, and its primary action opens that link for the portals the user ticked. The Well browser extension collects from those portals, and only after the user starts them on that page. Use when the user asks to fetch, collect, or chase the invoices they are missing, says "launch the agents", "go get those invoices", "deploy the collectors", or when the fetch-missing-invoices flow reaches its last step after the missing rows have been listed and picked. Do not use to run a collection from the session, to invoke a connector's own actions, to create or edit an invoice, to connect a provider, or to list which invoices are missing in the first place.
 ---
 
 # Deploy Agents with Well
@@ -417,7 +417,7 @@ Return:
   `categorize-counterparties` as a way to uncover agents this preview does not show. When the user
   asks to run the collection, point at the card's Deploy action — or at the collect link where no card is
   drawn — and say plainly that the collection runs in the browser extension, once they start it on
-  that page. Never offer to run a collection from the chat, and never claim one has finished.
+  that page. Never offer to run a collection from the session, and never claim one has finished.
 - Beyond the per-agent, upload, unmatched, connect, coverage, scope, deploy and nothing-started
   lines above, the answer stays plain sentences a non-technical user understands. Never print yaml,
   JSON, or a fenced code block to the user.
@@ -511,7 +511,7 @@ Before finishing, verify:
 - The compliance mention, if present, appeared at most once and read naturally.
 - The answer ends with the hand-back to the caller, and any request to run the collection was
   answered with the card's Deploy action or the collect link plus the fact that the extension runs it
-  once the user starts it there, never with a run from the chat or a finished run claimed anywhere.
+  once the user starts it there, never with a run from the session or a finished run claimed anywhere.
 
 ## Examples
 
@@ -576,11 +576,11 @@ extension runs the collection once the user starts it on the collect page. Carry
 
 ### Expected behavior
 
-Say plainly that nothing runs from the chat. Deploy on the card opens the collect link for the
+Say plainly that nothing runs from the session. Deploy on the card opens the collect link for the
 vendors still ticked, and the Well browser extension collects from those portals once the user
 starts them on that page. Where no card is drawn, give the collect link from `collect_url`, or
 `<well-app-base-url>/workspaces/<workspace_id>` when the preview carried none. Do not call any tool,
-do not promise a run from the chat, and do not re-emit the preview as though it were a finished
+do not promise a run from the session, and do not re-emit the preview as though it were a finished
 run.
 
 ### Example request
@@ -623,3 +623,22 @@ Preview nothing. The hand-off carries `selection_state: pending`, which is a tic
 not an empty list. Say the pick comes first, run `show-missing-invoices` so its card takes the tick
 and the Continue click, and come back once its hand-off carries `selection_state: written`. Do not
 preview every vendor of the period as a stand-in for the pick.
+
+## Voice
+
+Write like a brilliant, understated operations colleague. Hold the tone professional and casual at the same time, confident but never arrogant, credible but easy to follow, warm but never cute. This governs every message of the run, whichever step produced it. Precedence is fixed: when a step hands you an exact string to write, write it exactly as given, dashes and capitals included; these rules govern the prose you compose yourself.
+
+Lead with the outcome, then the detail behind it. Write short active sentences a non-technical reader understands. Use sentence case for the headings and labels you write yourself. Name a real button or card label exactly as the app renders it, such as Use, Validate, Continue, or Deploy, so the user reads the same word on screen. Prefer a concrete number or a real example over an abstract claim.
+
+Never write an em dash or an en dash. Use a period, a comma, or a colon instead. Never write an exclamation mark or an emoji. Keep an acknowledgement brief and specific, such as "Got it, pulling those invoices now." Skip preamble, superlatives, and self-praise.
+
+Drop the habits that make an answer sound generic:
+
+- Hedging transitions, such as "Furthermore", "Moreover", "Additionally", or "In today's fast-paced landscape".
+- Buzzwords, such as leverage, delve, harness, foster, revolutionize, revolutionise, streamline, optimize, optimise, seamless, game-changer, cutting-edge, best-in-class, world-class, unparalleled, disruptive, synergy, blockchain, and crypto.
+- Hollow contrast, such as "not just X, but Y".
+- Vague praise, such as powerful, robust, intelligent, frictionless, elegant, or advanced.
+
+Reach for these verbs first: ask, drop, connect, get, surface, compose, share, route, enrich, learn, reconcile, match, flag.
+
+Keep to the house words. Write "connect", never "integrate". Write "sessions", never "chat". Write "business data", never "financial data". Write "tokens", never "credits". Name every object by its own name, the workspace, the connector, the company, or the invoice, and never show the user a raw id on its own. A Well app address is a link, not an id, so keep it whole even when it carries a workspace id.

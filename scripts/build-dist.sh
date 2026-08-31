@@ -8,11 +8,6 @@
 # tree keeps references/ as symlinks for maintainability; only the archives
 # are self-contained.
 #
-# The house tone in atoms/voice/CONTENT.md is appended to every packaged
-# SKILL.md as a "## Voice" section, so a downloaded skill answers in the same
-# voice whether or not its source composes the atom. dist/ diverges from
-# skills/ here by design.
-#
 # An archive whose content already matches the source is left untouched, so
 # the script is idempotent and safe to run from the pre-commit hook.
 set -euo pipefail
@@ -31,33 +26,11 @@ strip_frontmatter_and_demote() {
 	' "$1"
 }
 
-# Print atoms/voice/CONTENT.md with its frontmatter and leading blank lines
-# removed. The atom is the one source for the house tone.
-voice_body() {
-	awk '
-		NR == 1 && $0 == "---" { infm = 1; next }
-		infm { if ($0 == "---") infm = 0; next }
-		!started && $0 == "" { next }
-		{ started = 1; print }
-	' atoms/voice/CONTENT.md
-}
-
-# Append the house tone to the packaged SKILL.md $1 as a "## Voice" section.
-# A skill compiled from src/*.hbs.md composes the voice atom itself and already
-# carries the section, so skip those and never write it twice.
-append_voice() {
-	local out=$1
-	if grep -q '^## Voice$' "$out"; then return; fi
-	{
-		printf '\n## Voice\n\n'
-		voice_body
-	} >>"$out"
-}
-
 # Write the packaged SKILL.md for skill dir $1 to $2. When references/ exists,
-# rewrite the "read references/<file>" pointers to name the inlined sections.
-# The house tone lands next, then one section per reference file, so "## Voice"
-# always closes the skill body and sits above any inlined step reference.
+# rewrite the "read references/<file>" pointers to name the inlined sections,
+# then append one section per reference file. The source SKILL.md already carries
+# its "## Voice" section from `make compile`, so the archive is a copy of the
+# source plus the inlined references.
 build_skill_md() {
 	local dir=$1 out=$2 ref name
 	local -a refs=()
@@ -68,14 +41,12 @@ build_skill_md() {
 	# directory lands here with nothing to inline.
 	if [ ${#refs[@]} -eq 0 ]; then
 		cp "$dir/SKILL.md" "$out"
-		append_voice "$out"
 		return
 	fi
 	sed -E \
 		-e 's|`references/<name>\.md`|its "Step reference" section|g' \
 		-e 's|`references/([a-z0-9-]+)\.md`|the "Step reference: \1" section|g' \
 		"$dir/SKILL.md" >"$out"
-	append_voice "$out"
 	for ref in "${refs[@]}"; do
 		name=$(basename "$ref" .md)
 		{
