@@ -149,7 +149,7 @@ Before finishing, verify:
 
 ### Example request
 
-The fetch-missing-invoices flow calls this skill with the Acme SAS `workspace_id`, `periods: [{ calendar_year: 2026, calendar_month: 3 }]`, and `bank_state: connected` from its own bank step. The tool returns 34 counterparties whose invoices March is still missing, 12 of them uncategorized, the largest being AWS at €4,120.
+The fetch-missing-invoices flow calls this skill with the Acme SAS `workspace_id`, `periods: [{ calendar_year: 2026, calendar_month: 3 }]`, and `bank_state: connected` from its own bank step, which ran because March held no bank transaction. The tool returns 34 counterparties whose invoices March is still missing, 12 of them uncategorized, the largest being AWS at €4,120.
 
 ### Expected behavior
 
