@@ -397,7 +397,7 @@ Run `define-workspace` and pin the workspace. Run `confirm-my-company` (strict, 
 the own company from the setting. Read connection coverage once with `connect-tools`
 `mode: internal_check` (`kinds: [bank, accounting, invoicing]`): the bank shows a recent sync and the
 accounting tool is connected, so **skip both connect steps** with a one-line note each ("Bank
-connected — Qonto, last synced yesterday", "Accounting connected: Pennylane") rather than re-showing
+connected: Qonto, last synced yesterday", "Accounting connected: Pennylane") rather than re-showing
 either connect card. Read the fiscal year start from `well_list_workspaces`; it is set to January, so
 nothing to change (no `accounting-settings` write needed). "Last month" is the last complete month,
 March 2026: run `define-period` in `mode: collect` with `show_close_readiness: true`, which shows
