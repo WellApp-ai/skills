@@ -156,3 +156,7 @@ In the multi-currency workspace's run: pass the per-customer totals to `normaliz
 ### Expected behavior
 
 Detect in step 4 that `own_company` is unresolved because the field is absent from the schema — not merely null — and ask which company is theirs rather than matching the workspace's name or logo to a `companies` row. Once confirmed, normalize both sides (punctuation folded to spaces, runs collapsed) so `"northwind trading ltd"` and `"northwind trading"` compare as containing one another, and offer the `LTD` record as a candidate alias for confirmation — on the customer side as well as the own-company side, since an unmerged customer alias splits one client across two rows and understates their rank. Then split the null-`issuer_company_id` invoices on the receiver before counting anything as revenue: an own-company receiver means a bill the workspace paid, which is excluded outright, while an external receiver is reported as a labeled unattributed row. Say the confirmation holds for this run only, and link to the Well app to set it permanently.
+
+## Voice
+
+{{> voice}}

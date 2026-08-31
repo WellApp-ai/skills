@@ -121,3 +121,7 @@ Pin the workspace, confirm connections, and spot-check that rows have landed; pu
 ### Expected behavior
 
 Determine the home currency, query invoices and account balances, find no non-home-currency balances at all, and report plainly that FX exposure is zero — the workspace holds no foreign-currency cash or receivables — rather than fabricating a risk figure or forcing a currency breakdown where none exists.
+
+## Voice
+
+{{> voice}}
