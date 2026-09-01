@@ -12,6 +12,11 @@
 // atoms/*/CONTENT.md frontmatter carries the same colon-heavy `description:`
 // prose, so the same bug class applies there too — checked here as well,
 // with its one legitimate nested block (`placeholders:`) stripped first.
+//
+// The `description` length is checked for the same reason the colon is: it is a
+// frontmatter rule a host enforces at install time, so breaking it fails where
+// nobody is watching rather than here. Only shipped skills are measured — an
+// atom's CONTENT.md is a dev artifact nothing installs.
 
 const fs = require("fs");
 const path = require("path");
@@ -28,6 +33,24 @@ function frontmatterOf(text) {
 
 function stripPlaceholdersBlock(frontmatter) {
   return frontmatter.replace(/\n?placeholders:\n(?:[ \t]+.*\n?)*/, "");
+}
+
+// Both counts, because the two can differ: an em dash is one character and three
+// UTF-8 bytes, so a description just under the limit by one measure can sit over
+// it by the other.
+const DESCRIPTION_LIMIT = 1024;
+
+function findOverlongDescription(frontmatter) {
+  const match = frontmatter.match(/^description: (.*)$/m);
+  if (!match) return null;
+  const value = match[1];
+  const chars = value.length;
+  const bytes = Buffer.byteLength(value, "utf8");
+  if (chars <= DESCRIPTION_LIMIT && bytes <= DESCRIPTION_LIMIT) return null;
+  return {
+    line: frontmatter.slice(0, match.index).split("\n").length,
+    text: `description is ${chars} chars / ${bytes} bytes, over the ${DESCRIPTION_LIMIT} limit`,
+  };
 }
 
 function findBareColonLines(frontmatter) {
@@ -75,6 +98,8 @@ function main() {
     }
     if (file.startsWith(atomsDir)) frontmatter = stripPlaceholdersBlock(frontmatter);
     const problems = findBareColonLines(frontmatter);
+    const overlong = file.startsWith(atomsDir) ? null : findOverlongDescription(frontmatter);
+    if (overlong) problems.push(overlong);
     if (problems.length > 0) failures.push({ file, problems });
   }
 
@@ -83,7 +108,10 @@ function main() {
     for (const { file, problems } of failures) {
       console.log(`  ❯ ${path.relative(root, file)}`);
       for (const problem of problems) {
-        console.log(`    line ${problem.line}: unquoted value contains a bare ':' — ${problem.text.slice(0, 80)}`);
+        const detail = problem.text.startsWith("description is")
+          ? problem.text
+          : `unquoted value contains a bare ':' — ${problem.text.slice(0, 80)}`;
+        console.log(`    line ${problem.line}: ${detail}`);
       }
       console.log("");
     }
