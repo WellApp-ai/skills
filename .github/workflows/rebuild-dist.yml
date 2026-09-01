@@ -46,6 +46,35 @@ jobs:
           echo "prev_dist_sha=$PREV_DIST_SHA" >> "$GITHUB_OUTPUT"
           make build
 
+      # Runs the same checks as .github/workflows/pr-checks.yml, on the checkout
+      # after the rebuild above — the bot PR must pass what any human PR would,
+      # so this gates the rebuilt output before it's opened rather than relying
+      # on `pull_request` CI, which never fires for a push made with this token.
+      - name: Skill frontmatter parses
+        run: node scripts/check-skill-frontmatter.js
+
+      - name: Atoms and compiled skills are current
+        run: node scripts/compile.mjs --check
+
+      - name: Distributed skills match the directory
+        run: |
+          node -e '
+            const { readdirSync, existsSync } = require("node:fs");
+            const listed = require("./.claude-plugin/plugin.json").skills;
+            if (!Array.isArray(listed)) throw new Error("plugin.json skills is no longer an array");
+            const missing = listed.filter((p) => !existsSync(p));
+            const dirs = readdirSync("skills", { withFileTypes: true })
+              .filter((d) => d.isDirectory())
+              .map((d) => `./skills/${d.name}`);
+            const unlisted = dirs.filter((d) => !listed.includes(d));
+            if (missing.length || unlisted.length) {
+              if (missing.length) console.error("listed but absent:", missing.join(", "));
+              if (unlisted.length) console.error("present but undistributed:", unlisted.join(", "));
+              process.exit(1);
+            }
+            console.log(`${listed.length} skills listed and present`);
+          '
+
       - name: Open or update the rebuild PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
