@@ -1,6 +1,6 @@
 ---
 name: import-bank-statement
-description: Import a bank statement file into Well as real transaction records, matched against existing data and promoted into the workspace. Use when the user asks to import a bank statement, upload their statement, add bank transactions from a file, import a bank CSV or PDF, reconcile a bank export, or drops a statement file into the conversation. Accepts .csv, .xml, .txt (text) and .pdf, .jpg, .jpeg, .png, .gif, .heic, .heif, .avif, .webp (image) statement exports; OFX, QIF, and MT940 files are not supported, and this skill says so instead of failing silently. Needs no connector — the uploaded file is the data source itself, so this runs on a fresh Well workspace with nothing connected yet.
+description: Import a bank statement file into Well as real transaction records, matched against existing data and promoted into the workspace. Use when the user asks to import a bank statement, upload their statement, add bank transactions from a file, import a bank CSV or PDF, or reconcile a bank export — and equally when they drop a statement-looking file with no explanation at all — a CSV/XML/TXT whose rows carry transaction dates, amounts, payees, balances, or an IBAN, a PDF or photo of an account statement, or a file named like one (statement, transactions, export, releve, releve_bancaire, compte). Accepts .csv, .xml, .txt (text) and .pdf, .jpg, .jpeg, .png, .gif, .heic, .heif, .avif, .webp (image) statement exports; OFX, QIF, and MT940 files are not supported, and this skill says so instead of failing silently. Needs no connector — the uploaded file is the data source itself, so this runs on a fresh Well workspace with nothing connected yet.
 ---
 
 # Import a Bank Statement into Well
@@ -18,7 +18,7 @@ Use this skill when the user asks things like:
 - "Add my bank transactions from this file"
 - "Import this CSV / PDF from my bank"
 - "Reconcile this bank export"
-- Or simply drops a statement file (CSV, XML, TXT, PDF, or image) into the conversation without further explanation — a dropped-in bank export is itself the request.
+- Or simply drops a statement file (CSV, XML, TXT, PDF, or image) into the conversation without further explanation — a dropped-in bank export is itself the request. Recognize one by its shape, not only its name: tabular rows of dates, amounts, and payees, a running balance column, an IBAN or account number, or a bank's letterhead on a PDF/photo; filenames like statement, transactions, export, or releve (relevé bancaire) are the same signal.
 
 ## When not to use this skill
 
