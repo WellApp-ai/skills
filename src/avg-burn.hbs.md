@@ -62,11 +62,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 1. **Pin the workspace.** {{> define-workspace purpose="to measure your average monthly burn"}}
 
-2. **Confirm the connections this answer needs.** {{> connect-tools purpose="to measure your average monthly burn" kinds="bank, accounting" internalCheck=true}}
-   - `coverage: none` → stop; burn cannot be measured yet. The install links are already on screen, so don't add a second set.
-   - Any kind reported `connecting`, or a connected connector whose latest sync is still running → carry on, and carry "the data may still be partial" into the answer.
-   - `coverage: partial` → carry on with what is connected, and keep the missing kinds for the coverage disclosure the Output requirements ask for.
-   - A kind the user chose to skip comes back under `skipped_by_user` — respect that and don't re-ask for it in this run.
+2. **Confirm the connections this answer needs.** {{> connect-tools purpose="to measure your average monthly burn" kinds="bank, accounting" internalCheck=true onNone="burn cannot be measured yet"}}
 
 3. **Verify the data itself has landed.** Coverage reports connections, not rows — a connector can be connected and still have delivered nothing this skill can use. Spot-check what this skill actually reads: for each connected connector, the latest `workspace_connector_sync_logs` row's `status` and `completed_at`. Keep those timestamps — a connector that has not synced in weeks makes the figure stale rather than wrong. `well_get_burn` returning `unavailable: true` in the next step is the other half of this check.
 

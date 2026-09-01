@@ -48,11 +48,7 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 
 1. **Pin the workspace.** {{> define-workspace purpose="to measure your foreign-currency exposure"}}
 
-2. **Confirm the connections this answer needs.** {{> connect-tools purpose="to measure your foreign-currency exposure" kinds="bank, invoicing, accounting" internalCheck=true}}
-   - `coverage: none` → stop; there is nothing to measure exposure against yet.
-   - Any kind `connecting`, or a connected connector whose latest sync is still running → carry on, and carry "the data may still be partial" into the answer.
-   - `coverage: partial` → carry on with what is connected, and keep the missing kinds for the coverage disclosure the Output requirements ask for.
-   - A kind under `skipped_by_user` → respect that, don't re-ask for it in this run.
+2. **Confirm the connections this answer needs.** {{> connect-tools purpose="to measure your foreign-currency exposure" kinds="bank, invoicing, accounting" internalCheck=true onNone="there is nothing to measure exposure against yet"}}
 
 3. **Verify the data itself has landed.** Coverage reports connections, not rows — a connector can be connected and still have delivered nothing this skill can use. Spot-check what this skill actually reads: a 1-row `well_query_records` read on `invoices` and on `accounts`. Zero rows on both means there is no exposure to measure yet — say so and stop rather than reporting zero exposure as a clean bill of health.
 

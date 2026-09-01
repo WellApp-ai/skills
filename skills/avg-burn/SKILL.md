@@ -124,7 +124,14 @@ For each of the requested kinds —
 
 At least one **connected** row for a kind → connected, and name any **error** row for that same kind alongside it (a live connector does not cancel a dead one). Only **connecting** rows → connecting. Only **error** rows → error, name the connector, offer the reconnect link. No qualifying row → missing, including a `to_configure` row the user started but never finished.
 
-This is a coverage read for a data skill, not a connect step: hand the per-kind states straight back in the same turn and keep going. No closing question, no `well_wait_for_selection`, no card acknowledgment to wait for. When a `required` kind is missing, say so in the hand-off and let the caller decide what to do — do not turn the read into a stop.
+This is a coverage read for a data skill, not a connect step: hand the per-kind states straight back in the same turn and keep going. No closing question, no `well_wait_for_selection`, no card acknowledgment to wait for. The read itself never stops the run — it reports, and the disposition below decides.
+
+Apply that disposition once the states are in hand:
+
+- `coverage: none` → stop; burn cannot be measured yet. The install links are already on screen, so don't add a second set.
+- Any kind reported `connecting`, or a connected connector whose latest sync is still running → carry on, and carry "the data may still be partial" into the answer.
+- `coverage: partial` → carry on with what is connected, and keep the missing kinds for the coverage disclosure the Output requirements ask for.
+- A kind the user chose to skip comes back under `skipped_by_user` — respect that and don't re-ask for it in this run.
 
 On a transient `well_list_connectors` failure, retry once; on a second failure, do not invent coverage — say it's unknown, give the user `<well-app-base-url>/workspaces/<workspace_id>`, and hand the failure back to the caller with no coverage claim.
 
@@ -132,10 +139,6 @@ Hand off, kept for the caller and never printed as a block: per requested kind, 
 
 Verify before moving on: `well_list_connectors` was the only connector-listing tool called — no `well_query_records` on `workspace_connectors`, no provider-specific tool; each kind's state came from the four-line precedence above, not from a name or `is_connected` alone; `coverage: none` was used (not `partial`) when every requested kind was in error; a transient failure was retried once before the fallback link.<!-- atom:connect-tools:end -->
 
-   - `coverage: none` → stop; burn cannot be measured yet. The install links are already on screen, so don't add a second set.
-   - Any kind reported `connecting`, or a connected connector whose latest sync is still running → carry on, and carry "the data may still be partial" into the answer.
-   - `coverage: partial` → carry on with what is connected, and keep the missing kinds for the coverage disclosure the Output requirements ask for.
-   - A kind the user chose to skip comes back under `skipped_by_user` — respect that and don't re-ask for it in this run.
 
 3. **Verify the data itself has landed.** Coverage reports connections, not rows — a connector can be connected and still have delivered nothing this skill can use. Spot-check what this skill actually reads: for each connected connector, the latest `workspace_connector_sync_logs` row's `status` and `completed_at`. Keep those timestamps — a connector that has not synced in weeks makes the figure stale rather than wrong. `well_get_burn` returning `unavailable: true` in the next step is the other half of this check.
 

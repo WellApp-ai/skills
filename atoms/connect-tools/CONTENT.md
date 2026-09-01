@@ -5,6 +5,7 @@ placeholders:
   purpose: "to fetch the missing March invoices"
   kinds: "bank, invoicing, accounting"
   internalCheck: true
+  onNone: "the missing invoices cannot be listed yet"
 ---
 
 The workspace is already pinned — pass its `workspace_id` on the call below; do not re-resolve it here.
@@ -24,7 +25,14 @@ For each of the requested kinds —
 At least one **connected** row for a kind → connected, and name any **error** row for that same kind alongside it (a live connector does not cancel a dead one). Only **connecting** rows → connecting. Only **error** rows → error, name the connector, offer the reconnect link. No qualifying row → missing, including a `to_configure` row the user started but never finished.
 
 {{#if internalCheck}}
-This is a coverage read for a data skill, not a connect step: hand the per-kind states straight back in the same turn and keep going. No closing question, no `well_wait_for_selection`, no card acknowledgment to wait for. When a `required` kind is missing, say so in the hand-off and let the caller decide what to do — do not turn the read into a stop.
+This is a coverage read for a data skill, not a connect step: hand the per-kind states straight back in the same turn and keep going. No closing question, no `well_wait_for_selection`, no card acknowledgment to wait for. The read itself never stops the run — it reports, and the disposition below decides.
+
+Apply that disposition once the states are in hand:
+
+- `coverage: none` → stop; {{onNone}}. The install links are already on screen, so don't add a second set.
+- Any kind reported `connecting`, or a connected connector whose latest sync is still running → carry on, and carry "the data may still be partial" into the answer.
+- `coverage: partial` → carry on with what is connected, and keep the missing kinds for the coverage disclosure the Output requirements ask for.
+- A kind the user chose to skip comes back under `skipped_by_user` — respect that and don't re-ask for it in this run.
 {{else}}
 Render the card and end the turn on it (`flow_step` mode): say one line per requested kind — connected, missing, or in error, and why it matters{{#if purpose}} for "{{purpose}}"{{/if}} — then add a closing line inviting the user to connect what's missing and click Continue, and stop. Even with every kind green, the card stays on screen and the turn still ends here.
 
