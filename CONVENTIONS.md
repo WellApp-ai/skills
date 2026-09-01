@@ -16,10 +16,14 @@ Declaring only the first is the mistake reviewers keep finding. The three surfac
 
 `define-workspace` is the only brick that declares nothing — it is the root and depends on no one.
 
-**This is the convention. Runtime delegation governs every new skill.** Three skills
-(`avg-burn`, `fx-exposure`, `rank-clients-by-ltv`) currently compile their bricks in at build
-time instead — see the next section, which documents that pattern. They are the exception, not
-the direction, and they migrate back to this one.
+**This is the convention. Runtime delegation governs every new skill.** Two skills — `avg-burn`
+and `fx-exposure` — currently compile their bricks in at build time instead. See the next
+section, which documents that pattern. They are the exception, not the direction, and they
+migrate back to this one.
+
+`rank-clients-by-ltv` has a `src/` template but is not one of them: it composes only `voice` and
+keeps a `requires:` for all four of its bricks, so it already follows this convention. A template
+alone does not make a skill compiled — what it composes does.
 
 ### Why delegation, and the one change that makes it safe
 
