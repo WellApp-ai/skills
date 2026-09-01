@@ -133,3 +133,6 @@ Pin the workspace, confirm connections, and spot-check that rows have landed; re
 ### Expected behavior
 
 Search `transactions` by date and `instructed_amount` for a candidate. If more than one transaction matches that date/amount, list the candidates and ask which one rather than guessing. Once resolved, confirm via `invoice_transactions` that no row exists for that transaction id, and report that as the answer — this payment has no invoice on file — rather than treating the absence as an error.
+
+## Voice
+{{> voice}}

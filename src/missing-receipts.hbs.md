@@ -123,3 +123,6 @@ Pin the workspace, confirm connections, and spot-check that rows have landed; qu
 ### Expected behavior
 
 Pin the workspace, run the same query scoped to last month, and if zero invoices come back with a null `document`, report a clean bill of health ("all N invoices from last month have a document attached") rather than an empty, unexplained list — still note the find-only scope limit for completeness.
+
+## Voice
+{{> voice}}

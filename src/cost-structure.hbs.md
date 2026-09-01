@@ -131,4 +131,7 @@ Call `well_get_cost_structure({ year: 2026, month: 3 })`, then report the month 
 ### Expected behavior
 
 Say that this breakdown covers a single month, name the month it returned, and offer to run it for each month of the quarter separately. Do not present one month's figures as a quarter, and do not sum three calls into a single category table without saying that is what you did.
+
+## Voice
+{{> voice}}
 </content>

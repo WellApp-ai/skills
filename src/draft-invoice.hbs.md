@@ -154,3 +154,6 @@ Pin the workspace, offer the workspace's `own_company` as issuer (confirmed by t
 ### Expected behavior
 
 Because only a total was given with no line-item breakdown, ask the user for at least one line item (name and price) before drafting anything — do not fabricate a single "Services" line item from the total. Once the user supplies real line items (which may sum to $4,800 or differ from it), proceed through the normal confirm-then-write flow.
+
+## Voice
+{{> voice}}

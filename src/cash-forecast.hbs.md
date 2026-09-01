@@ -135,4 +135,7 @@ Read the first `projection` of `0` from the series and name its month. If the pr
 ### Expected behavior
 
 Say this series cannot model revenue — it is a worst case that assumes none — so it cannot answer the question as asked. Offer the floor as a floor, clearly labelled, and stop there rather than adding the deals to the projection yourself.
+
+## Voice
+{{> voice}}
 </content>

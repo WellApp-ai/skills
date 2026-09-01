@@ -130,3 +130,6 @@ Pin the workspace, confirm connections, and spot-check that rows have landed; re
 ### Expected behavior
 
 Detect during step 4 that `own_company` is unresolved — whether it is null, missing from the schema altogether, or matches more than one company — and ask the user to confirm which company in Well is theirs rather than guessing which invoices are receivables versus payables. Matching the workspace's own name or logo against a `companies` row is a guess, not a resolution, and does not satisfy this step. Stop short of presenting a number until it's confirmed — or, if the user prefers, state the limitation plainly and offer the gross unpaid-invoice list unsplit as a caveated partial answer. Say that the confirmation holds for this run only, and link them to the Well app to set it permanently.
+
+## Voice
+{{> voice}}

@@ -117,4 +117,7 @@ Pin the workspace, confirm connections, and spot-check that rows have landed; ca
 ### Expected behavior
 
 Confirm the connections; the hand-off reports the connector as connected but its latest sync still running, so carry on and tell the user the balance may be partial or incomplete rather than presenting a confident total, offering to re-check once the sync finishes.
+
+## Voice
+{{> voice}}
 </content>

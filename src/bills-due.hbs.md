@@ -140,3 +140,6 @@ If the query returns zero unpaid/partial invoices, say plainly that there are no
 ### Expected behavior
 
 Detect in step 4 that `own_company` is unresolved because the field is absent from the schema — not merely null — and ask which company is theirs rather than inferring it from the workspace's name or logo. Once confirmed, normalize both sides (punctuation folded to spaces, runs collapsed) and test containment in both directions, so a `EI-` or `, LTD` variant is offered as a candidate alias rather than having its bills quietly vanish from the calendar. Then split the null-`receiver_company_id` invoices on the issuer: an own-company issuer is a stray receivable and stays off the payment calendar entirely, an external issuer is placed as a labeled entry because a large unattributed bill landing next week changes the plan, and a both-null row is reported separately, outside the cumulative running total.
+
+## Voice
+{{> voice}}

@@ -154,4 +154,7 @@ Detect the multiple matches during step 4, list them with distinguishing details
 ### Expected behavior
 
 Treat the absent `own_company` field as unresolved rather than open, and ask which company is theirs — a wrong pick here does not degrade the answer, it inverts customer and vendor, and reads as confident either way. Fold duplicates on both sides: normalize with punctuation folded to spaces and runs collapsed so `"brightwater s a s"` and `"brightwater"` compare as containing one another, and propose the match rather than merging it, because an unmerged alias makes a long relationship look thin and reads as a finding about the vendor rather than about our data. Report invoices missing either counterparty id in a labeled unattributed line kept out of both the vendor and customer totals, and note issuer-equals-receiver rows once as a data-quality issue without letting them imply a relationship.
+
+## Voice
+{{> voice}}
 </content>

@@ -129,3 +129,6 @@ Report the bridge as returned. If `unavailable: true` or `steps` is empty, say t
 ### Expected behavior
 
 Confirm it, and name the residual. The closing anchor is measured independently of the flows, so a gap is a real finding about the data rather than an arithmetic slip — surface the tool's hint for it and do not adjust a figure to close the gap.
+
+## Voice
+{{> voice}}

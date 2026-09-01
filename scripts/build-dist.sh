@@ -28,7 +28,9 @@ strip_frontmatter_and_demote() {
 
 # Write the packaged SKILL.md for skill dir $1 to $2. When references/ exists,
 # rewrite the "read references/<file>" pointers to name the inlined sections,
-# then append one section per reference file.
+# then append one section per reference file. The source SKILL.md already carries
+# its "## Voice" section from `make compile`, so the archive is a copy of the
+# source plus the inlined references.
 build_skill_md() {
 	local dir=$1 out=$2 ref name
 	local -a refs=()
