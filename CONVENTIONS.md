@@ -126,4 +126,4 @@ The review procedure lives here, in the repo it reviews. A reviewer, human or ag
 
 So running `claude plugin validate` alone is not the gate. Run `make validate`, and read the exit status unpiped (`make validate > /dev/null 2>&1; echo $?`), since a pipe reports its last stage.
 
-Any commit touching `skills/*/SKILL.md` must carry the rebuilt `dist/<name>.{zip,skill}`. The pre-commit hook does it; `make build` does it by hand. See [`dist/README.md`](dist/README.md).
+Don't carry a rebuilt `dist/<name>.{zip,skill}` in a PR that touches `skills/*/SKILL.md` — `.github/workflows/rebuild-dist.yml` rebuilds every archive after the PR merges to `main` (or on demand) and opens its own PR with the result. See [`dist/README.md`](dist/README.md).
