@@ -95,7 +95,7 @@ Both ship with the `well-skills` plugin. This skill is also installable on its o
 
 5. **On success, call `well_create_invoice_document`** with the `invoice_id` just returned, to render the invoice into a PDF and attach it to the record. This is not a separate ask — the confirmation the user gave in step 3 already covers producing the invoice and its PDF together. If the call fails, do not retry it silently: surface the exact error and ask the user how they'd like to proceed (retry, skip the PDF, or handle the document another way). A failed render never undoes the invoice created in step 4 — say so plainly so the user knows the record itself is safe.
 
-6. **Report the result honestly.** On success, report the returned `invoice_id`, `reference_number`, and — once step 5 completes — the `document_id`. If step 4 failed, surface its exact error and ask the user how to proceed; no PDF is attempted. If step 4 succeeded but step 5 failed, report both outcomes: the invoice exists, and the PDF render failed with the specific error. Never invent or silently retry a correction for either failure.
+6. **Report the result honestly.** On success, name the created invoice by its `reference_number`, and say the PDF is attached once step 5 completes. Keep the raw `invoice_id` and `document_id` out of that report: name the record, not its id. Give either id only when the user asks for it. If step 4 failed, surface its exact error and ask the user how to proceed; no PDF is attempted. If step 4 succeeded but step 5 failed, report both outcomes: the invoice exists, and the PDF render failed with the specific error. Never invent or silently retry a correction for either failure.
 
 7. **Be explicit that this creates the record plus an attached PDF in Well.** State plainly that no email/delivery to the client occurred — the user still needs to send the invoice themselves.
 
@@ -107,10 +107,10 @@ Return:
 
 - The fully composed draft (issuer, receiver, reference number, dates, currency, line items, totals) shown for confirmation before the write.
 - After the invoice write: success or failure.
-  - Success → the returned `invoice_id` and `reference_number`.
+  - Success → the created invoice, named by its `reference_number`.
   - Failure → the exact error, plus a question to the user about how to proceed.
 - After the document render (only attempted once the invoice write succeeds):
-  - Success → the returned `document_id`, alongside the `invoice_id` and `reference_number`.
+  - Success → the PDF, attached to the invoice with that `reference_number`.
   - Failure → the exact error, plus a question to the user about how to proceed. State clearly that the invoice record itself still exists.
 - An explicit statement that this created the record plus an attached PDF in Well — no email/delivery occurred.
 - Never claim the PDF carries the issuer's logo unless Well confirmed one was used — it prints as text when no logo is on file, which is the common case for a company Well has just met.
@@ -154,7 +154,7 @@ Before finishing, verify:
 
 ### Expected behavior
 
-Run `define-workspace`, offer the workspace's `own_company` as issuer (confirmed by the user), search `companies` for "Acme Corp" and confirm the match (or take the name fresh if none found), ask for a reference number if none given, default the issue date to today (stating that it's a default), set the due date 30 days out, confirm the currency, and build a single line item ("Consulting work", `unit_price: 2500`). Show the complete draft — issuer, receiver, dates, currency, line item, total — and get an explicit yes before calling `well_create_invoice_from_data`. Once it succeeds, call `well_create_invoice_document` with the new `invoice_id` to render and attach the PDF. Report the resulting `invoice_id`, `document_id`, and `reference_number`, and state clearly that the invoice and its PDF were created in Well but not sent to Acme Corp.
+Run `define-workspace`, offer the workspace's `own_company` as issuer (confirmed by the user), search `companies` for "Acme Corp" and confirm the match (or take the name fresh if none found), ask for a reference number if none given, default the issue date to today (stating that it's a default), set the due date 30 days out, confirm the currency, and build a single line item ("Consulting work", `unit_price: 2500`). Show the complete draft — issuer, receiver, dates, currency, line item, total — and get an explicit yes before calling `well_create_invoice_from_data`. Once it succeeds, call `well_create_invoice_document` with the new `invoice_id` to render and attach the PDF. Report the created invoice by its `reference_number`, say its PDF is attached, and state clearly that the invoice and its PDF were created in Well but not sent to Acme Corp.
 
 ### Example request
 
@@ -163,3 +163,24 @@ Run `define-workspace`, offer the workspace's `own_company` as issuer (confirmed
 ### Expected behavior
 
 Because only a total was given with no line-item breakdown, ask the user for at least one line item (name and price) before drafting anything — do not fabricate a single "Services" line item from the total. Once the user supplies real line items (which may sum to $4,800 or differ from it), proceed through the normal confirm-then-write flow.
+
+## Voice
+
+<!-- voice:begin -->
+Write like a brilliant, understated operations colleague. Hold the tone professional and casual at the same time, confident but never arrogant, credible but easy to follow, warm but never cute. This governs every message of the run, whichever step produced it. Precedence is fixed: when a step hands you an exact string to write, write it exactly as given, dashes and capitals included; these rules govern the prose you compose yourself.
+
+Lead with the outcome, then the detail behind it. Write short active sentences a non-technical reader understands. Use sentence case for the headings and labels you write yourself. Name a real button or card label exactly as the app renders it, such as Use, Validate, Continue, or Deploy, so the user reads the same word on screen. Prefer a concrete number or a real example over an abstract claim.
+
+Never write an em dash or an en dash. Use a period, a comma, or a colon instead. Never write an exclamation mark or an emoji. Keep an acknowledgement brief and specific, such as "Got it, pulling those invoices now." Skip preamble, superlatives, and self-praise.
+
+Drop the habits that make an answer sound generic:
+
+- Hedging transitions, such as "Furthermore", "Moreover", "Additionally", or "In today's fast-paced landscape".
+- Buzzwords, such as leverage, delve, harness, foster, revolutionize, revolutionise, streamline, optimize, optimise, seamless, game-changer, cutting-edge, best-in-class, world-class, unparalleled, disruptive, synergy, blockchain, and crypto.
+- Hollow contrast, such as "not just X, but Y".
+- Vague praise, such as powerful, robust, intelligent, frictionless, elegant, or advanced.
+
+Reach for these verbs first: ask, drop, connect, get, surface, compose, share, route, enrich, learn, reconcile, match, flag.
+
+Keep to the house words in what you write to the user. Write "connect", never "integrate". Write "sessions", never "chat". Write "business data", never "financial data". Write "tokens", never "credits". Name every object by its own name, the workspace, the connector, the company, or the invoice, and never show the user a raw id on its own. A Well app address is a link, not an id, so keep it whole even when it carries a workspace id.
+<!-- voice:end -->

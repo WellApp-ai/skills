@@ -1,14 +1,14 @@
 ---
 name: fetch-missing-invoices
 requires: [define-workspace, define-period, connect-bank, categorize-counterparties, show-missing-invoices, connect-tools, deploy-agents]
-description: Walk Well's whole missing-invoice flow end to end — pin the workspace, fix the months, get the bank feed in when a selected month holds no bank transaction, categorize the counterparties carrying no industry label, list the settled spend that still has no supplier invoice, take the user's pick of the vendors to chase, connect the services Well holds a connector for, and preview what Well would fetch for that pick. Nothing runs from the chat — the last card hands the picked portals to the Well app's collect page, where the browser extension collects from them once the user starts it there. Use when the user says "fetch the invoices I'm missing", "what am I missing for March", "chase my missing supplier invoices before I close", or "run the missing-invoice flow", or when a flow needs every brick walked in order. The flow is click-chained — the cards' Use / Validate / Continue clicks drive it. Do not use to collect from the chat, to compute a spend total, to close a period, or to run one brick alone.
+description: Walk Well's whole missing-invoice flow end to end — pin the workspace, fix the months, get the bank feed in when a selected month holds no bank transaction, categorize the counterparties carrying no industry label, list the settled spend that still has no supplier invoice, take the user's pick of the vendors to chase, connect the services Well holds a connector for, and preview what Well would fetch for that pick. Nothing runs from the session. The last card hands the picked portals to the Well app's collect page, where the browser extension collects from them once the user starts it there. Use when the user says "fetch the invoices I'm missing", "what am I missing for March", "chase my missing supplier invoices before I close", or "run the missing-invoice flow", or when a flow needs every brick walked in order. The flow is click-chained — the cards' Use / Validate / Continue clicks drive it. Do not use to collect from the session, to compute a spend total, to close a period, or to run one brick alone.
 ---
 
 # Fetch Missing Invoices with Well
 
 ## Purpose
 
-Run every step of Well's missing-invoice flow, in a fixed order: workspace → period → bank (when a selected month holds no bank transaction) → counterparty categorization (when the months hold uncategorized counterparties) → gap list and vendor pick → connect step (when the pick names a connector) → agent preview. The flow is **click-chained**: each card the flow renders ends the turn, and where the card carries the choice, the user's click writes it server-side AND prefills a message in their composer, which they send to move the flow on. A card whose choice is already made ends the turn all the same, and any message moves the flow on. Every stop is explicit, the workspace read ends its own turn before the period picker, the gap-list card takes the vendor pick and ends its own turn before the steps that read it, and a multi-workspace pick loops the whole walk one entity at a time. The last step starts nothing from the chat: its card opens the collect link, and the collect page in Well hands the picked portals to the Well browser extension once the user starts them there.
+Run every step of Well's missing-invoice flow, in a fixed order: workspace → period → bank (when a selected month holds no bank transaction) → counterparty categorization (when the months hold uncategorized counterparties) → gap list and vendor pick → connect step (when the pick names a connector) → agent preview. The flow is **click-chained**: each card the flow renders ends the turn, and where the card carries the choice, the user's click writes it server-side AND prefills a message in their composer, which they send to move the flow on. A card whose choice is already made ends the turn all the same, and any message moves the flow on. Every stop is explicit, the workspace read ends its own turn before the period picker, the gap-list card takes the vendor pick and ends its own turn before the steps that read it, and a multi-workspace pick loops the whole walk one entity at a time. The last step starts nothing from the session: its card opens the collect link, and the collect page in Well hands the picked portals to the Well browser extension once the user starts them there.
 
 This skill **composes**: all seven of its steps are atomic Well skills, one brick per step, and this file runs them in a fixed order rather than reimplementing what they do. Each brick owns its own tool calls, its own card and its own rules; what lives here is the ORDER, the turn boundaries between the bricks, and the one recap that spans them. See **Composed skills** under Tooling for the roster.
 
@@ -341,3 +341,24 @@ Before finishing, verify:
 **Text-only host.** No card is drawn at step 5, so the rows are listed in text and the flow asks which vendors to chase. The user names three; match them against the listed rows, write the pick with `well_switch_workspace({ workspace_id, counterparties })` from each row's `company_id` and `matched_connector_service_id`, then preview those three at step 7 and give the collect link instead of a Deploy pointer.
 
 **Tool unavailable.** `well_list_missing_invoices` absent → step 5 is `unavailable`: say so; never approximate from raw transactions; stop and recap workspace, period, and coverage.
+
+## Voice
+
+<!-- voice:begin -->
+Write like a brilliant, understated operations colleague. Hold the tone professional and casual at the same time, confident but never arrogant, credible but easy to follow, warm but never cute. This governs every message of the run, whichever step produced it. Precedence is fixed: when a step hands you an exact string to write, write it exactly as given, dashes and capitals included; these rules govern the prose you compose yourself.
+
+Lead with the outcome, then the detail behind it. Write short active sentences a non-technical reader understands. Use sentence case for the headings and labels you write yourself. Name a real button or card label exactly as the app renders it, such as Use, Validate, Continue, or Deploy, so the user reads the same word on screen. Prefer a concrete number or a real example over an abstract claim.
+
+Never write an em dash or an en dash. Use a period, a comma, or a colon instead. Never write an exclamation mark or an emoji. Keep an acknowledgement brief and specific, such as "Got it, pulling those invoices now." Skip preamble, superlatives, and self-praise.
+
+Drop the habits that make an answer sound generic:
+
+- Hedging transitions, such as "Furthermore", "Moreover", "Additionally", or "In today's fast-paced landscape".
+- Buzzwords, such as leverage, delve, harness, foster, revolutionize, revolutionise, streamline, optimize, optimise, seamless, game-changer, cutting-edge, best-in-class, world-class, unparalleled, disruptive, synergy, blockchain, and crypto.
+- Hollow contrast, such as "not just X, but Y".
+- Vague praise, such as powerful, robust, intelligent, frictionless, elegant, or advanced.
+
+Reach for these verbs first: ask, drop, connect, get, surface, compose, share, route, enrich, learn, reconcile, match, flag.
+
+Keep to the house words in what you write to the user. Write "connect", never "integrate". Write "sessions", never "chat". Write "business data", never "financial data". Write "tokens", never "credits". Name every object by its own name, the workspace, the connector, the company, or the invoice, and never show the user a raw id on its own. A Well app address is a link, not an id, so keep it whole even when it carries a workspace id.
+<!-- voice:end -->
