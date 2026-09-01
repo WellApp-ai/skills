@@ -42,6 +42,13 @@ const VOICE_HEADING = "## Voice";
 const VOICE_BEGIN = "<!-- voice:begin -->";
 const VOICE_END = "<!-- voice:end -->";
 
+// Provenance markers, in the same shape as the voice pair above. They render as
+// nothing, so the shipped prose is unchanged, and they say in the artifact which
+// bytes came from which atom — the question a reader of a compiled skill cannot
+// otherwise answer, since an inlined atom reads exactly like hand-written prose.
+const atomBegin = (atom) => `<!-- atom:${atom}:begin -->`;
+const atomEnd = (atom) => `<!-- atom:${atom}:end -->`;
+
 Handlebars.registerHelper("list", (value) =>
   String(value ?? "")
     .split(",")
@@ -89,6 +96,12 @@ function atomNames() {
 
 // --- compiling atoms and consumers ---
 
+// Filled by the partials as they render, so a template's declared `composes:` is
+// checked against what the compiler actually inlined rather than against a scan
+// of the source text. A partial reached from inside another partial is recorded
+// the same way, which a `{{> ` scan of the template alone would miss.
+const inlinedAtoms = new Set();
+
 function registerPartials() {
   for (const atom of atomNames()) {
     const path = join(ATOMS_DIR, atom, "CONTENT.md");
@@ -98,10 +111,27 @@ function registerPartials() {
     // composes the atom itself emits the same bytes the append writes, and the
     // block count below still matches on both paths.
     if (atom === VOICE_ATOM) {
-      Handlebars.registerPartial(atom, (context) => `\n${wrapVoiceBody(compiled(context).trim())}\n`);
+      Handlebars.registerPartial(atom, (context) => {
+        inlinedAtoms.add(atom);
+        return `\n${wrapVoiceBody(compiled(context).trim())}\n`;
+      });
       continue;
     }
-    Handlebars.registerPartial(atom, compiled);
+    // Markers only — the rendered bytes between them are exactly what this
+    // partial produced before they existed, so adding provenance can never
+    // reword a shipped skill. Both markers are glued to existing text rather
+    // than given lines of their own: an atom body ends with a newline, and a
+    // marker placed after it would occupy the blank line that separates two
+    // numbered steps, which splits the list in every markdown renderer. So the
+    // closing marker goes before that trailing whitespace, which is then
+    // re-emitted unchanged.
+    Handlebars.registerPartial(atom, (context) => {
+      inlinedAtoms.add(atom);
+      const rendered = compiled(context);
+      const trailing = rendered.match(/\s*$/)[0];
+      const body = rendered.slice(0, rendered.length - trailing.length);
+      return `${atomBegin(atom)}${body}${atomEnd(atom)}${trailing}`;
+    });
   }
 }
 
@@ -117,17 +147,68 @@ function renderDevArtifacts() {
   });
 }
 
+// Reads a one-line flow list — `composes: [a, b]` — out of a frontmatter block.
+// Absent key and empty list are both the empty set: a skill that inlines nothing
+// but the universal voice atom declares no `composes:` at all.
+function parseFlowList(frontmatterText, key) {
+  const match = frontmatterText.match(new RegExp(`^${key}:\\s*\\[(.*?)\\]\\s*$`, "m"));
+  if (!match) return [];
+  return match[1]
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+// `composes:` names the atoms whose content is inlined at compile time;
+// `requires:` names the skills a run loads at run time. The voice atom is
+// excluded because every shipped skill carries it and the coverage check above
+// already guarantees that — declaring it 26 times would say nothing.
+//
+// The two keys are mutually exclusive per atom, and that is the rule worth
+// enforcing: an atom in both claims to be inlined AND delegated, which is the
+// duplicated-brick state atoms exist to remove. A `composes:` that disagrees
+// with what was actually inlined is the same defect read from the other side.
+function composeDeclarationErrors(label, frontmatterText, inlined) {
+  const declared = parseFlowList(frontmatterText, "composes");
+  const required = parseFlowList(frontmatterText, "requires");
+  const actual = [...inlined].filter((atom) => atom !== VOICE_ATOM).sort();
+  const errors = [];
+
+  const missing = actual.filter((atom) => !declared.includes(atom));
+  const extra = declared.filter((atom) => !actual.includes(atom));
+  if (missing.length)
+    errors.push(
+      `${label}: inlines ${missing.map((a) => `\`${a}\``).join(", ")} but does not declare it in \`composes:\`. Declare \`composes: [${actual.join(", ")}]\` in the template's frontmatter.`,
+    );
+  if (extra.length)
+    errors.push(
+      `${label}: declares ${extra.map((a) => `\`${a}\``).join(", ")} in \`composes:\` but inlines no such atom. Either call \`{{> <atom>}}\` in the template or drop it from \`composes:\`.`,
+    );
+
+  const both = declared.filter((atom) => required.includes(atom));
+  if (both.length)
+    errors.push(
+      `${label}: ${both.map((a) => `\`${a}\``).join(", ")} appears in BOTH \`composes:\` and \`requires:\`. A brick is inlined or delegated, never both — two copies is the drift atoms exist to remove. Keep the key that matches how the skill actually uses it.`,
+    );
+
+  return errors;
+}
+
 function renderConsumers() {
-  if (!existsSync(SRC_DIR)) return [];
-  return readdirSync(SRC_DIR)
-    .filter((f) => f.endsWith(".hbs.md"))
-    .map((file) => {
-      const name = basename(file, ".hbs.md");
-      const label = `skills/${name}/SKILL.md`;
-      const source = readFileSync(join(SRC_DIR, file), "utf8");
-      const rendered = Handlebars.compile(source, { strict: true, noEscape: true })({});
-      return { path: join(SKILLS_DIR, name, "SKILL.md"), content: rendered, label };
-    });
+  if (!existsSync(SRC_DIR)) return { artifacts: [], errors: [] };
+  const artifacts = [];
+  const errors = [];
+  for (const file of readdirSync(SRC_DIR).filter((f) => f.endsWith(".hbs.md"))) {
+    const name = basename(file, ".hbs.md");
+    const label = `skills/${name}/SKILL.md`;
+    const source = readFileSync(join(SRC_DIR, file), "utf8");
+    inlinedAtoms.clear();
+    const rendered = Handlebars.compile(source, { strict: true, noEscape: true })({});
+    const { frontmatter } = splitFrontmatter(source, `src/${file}`);
+    errors.push(...composeDeclarationErrors(label, frontmatter, inlinedAtoms));
+    artifacts.push({ path: join(SKILLS_DIR, name, "SKILL.md"), content: rendered, label });
+  }
+  return { artifacts, errors };
 }
 
 // The markers that say which bytes the compiler owns. They render as nothing, so
@@ -279,14 +360,20 @@ function runOnce({ check }) {
   const voiceBody = renderVoiceBody();
   const voiceSection = renderVoiceSection(voiceBody);
   const appends = renderVoiceAppends(voiceSection, voiceBody);
-  const consumerArtifacts = [...renderConsumers(), ...appends.artifacts];
+  const consumers = renderConsumers();
+  const consumerArtifacts = [...consumers.artifacts, ...appends.artifacts];
 
   // Checked before anything is written, so a skill that lost its Voice section,
-  // or that holds content the append would drop, never reaches disk or dist/.
-  const voiceErrors = [...appends.errors, ...voiceCoverageErrors(consumerArtifacts, voiceSection)];
-  for (const message of voiceErrors) console.error(message);
-  if (voiceErrors.length) {
-    console.error(`\n${voiceErrors.length} skill(s) failed the voice atom check.`);
+  // that holds content the append would drop, or whose `composes:` disagrees
+  // with what it actually inlines, never reaches disk or dist/.
+  const compositionErrors = [
+    ...consumers.errors,
+    ...appends.errors,
+    ...voiceCoverageErrors(consumerArtifacts, voiceSection),
+  ];
+  for (const message of compositionErrors) console.error(message);
+  if (compositionErrors.length) {
+    console.error(`\n${compositionErrors.length} composition error(s). Nothing was written.`);
     process.exitCode = 1;
     return;
   }

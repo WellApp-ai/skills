@@ -1,5 +1,6 @@
 ---
 name: avg-burn
+composes: [define-workspace, connect-tools]
 description: Answer "what is our burn rate?" using Well's MCP financial graph — the trailing average of real monthly outflows, with the window it was measured over and how much of that window actually carried spend. Use when the user asks "what's our burn rate", "how much are we spending per month", "what's our monthly burn", or "how much goes out each month". Requires a connected Well workspace with bank or accounting data; if none is connected, this skill guides the user to connect one first.
 ---
 

@@ -16,7 +16,7 @@ Declaring only the first is the mistake reviewers keep finding. The three surfac
 
 `define-workspace` is the only brick that declares nothing — it is the root and depends on no one.
 
-**This section describes the runtime-delegation pattern, which still governs every skill except `fx-exposure`.** A newer, compile-time pattern exists alongside it — see the next section — and is meant to replace this one skill by skill, not overnight. Until a skill is migrated, it still follows the three-places rule above.
+**This section describes the runtime-delegation pattern, which still governs every skill without a `src/<name>.hbs.md` template.** A newer, compile-time pattern exists alongside it — see the next section — and is meant to replace this one skill by skill, not overnight. Until a skill is migrated, it still follows the three-places rule above.
 
 ## Atoms: compile-time composition, not runtime delegation
 
@@ -33,7 +33,48 @@ A skill that says `requires: [define-workspace]` leaves it to the model, at run 
 
 The appended section is always last, so its region runs to end of file and anything written below the heading belongs to it. `make compile` therefore replaces a Voice section only when it owns the bytes, and ownership is marked rather than guessed: the compiler wraps every body it renders in `<!-- voice:begin -->` and `<!-- voice:end -->`, on the template path as well, and rewrites only what sits between them. The markers are HTML comments, so a reader of the shipped skill sees the tone prose alone. An older render still carries them, which is how an atom edit propagates. A section without them stops the run, names the file, and quotes the first line at risk, so a note added under the heading is never dropped. Move that content above the `## Voice` heading, then compile again. The two other guards each cover one path. `compile.mjs` counts the rendered block on compile and again on `--check` in `make validate`, and fails when a skill carries anything other than exactly one copy: that guards the template path, where a dropped `{{> voice}}` call renders zero copies and still matches its own output on disk. On the hand-written path the compiler rewrites the block itself, so the count there is always one, and `--check`'s staleness comparison is what catches a skill the compiler fell behind on.
 
-`fx-exposure` (PR #61) is the one worked example so far — see `src/fx-exposure.hbs.md` next to `skills/fx-exposure/SKILL.md`.
+Three skills carry a template today. `avg-burn` and `fx-exposure` inline their setup steps;
+`rank-clients-by-ltv` has a template but composes only `voice`. Read `src/fx-exposure.hbs.md`
+next to `skills/fx-exposure/SKILL.md` for the worked example.
+
+## Which pattern a skill uses
+
+Both patterns are legitimate. The choice is not a matter of taste.
+
+**A flow skill delegates.** It walks the user through click-chained steps. `fetch-missing-invoices`
+and `close-books` are the examples. Each brick it names is a stop the user experiences. A user can
+also enter that brick mid-flow from somewhere else. So the brick stays separately installable, and
+the flow lists it in `requires:`.
+
+**A leaf data skill compiles.** It answers one question in one pass. `avg-burn` and `fx-exposure`
+are the examples. Its setup steps are internal checks, not stops the user navigates. Nothing needs
+to load them separately, so the content is inlined at build time. The skill lists the atoms it
+inlines in `composes:`.
+
+`requires:` and `composes:` say different things, and no atom may appear in both. An atom in both
+claims to be inlined AND delegated. That is the two-copies state atoms exist to remove.
+`compile.mjs` fails the build on three conditions: an atom in both keys, a `composes:` entry the
+template never inlines, and an inlined atom missing from `composes:`. It checks the declaration
+against what the compiler actually rendered, never against a scan of the template text. An atom
+reached from inside another atom therefore counts.
+
+`voice` is excluded from `composes:`. Every shipped skill carries it, and the compiler's own
+coverage check already guarantees that, so declaring it twenty-six times would say nothing. A
+skill that inlines nothing else declares no `composes:` at all — `rank-clients-by-ltv` is that
+case, and it keeps its `requires:`. Migrating such a skill means moving each step to a `{{> }}`
+call, then moving its name from one key to the other.
+
+**The shipped skill says where its content came from.** An inlined atom reads exactly like
+hand-written prose. So `make compile` wraps each one in `<!-- atom:<name>:begin -->` and
+`<!-- atom:<name>:end -->`, the same ownership idiom the `voice` pair uses. They are HTML
+comments, so a reader of the rendered page sees the prose alone. A reader of the raw file can see
+which bytes belong to which brick.
+
+Both markers are glued to existing text, never given a line of their own. An atom body ends with a
+newline. A closing marker placed after it would occupy the blank line that separates two numbered
+steps, and that splits the list in every markdown renderer. The compiler puts the marker before
+that trailing whitespace and re-emits the whitespace unchanged. Stripping the markers from a
+compiled skill therefore returns the exact bytes the same template produced before they existed.
 
 **When building or extending anything here:**
 
@@ -42,7 +83,7 @@ The appended section is always last, so its region runs to end of file and anyth
 - **Extend an atom before forking it.** A new use case that's *almost* what an atom does is a new `{{placeholder}}` and an `{{#if}}` branch inside that atom's `CONTENT.md`, not a second near-duplicate atom. Only split into a new atom when the behavior is genuinely a different thing, not a variant of the same thing.
 - **Push customization into props, not prose duplication.** An atom should take enough hash-arg props (`purpose`, `kinds`, `internalCheck`, …) that most callers never need it to behave differently outside what a prop already controls.
 - **A composed atom assumes its precondition is already met — say so explicitly.** When a skill chains two or more atoms, a later atom must not redo what an earlier one in the same chain already did (re-showing a picker, re-checking a connection). `atoms/connect-tools/CONTENT.md` states this directly — *"The workspace is already pinned — pass its `workspace_id` on the call below; do not re-resolve it here."* — because it always runs after `define-workspace` in a composed flow. Any atom written to run after another must carry the same kind of explicit assumption in its own prose; the compiler has no way to enforce this, it is a writing discipline.
-- **Iterate with `make watch`, verify with `make compile` then `make validate`.** `validate`'s `compile.mjs --check` enforces two things about `skills/*/SKILL.md`: that it stays current with its `src/*.hbs.md` and the atoms it composes, and that it carries the `voice` block exactly once. `atoms/*/SKILL.md` is gitignored and never checked against disk, since nothing ships it and nothing hand-edits it.
+- **Iterate with `make watch`, verify with `make compile` then `make validate`.** `validate`'s `compile.mjs --check` enforces three things about `skills/*/SKILL.md`: that it stays current with its `src/*.hbs.md` and the atoms it composes, that it carries the `voice` block exactly once, and that its `composes:` matches the atoms actually inlined. `atoms/*/SKILL.md` is gitignored and never checked against disk, since nothing ships it and nothing hand-edits it.
 - **Keep skill size in view while composing.** A skill built from many inlined atoms can grow long; there is no automated check for this yet (a token-count warning at validation time is planned as a follow-up) — until then, do a compaction pass yourself before shipping a skill that has grown noticeably verbose. `/skill-forge` has compaction guidance.
 
 ## Every dependency count appears four times per docs page

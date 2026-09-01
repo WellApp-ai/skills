@@ -1,5 +1,6 @@
 ---
 name: fx-exposure
+composes: [define-workspace, connect-tools, normalize-currency]
 description: Measure how exposed a company is to foreign-currency risk using Well's MCP financial graph — outstanding invoice balances and cash balances summed by non-home currency and converted to the workspace's home/reporting currency at real exchange rates. Use when the user asks "measure our FX exposure", "FX exposure", "currency risk", "how much of our cash/receivables is in foreign currency", "what's our exposure to EUR/USD/GBP", or "currency breakdown of our cash and invoices". Requires a connected Well workspace with invoicing and/or banking data plus a resolvable home currency; if either is missing, this skill walks the user through connecting one or confirming the home currency first.
 ---
 
@@ -45,7 +46,7 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 
 ## Workflow
 
-1. **Pin the workspace.** 
+1. **Pin the workspace.** <!-- atom:define-workspace:begin -->
 Call each list or read tool once per step, and render at most one widget card per turn. The cards refresh themselves. A card click executes server-side and prefills a message in the user's composer — rendering a card therefore ends the turn, and the sent message is how the routine resumes.
 
 Confirm the Well MCP server is configured — if `well_list_workspaces` (or any `well_*` tool) is not available, tell the user a Well connection is mandatory at `https://api.wellapp.ai/v1/mcp` and stop until it's there.
@@ -90,10 +91,10 @@ On `unresolved`, every other key is null. Pass `workspace_id` explicitly on ever
 
 On `multi_picked`: the caller runs its whole walk on the pinned workspace first, then calls `well_switch_workspace({ workspace_id: <next> })` on the next queue entry (read from `well_list_workspaces`' `session.workspace_queue`, never from chat) and repeats. Each pass carries its own `workspace_id` explicitly and gets its own recap — nothing is merged across two entities: no shared row, no combined total.
 
-Verify before moving on: exactly one workspace is pinned, or `resolution: unresolved` — never two, never a merged view; `session.pinned_workspace_id` was trusted only when this conversation established it; a hint resolved only on an exact id match or an unambiguous case-insensitive name match; `well_switch_workspace` was called exactly once on a hint match or typed pick and not at all for a pick the card itself already made; on `multi_picked`, the loop rule (one entity at a time, own recap, no merging) was stated in the hand-off.
+Verify before moving on: exactly one workspace is pinned, or `resolution: unresolved` — never two, never a merged view; `session.pinned_workspace_id` was trusted only when this conversation established it; a hint resolved only on an exact id match or an unambiguous case-insensitive name match; `well_switch_workspace` was called exactly once on a hint match or typed pick and not at all for a pick the card itself already made; on `multi_picked`, the loop rule (one entity at a time, own recap, no merging) was stated in the hand-off.<!-- atom:define-workspace:end -->
 
 
-2. **Confirm the connections this answer needs.** 
+2. **Confirm the connections this answer needs.** <!-- atom:connect-tools:begin -->
 The workspace is already pinned — pass its `workspace_id` on the call below; do not re-resolve it here.
 
 Read the current coverage in one call: `well_list_connectors({ workspace_id, from_selection: true })` when this run follows a vendor pick; `well_list_connectors({ workspace_id, kind })` when the job covers exactly one kind; `well_list_connectors({ workspace_id })` otherwise (one unscoped call for two or three kinds — one call renders one card, and a turn never renders two).
@@ -116,7 +117,7 @@ On a transient `well_list_connectors` failure, retry once; on a second failure, 
 
 Hand off, kept for the caller and never printed as a block: per requested kind, its state (`connected`/`connecting`/`error`/`missing`), the connector(s) behind it, and the `install_url` to act on; `coverage` — `complete` when every requested kind is connected or connecting, `none` when none is (an all-`error` workspace is `none`, not `partial`), `partial` otherwise; `skipped_by_user`; `required` echoed back.
 
-Verify before moving on: `well_list_connectors` was the only connector-listing tool called — no `well_query_records` on `workspace_connectors`, no provider-specific tool; each kind's state came from the four-line precedence above, not from a name or `is_connected` alone; `coverage: none` was used (not `partial`) when every requested kind was in error; a transient failure was retried once before the fallback link.
+Verify before moving on: `well_list_connectors` was the only connector-listing tool called — no `well_query_records` on `workspace_connectors`, no provider-specific tool; each kind's state came from the four-line precedence above, not from a name or `is_connected` alone; `coverage: none` was used (not `partial`) when every requested kind was in error; a transient failure was retried once before the fallback link.<!-- atom:connect-tools:end -->
 
    - `coverage: none` → stop; there is nothing to measure exposure against yet.
    - Any kind `connecting`, or a connected connector whose latest sync is still running → carry on, and carry "the data may still be partial" into the answer.
@@ -132,7 +133,7 @@ Verify before moving on: `well_list_connectors` was the only connector-listing t
 
 5. **Determine the home/reporting currency, then separate out the exposure set.** Check `identity.base_currency` from the workspace hand-off first. If it's set, use it. If it's null (accounting settings not yet configured on this workspace), either ask the user directly, or infer it as the most common currency across step 4's invoice/account groups. Whichever approach is used, state it plainly in the output; never silently assume USD or any other default. Once determined, separate out everything in step 4's groups that is **not** the home currency — that's the exposure set.
 
-6. **Convert each non-home currency to the home currency, using the home currency from step 5 as the target and `mode: convert`.** 
+6. **Convert each non-home currency to the home currency, using the home currency from step 5 as the target and `mode: convert`.** <!-- atom:normalize-currency:begin -->
 The workspace is already pinned — pass its `workspace_id` on every call below.
 
 Group the input amounts by currency for the rate lookup **only** — keep every tagged row, since the rate found for a currency gets applied back to each of its rows later, not just to a subtotal.
@@ -170,7 +171,7 @@ partial: <true|false>
 resolution: converted | per_currency | single_currency | unresolved
 ```
 
-Verify before moving on: the single-currency shortcut was taken only when that currency already equalled the target or the mode was `per_currency`; every converted figure carries the rate and rate date used, with the fallback date stated when an exact-date rate wasn't available; no rate dated after the as-of date was used; a currency with no available rate was excluded explicitly and the total marked `partial`; no total blends currencies anywhere in the output.
+Verify before moving on: the single-currency shortcut was taken only when that currency already equalled the target or the mode was `per_currency`; every converted figure carries the rate and rate date used, with the fallback date stated when an exact-date rate wasn't available; no rate dated after the as-of date was used; a currency with no available rate was excluded explicitly and the total marked `partial`; no total blends currencies anywhere in the output.<!-- atom:normalize-currency:end -->
 
    - Use its `per_currency` rows for the per-currency exposure lines and its `converted_total` for the single home-currency figure. A workspace with exactly one foreign currency still needs converting — `mode: convert` makes that explicit. Every rate and rate date it returns belongs in the output; an exposure number without its rate is not auditable.
    - `partial: true` means a currency had no rate in Well. That currency is still real exposure — report it in its own currency, name it as unconverted, and say the home-currency total excludes it. Dropping it understates exposure, which is the one direction this skill must never err in.
