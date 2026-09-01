@@ -25,6 +25,13 @@ you have to describe it correctly when the user asks what it counts:
   payment-means legs resolve to accounts the workspace owns is not spend leaving the business.
   No category, label, or transaction type decides this, so a user recategorizing a row does not
   change the burn.
+- **A fixed category list could not replace that rule.** Internal or external is a fact about the
+  counterparty account, not about the transaction. A transfer between two accounts you own is
+  internal. The same transfer to a sister company at a bank you have not connected is external,
+  and counts as burn. Category, label and amount are identical in both cases. Close one of your
+  own accounts and yesterday's internal transfer reads as external today, its category unchanged.
+  Burn also counts outflows carrying no category at all, so a category-driven rule would shrink
+  the figure as categorization coverage drops.
 - **Card and loan legs are excluded.** Card spend counts on the date its repayment leaves the
   bank account, so a window can look low simply because the repayment falls outside it.
 - **FX is applied before summing**, into the workspace's base currency.
