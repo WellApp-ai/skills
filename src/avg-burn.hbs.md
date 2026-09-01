@@ -43,7 +43,7 @@ Do not use this skill when:
 
 The user may provide:
 
-- A workspace hint — an id, a workspace name, or the company behind it — if they manage more than one. Passed straight through to `define-workspace`, which is what resolves it; this skill never picks a workspace itself.
+- A workspace hint — an id, a workspace name, or the company behind it — if they manage more than one. Step 1 resolves it; this skill never picks a workspace itself.
 - A reporting period — a calendar year and month — to measure a past window rather than the live one. Both or neither: a month with no year, or a year with no month, is refused rather than guessed.
 - A window length in months (default 3). Widen it to smooth a lumpy month, narrow it to react faster.
 
@@ -67,7 +67,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
    - `coverage: partial` → carry on with what is connected, and keep the missing kinds for the coverage disclosure the Output requirements ask for.
    - A kind the user chose to skip comes back under `skipped_by_user` — respect that and don't re-ask for it in this run.
 
-3. **Verify the data itself has landed.** `connect-tools` reports connections, not rows — a connector can be connected and still have delivered nothing this skill can use. Spot-check what this skill actually reads: for each connected connector, the latest `workspace_connector_sync_logs` row's `status` and `completed_at`. Keep those timestamps — a connector that has not synced in weeks makes the figure stale rather than wrong. `well_get_burn` returning `unavailable: true` in the next step is the other half of this check.
+3. **Verify the data itself has landed.** Step 2 reports connections, not rows — a connector can be connected and still have delivered nothing this skill can use. Spot-check what this skill actually reads: for each connected connector, the latest `workspace_connector_sync_logs` row's `status` and `completed_at`. Keep those timestamps — a connector that has not synced in weeks makes the figure stale rather than wrong. `well_get_burn` returning `unavailable: true` in the next step is the other half of this check.
 
 4. **Get the burn.** Call `well_get_burn()`. Pass `year` and `month` only if the user named a past period, and `months_back` only if they asked for a different window. It returns `amount` (a positive magnitude, not a signed figure), `currency`, and the window metadata:
    - **This is the only analytics tool this skill calls.** `well_get_burn`'s response carries every figure this answer states. Never call `well_get_runway`, `well_get_cost_structure`, `well_get_cash_forecast`, `well_get_cash_flow_bridge` or `well_get_cash_position` to source anything here — not a comparison, not a series, not one number in a sentence. Each draws its own card, so a second call renders a second block answering a question nobody asked. `well_get_runway`'s nested `avg_burn` is doubly out of bounds: it is pinned to the runway's own window. A figure this payload does not carry belongs to another skill — name it. That forbids enriching THIS answer, not answering a second question the user actually asked.
