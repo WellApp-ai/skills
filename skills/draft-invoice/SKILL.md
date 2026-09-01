@@ -43,7 +43,7 @@ The user may supply, or will be asked for:
 
 This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). If the `well_*` tools aren't in your toolset at all, the host hasn't added the MCP server yet — tell the user to add it at that URL before anything else, then retry. Required tools once it's added:
 
-- `well_list_workspaces` — how `define-workspace` resolves the workspace. Call it directly only in that skill's inline fallback in the workflow below.
+- `well_list_workspaces` — how `define-workspace` resolves the workspace. This skill never calls it directly.
 - `well_query_records` — read `workspaces` (for `own_company`) and search `companies` for a possible receiver match.
 - `well_get_schema` — call this before querying `invoices` or `companies` for the first time in a session; field names and semantics are workspace/connector-dependent, never assume them.
 - `well_create_invoice_from_data` — the write tool. Exact input schema (verified against source, use these field names as-is):
@@ -73,12 +73,12 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 - `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there's no connection yet, and pins exactly one workspace. Supplies the `workspace_id` that every later call carries.
 - `confirm-my-company` — called in `suggest` mode only, to offer the workspace's own company as the likely issuer for the user to confirm.
 
-Both ship with the `well-skills` plugin. This skill is also installable on its own, so step 1 of the workflow carries the inline fallback to use when it's absent.
+Both ship with the `well-skills` plugin. This skill is also installable on its own. When a brick it needs is absent, the step that needs it says so and stops.
 
 ## Workflow
 
 1. **Pin the workspace — run `define-workspace`.** Invoke the `define-workspace` skill with `purpose: "to draft and create this invoice"` and use its typed hand-off. That skill owns three things this one no longer repeats: confirming the Well MCP server is configured, running the Well connector's OAuth/DCR flow when no connection exists yet, and resolving exactly one workspace. Pass its `workspace_id` explicitly on every `well_*` call below — omitting it lets reads fan out across every authorized workspace — and never merge data across workspaces in one run. If it hands back `resolution: unresolved`, stop: nothing can be created without a pinned workspace.
-   - **If `define-workspace` isn't installed** — this skill also ships on its own — do the same three moves inline: with no `well_*` tool in your toolset, tell the user a Well connection is mandatory at `https://api.wellapp.ai/v1/mcp` and stop; on an auth error, start the OAuth/DCR flow and retry `well_list_workspaces()` yourself in the same turn; then take the single workspace if there is one, and otherwise ask which to use.
+   - **If `define-workspace` isn't installed**, say so and stop: this skill needs it, and `npx skills add wellapp-ai/skills` installs it. Do not do its work here.
 
 2. **Gather every required field — never invent one.** Call `well_get_schema({ root: "invoices" })` and `well_get_schema({ root: "companies" })` before relying on assumptions about either.
    - **Issuer**: invoke the `confirm-my-company` skill with the pinned `workspace_id` and `mode: suggest` — it reads `workspaces.own_company` and hands back a default without running the full resolution ceremony, because the user confirms the issuer on the draft anyway. Offer that company as the likely issuer and let the user confirm or override it; never assume it silently. Once confirmed, pass its hand-off's `own_company_id` as `issuer.company_id` so the write binds to that exact row instead of re-resolving by name/domain/tax_id. If the skill isn't installed, read `workspaces.own_company` directly for the same suggestion (and the same `company_id` binding), and if it's null or absent from the schema, just ask who the issuer is rather than inferring it from the workspace's name — in that case omit `company_id` and let the write create a fresh company from `name`.
@@ -131,7 +131,7 @@ State the invoice details in text regardless — you cannot know whether anythin
 Before finishing, verify:
 
 - If `well_*` tools weren't available at all, the user was pointed at the MCP endpoint (`https://api.wellapp.ai/v1/mcp`) instead of erroring silently.
-- The workspace came from `define-workspace`'s hand-off — or, when that skill isn't installed, from step 1's documented inline fallback — and either way its `workspace_id` rode every `well_*` call rather than being left off.
+- The workspace came from `define-workspace`'s hand-off, and its `workspace_id` rode every `well_*` call rather than being left off.
 - `well_get_schema` was called for `invoices` and `companies` before relying on assumptions about either.
 - No monetary amount, price, tax id, or date was fabricated — every one came from the user or was explicitly stated as a default (e.g. today's date) and confirmed.
 - The receiver company match (if any) was confirmed by the user, not silently substituted.

@@ -40,10 +40,10 @@ The user may provide:
 
 This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). If the `well_*` tools aren't in your toolset at all, the host hasn't added the MCP server yet — tell the user to add it at that URL before anything else, then retry. Required tools once it's added:
 
-- `well_list_workspaces` — how `define-workspace` resolves the workspace. Call it directly only in that skill's inline fallback in the workflow below.
+- `well_list_workspaces` — how `define-workspace` resolves the workspace. This skill never calls it directly.
 - `well_query_records` — read `invoices`, and optionally `transactions`.
 - `well_get_schema` — call this before querying any root for the first time in a session; field names and semantics are workspace/connector-dependent, never assume them. This is especially important for the secondary transaction check below, since the exact relation name that exposes a transaction's linked documents is not fixed.
-- `well_list_connectors` — how `connect-tools` surfaces install links. Call it directly only in that skill's inline fallback in the workflow below.
+- `well_list_connectors` — how `connect-tools` surfaces install links. This skill never calls it directly.
 - Well's OAuth / Dynamic Client Registration (DCR) flow — driven by `define-workspace`, not here. Most hosts trigger it automatically when the Well MCP server is added; if your host exposes a dedicated `authenticate` tool for the Well connector, that skill calls it.
 
 **Composed skills.** Three atomic Well skills own the setup this skill used to inline — invoke them, don't reimplement them:
@@ -52,19 +52,19 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 - `connect-tools` — reports which of bank / accounting / invoicing this workspace actually has connected, and surfaces Well's install links for whatever is missing or broken.
 - `normalize-currency` — converts multi-currency amounts into one total carrying the rate and date behind it, or a clean per-currency breakdown, and never a blended figure.
 
-All three ship with the `well-skills` plugin. This skill is also installable on its own, so steps 1, 2, and 7 of the workflow each carry the inline fallback to use when they're absent.
+All three ship with the `well-skills` plugin. This skill is also installable on its own. When a brick it needs is absent, the step that needs it says so and stops.
 
 ## Workflow
 
 1. **Pin the workspace — run `define-workspace`.** Invoke the `define-workspace` skill with `purpose: "to find the expenses with no receipt attached"` and use its typed hand-off. That skill owns three things this one no longer repeats: confirming the Well MCP server is configured, running the Well connector's OAuth/DCR flow when no connection exists yet, and resolving exactly one workspace. Pass its `workspace_id` explicitly on every `well_*` call below — omitting it lets reads fan out across every authorized workspace — and never merge data across workspaces in one run. If it hands back `resolution: unresolved`, stop: there is nothing to check without a pinned workspace.
-   - **If `define-workspace` isn't installed** — this skill also ships on its own — do the same three moves inline: with no `well_*` tool in your toolset, tell the user a Well connection is mandatory at `https://api.wellapp.ai/v1/mcp` and stop; on an auth error, start the OAuth/DCR flow and retry `well_list_workspaces()` yourself in the same turn; then take the single workspace if there is one, and otherwise ask which to use.
+   - **If `define-workspace` isn't installed**, say so and stop: this skill needs it, and `npx skills add wellapp-ai/skills` installs it. Do not do its work here.
 
 2. **Confirm the connections this answer needs — run `connect-tools`.** Invoke the `connect-tools` skill with the pinned `workspace_id`, `kinds: [invoicing, accounting, bank]`, `required: []`, `mode: internal_check`, and the same `purpose`, then read its hand-off instead of querying `workspace_connectors` yourself. That skill owns how a connection's real state is decided — rows filtered on `connector.direction: input` and matched on `connector.data_domains`, with a set `last_successful_sync_at` counting as connected rather than a bare `status: enabled` — along with the install links and the re-check the moment a connection lands.
    - `coverage: none` → stop; there is nothing to check yet. `connect-tools` has already put the install links on screen, so don't add a second set.
    - Any kind reported `connecting`, or a connected connector whose latest sync is still running → carry on, and carry "the data may still be partial" into the answer.
    - `coverage: partial` → carry on with what is connected, and keep the missing kinds for the coverage disclosure the Output requirements ask for.
    - A kind the user chose to skip comes back under `skipped_by_user` — respect that and don't re-ask for it in this run.
-   - **If `connect-tools` isn't installed**, do the connector half inline: keep `workspace_connectors` rows whose `connector.direction` is `input` and whose `connector.data_domains` covers `invoicing`, `accounting`, or `bank`, treat a set `last_successful_sync_at` as connected, and on a gap hand the user the top 2-3 `install_url` links from `well_list_connectors()` (invoicing and accounting connectors first), re-running this check yourself the moment one lands rather than waiting to be re-prompted.
+   - **If `connect-tools` isn't installed**, say so and stop: this skill needs it, and `npx skills add wellapp-ai/skills` installs it. Do not do its work here.
 
 3. **Verify the data itself has landed.** `connect-tools` reports connections, not rows — a connector can be connected and still have delivered nothing this skill can use. Spot-check what this skill actually reads: a 1-row `well_query_records` read on `invoices`. Zero rows means there is nothing to check for documentation yet — say so and stop, rather than reporting "no missing receipts" from an empty workspace.
 
@@ -76,7 +76,7 @@ All three ship with the `well-skills` plugin. This skill is also installable on 
 
 7. **Normalize currency — run `normalize-currency`.** If results span more than one currency, invoke the `normalize-currency` skill with the pinned `workspace_id`, the tagged amounts (one tag per invoice), `target_currency` (default: the workspace's base currency), and `as_of` (default today). That skill owns the never-blend invariant, the rate read from `exchange_rates`, the most-recent-rate-at-or-before-`as_of` fallback, and the rule that every converted figure carries the rate and date behind it. Report its `converted_total` with those rates, or its `per_currency` breakdown — never a blended total. Build any per-row figure from its `converted` entries, matched back by tag, rather than re-applying rates yourself.
    - `partial: true` means a currency had no rate in Well. Name it and say the total covers the rest, rather than letting a quietly smaller total read as complete.
-   - **If `normalize-currency` isn't installed**, do it inline: group amounts per currency first, then either convert via the `exchange_rates` root — using the most recent rate at or before `as_of`, never a later one, and stating the rate and date used — or report totals per currency. Never blend currencies silently.
+   - **If `normalize-currency` isn't installed**, say so and stop: this skill needs it, and `npx skills add wellapp-ai/skills` installs it. Do not do its work here.
 
 8. **State the scope limit plainly.** Regardless of how many results are found, tell the user this skill only finds the gap — it cannot fetch or collect the missing receipt from a vendor portal, email, or anywhere else.
 
@@ -107,8 +107,8 @@ State the rows in text regardless — you cannot know whether anything drew them
 Before finishing, verify:
 
 - If `well_*` tools weren't available at all, the user was pointed at the MCP endpoint (`https://api.wellapp.ai/v1/mcp`) instead of erroring silently.
-- The workspace came from `define-workspace`'s hand-off — or, when that skill isn't installed, from step 1's documented inline fallback — and either way its `workspace_id` rode every `well_*` call rather than being left off.
-- Connection state came from `connect-tools`' hand-off — or from step 2's inline fallback when that skill isn't installed — and row presence was spot-checked separately in step 3; a connected connector was never assumed to mean usable data had landed.
+- The workspace came from `define-workspace`'s hand-off, and its `workspace_id` rode every `well_*` call rather than being left off.
+- Connection state came from `connect-tools`' hand-off, and row presence was spot-checked separately in step 3; a connected connector was never assumed to mean usable data had landed.
 - `well_get_schema` was called before querying any root for the first time, including before attempting the secondary transaction check.
 - The `invoices.document` relation was checked with a real null-filter, not a guessed field name.
 - If the secondary transaction check was attempted, the relation name was discovered from the schema, not hardcoded.

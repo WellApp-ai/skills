@@ -54,12 +54,12 @@ Never fetch a rate from outside Well, and never invent one. A rate that is not i
 
 - `define-workspace` — pins the workspace and supplies both the `workspace_id` and the `identity.base_currency` that defaults `target_currency`.
 
-It ships with the `well-skills` plugin. This skill is also installable on its own, so step 1 carries the inline fallback to use when it's absent.
+It ships with the `well-skills` plugin. This skill is also installable on its own. When a brick it needs is absent, the step that needs it says so and stops.
 
 ## Workflow
 
 1. **Require the workspace.** Take `workspace_id` from the caller and pass it on every call below. If the caller did not pass one, run `define-workspace` and take its hand-off; never pick a workspace here.
-   - **If `define-workspace` isn't installed**, resolve inline: with no `well_*` tool, point the user at `https://api.wellapp.ai/v1/mcp` and stop; on an auth error run the OAuth/DCR flow and retry in the same turn; then take the single workspace or ask which to use.
+   - **If `define-workspace` isn't installed**, say so and stop: this skill needs it, and `npx skills add wellapp-ai/skills` installs it. Do not do its work here.
 
 2. **Group by currency for the rate lookup, and keep every row.** Sum the input amounts within each currency to learn which currencies are present — that is one rate lookup per currency rather than per row, and it means a missing rate later costs one currency rather than the whole set. **Grouping is for rates, not for results:** keep every tagged input row, because the rate you find for a currency is applied back to each of its rows in step 6. Collapsing rows here would leave a caller that ranks customers, runs a per-bill cumulative, or plots dated points unable to use the answer without redoing the conversion itself.
    - **One currency only is a shortcut only when there is nothing to convert.** Take it — report the single total, `resolution: single_currency`, no `exchange_rates` read — when that currency already equals `target_currency`, or when `mode` is `per_currency`. When the sole currency differs from the target and conversion was asked for, carry on through the conversion steps: a lone foreign currency is the ordinary case for `fx-exposure`, and returning its native subtotal as though it were the home-currency total would be a wrong number, not a shortcut.

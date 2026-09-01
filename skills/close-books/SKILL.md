@@ -123,8 +123,8 @@ chosen, in any order.
   month **is** starting the close, so this flow passes the collected month straight into
   `well_start_close`.
 
-All six ship with the `well-skills` plugin. This skill is also installable on its own, so the
-workflow carries an inline fallback for each when it is absent.
+All six ship with the `well-skills` plugin. This skill is also installable on its own. When one
+of them is absent, the step that needs it says so and stops.
 
 ## Workflow
 
@@ -147,7 +147,7 @@ step is skipped or re-run.
    `purpose: "to close this workspace's books"` and take its typed hand-off. Pass its
    `workspace_id` explicitly on every `well_*` call below, and never merge data across workspaces
    in one run. If it returns `resolution: unresolved`, stop — there is nothing to close.
-   - **If `define-workspace` isn't installed**, do its three moves inline: with no `well_*` tool,
+   - **If `define-workspace` isn't installed**, say so and stop: this skill needs it, and `npx skills add wellapp-ai/skills` installs it. Do not do its work here.
      tell the user a Well connection is mandatory at `https://api.wellapp.ai/v1/mcp` and stop; on
      an auth error, start the OAuth/DCR flow and retry in the same turn; then take the single
      workspace, or ask which to use.
@@ -160,7 +160,7 @@ step is skipped or re-run.
    the app orders it. In `persist: true`, when the anchor is unresolved and the user confirms which
    company is theirs, `confirm-my-company` sets it with `well_set_own_company` itself — the close no
    longer carries its own copy of that write.
-   - **If `confirm-my-company` isn't installed**, do it inline: call
+   - **If `confirm-my-company` isn't installed**, say so and stop: this skill needs it, and `npx skills add wellapp-ai/skills` installs it. Do not do its work here.
      `well_get_schema({ root: "workspaces" })` and read `workspaces.own_company`, treating null,
      absent-from-the-schema, and ambiguous alike as unresolved; never infer it from the workspace's
      name, logo, slug, or email domain. If it is unresolved and `well_set_own_company` is in your
@@ -219,7 +219,7 @@ step is skipped or re-run.
    January. If it is unset, or the user says it is wrong, run `accounting-settings` to set it on their
    explicit confirmation — never guess it. This is a setup precondition, not the month selection —
    the month is named in step 6.
-   - **If `accounting-settings` isn't installed**, do it inline: when the value is unset or wrong and
+   - **If `accounting-settings` isn't installed**, say so and stop: this skill needs it, and `npx skills add wellapp-ai/skills` installs it. Do not do its work here.
      `well_upsert_accounting_settings` is in your toolset, set it on the user's explicit confirmation
      (never guess it); if neither the skill nor that tool is available, point the user at the Well app
      to set it, and continue only once it is right.
@@ -243,7 +243,7 @@ step is skipped or re-run.
    - Naming the month **is** starting the close: pass the confirmed month straight into
      `well_start_close` with `scope: { calendar_year, calendar_month }`; from here on, echo the
      server's *fiscal* scope verbatim and never re-derive a coordinate.
-   - **If `define-period` isn't installed**, confirm the last complete month with the user inline and
+   - **If `define-period` isn't installed**, say so and stop: this skill needs it, and `npx skills add wellapp-ai/skills` installs it. Do not do its work here.
      pass it to `well_start_close` — never pin a month the user has not confirmed.
    - A current or future month → `well_start_close` refuses. Name the last complete month instead and
      let the user confirm; never pin a future month.
@@ -343,7 +343,7 @@ Before finishing, verify:
 
 - If `well_*` tools were absent, the user was pointed at `https://api.wellapp.ai/v1/mcp` instead of
   a tool error.
-- The workspace came from `define-workspace` (or step 1's inline fallback), and its `workspace_id`
+- The workspace came from `define-workspace`, and its `workspace_id`
   rode every `well_*` call.
 - The own company was resolved (step 2) before the connections and before `well_start_close`, and
   when it was set with `well_set_own_company`, the company was confirmed by the user, never inferred

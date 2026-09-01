@@ -35,7 +35,7 @@ Do not use this skill when:
 
 The calling skill provides:
 
-- `workspace_id` — **required**. Comes from `define-workspace`. If absent, run that skill first — or, when it isn't installed, use step 1's documented inline fallback; never resolve it any other way.
+- `workspace_id` — **required**. Comes from `define-workspace`. If absent, run that skill first; never resolve it any other way.
 - `purpose` — one line on why it is needed (e.g. "to tell your bills from your invoices"), used in the ask. Optional.
 - `consequence` — one clause naming what a wrong pick breaks in the caller's answer (e.g. "swaps payables for receivables", "ranks the wrong side of the invoice", "inverts customer and vendor"). Used to tell the user why the question matters. Optional but strongly preferred.
 - `mode` — `strict` (default) when the caller's answer is wrong without a confirmed identity, or `suggest` when the caller only needs a sensible default the user will confirm anyway (`draft-invoice` offering an issuer). In `suggest` mode a single unambiguous read is offered as a default and no alias folding runs.
@@ -59,12 +59,12 @@ Never call `well_update_company` or `well_delete_company` from this skill. Foldi
 
 - `define-workspace` — pins exactly one workspace and supplies the `workspace_id` every call here carries.
 
-It ships with the `well-skills` plugin. This skill is also installable on its own, so step 1 carries the inline fallback to use when it's absent.
+It ships with the `well-skills` plugin. This skill is also installable on its own. When a brick it needs is absent, the step that needs it says so and stops.
 
 ## Workflow
 
 1. **Require the workspace.** Take `workspace_id` from the caller, and pass it explicitly on every `well_*` call below. If the caller did not pass one, run `define-workspace` and take its hand-off; never pick a workspace here. If it returns `resolution: unresolved`, stop — there is no workspace in which to have an own company.
-   - **If `define-workspace` isn't installed**, resolve inline: with no `well_*` tool, tell the user a Well connection is mandatory at `https://api.wellapp.ai/v1/mcp` and stop; on an auth error, run the OAuth/DCR flow and retry in the same turn; then take the single workspace, or ask which to use.
+   - **If `define-workspace` isn't installed**, say so and stop: this skill needs it, and `npx skills add wellapp-ai/skills` installs it. Do not do its work here.
 
 2. **Read the schema, then the field.** `well_get_schema({ root: "workspaces" })`, then read `workspaces.own_company` for the pinned workspace. Treat **all three** of these as unresolved, not just the null case:
    - the relation is `null`;
@@ -133,7 +133,7 @@ State the company in text regardless — you cannot know whether anything drew i
 Before finishing, verify:
 
 - If `well_*` tools were absent, the user was pointed at `https://api.wellapp.ai/v1/mcp` instead of a tool error.
-- `workspace_id` came from `define-workspace` (or the caller) — or, when that skill isn't installed, from step 1's documented inline fallback — and rode every `well_*` call.
+- `workspace_id` came from `define-workspace` (or the caller), and rode every `well_*` call.
 - `well_get_schema({ root: "workspaces" })` ran before reading `own_company`, so "absent from the schema" was distinguishable from "null".
 - All three unresolved states were treated as unresolved — null, absent, and ambiguous.
 - The own company was never derived from the workspace's name, title, logo, slug, or email domain.

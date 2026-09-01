@@ -39,11 +39,11 @@ The user may provide:
 
 Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). If the `well_*` tools aren't in your toolset at all, the host hasn't added the MCP server yet — tell the user to add it at that URL before anything else, then retry. Required tools once it's added:
 
-- `well_list_workspaces` — how `define-workspace` resolves the workspace. Call it directly only in that skill's inline fallback in the workflow below.
+- `well_list_workspaces` — how `define-workspace` resolves the workspace. This skill never calls it directly.
 - `well_query_records` — browse `companies` when the user named none, search `companies` by name, and page `invoices`/other roots past the entity-depth row cap.
 - `well_get_entity` — read one `companies` row plus its direct sub-resources (contacts, invoice relations) at a configurable depth.
 - `well_get_schema` — call this before querying any root for the first time in a session; field/relation names (especially the issuer/receiver invoice relations on `companies`) are workspace/connector-dependent, never assume them.
-- `well_list_connectors` — how `connect-tools` surfaces install links. Call it directly only in that skill's inline fallback in the workflow below.
+- `well_list_connectors` — how `connect-tools` surfaces install links. This skill never calls it directly.
 - Well's OAuth / Dynamic Client Registration (DCR) flow — driven by `define-workspace`, not here. Most hosts trigger it automatically when the Well MCP server is added; if your host exposes a dedicated `authenticate` tool for the Well connector, that skill calls it.
 
 **Composed skills.** Four atomic Well skills own the setup this skill used to inline — invoke them, don't reimplement them:
@@ -53,19 +53,19 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 - `confirm-my-company` — works out which company in the workspace is the user's own legal entity, folds in its duplicate records, and hands back the `identity_set` that decides which side of an invoice is a payable.
 - `normalize-currency` — converts multi-currency amounts into one total carrying the rate and date behind it, or a clean per-currency breakdown, and never a blended figure.
 
-All four ship with the `well-skills` plugin. This skill is also installable on its own, so steps 1 and 2 of the workflow each carry the inline fallback to use when they're absent.
+All four ship with the `well-skills` plugin. This skill is also installable on its own. When a brick it needs is absent, the step that needs it says so and stops.
 
 ## Workflow
 
 1. **Pin the workspace — run `define-workspace`.** Invoke the `define-workspace` skill with `purpose: "to compose a full profile of one company"` and use its typed hand-off. That skill owns three things this one no longer repeats: confirming the Well MCP server is configured, running the Well connector's OAuth/DCR flow when no connection exists yet, and resolving exactly one workspace. Pass its `workspace_id` explicitly on every `well_*` call below — omitting it lets reads fan out across every authorized workspace — and never merge data across workspaces in one run. If it hands back `resolution: unresolved`, stop: there is no profile to compose without a pinned workspace.
-   - **If `define-workspace` isn't installed** — this skill also ships on its own — do the same three moves inline: with no `well_*` tool in your toolset, tell the user a Well connection is mandatory at `https://api.wellapp.ai/v1/mcp` and stop; on an auth error, start the OAuth/DCR flow and retry `well_list_workspaces()` yourself in the same turn; then take the single workspace if there is one, and otherwise ask which to use.
+   - **If `define-workspace` isn't installed**, say so and stop: this skill needs it, and `npx skills add wellapp-ai/skills` installs it. Do not do its work here.
 
 2. **Confirm the connections this answer needs — run `connect-tools`.** Invoke the `connect-tools` skill with the pinned `workspace_id`, `kinds: [invoicing, accounting]`, `required: []`, `mode: internal_check`, and the same `purpose`, then read its hand-off instead of querying `workspace_connectors` yourself. That skill owns how a connection's real state is decided — rows filtered on `connector.direction: input` and matched on `connector.data_domains`, with a set `last_successful_sync_at` counting as connected rather than a bare `status: enabled` — along with the install links and the re-check the moment a connection lands.
    - `coverage: none` → stop; there is nothing to compose a profile from yet. `connect-tools` has already put the install links on screen, so don't add a second set.
    - Any kind reported `connecting`, or a connected connector whose latest sync is still running → carry on, and carry "the data may still be partial" into the answer.
    - `coverage: partial` → carry on with what is connected, and keep the missing kinds for the coverage disclosure the Output requirements ask for.
    - A kind the user chose to skip comes back under `skipped_by_user` — respect that and don't re-ask for it in this run.
-   - **If `connect-tools` isn't installed**, do the connector half inline: keep `workspace_connectors` rows whose `connector.direction` is `input` and whose `connector.data_domains` covers `invoicing` or `accounting`, treat a set `last_successful_sync_at` as connected, and on a gap hand the user the top 2-3 `install_url` links from `well_list_connectors()` (invoicing and accounting connectors first), re-running this check yourself the moment one lands rather than waiting to be re-prompted.
+   - **If `connect-tools` isn't installed**, say so and stop: this skill needs it, and `npx skills add wellapp-ai/skills` installs it. Do not do its work here.
 
 3. **Verify the data itself has landed.** `connect-tools` reports connections, not rows — a connector can be connected and still have delivered nothing this skill can use. Spot-check what this skill actually reads: a 1-row `well_query_records` read on `companies` and on `invoices`. Zero rows on both means the workspace has no company or invoice data yet — say so and stop. Run this before asking which company the user means: it does not depend on the answer, and it is what makes the eventual question answerable in one turn.
 
@@ -90,13 +90,13 @@ All four ship with the `well-skills` plugin. This skill is also installable on i
 
 6. **Frame the relationship.** First resolve who "we" are — invoke the `confirm-my-company` skill with the pinned `workspace_id`, `purpose: "to frame whether this company is a customer or a vendor"`, `consequence: "inverts customer and vendor"`, `fold_counterparties: true`, and `on_decline: "report the invoice relationship without labeling either side"`. That skill owns the three-way unresolved test (null, absent from the schema entirely, or ambiguous), the never-infer rule, and the both-direction normalized containment that folds duplicate `companies` rows — which matters on both sides here, since a profile can look thin simply because half its invoices hang off an alias. Use its `identity_set` as "us" and its `counterparty_alias_sets` when gathering the profiled company's invoices.
    - `resolution: unresolved` means the user declined. Report the invoice relationship without labeling either side as customer or vendor, and say why the framing is missing — do not guess a label.
-   - **If `confirm-my-company` isn't installed**, do it inline: call `well_get_schema({ root: "workspaces" })` and read `workspaces.own_company`, treating null, absent-from-the-schema, and ambiguous alike as unresolved; ask which company is theirs rather than inferring it from the workspace's name, logo, slug, or email domain; then fold duplicate rows on both sides by comparing identically normalized names (Unicode NFD, strip combining marks, lowercase, punctuation to single spaces, collapse whitespace) with containment tested in **both** directions, folding only on an explicit yes.
+   - **If `confirm-my-company` isn't installed**, say so and stop: this skill needs it, and `npx skills add wellapp-ai/skills` installs it. Do not do its work here.
 
    Then compare the resolved company's role in `invoices` against `own_company`: if the resolved company is the issuer and the workspace is the receiver, they're a vendor to us; if the reverse, they're a customer; if both directions have invoices, say so — this schema doesn't force a single label. Invoices missing an `issuer_company_id` or `receiver_company_id` can't be framed either way — report them in a labeled "unattributed" line, kept out of the vendor and customer totals so neither direction is overstated, rather than dropping them from the profile entirely. Invoices whose issuer and receiver are the same company establish no relationship at all; note them once as a data-quality issue and leave them out of both totals.
 
 7. **Normalize currency — run `normalize-currency`.** If invoice totals span more than one currency, invoke the `normalize-currency` skill with the pinned `workspace_id`, the tagged amounts (one tag per invoice), `target_currency` (default: the workspace's base currency), and `as_of` (default today). That skill owns the never-blend invariant, the rate read from `exchange_rates`, the most-recent-rate-at-or-before-`as_of` fallback, and the rule that every converted figure carries the rate and date behind it. Report its `converted_total` with those rates, or its `per_currency` breakdown — never a blended total. Build any per-row figure from its `converted` entries, matched back by tag, rather than re-applying rates yourself.
    - `partial: true` means a currency had no rate in Well. Name it and say the total covers the rest, rather than letting a quietly smaller total read as complete.
-   - **If `normalize-currency` isn't installed**, do it inline: group amounts per currency first, then either convert via the `exchange_rates` root — using the most recent rate at or before `as_of`, never a later one, and stating the rate and date used — or report totals per currency. Never blend currencies silently.
+   - **If `normalize-currency` isn't installed**, say so and stop: this skill needs it, and `npx skills add wellapp-ai/skills` installs it. Do not do its work here.
 
 8. **If any required step errors or returns unusable data**, do not guess. If the failure is transient (a network/timeout error on the MCP call itself), retry once before falling back — don't dead-end on a blip. If it errors again or the data stays unusable, the fallback is: (a) state the fallback question plainly in your reply (e.g. "give me a 360 view of [company]"), (b) answer it yourself using whatever partial Well MCP data you already have, clearly caveated, and (c) give the user a direct link to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can ask it there directly and get a second opinion from their own AI assistant.
 
@@ -124,12 +124,12 @@ State the profile details in text regardless — you cannot know whether anythin
 Before finishing, verify:
 
 - If `well_*` tools weren't available at all, the user was pointed at the MCP endpoint (`https://api.wellapp.ai/v1/mcp`) instead of erroring silently.
-- The workspace came from `define-workspace`'s hand-off at step 1 — or, when that skill isn't installed, from step 1's documented inline fallback — and the question was never re-raised at step 4.
+- The workspace came from `define-workspace`'s hand-off at step 1, and the question was never re-raised at step 4.
 - No turn ended on a bare "which company?" with zero tool calls behind it — steps 1–3 ran, and a company list was on screen, before the question was asked.
 - No list of records was restated in prose under the table that already rendered it; where the table was truncated, the total was stated instead.
 - Every `well_*` call after step 1 carried the pinned `workspace_id`.
 - "No such company" was never concluded from the browse page — only from an `_ilike` search, or from a browse whose `totalCount` proved it was the whole set.
-- Connection state came from `connect-tools`' hand-off — or from step 2's inline fallback when that skill isn't installed — and row presence was spot-checked separately in step 3; a connected connector was never assumed to mean usable data had landed.
+- Connection state came from `connect-tools`' hand-off, and row presence was spot-checked separately in step 3; a connected connector was never assumed to mean usable data had landed.
 - The company was resolved unambiguously — not guessed on an ambiguous or zero-match name search.
 - `well_get_schema` was called before querying `companies` (and any other root) for the first time.
 - No `industry` field or customer/vendor boolean was fabricated — the relationship is framed only from issuer/receiver invoice data against `own_company`.

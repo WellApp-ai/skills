@@ -39,11 +39,11 @@ The user may provide:
 
 This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). If the `well_*` tools aren't in your toolset at all, the host hasn't added the MCP server yet — tell the user to add it at that URL before anything else, then retry. Required tools once it's added:
 
-- `well_list_workspaces` — how `define-workspace` resolves the workspace. Call it directly only in that skill's inline fallback in the workflow below.
+- `well_list_workspaces` — how `define-workspace` resolves the workspace. This skill never calls it directly.
 - `well_get_cash_position` — the authoritative total cash on hand plus the per-account breakdown behind it (native amount/currency, converted amount, FX rate applied) — the exact same computation the Well app's canvas KPI card shows. Call this directly; do not re-derive the total yourself from raw `accounts`/`account_balances`/`exchange_rates` reads.
 - `well_query_records` — used by `connect-tools` for the connection check; called here only for the 1-row `accounts` spot-check in step 3.
 - `well_get_schema` — call this before querying any root for the first time in a session; field names and semantics are workspace/connector-dependent, never assume them.
-- `well_list_connectors` — how `connect-tools` surfaces install links. Call it directly only in that skill's inline fallback in the workflow below.
+- `well_list_connectors` — how `connect-tools` surfaces install links. This skill never calls it directly.
 - Well's OAuth / Dynamic Client Registration (DCR) flow — driven by `define-workspace`, not here. Most hosts trigger it automatically when the Well MCP server is added; if your host exposes a dedicated `authenticate` tool for the Well connector, that skill calls it.
 
 **Composed skills.** Two atomic Well skills own the setup this skill used to inline — invoke them, don't reimplement them:
@@ -51,19 +51,19 @@ This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`
 - `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there's no connection yet, and pins exactly one workspace. Supplies the `workspace_id` that every later call carries.
 - `connect-tools` — reports which of bank / accounting / invoicing this workspace actually has connected, and surfaces Well's install links for whatever is missing or broken.
 
-Both ship with the `well-skills` plugin. This skill is also installable on its own, so steps 1 and 2 of the workflow each carry the inline fallback to use when they're absent.
+Both ship with the `well-skills` plugin. This skill is also installable on its own. When a brick it needs is absent, the step that needs it says so and stops.
 
 ## Workflow
 
 1. **Pin the workspace — run `define-workspace`.** Invoke the `define-workspace` skill with `purpose: "to total the cash you have on hand right now"` and use its typed hand-off. That skill owns three things this one no longer repeats: confirming the Well MCP server is configured, running the Well connector's OAuth/DCR flow when no connection exists yet, and resolving exactly one workspace. Pass its `workspace_id` explicitly on every `well_*` call below, and never merge data across workspaces in one run. Omitting it is not the safe, read-everything option: `well_get_cash_position` answers for **one** workspace chosen for you — whichever this connection was last switched to, otherwise the token's default — so a missing `workspace_id` can silently answer about a workspace the user never named, while the record reads in steps 2 and 3 do the opposite and merge rows from every authorized workspace into one result. Neither is what was asked for. Do not lean on an earlier `well_switch_workspace` instead: a later call is not guaranteed to see that switch, so the explicit argument is the only reliable instruction. If it hands back `resolution: unresolved`, stop: there is nothing to total without a pinned workspace.
-   - **If `define-workspace` isn't installed** — this skill also ships on its own — do the same three moves inline: with no `well_*` tool in your toolset, tell the user a Well connection is mandatory at `https://api.wellapp.ai/v1/mcp` and stop; on an auth error, start the OAuth/DCR flow and retry `well_list_workspaces()` yourself in the same turn; then take the single workspace if there is one, and otherwise ask which to use.
+   - **If `define-workspace` isn't installed**, say so and stop: this skill needs it, and `npx skills add wellapp-ai/skills` installs it. Do not do its work here.
 
 2. **Confirm the connections this answer needs — run `connect-tools`.** Invoke the `connect-tools` skill with the pinned `workspace_id`, `kinds: [bank]`, `required: [bank]`, `mode: internal_check`, and the same `purpose`, then read its hand-off instead of querying `workspace_connectors` yourself. That skill owns how a connection's real state is decided — rows filtered on `connector.direction: input` and matched on `connector.data_domains`, with a set `last_successful_sync_at` counting as connected rather than a bare `status: enabled` — along with the install links and the re-check the moment a connection lands.
    - `coverage: none` → stop; there is nothing to total yet. `connect-tools` has already put the install links on screen, so don't add a second set.
    - Any kind reported `connecting`, or a connected connector whose latest sync is still running → carry on, and carry "the data may still be partial" into the answer.
    - `coverage: partial` → carry on with what is connected, and keep the missing kinds for the coverage disclosure the Output requirements ask for.
    - A kind the user chose to skip comes back under `skipped_by_user` — respect that and don't re-ask for it in this run.
-   - **If `connect-tools` isn't installed**, do the connector half inline: keep `workspace_connectors` rows whose `connector.direction` is `input` and whose `connector.data_domains` covers `bank`, treat a set `last_successful_sync_at` as connected, and on a gap hand the user the top 2-3 `install_url` links from `well_list_connectors()` (bank connectors first), re-running this check yourself the moment one lands rather than waiting to be re-prompted.
+   - **If `connect-tools` isn't installed**, say so and stop: this skill needs it, and `npx skills add wellapp-ai/skills` installs it. Do not do its work here.
 
 3. **Verify the data itself has landed.** `connect-tools` reports connections, not rows — a connector can be connected and still have delivered nothing this skill can use. Spot-check what this skill actually reads: a 1-row `well_query_records` read on `accounts`, before calling `well_get_cash_position` at all. Zero rows means no bank account has landed yet — say so and stop instead of reporting a zero balance as a real cash position.
 
@@ -100,7 +100,7 @@ State the figures in text regardless — you cannot know whether anything drew t
 Before finishing, verify:
 
 - If `well_*` tools weren't available at all, the user was pointed at the MCP endpoint (`https://api.wellapp.ai/v1/mcp`) instead of erroring silently.
-- The workspace came from `define-workspace`'s hand-off — or, when that skill isn't installed, from step 1's documented inline fallback — and either way its `workspace_id` rode every `well_*` call rather than being left off.
+- The workspace came from `define-workspace`'s hand-off, and its `workspace_id` rode every `well_*` call rather than being left off.
 - Connector "enabled" status was checked before calling `well_get_cash_position`, not just assumed.
 - The total and per-account breakdown came straight from `well_get_cash_position`'s response, not re-derived from raw `accounts`/`account_balances`/`exchange_rates` reads.
 - If `partial: true`, the `excluded` count and any `hints` were disclosed rather than silently absorbed into the total.

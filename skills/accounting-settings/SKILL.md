@@ -91,14 +91,13 @@ reimplement it:
 - `define-workspace` — pins exactly one workspace and supplies the `workspace_id` every call here
   carries, plus the `identity.fiscal_year_start_month` this skill reads as the current value.
 
-It ships with the `well-skills` plugin. This skill is also installable on its own, so step 1 carries
-the inline fallback to use when it is absent.
+It ships with the `well-skills` plugin. This skill is also installable on its own. When a brick it needs is absent, the step that needs it says so and stops.
 
 ## Workflow
 
 1. **Require the workspace — run `define-workspace`.** Take its `workspace_id` and pass it on every
    `well_*` call. If it returns `resolution: unresolved`, stop — there is no workspace to configure.
-   - **If `define-workspace` isn't installed**, resolve inline: with no `well_*` tool, tell the user
+   - **If `define-workspace` isn't installed**, say so and stop: this skill needs it, and `npx skills add wellapp-ai/skills` installs it. Do not do its work here.
      a Well connection is mandatory at `https://api.wellapp.ai/v1/mcp` and stop; on an auth error,
      run the OAuth/DCR flow and retry in the same turn; then take the single workspace, or ask which
      to use.
@@ -175,7 +174,7 @@ Before finishing, verify:
 
 - If `well_*` tools were absent, the user was pointed at `https://api.wellapp.ai/v1/mcp` instead of
   a tool error.
-- `workspace_id` came from `define-workspace` (or step 1's inline fallback) and rode every `well_*`
+- `workspace_id` came from `define-workspace` and rode every `well_*`
   call.
 - For a setting with a read surface (`fiscal_year_start_month`, `base_currency`, `country`), the
   current value was read with `well_list_workspaces` and shown before any change; a null fiscal year
