@@ -1,0 +1,97 @@
+name: Rebuild the dist archives
+
+# dist/*.zip and dist/*.skill are committed binaries built from skills/. They used to be
+# rebuilt and staged into every commit touching skills/ by a pre-commit hook, but two
+# branches rebuilding those binaries independently made merges collide on binary diffs
+# (see 99747ce). This rebuilds them once, after main settles, and opens a PR with the
+# diff — contributor PRs now only ever touch skills/.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: rebuild-dist
+  # Leading-edge debounce, no paid wait: a push mid-run queues behind it, and any
+  # previously-queued run for this group is cancelled in favor of the newest one — so a
+  # burst of merges collapses to the run in progress plus at most one more, for free.
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      # Pinned, because the bot branch is shared and this job force-pushes it — see the
+      # same reasoning in refresh-design-system.yml.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Rebuild the archives
+        id: build
+        run: |
+          set -euo pipefail
+          PREV_DIST_SHA=$(git log -1 --format=%H -- dist/)
+          echo "prev_dist_sha=$PREV_DIST_SHA" >> "$GITHUB_OUTPUT"
+          make build
+
+      - name: Open or update the rebuild PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PREV_DIST_SHA: ${{ steps.build.outputs.prev_dist_sha }}
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain -- dist/)" ]; then
+            echo "dist/ is current; nothing to open."
+            exit 0
+          fi
+          BRANCH="bot/rebuild-dist"
+          TITLE="chore(dist): rebuild the dist archives"
+          {
+            echo "Rebuilds \`dist/*.zip\` and \`dist/*.skill\` from the skills that changed on \`main\`."
+            echo
+            echo "## Changelog"
+            git diff --name-only -- dist/ \
+              | grep -v '^dist/README.md$' \
+              | sed -E 's#^dist/([^./]+)\..*#\1#' \
+              | sort -u \
+              | while read -r skill; do
+                  echo
+                  echo "### $skill"
+                  COMMITS=$(git log --format='- [%h](https://github.com/WellApp-ai/skills/commit/%H) %s' \
+                    "$PREV_DIST_SHA"..HEAD -- "skills/$skill/")
+                  if [ -n "$COMMITS" ]; then
+                    echo "$COMMITS"
+                  else
+                    echo "_(no direct commit — rebuilt via a shared reference update)_"
+                  fi
+                done
+            echo
+            echo "Opened by \`.github/workflows/rebuild-dist.yml\`. A later run replaces this branch rather than opening a second PR."
+          } > /tmp/pr-body.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add dist/
+          git commit -m "chore(dist): rebuild the dist archives"
+          if git fetch --quiet origin "$BRANCH" 2>/dev/null; then
+            git push -u origin "$BRANCH" --force-with-lease="$BRANCH:$(git rev-parse FETCH_HEAD)"
+          else
+            git push -u origin "$BRANCH"
+          fi
+          NUMBER=$(gh pr list --head "$BRANCH" --state open --json number -q '.[].number' | head -1)
+          if [ -n "$NUMBER" ]; then
+            gh pr edit "$NUMBER" --title "$TITLE" --body-file /tmp/pr-body.md
+          else
+            gh pr create --base main --head "$BRANCH" --title "$TITLE" --body-file /tmp/pr-body.md
+          fi
