@@ -148,9 +148,6 @@ step is skipped or re-run.
    `workspace_id` explicitly on every `well_*` call below, and never merge data across workspaces
    in one run. If it returns `resolution: unresolved`, stop — there is nothing to close.
    - **If `define-workspace` isn't installed**, say so and stop: this skill needs it, and `npx skills add wellapp-ai/skills` installs it. Do not do its work here.
-     tell the user a Well connection is mandatory at `https://api.wellapp.ai/v1/mcp` and stop; on
-     an auth error, start the OAuth/DCR flow and retry in the same turn; then take the single
-     workspace, or ask which to use.
 
 2. **Resolve the own company — run `confirm-my-company`** in `mode: strict`, `persist: true`, with
    the pinned `workspace_id`, `purpose: "to close this workspace's books"`, and
@@ -161,14 +158,6 @@ step is skipped or re-run.
    company is theirs, `confirm-my-company` sets it with `well_set_own_company` itself — the close no
    longer carries its own copy of that write.
    - **If `confirm-my-company` isn't installed**, say so and stop: this skill needs it, and `npx skills add wellapp-ai/skills` installs it. Do not do its work here.
-     `well_get_schema({ root: "workspaces" })` and read `workspaces.own_company`, treating null,
-     absent-from-the-schema, and ambiguous alike as unresolved; never infer it from the workspace's
-     name, logo, slug, or email domain. If it is unresolved and `well_set_own_company` is in your
-     toolset, show the candidate companies (`well_query_records` on `companies`, or one the user
-     names / creates with `well_create_company`), take an **explicit confirmation**, then call
-     `well_set_own_company` with that `company_id` — accounting-critical, never silent, never
-     inferred. If the tool is absent, point the user at
-     `<well-app-base-url>/workspaces/<workspace_id>` and stop until it is set.
    - Resolved, read or written → carry its `own_company_id` and continue.
    - Still unset → `well_start_close` refuses with `own_company_unconfirmed`; resolve it before
      starting.
@@ -190,9 +179,9 @@ step is skipped or re-run.
      the flow resumes. The bank is the only connection the close treats as a blocker, but it does not
      gate the *start* — an unsynced bank is a blocker to clear later, never a start refusal. No close
      tool repairs a bank connection; connecting or fixing it happens on the connector surface.
-   - If `connect-tools` isn't installed for the coverage read, read
-     `well_list_connectors({ kind: bank })` yourself for the bank row; if `connect-bank` isn't
-     installed either, report the bank state from that row without blocking.
+   - If `connect-tools` isn't installed, say the bank coverage is unknown and continue — the
+     close does not block on it. Do not read connector rows here; `npx skills add
+     wellapp-ai/skills` installs the brick that owns that read.
 
 4. **Connect the accounting side only if it is missing.** Reuse step 3's coverage read — do not run a
    second `internal_check`.
@@ -209,8 +198,8 @@ step is skipped or re-run.
      injects it. Walk it for parity and richer posted-ledger data, surface what is connected, and
      continue — **the server never treats a missing accounting tool as a close blocker** (posting runs
      on the standard chart of accounts), so never gate the close on it.
-   - If `connect-tools` isn't installed, read `well_list_connectors` and report the accounting /
-     invoicing coverage without blocking.
+   - If `connect-tools` isn't installed, say the accounting and invoicing coverage is unknown
+     and continue — the close does not block on it. Do not read connector rows here.
 
 5. **Set the fiscal year start — run `accounting-settings`.** The close derives the fiscal period from
    `fiscal_year_start_month`, and an unset value falls back to January, so it must be right **before**
@@ -220,9 +209,6 @@ step is skipped or re-run.
    explicit confirmation — never guess it. This is a setup precondition, not the month selection —
    the month is named in step 6.
    - **If `accounting-settings` isn't installed**, say so and stop: this skill needs it, and `npx skills add wellapp-ai/skills` installs it. Do not do its work here.
-     `well_upsert_accounting_settings` is in your toolset, set it on the user's explicit confirmation
-     (never guess it); if neither the skill nor that tool is available, point the user at the Well app
-     to set it, and continue only once it is right.
 
 6. **Collect the month and start the close — run `define-period` in `mode: collect`, then
    `well_start_close`.** First reuse a live run: call `well_list_flow_runs` and, if a close run
@@ -244,7 +230,6 @@ step is skipped or re-run.
      `well_start_close` with `scope: { calendar_year, calendar_month }`; from here on, echo the
      server's *fiscal* scope verbatim and never re-derive a coordinate.
    - **If `define-period` isn't installed**, say so and stop: this skill needs it, and `npx skills add wellapp-ai/skills` installs it. Do not do its work here.
-     pass it to `well_start_close` — never pin a month the user has not confirmed.
    - A current or future month → `well_start_close` refuses. Name the last complete month instead and
      let the user confirm; never pin a future month.
    - Own company not set → it refuses with `own_company_unconfirmed`. Go back to step 2.

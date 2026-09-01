@@ -98,9 +98,6 @@ It ships with the `well-skills` plugin. This skill is also installable on its ow
 1. **Require the workspace — run `define-workspace`.** Take its `workspace_id` and pass it on every
    `well_*` call. If it returns `resolution: unresolved`, stop — there is no workspace to configure.
    - **If `define-workspace` isn't installed**, say so and stop: this skill needs it, and `npx skills add wellapp-ai/skills` installs it. Do not do its work here.
-     a Well connection is mandatory at `https://api.wellapp.ai/v1/mcp` and stop; on an auth error,
-     run the OAuth/DCR flow and retry in the same turn; then take the single workspace, or ask which
-     to use.
 
 2. **Read the current setting — `well_list_workspaces`.** Read `identity.fiscal_year_start_month`
    (and `base_currency` / `country` when relevant) for the pinned workspace, and state it in one
