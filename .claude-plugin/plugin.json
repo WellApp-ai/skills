@@ -19,7 +19,8 @@
     "reconciliation",
     "fx",
     "connectors",
-    "banking"
+    "banking",
+    "bank-statement"
   ],
   "skills": [
     "./skills/accounting-settings",
@@ -42,6 +43,7 @@
     "./skills/draft-invoice",
     "./skills/fetch-missing-invoices",
     "./skills/fx-exposure",
+    "./skills/import-bank-statement",
     "./skills/missing-receipts",
     "./skills/normalize-currency",
     "./skills/payment-invoice-lookup",
