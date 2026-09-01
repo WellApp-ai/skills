@@ -114,9 +114,9 @@ Verify before moving on: exactly one workspace is pinned, or `resolution: unreso
 
    If a call in rung (a) or (b) fails ambiguously — a network or timeout error where it's unclear whether the server actually received it — retry the exact same call once rather than escalating to the next rung; the write carries its own idempotency key, so a call that already landed is deduplicated server-side rather than double-imported. If rung (c) already minted a `document_id` before an ambiguous POST outcome, poll `well_get_statement_import_result` with that pre-allocated id FIRST — a second mint burns a second token unnecessarily, and a poll can already tell you the first attempt landed.
 
-   **End the turn once the import is running.** When an upload call in rung (a) or (b) succeeds, or rung (c)'s POST has landed, the returned `document_id` is in hand and the import is under way. On a host that renders cards, the upload's own result has already put the import's waiting card on screen — end the turn there: one short line that the statement is importing and the card on screen updates as it completes, and that any message they send gets the result read out. Do not call `well_get_statement_import_result` in that same turn; the card carries the waiting state, and a back-to-back poll only delays the turn without showing the user anything new. In a text-only host nothing rendered, so skip the wait and poll right away in step 4.
+   Once an upload call in rung (a) or (b) succeeds, or rung (c)'s POST has landed, the returned `document_id` is in hand and the import is under way. On a host that renders cards, the upload's own result has already put the import's waiting card on screen — it carries the processing state visually; the next step is the poll.
 
-4. **Poll for the outcome — on the message after the card, or right away on a text-only host.** On a card-rendering host this step runs when the user's next message arrives after step 3's end-of-turn: any message works, even a bare nudge — treat it as "read the result now", never re-ask what they meant. Call `well_get_statement_import_result({ document_id })` with backoff (for example, a few seconds, then longer) and a bounded total timeout — a few minutes is enough for a single statement. `not_found_yet` right after rung (c)'s mint, before the client has posted the file, is normal, not an error; keep polling briefly. The card refreshes itself as extraction and promotion complete — the poll serves your narration of the outcome, never the card's rendering. If the timeout is reached before a terminal status, say so plainly and give the user the last state you saw rather than a silent stop; on a host that drew the card, it keeps updating on its own either way.
+4. **Poll for the outcome, every few seconds, until a terminal status.** Call `well_get_statement_import_result({ document_id })` every ~3-5 seconds at first, backing off to ~10 seconds, with a bounded total timeout — a few minutes is enough for a single statement. Poll in the same turn on EVERY host: the card on screen updates itself on each poll as extraction and promotion run, so the user watches progress live; on a text-only host, narrate the status as it changes. `not_found_yet` right after rung (c)'s mint, before the client has posted the file, is normal, not an error; keep polling briefly. When the status turns terminal, show the result: on a card host the card is already displaying the recap — narrate the counts and the fidelity echo alongside it; on a text-only host the narration is the result. If the timeout is reached before a terminal status, say so plainly and give the user the last state you saw rather than a silent stop; on a host that drew the card, it keeps updating on its own either way.
 
 5. **Report the outcome.** See Output requirements below for exactly what to state.
 
@@ -151,7 +151,7 @@ Before finishing, verify:
 - `content_sha256` and `byte_length` from the upload response were reported, not silently dropped.
 - The poll's four counts were reported using its own null-means-unmeasured semantics — never presented as zero when absent.
 - `needs_account` and `duplicate`/`deduplicated` outcomes were reported plainly, with `needs_account` pointed at the Well app rather than an invented tool or deep link.
-- On a card-rendering host, the turn ended right after a successful upload with the one-line processing note, and the poll ran only on the user's next message — never back-to-back in the upload turn. On a text-only host, the poll ran in the same turn instead.
+- The poll ran every few seconds with backoff until a terminal status, on every host — the card updated live through processing on card hosts, and the outcome was shown to the user at completion, not only after a silent wait.
 - No connector check was performed or implied as a precondition for this skill.
 - Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation.
 
@@ -163,7 +163,7 @@ The user pastes a CSV export from their bank directly into the chat and asks to 
 
 ### Expected behavior
 
-Pin the workspace, confirm the CSV's rows are directly visible in the conversation, call `well_upload_statement_content` with the filename and the exact text (no reformatting), then end the turn on the import card with a one-line note that the import is running. On the user's next message, poll `well_get_statement_import_result` until it reaches `imported` (or another terminal status), and report the returned `content_sha256`/`byte_length` alongside the matched / pending-review / new / already-present counts plus a pointer to `close-books`.
+Pin the workspace, confirm the CSV's rows are directly visible in the conversation, call `well_upload_statement_content` with the filename and the exact text (no reformatting), report the returned `content_sha256`/`byte_length`, then poll `well_get_statement_import_result` every few seconds until it reaches `imported` (or another terminal status) — the import card updating live on screen through processing — and report the matched / pending-review / new / already-present counts plus a pointer to `close-books`.
 
 ### Example request
 
@@ -171,7 +171,7 @@ The user drops a 2 MB PDF bank statement into the conversation and asks to impor
 
 ### Expected behavior
 
-Pin the workspace, confirm the PDF's bytes are available to encode, base64-encode them exactly and call `well_upload_statement_bytes` with the filename (compute and send `sha256` if the environment allows it), then end the turn on the import card with a one-line note that the import is running. On the user's next message, poll to a terminal status and report the outcome the same way as the CSV example, fidelity echo included.
+Pin the workspace, confirm the PDF's bytes are available to encode, base64-encode them exactly and call `well_upload_statement_bytes` with the filename (compute and send `sha256` if the environment allows it), report the fidelity echo, then poll every few seconds to a terminal status and report the outcome the same way as the CSV example.
 
 ### Example request
 
