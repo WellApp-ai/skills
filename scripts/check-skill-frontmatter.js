@@ -35,21 +35,26 @@ function stripPlaceholdersBlock(frontmatter) {
   return frontmatter.replace(/\n?placeholders:\n(?:[ \t]+.*\n?)*/, "");
 }
 
-// Both counts, because the two can differ: an em dash is one character and three
-// UTF-8 bytes, so a description just under the limit by one measure can sit over
-// it by the other.
+// The documented ceiling is 1024 CHARACTERS, so characters are what this enforces.
+// Counting bytes instead would reject valid metadata: descriptions here are dense
+// with em dashes at three bytes each, and one is already at 1021 bytes while
+// comfortably inside the character limit. Spreading the value counts code points
+// rather than UTF-16 units, so an astral character counts once instead of twice.
+// The byte width rides along in the message because it is the number a
+// byte-counting host would trip on, and a reader chasing a failure elsewhere
+// should not have to measure it again.
 const DESCRIPTION_LIMIT = 1024;
 
 function findOverlongDescription(frontmatter) {
   const match = frontmatter.match(/^description: (.*)$/m);
   if (!match) return null;
   const value = match[1];
-  const chars = value.length;
+  const chars = [...value].length;
+  if (chars <= DESCRIPTION_LIMIT) return null;
   const bytes = Buffer.byteLength(value, "utf8");
-  if (chars <= DESCRIPTION_LIMIT && bytes <= DESCRIPTION_LIMIT) return null;
   return {
     line: frontmatter.slice(0, match.index).split("\n").length,
-    text: `description is ${chars} chars / ${bytes} bytes, over the ${DESCRIPTION_LIMIT} limit`,
+    text: `description is ${chars} characters, over the ${DESCRIPTION_LIMIT}-character limit (${bytes} bytes)`,
   };
 }
 
