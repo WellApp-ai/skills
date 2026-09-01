@@ -57,7 +57,7 @@ This repo packages that judgment as **Agent Skills** — playbooks any AI assist
 | `payment-invoice-lookup` | "What happened with this payment?" — match a payment to its invoice, or list every unreconciled one. | [View details →](docs/payment-invoice-lookup.md) |
 | `missing-receipts` | "Which expenses are missing receipts?" — invoices with no source document attached, for compliance. | [View details →](docs/missing-receipts.md) |
 | `draft-invoice` | "Draft an invoice for this client" — creates a real invoice record in Well, with an attached PDF, from a chat description. | [View details →](docs/draft-invoice.md) |
-| `fetch-missing-invoices` | "Fetch the invoices I'm missing" — the whole month-end sweep in one prompt: workspace, connections, bank, month, the gap list, then a preview of the agents that would fetch them. | [View details →](docs/fetch-missing-invoices.md) |
+| `fetch-missing-invoices` | "Fetch the invoices I'm missing" — the whole month-end sweep in one prompt: workspace, month, bank when a month holds no bank transaction, the gap list, then a preview of the agents that would fetch them. | [View details →](docs/fetch-missing-invoices.md) |
 | `show-missing-invoices` | "What am I missing for March?" — settled spend with no supplier invoice, one row per supplier, each row saying how the gap can be closed. | [View details →](docs/show-missing-invoices.md) |
 | `deploy-agents` | "Go get those invoices" — a preview of which invoice-fetching agents Well would launch, per provider, before any of them runs. | [View details →](docs/deploy-agents.md) |
 | `close-books` | "Close the books for last month" — drives the month-end close: starts the period, clears the blockers one at a time, prepares the package, and leaves the final lock as your one-click approval in Well. | [View details →](docs/close-books.md) |
@@ -73,7 +73,7 @@ These are the setup steps the skills above invoke automatically to get what they
 | `connect-bank` | "Connect my bank" — the dedicated bank step: which banks are live, syncing, or expired, and a one-click link to get the feed in. | [View details →](docs/connect-bank.md) |
 | `define-period` | "Which month are we working on?" — pins the calendar month or months, translates them into the workspace's fiscal year and period, and says whether the selection holds activity. | [View details →](docs/define-period.md) |
 | `categorize-counterparties` | "Which suppliers have no category?" — the companies behind your spend on a card, uncategorized ones first, each one categorized by picking from Well's catalog on its row. | [View details →](docs/categorize-counterparties.md) |
-| `resolve-own-company` | Resolves the own-company pointer that decides payable from receivable, and folds in an entity's duplicate records. | [View details →](docs/resolve-own-company.md) |
+| `confirm-my-company` | Resolves the own-company pointer that decides payable from receivable, and folds in an entity's duplicate records. | [View details →](docs/confirm-my-company.md) |
 | `accounting-settings` | "Set our fiscal year start to April" — writes the workspace's accounting settings (fiscal year start month, currency, framework, chart of accounts), only what you confirm. | [View details →](docs/accounting-settings.md) |
 | `normalize-currency` | Converts multi-currency amounts into one total carrying its rate and date, or a clean per-currency breakdown, never a blended figure. | [View details →](docs/normalize-currency.md) |
 
@@ -126,7 +126,7 @@ Install the following official skills from Well. Instructions:
     v. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-period/SKILL.md
     w. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/categorize-counterparties/SKILL.md
     x. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounting-settings/SKILL.md
-    y. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/resolve-own-company/SKILL.md
+    y. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/confirm-my-company/SKILL.md
     z. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/normalize-currency/SKILL.md
 2. Download and display the SKILL.md files to the user. Each must be named "SKILL.md" — no prefix, no suffix, exact name.
 3. Create a summary table with skill names and descriptions extracted from the frontmatter
@@ -219,7 +219,7 @@ Download the `.skill` file and double-click it to install — Claude Desktop ins
 | `connect-bank` | Get the bank feed into a workspace in one click, and report whether it is live, syncing, or expired. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/connect-bank.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/connect-bank.zip) |
 | `define-period` | Pin the calendar month or months, derive the fiscal year and period, and report whether the selection holds activity. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/define-period.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/define-period.zip) |
 | `categorize-counterparties` | Categorize the companies behind a workspace's spend from Well's shared catalog, on a card where every pick saves as you make it. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/categorize-counterparties.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/categorize-counterparties.zip) |
-| `resolve-own-company` | Work out which company in the workspace is yours, and fold in its duplicate records. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/resolve-own-company.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/resolve-own-company.zip) |
+| `confirm-my-company` | Work out which company in the workspace is yours, and fold in its duplicate records. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/confirm-my-company.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/confirm-my-company.zip) |
 | `accounting-settings` | Set the workspace's accounting settings — the fiscal year start month above all — writing only what you confirm. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/accounting-settings.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/accounting-settings.zip) |
 | `normalize-currency` | Convert amounts across currencies into one auditable total, or report them per currency. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/normalize-currency.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/normalize-currency.zip) |
 

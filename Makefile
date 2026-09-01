@@ -1,10 +1,12 @@
-.PHONY: install validate build refresh refresh-check
+.PHONY: install validate compile watch build
 
 install:
 	git config core.hooksPath .githooks
+	npm ci
 
 # SKIP_CLAUDE=1 drops the two `claude` steps for an environment that has no CLI — a CI
-# runner, a container. The frontmatter check runs either way, since it needs only node.
+# runner, a container. The frontmatter and atoms checks run either way, since they
+# need only node.
 validate:
 	@if [ "$(SKIP_CLAUDE)" = "1" ]; then \
 		echo "SKIP_CLAUDE=1 — skipping the claude plugin validation"; \
@@ -14,19 +16,26 @@ validate:
 		claude plugin validate ./skills --strict; \
 	fi
 	node scripts/check-skill-frontmatter.js
+	node scripts/compile.mjs --check
 
-build:
+# atoms/<name>/CONTENT.md and src/<name>.hbs.md are the source; this renders
+# them into atoms/<name>/SKILL.md (a dev-only test artifact, gitignored — load
+# it into Claude to test one atom in isolation, then discard it) and
+# skills/<name>/SKILL.md (what ships). src/ lives outside skills/, so this
+# never touches what `build` zips. `validate`/`--check` only enforces
+# skills/*/SKILL.md staying current — the atom artifact is never committed,
+# so there's nothing on disk to compare it against in a fresh checkout.
+compile:
+	node scripts/compile.mjs
+
+# The local dev loop: recompiles on every atoms/**/CONTENT.md or src/*.hbs.md
+# change, so editing an atom shows its effect on every skill that uses it
+# immediately. Never writes to dist/ — run `make build` once you're done.
+watch:
+	node scripts/compile.mjs --watch
+
+# Rebuilds dist/<name>.{zip,skill} for any skill/atom whose content changed since
+# the last build (build-dist.sh diffs against the existing archive and skips the
+# rest) — `compile` runs first so skills/*/SKILL.md is current before zipping.
+build: compile
 	@bash scripts/build-dist.sh
-
-# design-system/well-tokens.css is a copy of what @wellapp-ai/design-tokens builds; the
-# values are generated from it into the skills that compose a visual. The design system is
-# not itself a skill — it is Well's brand, not a capability a user installs.
-# Reads npm.pkg.github.com and needs a token.
-refresh:
-	node scripts/refresh-design-system.mjs
-	node scripts/generate-style-blocks.mjs
-	$(MAKE) build
-
-refresh-check:
-	node scripts/refresh-design-system.mjs --check
-	node scripts/generate-style-blocks.mjs --check

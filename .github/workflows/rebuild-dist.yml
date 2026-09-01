@@ -26,8 +26,7 @@ jobs:
   rebuild:
     runs-on: ubuntu-latest
     steps:
-      # Pinned, because the bot branch is shared and this job force-pushes it — see the
-      # same reasoning in refresh-design-system.yml.
+      # Pinned, because the bot branch is shared and this job force-pushes it.
       - uses: actions/checkout@v4
         with:
           ref: main
@@ -36,6 +35,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+
+      - run: npm ci
 
       - name: Rebuild the archives
         id: build

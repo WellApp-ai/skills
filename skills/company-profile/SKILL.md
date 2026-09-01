@@ -1,6 +1,6 @@
 ---
 name: company-profile
-requires: [define-workspace, connect-tools, resolve-own-company, normalize-currency]
+requires: [define-workspace, connect-tools, confirm-my-company, normalize-currency]
 description: Compose everything Well knows about one named company — customer or vendor — into a single 360 view using Well's MCP financial graph — profile info, contact channels, and the invoice relationship (as issuer, receiver, or both). Use when the user asks "build a customer 360 view", "customer 360", "give me a 360 view of X", "everything about [company name]", "vendor across every rail", "who is this company", "show me our history with X", or "tell me about our relationship with [vendor/customer]". Requires a connected Well workspace with at least one connector that has synced company/invoice data; if none is connected or the company can't be found, this skill says so instead of guessing.
 ---
 
@@ -50,7 +50,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 - `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there's no connection yet, and pins exactly one workspace. Supplies the `workspace_id` that every later call carries.
 - `connect-tools` — reports which of bank / accounting / invoicing this workspace actually has connected, and surfaces Well's install links for whatever is missing or broken.
-- `resolve-own-company` — works out which company in the workspace is the user's own legal entity, folds in its duplicate records, and hands back the `identity_set` that decides which side of an invoice is a payable.
+- `confirm-my-company` — works out which company in the workspace is the user's own legal entity, folds in its duplicate records, and hands back the `identity_set` that decides which side of an invoice is a payable.
 - `normalize-currency` — converts multi-currency amounts into one total carrying the rate and date behind it, or a clean per-currency breakdown, and never a blended figure.
 
 All four ship with the `well-skills` plugin. This skill is also installable on its own, so steps 1 and 2 of the workflow each carry the inline fallback to use when they're absent.
@@ -81,16 +81,16 @@ All four ship with the `well-skills` plugin. This skill is also installable on i
    - The name matches a row you got back → you already hold its id; go straight to step 5, no second query.
    - Anything else → run the `_ilike` search. Never answer "no such company" off the browse page. The only case where absence is real is `totalCount` equal to the number of rows returned, which means the page WAS the whole set; otherwise a missing name means unqueried, not nonexistent.
 
-   **Don't narrate the table.** Every `well_query_records` result renders as a table in MCP-Apps hosts, so restating those same rows as markdown gives the user the card and a duplicate list under it. Ask the question and stop. Two things the table cannot say for itself, and that belong in your text: `totalCount` when it exceeds what's displayed ("showing the 50 most recently updated of 214 — name one, or narrow it down"), and a pointer to open the full table in Well for anything the card truncates.
+   **Don't narrate the table.** Every `well_query_records` result renders as a table in MCP-Apps hosts, so restating those same rows as markdown gives the user the card and a duplicate list under it. Ask the question and stop. Two things the table cannot say for itself, and that belong in your text: `totalCount` when it exceeds what's displayed ("showing the 50 most recently updated of 214: name one, or narrow it down"), and a pointer to open the full table in Well for anything the card truncates.
 
 5. **Compose the profile.** Call `well_get_entity({ root: "companies", id, depth: 2 })` to pull scalars (`name`, `description`, `domain`, `locale`, `tax_id_value`/`tax_id_type`, `trade_name`, `registered_name`, `business_type`, `employee_count`, `founded_year`), contact sub-resources (`emails`, `phones`, `locations`, `web_links`), and the direct invoice relation(s).
    - `business_type` is the legal entity form (Inc/LLC/GmbH), not an industry — there is no `industry` field on `companies`; never fabricate one.
    - If a child collection (e.g. invoices) hits the 50-row depth cap and the user wants full history, follow up with paginated `well_query_records` on `invoices` filtered by a `whereClause` on that company's id as issuer or receiver.
    - Companies have no direct FK to `transactions` — that relation only exists indirectly, via `debtor_payment_means`/`creditor_payment_means` on a transaction pointing to a `PaymentMeans` row that itself links to a Company/Person/Account. If the user wants transaction-level history for this company, treat it as a secondary, more-involved lookup: call `well_get_schema({ root: "transactions" })` to find the current nested path before assuming one, and lead with the invoice relationship as the primary, reliable answer.
 
-6. **Frame the relationship.** First resolve who "we" are — invoke the `resolve-own-company` skill with the pinned `workspace_id`, `purpose: "to frame whether this company is a customer or a vendor"`, `consequence: "inverts customer and vendor"`, `fold_counterparties: true`, and `on_decline: "report the invoice relationship without labeling either side"`. That skill owns the three-way unresolved test (null, absent from the schema entirely, or ambiguous), the never-infer rule, and the both-direction normalized containment that folds duplicate `companies` rows — which matters on both sides here, since a profile can look thin simply because half its invoices hang off an alias. Use its `identity_set` as "us" and its `counterparty_alias_sets` when gathering the profiled company's invoices.
+6. **Frame the relationship.** First resolve who "we" are — invoke the `confirm-my-company` skill with the pinned `workspace_id`, `purpose: "to frame whether this company is a customer or a vendor"`, `consequence: "inverts customer and vendor"`, `fold_counterparties: true`, and `on_decline: "report the invoice relationship without labeling either side"`. That skill owns the three-way unresolved test (null, absent from the schema entirely, or ambiguous), the never-infer rule, and the both-direction normalized containment that folds duplicate `companies` rows — which matters on both sides here, since a profile can look thin simply because half its invoices hang off an alias. Use its `identity_set` as "us" and its `counterparty_alias_sets` when gathering the profiled company's invoices.
    - `resolution: unresolved` means the user declined. Report the invoice relationship without labeling either side as customer or vendor, and say why the framing is missing — do not guess a label.
-   - **If `resolve-own-company` isn't installed**, do it inline: call `well_get_schema({ root: "workspaces" })` and read `workspaces.own_company`, treating null, absent-from-the-schema, and ambiguous alike as unresolved; ask which company is theirs rather than inferring it from the workspace's name, logo, slug, or email domain; then fold duplicate rows on both sides by comparing identically normalized names (Unicode NFD, strip combining marks, lowercase, punctuation to single spaces, collapse whitespace) with containment tested in **both** directions, folding only on an explicit yes.
+   - **If `confirm-my-company` isn't installed**, do it inline: call `well_get_schema({ root: "workspaces" })` and read `workspaces.own_company`, treating null, absent-from-the-schema, and ambiguous alike as unresolved; ask which company is theirs rather than inferring it from the workspace's name, logo, slug, or email domain; then fold duplicate rows on both sides by comparing identically normalized names (Unicode NFD, strip combining marks, lowercase, punctuation to single spaces, collapse whitespace) with containment tested in **both** directions, folding only on an explicit yes.
 
    Then compare the resolved company's role in `invoices` against `own_company`: if the resolved company is the issuer and the workspace is the receiver, they're a vendor to us; if the reverse, they're a customer; if both directions have invoices, say so — this schema doesn't force a single label. Invoices missing an `issuer_company_id` or `receiver_company_id` can't be framed either way — report them in a labeled "unattributed" line, kept out of the vendor and customer totals so neither direction is overstated, rather than dropping them from the profile entirely. Invoices whose issuer and receiver are the same company establish no relationship at all; note them once as a data-quality issue and leave them out of both totals.
 
@@ -133,8 +133,8 @@ Before finishing, verify:
 - The company was resolved unambiguously — not guessed on an ambiguous or zero-match name search.
 - `well_get_schema` was called before querying `companies` (and any other root) for the first time.
 - No `industry` field or customer/vendor boolean was fabricated — the relationship is framed only from issuer/receiver invoice data against `own_company`.
-- The own company came from `resolve-own-company`'s hand-off — its `identity_set`, not a value resolved here — and on `resolution: unresolved` the documented fallback ran rather than a guess.
-- Duplicate company records were folded by `resolve-own-company`, which proposes them for an explicit yes; none were merged silently here, and no `well_update_company`/`well_delete_company` call was made.
+- The own company came from `confirm-my-company`'s hand-off — its `identity_set`, not a value resolved here — and on `resolution: unresolved` the documented fallback ran rather than a guess.
+- Duplicate company records were folded by `confirm-my-company`, which proposes them for an explicit yes; none were merged silently here, and no `well_update_company`/`well_delete_company` call was made.
 - Invoices missing either counterparty id were reported in a labeled unattributed line and kept out of the vendor and customer totals, so neither direction was overstated.
 - Invoices whose issuer equals their receiver were noted once and excluded from both totals, since they establish no relationship.
 - If `well_get_entity`'s depth-2 child cap (50 rows) was hit and full history was needed, the fallback to paginated `well_query_records` was used, not a silently truncated total.
@@ -169,3 +169,24 @@ Detect the multiple matches during step 4, list them with distinguishing details
 ### Expected behavior
 
 Treat the absent `own_company` field as unresolved rather than open, and ask which company is theirs — a wrong pick here does not degrade the answer, it inverts customer and vendor, and reads as confident either way. Fold duplicates on both sides: normalize with punctuation folded to spaces and runs collapsed so `"brightwater s a s"` and `"brightwater"` compare as containing one another, and propose the match rather than merging it, because an unmerged alias makes a long relationship look thin and reads as a finding about the vendor rather than about our data. Report invoices missing either counterparty id in a labeled unattributed line kept out of both the vendor and customer totals, and note issuer-equals-receiver rows once as a data-quality issue without letting them imply a relationship.
+
+## Voice
+
+<!-- voice:begin -->
+Write like a brilliant, understated operations colleague. Hold the tone professional and casual at the same time, confident but never arrogant, credible but easy to follow, warm but never cute. This governs every message of the run, whichever step produced it. Precedence is fixed: when a step hands you an exact string to write, write it exactly as given, dashes and capitals included; these rules govern the prose you compose yourself.
+
+Lead with the outcome, then the detail behind it. Write short active sentences a non-technical reader understands. Use sentence case for the headings and labels you write yourself. Name a real button or card label exactly as the app renders it, such as Use, Validate, Continue, or Deploy, so the user reads the same word on screen. Prefer a concrete number or a real example over an abstract claim.
+
+Never write an em dash or an en dash. Use a period, a comma, or a colon instead. Never write an exclamation mark or an emoji. Keep an acknowledgement brief and specific, such as "Got it, pulling those invoices now." Skip preamble, superlatives, and self-praise.
+
+Drop the habits that make an answer sound generic:
+
+- Hedging transitions, such as "Furthermore", "Moreover", "Additionally", or "In today's fast-paced landscape".
+- Buzzwords, such as leverage, delve, harness, foster, revolutionize, revolutionise, streamline, optimize, optimise, seamless, game-changer, cutting-edge, best-in-class, world-class, unparalleled, disruptive, synergy, blockchain, and crypto.
+- Hollow contrast, such as "not just X, but Y".
+- Vague praise, such as powerful, robust, intelligent, frictionless, elegant, or advanced.
+
+Reach for these verbs first: ask, drop, connect, get, surface, compose, share, route, enrich, learn, reconcile, match, flag.
+
+Keep to the house words in what you write to the user. Write "connect", never "integrate". Write "sessions", never "chat". Write "business data", never "financial data". Write "tokens", never "credits". Name every object by its own name, the workspace, the connector, the company, or the invoice, and never show the user a raw id on its own. A Well app address is a link, not an id, so keep it whole even when it carries a workspace id.
+<!-- voice:end -->

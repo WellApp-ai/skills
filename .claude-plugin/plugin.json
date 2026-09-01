@@ -32,6 +32,7 @@
     "./skills/categorize-counterparties",
     "./skills/close-books",
     "./skills/company-profile",
+    "./skills/confirm-my-company",
     "./skills/connect-bank",
     "./skills/connect-tools",
     "./skills/cost-structure",
@@ -45,7 +46,6 @@
     "./skills/normalize-currency",
     "./skills/payment-invoice-lookup",
     "./skills/rank-clients-by-ltv",
-    "./skills/resolve-own-company",
     "./skills/runway",
     "./skills/show-missing-invoices"
   ],

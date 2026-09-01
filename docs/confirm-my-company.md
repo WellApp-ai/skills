@@ -5,7 +5,7 @@
   </picture>
 </p>
 
-# Resolve Own Company
+# Confirm My Company
 
 **Work out which company in your Well workspace is *yours* — the one line that decides what you owe from what you're owed.**
 
@@ -47,7 +47,7 @@ Install the following official skills from Well.
 **Instructions**:
 
 1. Fetch these files:
-    a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/resolve-own-company/SKILL.md
+    a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/confirm-my-company/SKILL.md
     b. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
 2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
 3. Install these skills.
@@ -61,14 +61,14 @@ Install the following official skills from Well.
 
 Download the `.skill` file and double-click it — Claude Desktop installs it immediately, no drag-and-drop, no unzipping:
 
-[⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/resolve-own-company.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/resolve-own-company.zip)
+[⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/confirm-my-company.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/confirm-my-company.zip)
 
 #### Advanced
 
 Install directly from **[skills.sh/wellapp-ai](https://www.skills.sh/wellapp-ai)**:
 
 ```bash
-npx skills add wellapp-ai/skills --skill resolve-own-company
+npx skills add wellapp-ai/skills --skill confirm-my-company
 ```
 
 ---

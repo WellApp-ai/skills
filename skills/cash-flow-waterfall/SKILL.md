@@ -58,7 +58,7 @@ Both ship with the `well-skills` plugin. This skill is also installable on its o
 
 ## Workflow
 
-1. **Pin the workspace — run `define-workspace`.** Invoke the `define-workspace` skill with `purpose: "to reconcile how your cash position changed"` and use its typed hand-off. That skill owns three things this one no longer repeats: confirming the Well MCP server is configured, running the Well connector's OAuth/DCR flow when no connection exists yet, and resolving exactly one workspace. Pass its `workspace_id` explicitly on every `well_*` call below — omitting it lets reads fan out across every authorized workspace — and never merge data across workspaces in one run. If it hands back `resolution: unresolved`, stop: there is nothing to reconcile without a pinned workspace.
+1. **Pin the workspace — run `define-workspace`.** Invoke the `define-workspace` skill with `purpose: "to reconcile how your cash position changed"` and use its typed hand-off. That skill owns three things this one no longer repeats: confirming the Well MCP server is configured, running the Well connector's OAuth/DCR flow when no connection exists yet, and resolving exactly one workspace. Pass its `workspace_id` explicitly on every `well_*` call below, and never merge data across workspaces in one run. Omitting it is not the safe, read-everything option: `well_get_cash_flow_bridge` answers for **one** workspace chosen for you — whichever this connection was last switched to, otherwise the token's default — so a missing `workspace_id` can silently answer about a workspace the user never named, while the record reads in steps 2 and 3 do the opposite and merge rows from every authorized workspace into one result. Neither is what was asked for. Do not lean on an earlier `well_switch_workspace` instead: a later call is not guaranteed to see that switch, so the explicit argument is the only reliable instruction. If it hands back `resolution: unresolved`, stop: there is nothing to reconcile without a pinned workspace.
    - **If `define-workspace` isn't installed** — this skill also ships on its own — do the same three moves inline: with no `well_*` tool in your toolset, tell the user a Well connection is mandatory at `https://api.wellapp.ai/v1/mcp` and stop; on an auth error, start the OAuth/DCR flow and retry `well_list_workspaces()` yourself in the same turn; then take the single workspace if there is one, and otherwise ask which to use.
 
 2. **Confirm the connections this answer needs — run `connect-tools`.** Invoke the `connect-tools` skill with the pinned `workspace_id`, `kinds: [bank]`, `required: [bank]`, `mode: internal_check`, and the same `purpose`, then read its hand-off instead of querying `workspace_connectors` yourself. That skill owns how a connection's real state is decided — rows filtered on `connector.direction: input` and matched on `connector.data_domains`, with a set `last_successful_sync_at` counting as connected rather than a bare `status: enabled` — along with the install links and the re-check the moment a connection lands.
@@ -72,6 +72,7 @@ Both ship with the `well-skills` plugin. This skill is also installable on its o
 3. **Verify the data itself has landed.** `connect-tools` reports connections, not rows — a connector can be connected and still have delivered nothing this skill can use. Spot-check what this skill actually reads: for each connected connector, the latest `workspace_connector_sync_logs` row's `status` and `completed_at`. Both ends of the bridge are measured balances, so a stale connector can move either anchor and change the whole reconciliation.
 
 4. **Get the bridge.** Call `well_get_cash_flow_bridge()`. Pass `year` and `month` only if the user named a past period. It returns `steps` in render order, each `{ label, value, kind }`, plus `currency`:
+   - **This is the only analytics tool this skill calls for its own answer.** `well_get_cash_flow_bridge`'s own response is a self-contained reconciliation: its `start` and `total` steps ARE the opening and closing balances, so neither anchor needs fetching from anywhere else. Do not call `well_get_cash_position`, `well_get_runway`, `well_get_burn`, `well_get_cost_structure` or `well_get_cash_forecast` to source anything this answer states — not for a comparison, not for a series, not for one number in a sentence. Each of them draws its own card, so an uninvited second call renders a second block beside the one the user asked for, answering a question they did not ask. `well_get_cash_position` is the specific temptation, and its own description already warns against it: that tool answers the balance right now, not this period's closing one, so pairing them reports two different readings as though they were the same. If the answer you want needs a figure this payload does not carry — a category split of the outflow, a burn rate, a forward projection — that figure belongs to another skill: name it, as the Output requirements already say, rather than fetching it here. What this forbids is enriching THIS answer, not answering a second question the user actually asked: when they ask one, hand it to the skill that owns it and let it answer as its own block.
    - `kind: "start"` and `kind: "total"` carry an ABSOLUTE cash position — the opening and closing anchors.
    - `kind: "increase"` and `kind: "decrease"` carry a gross flow MAGNITUDE, always positive. **The direction lives in `kind`, not in the sign.** Never report a `decrease` as a negative number the tool gave you, and never add the magnitudes as though they were signed — a decrease has to be subtracted, which the sign will not tell you.
    - `unavailable: true`, or an EMPTY `steps` array, means neither anchor could be measured. That is missing data, **not a period with no movement** — say the bridge is unavailable rather than reporting flat cash.
@@ -111,6 +112,7 @@ Before finishing, verify:
 - A residual between the measured closing anchor and the flows was reported rather than reconciled away.
 - The pointer to `cost-structure` says the two will not tie out, so neither is presented as the other's breakdown.
 - No forecast, burn rate, or category split was composed here — each was pointed at by name instead.
+- Only this block's analytics tool was called — `well_get_cash_flow_bridge`, plus at most the single retry the fallback step documents — and no other block's analytics tool (`well_get_cash_position`, `well_get_runway`, `well_get_burn`, `well_get_cost_structure`, `well_get_cash_forecast`) was called to source any figure in this answer, including one number in a sentence.
 - Which connector categories are connected versus missing was stated from `connect-tools`' hand-off, so the user knows whether the picture is complete or partial.
 - Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation — not forced into every answer.
 
@@ -139,3 +141,24 @@ Report the bridge as returned. If `unavailable: true` or `steps` is empty, say t
 ### Expected behavior
 
 Confirm it, and name the residual. The closing anchor is measured independently of the flows, so a gap is a real finding about the data rather than an arithmetic slip — surface the tool's hint for it and do not adjust a figure to close the gap.
+
+## Voice
+
+<!-- voice:begin -->
+Write like a brilliant, understated operations colleague. Hold the tone professional and casual at the same time, confident but never arrogant, credible but easy to follow, warm but never cute. This governs every message of the run, whichever step produced it. Precedence is fixed: when a step hands you an exact string to write, write it exactly as given, dashes and capitals included; these rules govern the prose you compose yourself.
+
+Lead with the outcome, then the detail behind it. Write short active sentences a non-technical reader understands. Use sentence case for the headings and labels you write yourself. Name a real button or card label exactly as the app renders it, such as Use, Validate, Continue, or Deploy, so the user reads the same word on screen. Prefer a concrete number or a real example over an abstract claim.
+
+Never write an em dash or an en dash. Use a period, a comma, or a colon instead. Never write an exclamation mark or an emoji. Keep an acknowledgement brief and specific, such as "Got it, pulling those invoices now." Skip preamble, superlatives, and self-praise.
+
+Drop the habits that make an answer sound generic:
+
+- Hedging transitions, such as "Furthermore", "Moreover", "Additionally", or "In today's fast-paced landscape".
+- Buzzwords, such as leverage, delve, harness, foster, revolutionize, revolutionise, streamline, optimize, optimise, seamless, game-changer, cutting-edge, best-in-class, world-class, unparalleled, disruptive, synergy, blockchain, and crypto.
+- Hollow contrast, such as "not just X, but Y".
+- Vague praise, such as powerful, robust, intelligent, frictionless, elegant, or advanced.
+
+Reach for these verbs first: ask, drop, connect, get, surface, compose, share, route, enrich, learn, reconcile, match, flag.
+
+Keep to the house words in what you write to the user. Write "connect", never "integrate". Write "sessions", never "chat". Write "business data", never "financial data". Write "tokens", never "credits". Name every object by its own name, the workspace, the connector, the company, or the invoice, and never show the user a raw id on its own. A Well app address is a link, not an id, so keep it whole even when it carries a workspace id.
+<!-- voice:end -->

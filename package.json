@@ -1,0 +1,7 @@
+{
+  "name": "well-skills",
+  "private": true,
+  "devDependencies": {
+    "handlebars": "^4.7.9"
+  }
+}

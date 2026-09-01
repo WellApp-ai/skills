@@ -1,6 +1,6 @@
 ---
 name: close-books
-requires: [define-workspace, resolve-own-company, connect-bank, connect-tools, accounting-settings, define-period]
+requires: [define-workspace, confirm-my-company, connect-bank, connect-tools, accounting-settings, define-period]
 description: Drive a month-end close for a Well workspace to the point of approval — start the close for a named month, read what is blocking it, clear the blockers one at a time, prepare the close package, and mint the approval offer the user accepts in the Well app. Use when the user asks to "close the books", "close last month", "run the month-end close", "close March", "finish the close", or "what's left to close the period". This is a WRITE flow — it advances a real close run and can resolve tasks, so it shows the state before every step and asks first before retrying reconciliation or queuing a vendor invoice fetch, the two that need an explicit yes. It never locks the period itself; the final approval is a first-party click in Well by design. Requires a connected Well workspace with its bank synced — the only connection the close blocks on; an accounting connection is optional and makes the close richer. If none, it walks the user through connecting first.
 ---
 
@@ -98,17 +98,21 @@ chosen, in any order.
 - `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there is no
   connection yet, and pins exactly one workspace. Supplies the `workspace_id` every call carries, and
   the `fiscal_year_start_month` behind the period. Ambient session context, not a numbered step.
-- `resolve-own-company` — resolves which company is the workspace's own legal entity, and in
+- `confirm-my-company` — resolves which company is the workspace's own legal entity, and in
   `persist` mode sets it (`well_set_own_company`) on the user's explicit confirmation. **This is the
   one real start-gate:** the close refuses to start until the own company is set. The answer also
   decides invoice polarity.
 - `connect-bank` — gets the bank feed connected and syncing. The bank is the **only connection the
   close treats as a blocker**, and no close tool repairs it — connecting happens on the connector
   surface, not through a `well_*` close call. It does not gate the *start*: an unsynced bank is a
-  blocker to clear later, never a start refusal.
+  blocker to clear later, never a start refusal. **This flow gates it: an already-connected bank is
+  skipped with a one-line note rather than re-shown as a connect card** (step 3) — `connect-bank`
+  itself stays idempotent; the skip is decided here from a coverage read, not inside the brick.
 - `connect-tools` — connects the accounting (and invoicing) side. **The close never blocks on a
   missing accounting tool**, so this step is for parity with the app and richer data, not a close
-  prerequisite. Walk it, but never gate the close on it.
+  prerequisite. Walk it, but never gate the close on it. **Same gate as the bank: an already-connected
+  accounting tool is skipped with a note, and when it is missing, the connect card carries close-context
+  wording** (step 4) — the brick stays idempotent, the gate and the wording live here.
 - `accounting-settings` — sets the workspace's `fiscal_year_start_month`. The close derives the
   fiscal period from it and an unset value falls back to January, so it must be set **before** the
   month is named, and it locks once a period closes. The app's flow places it after the connections
@@ -148,15 +152,15 @@ step is skipped or re-run.
      an auth error, start the OAuth/DCR flow and retry in the same turn; then take the single
      workspace, or ask which to use.
 
-2. **Resolve the own company — run `resolve-own-company`** in `mode: strict`, `persist: true`, with
+2. **Resolve the own company — run `confirm-my-company`** in `mode: strict`, `persist: true`, with
    the pinned `workspace_id`, `purpose: "to close this workspace's books"`, and
    `consequence: "the close cannot start and invoice polarity is wrong"`. This is the one setup step
    that is a real server start-gate — `well_start_close` re-reads `own_company` first and refuses
    with `own_company_unconfirmed` when it is unset — so it comes before the connections, exactly as
    the app orders it. In `persist: true`, when the anchor is unresolved and the user confirms which
-   company is theirs, `resolve-own-company` sets it with `well_set_own_company` itself — the close no
+   company is theirs, `confirm-my-company` sets it with `well_set_own_company` itself — the close no
    longer carries its own copy of that write.
-   - **If `resolve-own-company` isn't installed**, do it inline: call
+   - **If `confirm-my-company` isn't installed**, do it inline: call
      `well_get_schema({ root: "workspaces" })` and read `workspaces.own_company`, treating null,
      absent-from-the-schema, and ambiguous alike as unresolved; never infer it from the workspace's
      name, logo, slug, or email domain. If it is unresolved and `well_set_own_company` is in your
@@ -169,22 +173,44 @@ step is skipped or re-run.
    - Still unset → `well_start_close` refuses with `own_company_unconfirmed`; resolve it before
      starting.
 
-3. **Connect the bank — run `connect-bank`.** The bank feed is the only connection the close treats
-   as a blocker (reconciliation reads settled bank data). Take `connect-bank`'s typed `state`
-   (`connected`, `connecting`, `error`, `missing`).
-   It does not gate the *start* — an unsynced bank is a blocker to clear later, not a start refusal —
-   so surface its state and continue rather than stalling. No close tool repairs a bank connection;
-   connecting or fixing it happens on the connector surface. If `connect-bank` isn't installed, read
-   `well_list_connectors` yourself and check for an enabled bank connector with a recent
-   `last_successful_sync_at`.
+3. **Read connection coverage once, then connect the bank only if it is missing.** Read coverage
+   without forcing a connect stop: run `connect-tools` in `mode: internal_check` with
+   `kinds: [bank, accounting, invoicing]`, `required: [bank]`, the pinned `workspace_id`, and
+   `purpose: "to close this workspace's books"`. It hands per-kind coverage back in the same turn and
+   never stops. Keep that coverage for step 4 — read it once, not twice. Then gate the bank:
+   - **Bank already connected and syncing** (an `input` bank row `is_connected` with a recent
+     `last_successful_sync_at`, not `error` / `need_reconnect`) → **skip `connect-bank`.** Say so in
+     one line — "Bank connected: Qonto, last synced <when>" — and continue. Never render the bank
+     connect card for a bank the workspace already has: a redundant connect stop is exactly the
+     friction this skips. The gate lives here, in the close flow; `connect-bank` itself stays
+     idempotent and unchanged.
+   - **Bank missing, in error, or needs reconnect** → run `connect-bank` (its default `flow_step`)
+     with the pinned `workspace_id`, `required: false`, and `purpose: "to close this workspace's
+     books"`. Its card renders and the turn ends on the user's Continue; take its typed `state` when
+     the flow resumes. The bank is the only connection the close treats as a blocker, but it does not
+     gate the *start* — an unsynced bank is a blocker to clear later, never a start refusal. No close
+     tool repairs a bank connection; connecting or fixing it happens on the connector surface.
+   - If `connect-tools` isn't installed for the coverage read, read
+     `well_list_connectors({ kind: bank })` yourself for the bank row; if `connect-bank` isn't
+     installed either, report the bank state from that row without blocking.
 
-4. **Connect the accounting side — run `connect-tools` scoped to accounting and invoicing.** Pass
-   `kinds: [accounting, invoicing]` so it does not re-check the bank — step 3 already covered that.
-   Walk this for parity with the app and for richer posted-ledger data. **The server never treats a
-   missing accounting tool as a close blocker** — posting runs on the standard chart of accounts — so
-   never gate the close on it: surface what is connected, note anything missing, and continue
-   regardless. If `connect-tools` isn't installed, read `well_list_connectors` and report the
-   accounting/invoicing coverage without blocking.
+4. **Connect the accounting side only if it is missing.** Reuse step 3's coverage read — do not run a
+   second `internal_check`.
+   - **Accounting already connected** (an `input` `accounting` row `is_connected`, not `error`) →
+     **skip `connect-tools`.** Say so in one line — "Accounting connected: Pennylane" — and continue.
+     The close is never gated on accounting, so a redundant connect stop here only slows the user down.
+   - **Accounting missing** → run `connect-tools` (its default `flow_step`) with
+     `kinds: [accounting, invoicing]`, the pinned `workspace_id`, `required: []` (never required — the
+     close never blocks on a missing accounting tool), `purpose: "to close this workspace's books"`,
+     and **close-context card wording**: pass `title` / `subtitle` that name the close so the card
+     reads as part of it, not a generic connect prompt — e.g. `title: "Connect your accounting tool for
+     the close"`, `subtitle: "Optional. It makes the close richer, but the books close without it."`
+     Adapt the wording to the close here rather than leaving the catalog's default; the connect card
+     injects it. Walk it for parity and richer posted-ledger data, surface what is connected, and
+     continue — **the server never treats a missing accounting tool as a close blocker** (posting runs
+     on the standard chart of accounts), so never gate the close on it.
+   - If `connect-tools` isn't installed, read `well_list_connectors` and report the accounting /
+     invoicing coverage without blocking.
 
 5. **Set the fiscal year start — run `accounting-settings`.** The close derives the fiscal period from
    `fiscal_year_start_month`, and an unset value falls back to January, so it must be right **before**
@@ -202,11 +228,21 @@ step is skipped or re-run.
    `well_start_close`.** First reuse a live run: call `well_list_flow_runs` and, if a close run
    already exists for the month the user means, resume it and skip to step 7. Otherwise run
    `define-period` in `mode: collect` with the pinned `workspace_id`, its `fiscal_year_start_month`,
-   and any month `hint` the user gave — it collects **exactly one** calendar month through the picker
-   UX and hands back its `calendar_year` + `calendar_month`. Naming the month **is** starting the
-   close: pass that month straight into `well_start_close` with
-   `scope: { calendar_year, calendar_month }`; from here on, echo the server's *fiscal* scope
-   verbatim and never re-derive a coordinate.
+   the bank's `state` from step 3 as `bank_state`, any month `hint` the user gave, **and
+   `show_close_readiness: true`** — so the period picker surfaces each month's run-free close readiness
+   (its `close_status` / `close_reason` and `missing_invoice_count` / `unposted_invoice_count`) right
+   on the card, and the user sees whether the month is closeable, and roughly why not, **before**
+   confirming it. `define-period` collects **exactly one** calendar month through the picker UX and
+   hands back its `calendar_year` + `calendar_month`.
+   - **The user's confirmation of the month is the deliberate go-ahead to start the close.** Starting
+     is a write, so it rides an explicit choice, never a silent continuation from the setup steps: when
+     the month comes from the picker, the user's card confirmation *is* that go-ahead; when it comes
+     only from an up-front hint and no picker was rendered, state the month and its readiness and take
+     an explicit yes before calling `well_start_close`. Never roll straight from the accounting or
+     fiscal step into starting the close.
+   - Naming the month **is** starting the close: pass the confirmed month straight into
+     `well_start_close` with `scope: { calendar_year, calendar_month }`; from here on, echo the
+     server's *fiscal* scope verbatim and never re-derive a coordinate.
    - **If `define-period` isn't installed**, confirm the last complete month with the user inline and
      pass it to `well_start_close` — never pin a month the user has not confirmed.
    - A current or future month → `well_start_close` refuses. Name the last complete month instead and
@@ -312,10 +348,20 @@ Before finishing, verify:
 - The own company was resolved (step 2) before the connections and before `well_start_close`, and
   when it was set with `well_set_own_company`, the company was confirmed by the user, never inferred
   from the workspace — it is the one real start-gate.
-- The bank side was checked via `connect-bank` (or the inline fallback) and its state surfaced; an
-  unsynced bank was reported as a blocker to clear, not treated as a start refusal. The accounting
-  side was checked via `connect-tools` for parity, and the close was **never gated** on it — a
-  missing accounting tool is not a close blocker.
+- Connection coverage was read once (step 3's `connect-tools` `internal_check`), and each connection
+  was **gated on that read**: an already-connected bank or accounting tool was skipped with a one-line
+  note, never re-shown as a redundant connect card; only a missing/errored one rendered its connect
+  card. The bank state was surfaced and an unsynced bank reported as a blocker to clear, not a start
+  refusal; the accounting side was walked for parity, its connect card (when shown) carried
+  close-context wording, and the close was **never gated** on it — a missing accounting tool is not a
+  close blocker.
+- The flow never rolled straight from the setup steps into `well_start_close`: starting the close rode
+  an explicit user go-ahead — the month picker's confirmation, or an explicit yes when the month came
+  only from a hint — never a silent continuation past the accounting or fiscal step.
+- Before that go-ahead, each candidate month's run-free readiness from step 6 — its `close_status` /
+  `close_reason` and `missing_invoice_count` / `unposted_invoice_count`, surfaced by `define-period`'s
+  `show_close_readiness: true` — was shown to the user, stated as the coarse readiness and never as the
+  full blocker ladder, which only `well_get_close_state` carries once the run has started.
 - The fiscal year start was confirmed (step 5) before the month was named, so it was not left to fall
   back to January; when no MCP tool to set the fiscal year was available, the user was pointed at the
   Well app rather than left on the default.
@@ -347,13 +393,17 @@ Before finishing, verify:
 
 ### Expected behavior
 
-Run `define-workspace` and pin the workspace. Run `resolve-own-company` (strict, persist) — it reads
-the own company from the setting. Run `connect-bank`; the bank feed shows a recent sync. Run
-`connect-tools` for the accounting side — it is connected, but the close is not gated on it either
-way. Read the fiscal year start from `well_list_workspaces`; it is set to January, so nothing to
-change (no `accounting-settings` write needed). "Last month" is the last complete month, March 2026:
-run `define-period` in `mode: collect`, which hands back `calendar_year: 2026, calendar_month: 3`,
-and pass it straight into `well_start_close({ scope: { calendar_year: 2026, calendar_month: 3 } })`.
+Run `define-workspace` and pin the workspace. Run `confirm-my-company` (strict, persist) — it reads
+the own company from the setting. Read connection coverage once with `connect-tools`
+`mode: internal_check` (`kinds: [bank, accounting, invoicing]`): the bank shows a recent sync and the
+accounting tool is connected, so **skip both connect steps** with a one-line note each ("Bank
+connected: Qonto, last synced yesterday", "Accounting connected: Pennylane") rather than re-showing
+either connect card. Read the fiscal year start from `well_list_workspaces`; it is set to January, so
+nothing to change (no `accounting-settings` write needed). "Last month" is the last complete month,
+March 2026: run `define-period` in `mode: collect` with `show_close_readiness: true`, which shows
+March's run-free readiness on the picker and hands back `calendar_year: 2026, calendar_month: 3` once
+the user confirms it — that confirmation is the go-ahead to start. Pass it straight into
+`well_start_close({ scope: { calendar_year: 2026, calendar_month: 3 } })`.
 Read `well_get_close_state` — two blockers: one uncategorised-transactions task and one settled
 payment missing its invoice. Confirm the scope with `well_select_close_scope` (the server's fiscal
 scope, copied verbatim). Point the user at `categorize-counterparties` for the categories; for the
@@ -371,7 +421,7 @@ toolset.
 ### Expected behavior
 
 `well_start_close` would refuse with `own_company_unconfirmed`, so resolve the own company first.
-Run `resolve-own-company` in `persist: true` (strict); it comes back unresolved, asks the user which
+Run `confirm-my-company` in `persist: true` (strict); it comes back unresolved, asks the user which
 company is theirs, and on their explicit yes sets the anchor with `well_set_own_company` itself —
 close-books never writes it. Once it hands back `own_company_id`, start the close for March 2026 and
 continue the normal flow. Never pick the company for them, and never infer it from the workspace name.
@@ -385,3 +435,24 @@ continue the normal flow. Never pick the company for them, and never infer it fr
 April 2026 has not ended, so a close cannot run on it. Say so in one line, offer the last complete
 month — March 2026 — instead, and let the user confirm before starting. Do not pin a future or
 running month.
+
+## Voice
+
+<!-- voice:begin -->
+Write like a brilliant, understated operations colleague. Hold the tone professional and casual at the same time, confident but never arrogant, credible but easy to follow, warm but never cute. This governs every message of the run, whichever step produced it. Precedence is fixed: when a step hands you an exact string to write, write it exactly as given, dashes and capitals included; these rules govern the prose you compose yourself.
+
+Lead with the outcome, then the detail behind it. Write short active sentences a non-technical reader understands. Use sentence case for the headings and labels you write yourself. Name a real button or card label exactly as the app renders it, such as Use, Validate, Continue, or Deploy, so the user reads the same word on screen. Prefer a concrete number or a real example over an abstract claim.
+
+Never write an em dash or an en dash. Use a period, a comma, or a colon instead. Never write an exclamation mark or an emoji. Keep an acknowledgement brief and specific, such as "Got it, pulling those invoices now." Skip preamble, superlatives, and self-praise.
+
+Drop the habits that make an answer sound generic:
+
+- Hedging transitions, such as "Furthermore", "Moreover", "Additionally", or "In today's fast-paced landscape".
+- Buzzwords, such as leverage, delve, harness, foster, revolutionize, revolutionise, streamline, optimize, optimise, seamless, game-changer, cutting-edge, best-in-class, world-class, unparalleled, disruptive, synergy, blockchain, and crypto.
+- Hollow contrast, such as "not just X, but Y".
+- Vague praise, such as powerful, robust, intelligent, frictionless, elegant, or advanced.
+
+Reach for these verbs first: ask, drop, connect, get, surface, compose, share, route, enrich, learn, reconcile, match, flag.
+
+Keep to the house words in what you write to the user. Write "connect", never "integrate". Write "sessions", never "chat". Write "business data", never "financial data". Write "tokens", never "credits". Name every object by its own name, the workspace, the connector, the company, or the invoice, and never show the user a raw id on its own. A Well app address is a link, not an id, so keep it whole even when it carries a workspace id.
+<!-- voice:end -->

@@ -1,7 +1,7 @@
 ---
 name: accounting-settings
 requires: [define-workspace]
-description: Set a Well workspace's accounting settings — the fiscal year start month above all, plus the first fiscal year start date, home/base currency, country, accounting framework, and chart-of-accounts confirmation — over Well's MCP server, writing only the value the user confirms, never a guessed one. Use when the user asks to "set our fiscal year start", "our accounting year starts in April", "change the reporting currency", "set the accounting framework", "confirm the chart of accounts", or when a close or period-scoped flow needs the fiscal year start confirmed before it derives fiscal periods. This is a WRITE flow — it shows the current value where it can read one, confirms the new one, then writes; the fiscal year start is refused when a period is locked or a close is in progress, and changing it discards regenerable draft journal entries. Requires a connected Well workspace and owner/admin rights; it never touches the own-company identity — that is `resolve-own-company`.
+description: Set a Well workspace's accounting settings — the fiscal year start month above all, plus the first fiscal year start date, home/base currency, country, accounting framework, and chart-of-accounts confirmation — over Well's MCP server, writing only the value the user confirms, never a guessed one. Use when the user asks to "set our fiscal year start", "our accounting year starts in April", "change the reporting currency", "set the accounting framework", "confirm the chart of accounts", or when a close or period-scoped flow needs the fiscal year start confirmed before it derives fiscal periods. This is a WRITE flow — it shows the current value where it can read one, confirms the new one, then writes; the fiscal year start is refused when a period is locked or a close is in progress, and changing it discards regenerable draft journal entries. Requires a connected Well workspace and owner/admin rights; it never touches the own-company identity — that is `confirm-my-company`.
 ---
 
 # Set accounting settings with Well
@@ -13,7 +13,7 @@ every fiscal coordinate — over Well's MCP server. The one that matters most is
 start month**: the server derives each month's fiscal period from it, so an unset or wrong start
 month silently mis-files every close. This skill reads the current value, asks the user for the new
 one, and writes exactly what they confirm — it never infers a start month, a currency, or a
-framework, and it never changes the workspace's legal identity (that is `resolve-own-company`).
+framework, and it never changes the workspace's legal identity (that is `confirm-my-company`).
 
 The write is deliberate and gated. Changing the fiscal year start realigns the whole fiscal
 calendar, so the server **refuses it once a period is locked or a close is in progress**, and when
@@ -41,7 +41,7 @@ Do not use this skill when:
 - The user wants to know *which month* a job works on, not to change a durable setting — that is
   `define-period`. This skill sets the fiscal year *start*; it never picks the working period.
 - The user wants to set which company the workspace *is* — its legal identity, tax id, registered
-  name — that is `resolve-own-company` and `well_set_own_company`. This skill never writes identity.
+  name — that is `confirm-my-company` and `well_set_own_company`. This skill never writes identity.
 - The user wants to reopen or unlock a period so the start month can change — no MCP tool does that;
   point them at the Well app.
 - The workspace is not resolved yet — run `define-workspace` first.
@@ -240,3 +240,24 @@ no draft-discard consequence to state — do not invent one.
 
 This skill sets durable accounting settings, it does not pick a working period. Say so in one line
 and point the user at `define-period` (or the close flow), rather than writing anything.
+
+## Voice
+
+<!-- voice:begin -->
+Write like a brilliant, understated operations colleague. Hold the tone professional and casual at the same time, confident but never arrogant, credible but easy to follow, warm but never cute. This governs every message of the run, whichever step produced it. Precedence is fixed: when a step hands you an exact string to write, write it exactly as given, dashes and capitals included; these rules govern the prose you compose yourself.
+
+Lead with the outcome, then the detail behind it. Write short active sentences a non-technical reader understands. Use sentence case for the headings and labels you write yourself. Name a real button or card label exactly as the app renders it, such as Use, Validate, Continue, or Deploy, so the user reads the same word on screen. Prefer a concrete number or a real example over an abstract claim.
+
+Never write an em dash or an en dash. Use a period, a comma, or a colon instead. Never write an exclamation mark or an emoji. Keep an acknowledgement brief and specific, such as "Got it, pulling those invoices now." Skip preamble, superlatives, and self-praise.
+
+Drop the habits that make an answer sound generic:
+
+- Hedging transitions, such as "Furthermore", "Moreover", "Additionally", or "In today's fast-paced landscape".
+- Buzzwords, such as leverage, delve, harness, foster, revolutionize, revolutionise, streamline, optimize, optimise, seamless, game-changer, cutting-edge, best-in-class, world-class, unparalleled, disruptive, synergy, blockchain, and crypto.
+- Hollow contrast, such as "not just X, but Y".
+- Vague praise, such as powerful, robust, intelligent, frictionless, elegant, or advanced.
+
+Reach for these verbs first: ask, drop, connect, get, surface, compose, share, route, enrich, learn, reconcile, match, flag.
+
+Keep to the house words in what you write to the user. Write "connect", never "integrate". Write "sessions", never "chat". Write "business data", never "financial data". Write "tokens", never "credits". Name every object by its own name, the workspace, the connector, the company, or the invoice, and never show the user a raw id on its own. A Well app address is a link, not an id, so keep it whole even when it carries a workspace id.
+<!-- voice:end -->
