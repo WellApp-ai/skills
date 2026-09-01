@@ -53,7 +53,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 - `well_list_workspaces` — how the workspace step below resolves the workspace.
 - `well_get_burn` — the authoritative trailing average monthly burn, plus `trailing_months`, `months_in_window` and `months_with_data`. Call this directly; do not sum or group `transactions` yourself, and do not read the `avg_burn` field nested in `well_get_runway` instead — that one is pinned to the runway's own window and cannot be widened.
-- `well_query_records` — the connection check in step 2, and the data-freshness read in step 3.
+- `well_query_records` — the data-freshness read in step 3, and nothing else. Step 2 reads connector state through `well_list_connectors` alone; a `well_query_records` call on `workspace_connectors` bypasses that logic and the step checks that it did not happen.
 - `well_list_connectors` — how the connection step below surfaces install links.
 - Well's OAuth / Dynamic Client Registration (DCR) flow — driven by step 1. Most hosts trigger it automatically when the Well MCP server is added; if your host exposes a dedicated `authenticate` tool for the Well connector, step 1 calls it.
 
