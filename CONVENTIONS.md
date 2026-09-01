@@ -16,7 +16,36 @@ Declaring only the first is the mistake reviewers keep finding. The three surfac
 
 `define-workspace` is the only brick that declares nothing — it is the root and depends on no one.
 
-**This section describes the runtime-delegation pattern, which still governs every skill except `fx-exposure`.** A newer, compile-time pattern exists alongside it — see the next section — and is meant to replace this one skill by skill, not overnight. Until a skill is migrated, it still follows the three-places rule above.
+**This is the convention. Runtime delegation governs every new skill.** Three skills
+(`avg-burn`, `fx-exposure`, `rank-clients-by-ltv`) currently compile their bricks in at build
+time instead — see the next section, which documents that pattern. They are the exception, not
+the direction, and they migrate back to this one.
+
+### Why delegation, and the one change that makes it safe
+
+The compile-time pattern exists for one reason: a skill that delegates also carries a
+hand-copied inline fallback for when the brick is not installed, and that copy drifts. The
+concern is real and larger than it looks — twenty of twenty-six skills carry such a fallback,
+and `rank-clients-by-ltv` carries four.
+
+The fix is not to inline the brick at build time. It is to stop carrying a fallback at all.
+
+**When a brick is not installed, say so and point at the install. Never do its work inline.**
+
+    If `define-workspace` is not available, tell the user this skill needs it and give them
+    `npx skills add wellapp-ai/skills`. Then stop. Do not attempt the workspace resolution
+    from this file.
+
+That removes the second copy, which was the whole argument for compiling. It keeps each
+shipped skill small. And it fails loudly rather than silently doing a worse job than the brick
+would have — a degraded inline path that nobody notices is worse than a stop that names its
+own remedy.
+
+Two facts settled this, both measured rather than assumed. Compiling a brick in adds five to
+ten kilobytes per skill. And file size is not what breaks a Claude Cowork import: the eight
+largest skills in this repo all delegate, and `fetch-missing-invoices` imports at 80 KB while
+`define-period` fails at 43 KB. Frontmatter is the more likely culprit there — `define-period`
+carries the only `description` in the repo over 1024 characters.
 
 ## Atoms: compile-time composition, not runtime delegation
 
