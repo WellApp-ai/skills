@@ -1,31 +1,32 @@
 /**
- * Ballpark size warning for skills/*\/SKILL.md and atoms/*\/CONTENT.md.
+ * Size gates for the files a skill ships.
  *
- * This is a hygiene ceiling, not a quality-degradation claim — no source
- * ties a specific token count to measured LLM output quality at the sizes
- * these files actually reach. Research turned up one real, Claude-specific
- * cliff ("Prompt Design at Scale," arXiv 2607.19257: adherence to a stacked
- * rule-set collapses with instruction *count*, not token length — ~62% at 20
- * instructions, ~17% at 40), but that paper's N counted a synthetic prompt
- * built with exactly one isolated instruction per line. A naive keyword-line
- * count against this repo's actual prose (which routinely packs 2-3
- * imperative words into one ordinary, non-bloated sentence) flagged all 26
- * of 26 skills — not a usable signal, so that approach was tried and
- * dropped rather than shipped as if it were evidence-backed when the
- * counting method didn't actually match what the paper measured.
+ * Two different ceilings apply:
  *
- * So: token count stays as a plain, non-empirical ceiling for keeping a file
- * reviewable and roughly bounded — 50,000 tokens for a skill (~5% of
- * Claude's 1M-token context, a round number chosen as a common-sense outer
- * bound rather than derived from any measured degradation point), estimated
- * at ~4 characters each (a rough ratio, not a real tokenizer). An atom gets
- * 10% of that: it's inlined verbatim into every skill that composes it, so
- * its size is paid by each of them, not once — a skill composing a few
- * atoms at full skill-sized budgets each would blow its own budget before
- * writing a line of its own logic. This is a warning, never a failure: it
- * does not affect `make validate`'s exit code.
+ * 1. A HARD per-file cap of 10,000 estimated tokens on every shipped source
+ *    file — skills/<name>/SKILL.md and skills/<name>/references/*.md. Claude
+ *    Code's Read tool refuses any file over ~10,000 real tokens ("File
+ *    content (n) exceeds maximum allowed tokens (10000)", reproduced in
+ *    anthropics/claude-plugins-official#995), and the plugin marketplace
+ *    serves these source files directly — so a file over the cap fails to
+ *    load at every invocation while `claude plugin validate --strict` still
+ *    passes it. The chars/4 estimate runs ~5-10% ABOVE a real BPE count on
+ *    this repo's prose, so a file that passes here has margin against the
+ *    real cap. This check fails the run.
  *
- * Run through `make validate` (or `node scripts/check-content-size.mjs`).
+ * 2. A WARNING at the same threshold on the PACKAGED size — SKILL.md plus
+ *    every references/*.md the build inlines into the one-file archive that
+ *    Claude Desktop installs (see scripts/build-dist.sh). Desktop's loader
+ *    has no documented per-file token cap, so an oversized package is a risk
+ *    to flag, not a proven failure.
+ *
+ * Atoms keep their advisory ceiling: an atom is inlined verbatim into every
+ * skill that composes it, so its size is paid by each consumer and the hard
+ * gate on the compiled skills/<name>/SKILL.md is what actually enforces the
+ * budget. The atom warning just points at the source to shrink.
+ *
+ * Tokens are estimated at ~4 characters each (a rough ratio, not a real
+ * tokenizer). Run through `make validate` (or `node scripts/check-content-size.mjs`).
  */
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
@@ -36,19 +37,21 @@ const SKILLS_DIR = join(ROOT, "skills");
 const ATOMS_DIR = join(ROOT, "atoms");
 
 const CHARS_PER_TOKEN = 4;
-const SKILL_BUDGET_TOKENS = 50000;
-const ATOM_BUDGET_RATIO = 0.1;
-const ATOM_BUDGET_TOKENS = Math.round(SKILL_BUDGET_TOKENS * ATOM_BUDGET_RATIO);
+const SHIPPED_FILE_CAP_TOKENS = 10000;
+const ATOM_BUDGET_TOKENS = 5000;
 
 function estimateTokens(text) {
   return Math.ceil(text.length / CHARS_PER_TOKEN);
 }
 
-function skillFiles() {
+function measure(file) {
+  return { file, tokens: estimateTokens(readFileSync(file, "utf8")) };
+}
+
+function skillDirs() {
   return readdirSync(SKILLS_DIR, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
-    .map((entry) => join(SKILLS_DIR, entry.name, "SKILL.md"))
-    .filter((file) => existsSync(file));
+    .map((entry) => join(SKILLS_DIR, entry.name));
 }
 
 function atomFiles() {
@@ -58,37 +61,61 @@ function atomFiles() {
     .filter((file) => existsSync(file));
 }
 
-function checkGroup(label, files, budget, reasonSuffix) {
-  const measured = files
-    .map((file) => ({ file, tokens: estimateTokens(readFileSync(file, "utf8")) }))
-    .sort((a, b) => b.tokens - a.tokens);
-  const over = measured.filter(({ tokens }) => tokens > budget);
+const hardFailures = [];
+const packagedWarnings = [];
+let shippedCount = 0;
 
-  if (over.length === 0) {
-    console.log(`✔ ${measured.length} ${label} file(s), none over the ${budget}-token ballpark`);
-    return [];
+for (const dir of skillDirs()) {
+  const skillMd = join(dir, "SKILL.md");
+  if (!existsSync(skillMd)) continue;
+  const refsDir = join(dir, "references");
+  const refs = existsSync(refsDir)
+    ? readdirSync(refsDir)
+        .filter((name) => name.endsWith(".md"))
+        .map((name) => join(refsDir, name))
+    : [];
+  const measured = [skillMd, ...refs].map(measure);
+  shippedCount += measured.length;
+  for (const entry of measured) {
+    if (entry.tokens > SHIPPED_FILE_CAP_TOKENS) hardFailures.push(entry);
   }
-  console.log(`⚠ ${over.length} of ${measured.length} ${label} file(s) over the ${budget}-token ballpark:\n`);
-  for (const { file, tokens } of over) {
+  const packaged = measured.reduce((sum, entry) => sum + entry.tokens, 0);
+  if (refs.length > 0 && packaged > SHIPPED_FILE_CAP_TOKENS) {
+    packagedWarnings.push({ file: skillMd, tokens: packaged });
+  }
+}
+
+if (hardFailures.length === 0) {
+  console.log(`✔ ${shippedCount} shipped file(s), none over the ${SHIPPED_FILE_CAP_TOKENS}-token load cap`);
+} else {
+  console.log(`✘ ${hardFailures.length} of ${shippedCount} shipped file(s) over the ${SHIPPED_FILE_CAP_TOKENS}-token load cap:\n`);
+  for (const { file, tokens } of hardFailures) {
     console.log(
-      `  ${relative(ROOT, file)} — exceeds ${budget} tokens (~${tokens} estimated)${reasonSuffix}. ` +
-        "You should do a pass to compact the content. Refer to /skill-forge for guidelines.",
+      `  ${relative(ROOT, file)} — ~${tokens} estimated tokens. Claude Code cannot read a file this size, ` +
+        "so the skill fails to load at every invocation. Move detail into skills/<name>/references/*.md files.",
     );
   }
   console.log("");
-  return over;
 }
 
-const skillOver = checkGroup("skill", skillFiles(), SKILL_BUDGET_TOKENS, "");
-const atomOver = checkGroup(
-  "atom",
-  atomFiles(),
-  ATOM_BUDGET_TOKENS,
-  ` — an atom's budget is ${Math.round(ATOM_BUDGET_RATIO * 100)}% of a skill's (${ATOM_BUDGET_TOKENS} of ${SKILL_BUDGET_TOKENS}), since it's inlined into every skill that composes it`,
-);
+for (const { file, tokens } of packagedWarnings) {
+  console.log(
+    `⚠ ${relative(ROOT, file)} packages to ~${tokens} estimated tokens once its references are inlined ` +
+      "for the Claude Desktop archive. Desktop documents no per-file cap, so this is a warning, not a failure.",
+  );
+}
 
-if (skillOver.length === 0 && atomOver.length === 0) {
-  console.log("✔ no skill or atom file over its ballpark budget");
-} else {
-  console.log("This is a warning, not a failure — it does not affect make validate's exit code.");
+const atomOver = atomFiles()
+  .map(measure)
+  .filter(({ tokens }) => tokens > ATOM_BUDGET_TOKENS);
+for (const { file, tokens } of atomOver) {
+  console.log(
+    `⚠ ${relative(ROOT, file)} — ~${tokens} estimated tokens, over the ${ATOM_BUDGET_TOKENS}-token atom ` +
+      "ceiling. An atom is inlined into every skill that composes it; the compiled skills are what the " +
+      "hard cap above enforces, so shrink the atom before its consumers start failing.",
+  );
+}
+
+if (hardFailures.length > 0) {
+  process.exit(1);
 }
