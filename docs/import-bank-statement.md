@@ -17,18 +17,8 @@ OFX, QIF, and MT940 exports are not supported yet — this skill says so rather 
 
 ## Required data in Well
 
-- **A resolved workspace** — *required.* Run `define-workspace` first; this skill takes its `workspace_id`.
+- **A resolved workspace** — the skill pins one itself at the start of its workflow (the workspace-resolution step is compiled into it); with several workspaces it asks which one to use.
 - **No bank, accounting, or invoicing connector required.** The statement file itself is the data source. Connecting a bank (`connect-bank`) is a separate, complementary step for an ongoing automatic feed — not a prerequisite for this one-off import.
-
----
-
-## Composes onto
-
-This skill delegates one setup step to a Well atomic skill rather than repeating it:
-
-- **[`define-workspace`](define-workspace.md)** — pins which Well workspace the statement imports into.
-
-Install it alongside this one. This skill takes its `workspace_id` and does not resolve the workspace itself, so the pair belongs together. The **Claude Code plugin** and **Codex plugin** paths below install both together; if you download the `.skill` file on its own, grab `define-workspace` as well.
 
 ---
 
@@ -48,7 +38,6 @@ Install the following official skills from Well.
 
 1. Fetch these files:
     a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/import-bank-statement/SKILL.md
-    b. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
 2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
 3. Install these skills.
 4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
