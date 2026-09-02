@@ -91,49 +91,18 @@ to run the checks that need only node.
 
 ## Installation
 
-### Assisted by AI (Recommended)
+### Claude Desktop, claude.ai, and Cowork (Recommended)
 
-Paste this into any AI agent — Claude, Codex, Cursor, OpenCode, and others — to install all the skills:
+This repo is a Claude plugin marketplace. On any paid plan (Pro, Max, Team, Enterprise), one install brings in every skill above and wires the Well connection:
 
-> [!NOTE]
-> We suggest using **Claude Chat** rather than Claude Cowork for this step — Cowork's approach is noticeably slower and pricier for a quick install like this. Any Claude model works fine.
+1. Open the **Customize** menu and go to the **Plugins** tab.
+2. In **Personal plugins**, click **+**, then **Add marketplace → Add from a repository**.
+3. Paste `https://github.com/WellApp-ai/skills` and sync.
+4. Install **well-skills**.
 
-```
-Install the following official skills from Well. Instructions:
+You'll be asked to sign in to Well the first time a skill needs your data. Skills installed this way update when the marketplace syncs — nothing to re-download.
 
-1. Fetch these files:
-    a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cash-position/SKILL.md
-    b. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/avg-burn/SKILL.md
-    c. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/runway/SKILL.md
-    d. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cost-structure/SKILL.md
-    e. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cash-forecast/SKILL.md
-    f. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cash-flow-waterfall/SKILL.md
-    g. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounts-receivable-aging/SKILL.md
-    h. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/bills-due/SKILL.md
-    i. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/rank-clients-by-ltv/SKILL.md
-    j. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/fx-exposure/SKILL.md
-    k. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/company-profile/SKILL.md
-    l. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/payment-invoice-lookup/SKILL.md
-    m. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/missing-receipts/SKILL.md
-    n. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/draft-invoice/SKILL.md
-    o. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/fetch-missing-invoices/SKILL.md
-    p. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/show-missing-invoices/SKILL.md
-    q. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/deploy-agents/SKILL.md
-    r. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/close-books/SKILL.md
-    s. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
-    t. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
-    u. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-bank/SKILL.md
-    v. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-period/SKILL.md
-    w. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/categorize-counterparties/SKILL.md
-    x. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounting-settings/SKILL.md
-    y. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/confirm-my-company/SKILL.md
-    z. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/normalize-currency/SKILL.md
-2. Download and display the SKILL.md files to the user. Each must be named "SKILL.md" — no prefix, no suffix, exact name.
-3. Create a summary table with skill names and descriptions extracted from the frontmatter
-4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
-5. If you can, install these skills yourself.
-6. If the MCP https://api.wellapp.ai/v1/mcp is not installed: suggest it to the user and explain them how to add a new MCP.
-```
+On the Free plan, plugins are unavailable. Connect the Well MCP as a custom connector ([Step 1 below](#step-1-connect-well)), then install the skills you need from the [per-skill downloads](#claude-desktop).
 
 ### Claude Code Plugin Marketplace
 
@@ -187,6 +156,9 @@ Next, give it the skills below so it knows how to use that connection well.
 
 ##### Claude Desktop
 
+> [!NOTE]
+> On a paid plan, prefer the [plugin install](#claude-desktop-claudeai-and-cowork-recommended) — one action installs everything and stays updated. The per-skill downloads below remain for the Free plan and for picking single skills.
+
 Download the `.skill` file and double-click it to install — Claude Desktop installs it immediately, no drag-and-drop, no unzipping.
 
 | Skill | Description | Download |
@@ -230,6 +202,53 @@ Install directly from **[skills.sh/wellapp-ai](https://www.skills.sh/wellapp-ai)
 ```bash
 npx skills add wellapp-ai/skills
 ```
+
+### Deprecated: assisted install prompt
+
+<details>
+<summary>The old paste-into-any-agent prompt — superseded by the plugin and skills.sh routes above</summary>
+
+> [!WARNING]
+> Deprecated. Fetching and displaying 26 files trips per-file and display limits in most agents, and the list goes stale as skills are added. Use the plugin marketplace (Claude) or `npx skills add wellapp-ai/skills` (other agents) instead.
+
+```
+Install the following official skills from Well. Instructions:
+
+1. Fetch these files:
+    a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cash-position/SKILL.md
+    b. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/avg-burn/SKILL.md
+    c. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/runway/SKILL.md
+    d. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cost-structure/SKILL.md
+    e. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cash-forecast/SKILL.md
+    f. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cash-flow-waterfall/SKILL.md
+    g. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounts-receivable-aging/SKILL.md
+    h. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/bills-due/SKILL.md
+    i. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/rank-clients-by-ltv/SKILL.md
+    j. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/fx-exposure/SKILL.md
+    k. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/company-profile/SKILL.md
+    l. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/payment-invoice-lookup/SKILL.md
+    m. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/missing-receipts/SKILL.md
+    n. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/draft-invoice/SKILL.md
+    o. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/fetch-missing-invoices/SKILL.md
+    p. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/show-missing-invoices/SKILL.md
+    q. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/deploy-agents/SKILL.md
+    r. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/close-books/SKILL.md
+    s. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
+    t. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
+    u. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-bank/SKILL.md
+    v. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-period/SKILL.md
+    w. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/categorize-counterparties/SKILL.md
+    x. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounting-settings/SKILL.md
+    y. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/confirm-my-company/SKILL.md
+    z. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/normalize-currency/SKILL.md
+2. Download and display the SKILL.md files to the user. Each must be named "SKILL.md" — no prefix, no suffix, exact name.
+3. Create a summary table with skill names and descriptions extracted from the frontmatter
+4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
+5. If you can, install these skills yourself.
+6. If the MCP https://api.wellapp.ai/v1/mcp is not installed: suggest it to the user and explain them how to add a new MCP.
+```
+
+</details>
 
 ---
 

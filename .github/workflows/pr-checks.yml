@@ -35,6 +35,11 @@ jobs:
       - name: Atoms and compiled skills are current
         run: node scripts/compile.mjs --check
 
+      # A file over ~10,000 tokens fails Claude Code's Read tool, so the skill
+      # never loads while `claude plugin validate` still passes it. Hard gate.
+      - name: Shipped skill files fit the per-file load cap
+        run: node scripts/check-content-size.mjs
+
       # Every skill the plugin distributes must exist, and every skill directory must be
       # distributed. A directory added without its manifest entry ships to nobody.
       - name: Distributed skills match the directory
@@ -55,3 +60,31 @@ jobs:
             }
             console.log(`${listed.length} skills listed and present`);
           '
+
+  # The real `claude plugin validate --strict` used to run only in the skippable local
+  # pre-push hook, so a PR could merge without ever passing the actual validator. It is
+  # a structural check that needs no API credential. A separate job keeps a validator
+  # failure distinguishable from a content-check failure.
+  plugin_validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      # Pinned so a future CLI release that tightens `plugin validate --strict` cannot
+      # turn this required check red on an unrelated PR. check-claude-version.mjs only
+      # enforces a floor; bumping the pin is how validator-semantics drift lands on purpose.
+      - name: Install the Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code@2.1.258
+
+      - name: CLI is new enough to validate a skills directory
+        run: node scripts/check-claude-version.mjs
+
+      - name: Plugin manifest validates
+        run: claude plugin validate . --strict
+
+      - name: Skills directory validates
+        run: claude plugin validate ./skills --strict
