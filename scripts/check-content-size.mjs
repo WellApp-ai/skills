@@ -73,6 +73,7 @@ for (const dir of skillDirs()) {
     ? readdirSync(refsDir)
         .filter((name) => name.endsWith(".md"))
         .map((name) => join(refsDir, name))
+        .filter((file) => existsSync(file))
     : [];
   const measured = [skillMd, ...refs].map(measure);
   shippedCount += measured.length;

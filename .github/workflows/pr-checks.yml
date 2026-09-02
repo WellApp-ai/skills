@@ -74,8 +74,11 @@ jobs:
         with:
           node-version: 22
 
+      # Pinned so a future CLI release that tightens `plugin validate --strict` cannot
+      # turn this required check red on an unrelated PR. check-claude-version.mjs only
+      # enforces a floor; bumping the pin is how validator-semantics drift lands on purpose.
       - name: Install the Claude Code CLI
-        run: npm install -g @anthropic-ai/claude-code
+        run: npm install -g @anthropic-ai/claude-code@2.1.258
 
       - name: CLI is new enough to validate a skills directory
         run: node scripts/check-claude-version.mjs
