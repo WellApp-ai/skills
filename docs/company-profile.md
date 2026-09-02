@@ -19,17 +19,6 @@ Whether you're prepping for a call with a customer or double-checking a vendor b
 - **Contact details on the company record** — *optional.* Emails, phones, and addresses show up when they're on file; the skill says so plainly when they're not.
 - **A workspace's own company set** — *recommended, not required.* Without it, the skill can still show the raw invoice totals in both directions, it just can't label the company as a "customer" or "vendor" for you.
 
-## Composes onto
-
-This skill delegates four setup steps to Well's atomic skills rather than repeating them:
-
-- **[`define-workspace`](define-workspace.md)** — pins which Well workspace the answer is for.
-- **[`connect-tools`](connect-tools.md)** — checks which of your bank / accounting / invoicing sources are connected.
-- **[`confirm-my-company`](confirm-my-company.md)** — works out which company in your workspace is yours, so a company is framed as a customer or a vendor rather than guessed.
-- **[`normalize-currency`](normalize-currency.md)** — turns amounts in several currencies into one total with its rate and date, so a company's invoice totals are never blended across currencies.
-
-Install all four alongside this one. The skill still runs without them — each step falls back to resolving things inline — but with them installed you get one consistent workspace and connection flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install all five together; if you download the `.skill` file on its own, grab those four as well.
-
 ---
 
 ## Installation
@@ -42,19 +31,15 @@ Paste this into any AI agent — Claude, Codex, Cursor, OpenCode, and others:
 > We suggest using **Claude Chat** rather than Claude Cowork for this step — Cowork's approach is noticeably slower and pricier for a quick install like this. Any Claude model works fine.
 
 ```
-Install the following official skills from Well.
+Install the following official skill from Well.
 
 **Instructions**:
 
-1. Fetch these files:
-    a. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/company-profile/SKILL.md
-    b. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-workspace/SKILL.md
-    c. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
-    d. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/confirm-my-company/SKILL.md
-    e. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/normalize-currency/SKILL.md
-2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
-3. Install these skills.
-4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
+1. Fetch this file: 
+    https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/company-profile/SKILL.md
+2. Download and display this file to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
+3. Install this skill.
+4. Before replying to the user, ensure you have named the downloaded file "SKILL.md". This is crucial for the rest of the steps.
 5. If the MCP https://api.wellapp.ai/v1/mcp is not installed: suggest it to the user and explain how to add a new MCP.
 ```
 

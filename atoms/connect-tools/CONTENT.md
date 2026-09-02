@@ -4,6 +4,7 @@ description: Check which data sources a Well workspace has connected and hand of
 placeholders:
   purpose: "to fetch the missing March invoices"
   kinds: "bank, invoicing, accounting"
+  required: "bank"
   internalCheck: true
 ---
 
@@ -15,7 +16,7 @@ For each of the requested kinds —
 {{#each (list kinds)}}
 - `{{this}}`
 {{/each}}
-— keep only rows whose `direction` is `input` and whose `data_domains` contains that kind (never a display name or `category_id`), and read each qualifying row's state in this order, first match wins:
+— keep only rows whose `direction` is `input` and whose `data_domains` contains that kind (never a display name or `category_id`), and read each qualifying row's state in this order, first match wins:{{#if (list required)}} ({{#each (list required)}}`{{this}}`{{#unless @last}}, {{/unless}}{{/each}} is **required** here — this run cannot continue past the acknowledgment without every one of them connected or connecting.){{/if}}
 1. `to_configure` or `disabled` → **missing**.
 2. `need_reconnect`, `error`, or `suspended` → **error** — offer `install_url` as a reconnect, not a first install.
 3. `enabled` with `last_successful_sync_at` set → **connected** (note "data may be partial" if `sync_in_progress: true`).
