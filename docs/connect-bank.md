@@ -11,7 +11,7 @@
 
 ## What it does
 
-Every grounded answer about spend rests on the bank feed. This skill reads which banks a workspace has connected — live and syncing, still running their first pass, or expired and needing a reconnect — and, when the feed is missing, hands your AI assistant Well's one-click bank install link (in Claude Desktop, a connect card showing banks only). Once the bank lands it re-checks on its own and moves the flow forward, then reports one plain line: connected, connecting, needs a reconnect, or not connected. It is the dedicated bank step of Well's fetch-missing-invoices flow, right after `connect-tools`, because settled bank spend is what every missing invoice is measured against.
+Every grounded answer about spend rests on the bank feed. This skill reads which banks a workspace has connected — live and syncing, still running their first pass, or expired and needing a reconnect — and, when the feed is missing, hands your AI assistant Well's one-click bank install link (in Claude Desktop, a connect card showing banks only). Once the bank lands it re-checks on its own and moves the flow forward, then reports one plain line: connected, connecting, needs a reconnect, or not connected. It is the dedicated bank step of Well's fetch-missing-invoices flow, asked before the month when no month on the period picker holds a bank transaction and after the month when one you picked holds none, because settled bank spend is what every missing invoice is measured against.
 
 ## Required data in Well
 

@@ -50,7 +50,7 @@ The pin is a convenience, never the contract. Pass `workspace_id` explicitly on 
 
 ## Workflow
 
-Call each list or read tool once per step, and render at most one widget card per turn. The cards refresh themselves. A card click executes server-side and prefills a message in the user's composer — rendering a card therefore ends the turn, and the sent message is how the skill resumes.
+Call each list or read tool once per step, and render at most one widget card carrying a question per turn. The cards refresh themselves. A card click executes server-side and prefills a message in the user's composer — rendering a card that carries the turn's question therefore ends the turn, and the sent message is how the skill resumes. **One path renders a card that carries no question, and it does not end the turn**: an account holding exactly one workspace, where the picker has a single tile and step 3 resolves it with nothing to choose between, writing nothing. A caller MAY then continue in the same turn. That "may" is load-bearing: a caller with a stricter unqualified rule of its own declines the permission and still ends the turn, which is what keeps the bricks that call this one consistent. Do not upgrade it to "does" without amending them. This sentence is the governing rule, so that path is stated here rather than left to be inferred from the step that owns it.
 
 1. **Confirm the MCP server is configured.** If `well_list_workspaces` (or any `well_*` tool) is not available, the Well MCP server has not been added to this host. Tell the user a Well connection is mandatory — endpoint `https://api.wellapp.ai/v1/mcp` — because the workspace list comes from Well and nothing can be resolved without it. Stop until it is there.
 

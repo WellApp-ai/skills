@@ -8,7 +8,7 @@ description: Get a bank account connected to a Well workspace and confirm the fe
 
 ## Purpose
 
-Get the bank feed in, and say plainly whether it is live. One tool does the whole job: `well_list_connectors` scoped to `kind` `bank` returns Well's bank catalog — Plaid institutions and Well's native bank connectors — with the workspace's own bank connections represented on their catalog rows, and in an MCP-Apps host that result renders as the connect picker card showing banks only. It runs as its own step in Well's fetch-missing-invoices flow, after the period is fixed and only where a selected month holds no bank transaction, because settled bank spend is what every missing invoice is measured against, and because a bank connection is the slowest one a user makes. As a flow step this is **always a user stop, connected banks included**: the card renders with a per-row **Connect** button on each bank tile and one **Continue** button. The Continue click writes an acknowledgment server-side (`well_switch_workspace` with `ack: "bank"`) and prefills "Continue" in the user's composer; the user sends it, and that message is how the flow moves on.
+Get the bank feed in, and say plainly whether it is live. One tool does the whole job: `well_list_connectors` scoped to `kind` `bank` returns Well's bank catalog — Plaid institutions and Well's native bank connectors — with the workspace's own bank connections represented on their catalog rows, and in an MCP-Apps host that result renders as the connect picker card showing banks only. It runs as its own step in Well's fetch-missing-invoices flow, at whichever of two moments that flow asks for the bank: ahead of the month question, when no month the period picker offers holds a bank transaction, and otherwise after the period is fixed, where a selected month holds none. Settled bank spend is what every missing invoice is measured against, and a bank connection is the slowest one a user makes. As a flow step this is **always a user stop, connected banks included**: the card renders with a per-row **Connect** button on each bank tile and one **Continue** button. The Continue click writes an acknowledgment server-side (`well_switch_workspace` with `ack: "bank"`) and prefills "Continue" in the user's composer; the user sends it, and that message is how the flow moves on.
 
 ## When to use this skill
 
@@ -17,7 +17,7 @@ Use this skill when:
 - The user asks to connect or link a bank account ("connect my Qonto", "link my business account", "add my bank so you can see my spend").
 - The user asks whether the bank is connected, why transactions are missing, or why the bank shows an error or needs a reconnect.
 - A calling skill or flow (fetch missing invoices, close the books, a cash skill) needs settled bank spend in the workspace before it can continue.
-- The fetch-missing-invoices flow reaches its bank step. That flow runs the step where a selected month holds no bank transaction, and where it cannot read that count at all.
+- The fetch-missing-invoices flow reaches its bank step. That flow runs the step where a selected month holds no bank transaction, where it cannot read that count at all, and, before the month is picked, where no month on its period picker holds one.
 
 ## When not to use this skill
 
