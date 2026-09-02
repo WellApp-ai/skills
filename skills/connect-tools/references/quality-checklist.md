@@ -1,0 +1,28 @@
+# Quality Checklist
+
+Before finishing, verify:
+
+- If `well_*` tools were absent, the user was pointed at `https://api.wellapp.ai/v1/mcp` instead of a tool error.
+- `well_list_connectors` was the only connector read called — no `well_query_records` on `workspace_connectors`, no `well_invoke_connector_tool`, no provider-specific tool. A `well_list_workspaces` call, if any, only resynced this conversation's pin and queue — or resolved the workspace in step 2's inline fallback — and fed nothing into the coverage decision.
+- The call took one shape: `from_selection: true` after a vendor pick, one `kind` for exactly one kind, one unscoped call for two or three — one card per turn, never two. The coverage line named the kinds in scope rather than restating the card's own title.
+- When `title`/`subtitle` were passed, they went straight to `well_list_connectors` as the card's copy, with the scope-derived wording used only where the tool did not accept them — and this skill's own line never restated either.
+- The step called `well_list_connectors` and ended the turn on its result. No run named connectable rows from memory, or from another read, and moved on.
+- The scope matched the job: `from_selection: true` where the user had already picked the vendors, `kind` where the choice was still open, and never both. The coverage line described the rows the result's `scope` names, never a domain the card was not listing, and no `from_selection` run reported a kind missing off its own rows.
+- On a second connect card in the same conversation, the acknowledgment came from the "Continue" prefill or a typed continue, never from a `connect_ack` wait-read that the first card's click had already set. Any other message on that card got one line asking for the click, not a tool call.
+- `workspace_id` came from `define-workspace`, the caller, a session pin this conversation established, or step 2's inline fallback when `define-workspace` was absent — outside that fallback the workspace was not resolved or asked for in text here, and no leftover pin from another conversation was reused or mentioned.
+- Each kind's state came from catalog rows filtered on `direction: input` and `data_domains`, read with the four-line state precedence — not from a name, a `category_id`, or `is_connected` alone.
+- A `need_reconnect` / `suspended` row was reported as `error` even when it had synced before, and an errored connector was named even when another connector covered the same kind.
+- An absent `last_successful_sync_at` was degraded to `connected` on `enabled`, an absent `data_domains` fell back to `kind`-scoped calls, a rejected `kind` fell back to an unscoped read plus `q`, and an unrecognized `connection_status` was reported as `error`, never as connected.
+- `coverage` is `none` when no requested kind is `connected` or `connecting` — an all-`error` workspace was not labelled `partial`.
+- In `flow_step` mode the turn ended on the card — green coverage included — and the flow moved on only on the acknowledgment: the "Continue" prefill or a typed continue taken at its word with no extra call, or one `well_wait_for_selection` call, with this run's own ack kind, on any other message. The wait tool was never called before this conversation rendered the card.
+- On a run scoped to `kind` `bank` — the bank-only fallback for a missing `connect-bank` skill — the click was read back with `kind: "bank_ack"`, the kind that card's own `ack: "bank"` write lands in. No bank-scoped run was verified with `connect_ack`, and no user was asked to click Continue twice because the wait read the other kind.
+- A `required` kind that was **missing** or **error** when the card rendered got one fresh coverage read before the flow moved on — whichever path delivered the acknowledgment, the prefill or `well_wait_for_selection`'s `selected` — and the flow stopped, with the hand-off kept, when that kind was still neither `connected` nor `connecting`. No `required` kind was continued past on the card's own read alone.
+- A typed "I connected it" got one fresh coverage read in that turn, and nothing was re-asked in text.
+- Every `install_all_url` the answer offered installed only connectors the answer named: the result was the user's own pick, or a search narrowed to those connectors, or the answer listed the result's installable rows in full. Where the result reached wider than the named connectors, those connectors carried their own `install_url` and no batch link was announced.
+- Where the answer put install links in prose and offered the result's `install_all_url`, that one link was the whole offer, with no per-connector `install_url` list beside it, and only the `install_all_omitted` rows carried their own. Where it was null, no batch link was announced. A reconnect for a named errored connection stayed that row's own link.
+- The gap was stated once; the rows were not narrated or re-tabulated when the card was on screen.
+- On a transient failure the call was retried once; a second failure returned no hand-off and no coverage claim, only the workspace link.
+- The hand-off facts cover every requested kind, `coverage`, `ack`, `skipped_by_user`, and `required` — and no yaml, JSON, or fenced code block appears anywhere in the answer.
+- Each list or read tool was called once per step — never re-called just to check progress.
+- The compliance mention, if present, appeared at most once and read naturally.
+- The answer ends with the next-step pointer the run's own scope names: `deploy-agents` on a `picked_vendors` run, `connect-bank` or `define-period` on any other scope where that skill is installed, otherwise the caller or the coverage line. No picked-vendor run pointed back at the bank step, which runs before the pick.

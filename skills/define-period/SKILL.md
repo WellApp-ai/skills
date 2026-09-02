@@ -54,15 +54,15 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 **Composed skills.** One atomic Well skill owns the step before this one — invoke it, don't reimplement it:
 
-- `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there is no connection yet, and pins exactly one workspace. Supplies the `workspace_id` every call here carries, and the `fiscal_year_start_month` the fiscal coordinate is derived from.
+- `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there is no connection yet, and pins exactly one workspace. Supplies the `workspace_id` every call here carries, and the `fiscal_year_start_month` the fiscal coordinate is derived from. It ships with the `well-skills` plugin. This skill takes its `workspace_id` and never resolves the workspace itself: when none was passed and this conversation established no pin, run `define-workspace` first (step 2) rather than asking for a workspace here.
 
-It ships with the `well-skills` plugin. This skill takes its `workspace_id` and never resolves the workspace itself: when none was passed and this conversation established no pin, run `define-workspace` first (step 2) rather than asking for a workspace here.
+**The tools this skill calls**, one line each — for full field semantics, fallback paths, and edge cases on any of them, read `references/tool-reference.md`:
 
-- `well_list_periods` — **only when it is present in your toolset.** It returns the workspace's periods with their fiscal coordinates and state, and in MCP-Apps hosts its result renders the period picker card (months are multi-select); pass `title` / `subtitle` through when the tool accepts them. The card's **Use** click calls `well_switch_workspace` with the picked `periods` itself — the selection lands server-side — and prefills "Work on <Month Year> and <Month Year>" in the user's composer. Check for the tool by name before you plan around it. Each period row carries `bank_transaction_count`, the number of BANK transactions that month holds. The same row's `transaction_count` is a different figure: it counts every transaction the month holds, whatever produced it, so an accounting connector on its own puts thousands of rows behind `transaction_count`, and a transaction with no source connector counts there too. A caller that must know whether bank data reached a month reads `bank_transaction_count`, and reads nothing else for it. A current server emits `0` for a month with no bank coverage rather than omitting the field, so an absent count means an older server, or a path that read no period row at all. It never means a month the server declined to count. Its per-period result also carries a coarse `close_status` + `close_reason` and the month's `missing_invoice_count` / `unposted_invoice_count` — surface these on the picker and in the hand-off **only when `show_close_readiness` is `true`**; they are the run-free close readiness, never the full blocker ladder. These readiness counts are computed **per month** (the missing-invoice count reads proof-gaps for each), so a wide window is expensive — the tool flags the cost itself; request only the months the picker needs, never a full year by default.
-- `well_switch_workspace({ periods: [{ calendar_year, calendar_month }, …] })` — how a period selection is **written**. The card's click calls it; call it yourself when a hint or a typed answer resolves the months, so the selection is just as live as a clicked one. It is the same tool that pins workspaces; passing only `periods` leaves the workspace pin untouched, and a call carrying `periods` never pins even when it also carries `workspace_id`. A `periods` list holds at most twelve months — the server refuses a longer one outright. If the server rejects `periods` (an older server), carry the selection in the conversation instead and pass it explicitly to the later reads — the one case where they still take a periods argument.
-- `well_wait_for_selection({ kind: "periods", timeout_s? })` — reads the click the user made on the period picker card, for when a later message is not the card's prefill. Call it only after this conversation has rendered the picker: reading a click on that card is its one job. Never call it at step start, never before the picker exists, and never to probe whether a selection already exists — a trusted selection lives only in this conversation's own history (a prior click, prefill, or typed months). A fresh conversation trusts no session state — a `session.selected_periods` present at its start is another conversation's leftover; when the period is unresolved and no picker has been rendered yet, render the picker at once — no tool call comes before it except the render itself. An already-made click returns instantly as `{ status: "selected", selection: { periods }, already_set: true }`; when nothing is set yet it waits briefly (default 10 seconds) and returns `{ status: "no_selection_yet" }` — a normal result, not an error. Never call it in the turn that renders the picker, and never use it as a long wait. If the tool is absent, resync from `well_list_workspaces`' `session.selected_periods` instead.
-- `well_list_workspaces` — for resync only: its `session.selected_periods` is the selection as the server currently holds it. Desktop-class hosts keep one MCP session per connector, shared across all conversations, so trust it only for a selection THIS conversation itself wrote (its own card click or typed months) — never to skip the picker.
-- `well_get_schema` + `well_query_records` on root `transactions` — the activity probe, and nothing else. Two answers come before it and cancel it: a `bank_transaction_count` on the period rows, and a caller's `probe: false`. Where neither applies: when `well_list_periods` is absent the fallback proposes a month by arithmetic, never by querying this root. Call `well_get_schema({ root: "transactions" })` once per session and read the date fields from the result rather than assuming them. Range on `executed_at`, and on that field alone: it is the non-null settlement date Well buckets a transaction's month by, and it already falls back through `booking_date` then `value_date` at ingest. `booking_date` is nullable and is *not* the month field — on the rows where the two disagree it belongs to a different month, so widening the probe with it reports activity the selection does not hold. Only when the schema exposes no `executed_at` should you range on `booking_date` instead, and then say the probe is approximate. Range the selected months' own intervals and nothing between them: the picker's multi-select does not require the months to be contiguous, so one span from the earliest month to the latest one counts activity in a month the user did not select. The probe answers one boolean — does the selection hold any bank activity — never a count and never a figure.
+- `well_list_periods` — **only when it is present in your toolset.** Lists the workspace's periods with their fiscal coordinates and state; in MCP-Apps hosts its result renders the period picker card. Called at step 4, with no usable hint. Check for the tool by name before you plan around it.
+- `well_switch_workspace({ periods: [{ calendar_year, calendar_month }, …] })` — how a period selection is **written**. The card's **Use** click calls it; call it yourself when a hint or a typed answer resolves the months (steps 3 and 5), so the selection is just as live as a clicked one. A `periods` list holds at most twelve months.
+- `well_wait_for_selection({ kind: "periods", timeout_s? })` — reads the click on an already-rendered picker card (step 5), for when a later message is not the card's prefill. Never call it before this conversation has rendered the picker, and never as a probe for whether a selection already exists.
+- `well_list_workspaces` — resync only, for a `session.selected_periods` this conversation itself wrote (step 2). Never trust it to skip the picker.
+- `well_get_schema` + `well_query_records` on root `transactions` — the activity probe (step 6). Two answers cancel it before it runs: a `bank_transaction_count` on the period rows, and a caller's `probe: false`.
 
 Never call `well_start_close` or any close, lock, or posting tool. A close creates a run; this skill only reads and writes the session's period selection. If a caller asks this skill to close a period, refuse and point at the Well app.
 
@@ -149,84 +149,11 @@ is one. State the periods in text regardless — you cannot know whether anythin
 
 ## Quality checks
 
-Before finishing, verify:
-
-- If `well_*` tools were absent, the user was pointed at `https://api.wellapp.ai/v1/mcp` instead of a tool error.
-- `workspace_id` came from `define-workspace` (or the caller) and was passed on every call — the workspace was not resolved or asked for in text here.
-- `session.selected_periods` was reused only when this conversation wrote it; a selection present at conversation start was ignored and never mentioned, and the picker rendered anyway.
-- Every resolved selection ended up server-side: written by the card's click, or by one `well_switch_workspace({ periods })` call on a hint or typed answer — and a click-written selection was not re-written. In `mode: collect` this does not apply: exactly one calendar month was collected, a multi-month pick was refused, the card click's incidental server write was not treated as the commit, and the hand-off carried `calendar_year` + `calendar_month` back to the caller.
-- When `show_close_readiness` was `true`, each month the picker offered carried its `close_status` / `close_reason` and `missing_invoice_count` / `unposted_invoice_count` — on the card and in the hand-off — stated as the coarse, run-free readiness and never as the full blocker ladder; when it was `false` or absent, those fields were not surfaced. Reading them called no close, lock, or posting tool.
-- No `well_switch_workspace` call pinned a workspace here — every call this skill made carried `periods`, and none named a workspace to pin. A `periods` call may still carry the universal `workspace_id`, which says which workspace the months answer for and pins nothing. The caller's pin stood for the whole step, and the step after this one opened on it without a re-pin.
-- With no hint, the picker rendered and the turn ended with one card-pointing line; no wait tool was called in that turn — or in any turn before the picker existed — and in a host that renders the card, no text question replaced it. In a text-only host, the three-month list and its single question stand in for the picker; when `well_list_periods` was absent entirely, the last-complete-month proposal did — both as step 4 allows.
-- `well_start_close` — and every other close, lock, or posting tool — was not called.
-- `fiscal_period` and `fiscal_year` came from the formula for every selected month, with `fiscal_year_start_month` defaulted to 1 and the assumption disclosed when it was null; period 13 was never produced.
-- Each `date_range` runs from the month's first day to its real last day, leap years included; a month that has not ended was refused and never pinned.
-- Several months named resolved to one written selection, oldest first and never longer than twelve months; a quarter name was read as a calendar quarter and its three months were named when the fiscal year does not start in January.
-- `has_activity` is `false` only behind a `connected` feed, whether the 0 came from `bank_transaction_count` or from an empty probe. It is `unknown`, never `false`, when `bank_state` said the feed is missing, in error, or still `connecting`, when no `bank_state` was passed at all, when a selected month carried no count, and when the read failed. A count above 0 on any selected month sets `true`, whatever the other months carry. No probe ran wherever the rows carried a count, wherever the caller passed `probe: false`, or behind a `missing` or `error` `bank_state`. The probe ranged `executed_at` alone, over the selected months' own intervals — one interval per run of consecutive months, `_or`-ed together — and never across a gap the selection does not cover.
-- After the card, a prefill message was taken at its word with no extra verification call; any other message got one `well_wait_for_selection({ kind: "periods", timeout_s: 10 })` call; nothing was re-asked in text. `well_wait_for_selection` was called only after this conversation rendered the picker — never as a selection probe.
-- On a transient failure the call was retried once before the fallback link.
-- The hand-off facts were kept with `resolution` set, and no yaml, JSON, or fenced code block appears anywhere in the answer.
-- Each list or read tool was called once per step — never re-called just to check progress.
-- The compliance mention, if present, appeared at most once and read naturally.
-- The answer ends with the next-step pointer: control back to the caller inside a flow; on a standalone ask, `categorize-counterparties` when it is installed and `show-missing-invoices` when it is not.
+Before finishing, run the full checklist in `references/quality-checklist.md` — it re-checks the workspace pin, the server-side write, `show_close_readiness` handling, the fiscal formula, `has_activity`'s precedence rules, and every hard prohibition above against what you actually did this run.
 
 ## Examples
 
-### Example request
-
-The fetch-missing-invoices flow calls define-period with the Acme SAS `workspace_id`, `fiscal_year_start_month: 1`, `hint: "March"`, `probe: false`, `purpose: "to fetch the invoices missing for that month"`. Today is 12 April 2026.
-
-### Expected behavior
-
-"March" resolves to the most recent March that has ended: March 2026. Write it server-side — `well_switch_workspace({ periods: [{ calendar_year: 2026, calendar_month: 3 }] })` — derive `fiscal_period = ((3 - 1 + 12) % 12) + 1 = 3` and `fiscal_year = 2026`, and run no probe: the hint resolved the month, so no period row was read and no `bank_transaction_count` reached the hand-off, and `probe: false` bars the `transactions` read. Answer: "Working on **March 2026**, fiscal year 2026, period 3. The month is complete, and I cannot confirm the bank side from here." Hand off `has_activity: unknown`. Keep `resolution: hint_matched`, and point at `show-missing-invoices` — which will read this selection from the server, with no periods argument.
-
-### Example request
-
-"Let's go through a month." — no hint, `well_list_periods` is in the toolset. Today is 12 April 2026.
-
-### Expected behavior
-
-Call `well_list_periods({ workspace_id, title, subtitle })` — the picker card renders. End the turn with one line: "Pick the month on the card, then send the message it prepares." The user clicks **Use** on February 2026 and sends the prefilled "Work on February 2026": the click already wrote the selection. Narrate "Working on **February 2026**, fiscal year 2026, period 2." and continue with `resolution: user_picked` — no verification read.
-
-### Example request
-
-The user clicks **Use** with February and March 2026 both selected and sends the prefilled "Work on February 2026 and March 2026".
-
-### Expected behavior
-
-The click already wrote both months server-side. Derive both fiscal coordinates. The period rows carry no `bank_transaction_count` on this server, and this caller passed no `probe: false`, so probe once: February and March are consecutive, so the two months form one interval, 2026-02-01 to 2026-03-31. Answer: "Working on **February and March 2026** — fiscal periods 2 and 3, both complete." Keep `resolution: user_picked` with both entries in `periods`. The later reads cover the whole selection without naming it. April could not have been picked here — the card leaves the running month unselectable, and a selection holding it would make those reads refuse every month at once.
-
-### Example request
-
-The user clicks **Use** with March and May 2026 selected — April is left out — and sends the prefilled "Work on March 2026 and May 2026".
-
-### Expected behavior
-
-Two months, two runs. Probe both intervals in one call, `_or`-ed: `executed_at` in 2026-03-01 to 2026-03-31, or in 2026-05-01 to 2026-05-31. A single span from 2026-03-01 to 2026-05-31 would answer `true` on an April transaction the user did not select, so it is never built. Answer "Working on **March and May 2026**, fiscal periods 3 and 5, both complete." with `resolution: user_picked` and both entries in `periods`.
-
-### Example request
-
-"Let's do Q1."
-
-### Expected behavior
-
-Q1 names three months — a legal selection, not an ambiguity. Write all three in one call: `well_switch_workspace({ periods: [{ calendar_year: 2026, calendar_month: 1 }, { calendar_year: 2026, calendar_month: 2 }, { calendar_year: 2026, calendar_month: 3 }] })`, oldest first. Answer "Working on **January through March 2026**, fiscal periods 1 to 3, all complete." with `resolution: hint_matched`.
-
-### Example request
-
-The caller's hand-off carries `bank_state: missing`, and it asks for last month.
-
-### Expected behavior
-
-Pin the month normally — the fiscal coordinate is arithmetic, not data. Skip the probe, report `has_activity: unknown`, and say why in one line: "I can't tell whether February 2026 holds any activity. No bank feed is connected to this workspace." Point at `connect-bank` for the bank side, then hand off. Do not report `has_activity: false`. Had no `bank_state` reached this skill at all, the probe would run, and an empty result would still be `unknown` — with the bank side named as unconfirmed rather than missing.
-
-### Example request
-
-The close-books flow calls define-period with `mode: collect`, the Acme SAS `workspace_id`, `fiscal_year_start_month: 1`, `show_close_readiness: true`, and `hint: "last month"`. Today is 12 April 2026.
-
-### Expected behavior
-
-`collect` collects one month for a caller that will start the run from it. "Last month" is March 2026 — the last complete month. Do not treat this as a commit: hand back `calendar_year: 2026, calendar_month: 3` (and, for narration, fiscal year 2026, period 3) so close-books can pass it straight into `well_start_close`. Because `show_close_readiness: true` was passed, read March's `close_status` / `close_reason` and its `missing_invoice_count` / `unposted_invoice_count` from `well_list_periods` and state them in the same line — "Collected **March 2026** for the close. Not ready: 3 missing invoices, 2 unposted (run-free readiness; the full blocker ladder appears once the close starts)" — then hand control back to close-books; name no `show-missing-invoices` or `categorize-counterparties` follow-up, and do not tell close-books to omit a periods argument. Had the user asked for two months here, refuse in one line: a close runs a single month.
+Seven worked examples cover hint resolution, the no-hint picker path, a several-months hand-off (both consecutive and with a gap), a quarter name, a missing bank feed, and a `collect`-mode call from a close — read `references/examples.md`.
 
 ## Voice
 

@@ -1,0 +1,22 @@
+# Quality Checklist
+
+Before finishing a `define-period` run, verify:
+
+- If `well_*` tools were absent, the user was pointed at `https://api.wellapp.ai/v1/mcp` instead of a tool error.
+- `workspace_id` came from `define-workspace` (or the caller) and was passed on every call — the workspace was not resolved or asked for in text here.
+- `session.selected_periods` was reused only when this conversation wrote it; a selection present at conversation start was ignored and never mentioned, and the picker rendered anyway.
+- Every resolved selection ended up server-side: written by the card's click, or by one `well_switch_workspace({ periods })` call on a hint or typed answer — and a click-written selection was not re-written. In `mode: collect` this does not apply: exactly one calendar month was collected, a multi-month pick was refused, the card click's incidental server write was not treated as the commit, and the hand-off carried `calendar_year` + `calendar_month` back to the caller.
+- When `show_close_readiness` was `true`, each month the picker offered carried its `close_status` / `close_reason` and `missing_invoice_count` / `unposted_invoice_count` — on the card and in the hand-off — stated as the coarse, run-free readiness and never as the full blocker ladder; when it was `false` or absent, those fields were not surfaced. Reading them called no close, lock, or posting tool.
+- No `well_switch_workspace` call pinned a workspace here — every call this skill made carried `periods`, and none named a workspace to pin. A `periods` call may still carry the universal `workspace_id`, which says which workspace the months answer for and pins nothing. The caller's pin stood for the whole step, and the step after this one opened on it without a re-pin.
+- With no hint, the picker rendered and the turn ended with one card-pointing line; no wait tool was called in that turn — or in any turn before the picker existed — and in a host that renders the card, no text question replaced it. In a text-only host, the three-month list and its single question stand in for the picker; when `well_list_periods` was absent entirely, the last-complete-month proposal did — both as step 4 allows.
+- `well_start_close` — and every other close, lock, or posting tool — was not called.
+- `fiscal_period` and `fiscal_year` came from the formula for every selected month, with `fiscal_year_start_month` defaulted to 1 and the assumption disclosed when it was null; period 13 was never produced.
+- Each `date_range` runs from the month's first day to its real last day, leap years included; a month that has not ended was refused and never pinned.
+- Several months named resolved to one written selection, oldest first and never longer than twelve months; a quarter name was read as a calendar quarter and its three months were named when the fiscal year does not start in January.
+- `has_activity` is `false` only behind a `connected` feed, whether the 0 came from `bank_transaction_count` or from an empty probe. It is `unknown`, never `false`, when `bank_state` said the feed is missing, in error, or still `connecting`, when no `bank_state` was passed at all, when a selected month carried no count, and when the read failed. A count above 0 on any selected month sets `true`, whatever the other months carry. No probe ran wherever the rows carried a count, wherever the caller passed `probe: false`, or behind a `missing` or `error` `bank_state`. The probe ranged `executed_at` alone, over the selected months' own intervals — one interval per run of consecutive months, `_or`-ed together — and never across a gap the selection does not cover.
+- After the card, a prefill message was taken at its word with no extra verification call; any other message got one `well_wait_for_selection({ kind: "periods", timeout_s: 10 })` call; nothing was re-asked in text. `well_wait_for_selection` was called only after this conversation rendered the picker — never as a selection probe.
+- On a transient failure the call was retried once before the fallback link.
+- The hand-off facts were kept with `resolution` set, and no yaml, JSON, or fenced code block appears anywhere in the answer.
+- Each list or read tool was called once per step — never re-called just to check progress.
+- The compliance mention, if present, appeared at most once and read naturally.
+- The answer ends with the next-step pointer: control back to the caller inside a flow; on a standalone ask, `categorize-counterparties` when it is installed and `show-missing-invoices` when it is not.
