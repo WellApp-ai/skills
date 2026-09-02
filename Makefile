@@ -5,8 +5,8 @@ install:
 	npm ci
 
 # SKIP_CLAUDE=1 drops the two `claude` steps for an environment that has no CLI — a CI
-# runner, a container. The frontmatter and atoms checks run either way, since they
-# need only node.
+# runner, a container. The frontmatter, atoms, and content-size checks run either way,
+# since they need only node.
 validate:
 	@if [ "$(SKIP_CLAUDE)" = "1" ]; then \
 		echo "SKIP_CLAUDE=1 — skipping the claude plugin validation"; \
@@ -17,6 +17,7 @@ validate:
 	fi
 	node scripts/check-skill-frontmatter.js
 	node scripts/compile.mjs --check
+	node scripts/check-content-size.mjs
 
 # atoms/<name>/CONTENT.md and src/<name>.hbs.md are the source; this renders
 # them into atoms/<name>/SKILL.md (a dev-only test artifact, gitignored — load
