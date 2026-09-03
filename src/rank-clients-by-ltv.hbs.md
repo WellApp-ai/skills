@@ -1,6 +1,5 @@
 ---
 name: rank-clients-by-ltv
-requires: [define-workspace, connect-tools, confirm-my-company, normalize-currency]
 description: Rank customers by total realized revenue paid to date — sum of paid invoices per customer — using Well's MCP financial graph, backed by real invoice data rather than guesswork. Use when the user asks "rank our clients by lifetime value", "who are our best customers", "rank clients by revenue", "biggest customers", "customer lifetime value", or "which customers have paid us the most". This is a realized-revenue ranking (paid invoices to date), not a predictive churn/retention-based LTV model. Requires a connected Well workspace with invoicing data and a resolvable `own_company`; if either is missing, this skill walks the user through connecting one or confirming their company first.
 ---
 
@@ -33,7 +32,7 @@ Do not use this skill when:
 
 The user may provide:
 
-- A workspace hint — an id, a workspace name, or the company behind it — if they manage more than one. Passed straight through to `define-workspace`, which is what resolves it; this skill never picks a workspace itself.
+- A workspace hint — an id, a workspace name, or the company behind it — if they manage more than one. Passed straight through to workspace resolution, which is what resolves it; this skill never picks a workspace itself.
 - A time window (e.g. "this year", "last quarter") — default to **all-time** since this is a cumulative "to date" ranking, not a period-bound one. State clearly which window was used.
 - How many top customers to show — default to 10.
 
@@ -41,52 +40,40 @@ The user may provide:
 
 This skill runs entirely over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). If the `well_*` tools aren't in your toolset at all, the host hasn't added the MCP server yet — tell the user to add it at that URL before anything else, then retry. Required tools once it's added:
 
-- `well_list_workspaces` — how `define-workspace` resolves the workspace. Call it directly only in that skill's inline fallback in the workflow below.
+- `well_list_workspaces` — how the workspace step resolves the workspace.
 - `well_query_records` — read `invoices`, `workspaces` (for `own_company`), `exchange_rates`.
 - `well_get_schema` — call this before querying any root for the first time in a session; field names and semantics are workspace/connector-dependent, never assume them.
-- `well_list_connectors` — how `connect-tools` surfaces install links. Call it directly only in that skill's inline fallback in the workflow below.
-- Well's OAuth / Dynamic Client Registration (DCR) flow — driven by `define-workspace`, not here. Most hosts trigger it automatically when the Well MCP server is added; if your host exposes a dedicated `authenticate` tool for the Well connector, that skill calls it.
-
-**Composed skills.** Four atomic Well skills own the setup this skill used to inline — invoke them, don't reimplement them:
-
-- `define-workspace` — confirms the MCP server is configured, drives OAuth/DCR when there's no connection yet, and pins exactly one workspace. Supplies the `workspace_id` that every later call carries.
-- `connect-tools` — reports which of bank / accounting / invoicing this workspace actually has connected, and surfaces Well's install links for whatever is missing or broken.
-- `confirm-my-company` — works out which company in the workspace is the user's own legal entity, folds in its duplicate records, and hands back the `identity_set` that decides which side of an invoice is a payable.
-- `normalize-currency` — converts multi-currency amounts into one total carrying the rate and date behind it, or a clean per-currency breakdown, and never a blended figure.
-
-All four ship with the `well-skills` plugin. This skill is also installable on its own, so steps 1 and 2 of the workflow each carry the inline fallback to use when they're absent.
+- `well_list_connectors` — how the connections step surfaces install links.
+- Well's OAuth / Dynamic Client Registration (DCR) flow — driven by the workspace step, not here. Most hosts trigger it automatically when the Well MCP server is added; if your host exposes a dedicated `authenticate` tool for the Well connector, that step calls it.
 
 ## Workflow
 
-1. **Pin the workspace — run `define-workspace`.** Invoke the `define-workspace` skill with `purpose: "to rank your customers by the revenue they've paid you"` and use its typed hand-off. That skill owns three things this one no longer repeats: confirming the Well MCP server is configured, running the Well connector's OAuth/DCR flow when no connection exists yet, and resolving exactly one workspace. Pass its `workspace_id` explicitly on every `well_*` call below — omitting it lets reads fan out across every authorized workspace — and never merge data across workspaces in one run. If it hands back `resolution: unresolved`, stop: there is nothing to rank without a pinned workspace.
-   - **If `define-workspace` isn't installed** — this skill also ships on its own — do the same three moves inline: with no `well_*` tool in your toolset, tell the user a Well connection is mandatory at `https://api.wellapp.ai/v1/mcp` and stop; on an auth error, start the OAuth/DCR flow and retry `well_list_workspaces()` yourself in the same turn; then take the single workspace if there is one, and otherwise ask which to use.
+1. **Pin the workspace.** {{> define-workspace purpose="to rank your customers by the revenue they've paid you"}}
 
-2. **Confirm the connections this answer needs — run `connect-tools`.** Invoke the `connect-tools` skill with the pinned `workspace_id`, `kinds: [invoicing, accounting]`, `required: []`, `mode: internal_check`, and the same `purpose`, then read its hand-off instead of querying `workspace_connectors` yourself. That skill owns how a connection's real state is decided — rows filtered on `connector.direction: input` and matched on `connector.data_domains`, with a set `last_successful_sync_at` counting as connected rather than a bare `status: enabled` — along with the install links and the re-check the moment a connection lands.
+2. **Confirm the connections this answer needs.** {{> connect-tools purpose="to rank your customers by the revenue they've paid you" kinds="invoicing, accounting" internalCheck=true}}
    - `coverage: none` → stop; there is nothing to rank yet. `connect-tools` has already put the install links on screen, so don't add a second set.
    - Any kind reported `connecting`, or a connected connector whose latest sync is still running → carry on, and carry "the data may still be partial" into the answer.
    - `coverage: partial` → carry on with what is connected, and keep the missing kinds for the coverage disclosure the Output requirements ask for.
    - A kind the user chose to skip comes back under `skipped_by_user` — respect that and don't re-ask for it in this run.
-   - **If `connect-tools` isn't installed**, do the connector half inline: keep `workspace_connectors` rows whose `connector.direction` is `input` and whose `connector.data_domains` covers `invoicing` or `accounting`, treat a set `last_successful_sync_at` as connected, and on a gap hand the user the top 2-3 `install_url` links from `well_list_connectors()` (invoicing and accounting connectors first), re-running this check yourself the moment one lands rather than waiting to be re-prompted.
 
 3. **Verify the data itself has landed.** `connect-tools` reports connections, not rows — a connector can be connected and still have delivered nothing this skill can use. Spot-check what this skill actually reads: a 1-row `well_query_records` read on `invoices`. Zero rows means the workspace has no invoices synced yet — say so and stop, rather than presenting an empty ranking as a real one.
 
-4. **Resolve your own company — run `confirm-my-company`.** Invoke the `confirm-my-company` skill with the pinned `workspace_id`, `purpose: "to count only the invoices you issued"`, `consequence: "ranks the wrong side of the invoice"`, `fold_counterparties: true`, and `on_decline: "state plainly that the ranking can't isolate this workspace's own paid invoices until it's set"`. That skill owns the three-way unresolved test (the relation is null, the field is absent from the schema entirely, or it resolves to more than one company), the never-infer rule, and the both-direction normalized containment that folds a legal entity's duplicate `companies` rows into one identity. Use its `identity_set` — the own company plus every confirmed alias — for every issuer/receiver comparison below.
+4. **Resolve your own company.** {{> confirm-my-company purpose="to count only the invoices you issued" consequence="ranks the wrong side of the invoice" foldAliases=true foldCounterparties=true onDecline="state plainly that the ranking can't isolate this workspace's own paid invoices until it's set"}}
    - `resolution: unresolved` means the user declined to confirm. Say plainly that the ranking can't isolate this workspace's own paid invoices until it's set, and stop rather than ranking both sides together.
-   - **If `confirm-my-company` isn't installed**, do it inline: call `well_get_schema({ root: "workspaces" })` and read `workspaces.own_company`, treating null, absent-from-the-schema, and ambiguous alike as unresolved; ask which company is theirs rather than inferring it from the workspace's name, logo, slug, or email domain; then propose duplicate `companies` rows as aliases by comparing identically normalized names (Unicode NFD, strip combining marks, lowercase, punctuation to single spaces, collapse whitespace) with containment tested in **both** directions, folding only on an explicit yes.
 
 5. **Resolve the time window.** Default to **all-time** (this is a cumulative "to date" ranking). If the user names a window (e.g. "this year"), use it and filter on `issue_date`. State explicitly which window was used in the output either way.
 
-6. **Query paid revenue by customer.** Call `well_get_schema({ root: "invoices" })` (always, even if queried earlier in the session for a different purpose — this skill relies on `payment_status`, a separate dimension from lifecycle `status`, and field behavior can vary by connector). Query `invoices` where `issuer_company_id` matches the `identity_set` from `confirm-my-company` and `payment_status` is `paid` (optionally filtered on `issue_date` to the resolved window). Include `receiver.name`, `grand_total`, `local_currency`. Group and sum `grand_total` by `receiver_company_id`/`receiver.name`, collapsing each set in `counterparty_alias_sets` into a single row.
+6. **Query paid revenue by customer.** Call `well_get_schema({ root: "invoices" })` (always, even if queried earlier in the session for a different purpose — this skill relies on `payment_status`, a separate dimension from lifecycle `status`, and field behavior can vary by connector). Query `invoices` where `issuer_company_id` matches the `identity_set` from the own-company step and `payment_status` is `paid` (optionally filtered on `issue_date` to the resolved window). Include `receiver.name`, `grand_total`, `local_currency`. Group and sum `grand_total` by `receiver_company_id`/`receiver.name`, collapsing each set in `counterparty_alias_sets` into a single row.
    - **Don't let an equality filter hide rows — and don't over-collect either.** A filter on `issuer_company_id` silently drops invoices where it is `null`. Query that bucket separately, then split it on the *receiver* before counting anything as revenue, because a null issuer alone does not make a paid invoice income:
      - **Receiver is the own-company identity** → a bill the workspace *paid*, not revenue it earned. Counting it would inflate every total on the page. Leave it out entirely.
-     - **Receiver is an external company** → genuinely unresolved, and revenue on the balance of evidence. Report it as a labeled row ("unattributed — issuer not recorded") alongside the ranking, so the user can see how much revenue the ranking couldn't place.
+     - **Receiver is an external company** → genuinely unresolved, and revenue on the balance of evidence. Report it as a labeled row ("unattributed, issuer not recorded") alongside the ranking, so the user can see how much revenue the ranking couldn't place.
      - **Receiver is null too** → nothing places this row. Report it as a separate unsplit line with a count and total, outside the ranking and outside the revenue total.
    - Paid invoices the workspace issued but whose `receiver_company_id` is null are real revenue with an unknown customer: keep them in the revenue total as a single "unattributed customer" row rather than dropping them, and never merge them into a named customer's figure.
    - **Invoices whose issuer and receiver are the same company** are not revenue. Keep them out of the ranking and out of the total, and note them once as a data-quality issue.
 
-7. **Normalize currency — run `normalize-currency`.** If results span more than one currency, invoke the `normalize-currency` skill with the pinned `workspace_id`, the tagged amounts (one tag per customer, so the ranking is built on converted totals), `target_currency` (default: the workspace's base currency), and `as_of` (default today). That skill owns the never-blend invariant, the rate read from `exchange_rates`, the most-recent-rate-at-or-before-`as_of` fallback, and the rule that every converted figure carries the rate and date behind it. Report its `converted_total` with those rates, or its `per_currency` breakdown — never a blended total. Build any per-row figure from its `converted` entries, matched back by tag, rather than re-applying rates yourself.
+7. **Normalize currency.** If results span more than one currency: {{> normalize-currency}}
+   - Use its `per_currency` rows for the per-customer figures and its `converted_total` for the ranking, tagged one entry per customer so the ranking is built on converted totals. Report its `converted_total` with those rates, or its `per_currency` breakdown — never a blended total. Build any per-row figure from its `converted` entries, matched back by tag, rather than re-applying rates yourself.
    - `partial: true` means a currency had no rate in Well. Name it and say the total covers the rest, rather than letting a quietly smaller total read as complete.
-   - **If `normalize-currency` isn't installed**, do it inline: group amounts per currency first, then either convert via the `exchange_rates` root — using the most recent rate at or before `as_of`, never a later one, and stating the rate and date used — or report totals per currency. Never blend currencies silently.
 
 8. **Sort and limit.** Sort customers descending by total paid revenue. Return the requested count, default top 10.
 
@@ -97,35 +84,29 @@ All four ship with the `well-skills` plugin. This skill is also installable on i
 Return:
 
 - The time window used (all-time by default), stated explicitly.
-- A ranked table: customer name, total paid revenue, currency, and share of total paid revenue across all ranked customers. `well_query_records` ships its own card, and that card renders these rows — so do not restate them in prose. It draws no chart, so the form is yours to judge on its merits: a horizontal bar chart is the natural fit for a comparison across customers, so reach for it when the host supports it and prose alone would read worse. Do not stop to ask table-or-chart first. Back any visual with the exact figures.
+- A ranked table: customer name, total paid revenue, currency, and share of total paid revenue across all ranked customers. `well_query_records` ships its own card, and that card renders these rows — so do not restate them in prose. It draws no chart, and neither do you: this skill has no tool of its own, so the answer is the table and the prose around it.
 - The as-of date the ranking was computed against.
 - An explicit one-line caveat: this is realized paid-invoice revenue to date, not a predictive customer-lifetime-value model.
-- Whether the picture is complete: which relevant connector categories (invoicing/accounting) are connected versus still missing — read off `connect-tools`' `coverage` and `skipped_by_user` hand-off, not an inline connector read of your own — and whether the workspace's own company is set, read off `confirm-my-company`'s hand-off, so the user knows whether this ranking reflects their full revenue history or a partial view gated by what's connected today.
+- Whether the picture is complete: which relevant connector categories (invoicing/accounting) are connected versus still missing — read off `connect-tools`' `coverage` and `skipped_by_user` hand-off, not an inline connector read of your own — and whether the workspace's own company is set, read off the own-company hand-off, so the user knows whether this ranking reflects their full revenue history or a partial view gated by what's connected today.
 - A one-line pointer to `company-profile` for a deep dive on any single top customer's full relationship history.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
 - If step 9's fallback was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
 
-**How this reaches the user.** A Well MCP tool that ships a widget attaches
-`_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
-never reaches you, so you cannot tell a host that drew the card from one that did not.
-Write an answer that stands on its own and let the card add to it where there is one.
-State the figures in text regardless — you cannot know whether anything drew them. What you must not add is a second rendering of what a card already
-shows; where a visual the tool does not draw genuinely reads better, compose one and
-style it with the tokens under **Styling a composed view** below.
-
-## Styling a composed view
-
-{{> styling}}
+**How this reaches the user.** This skill has no Well MCP tool of its own, so no card is
+drawn for it on any host — the widget-disclosure reasoning the tool-backed skills carry
+does not apply here. Answer in prose and a markdown table, and state every figure in the
+text. Do not compose a styled visual: Well's own surfaces own how Well data is drawn, and
+this answer is not one of them.
 
 ## Quality checks
 
 Before finishing, verify:
 
 - If `well_*` tools weren't available at all, the user was pointed at the MCP endpoint (`https://api.wellapp.ai/v1/mcp`) instead of erroring silently.
-- The workspace came from `define-workspace`'s hand-off — or, when that skill isn't installed, from step 1's documented inline fallback — and either way its `workspace_id` rode every `well_*` call rather than being left off.
-- Connection state came from `connect-tools`' hand-off — or from step 2's inline fallback when that skill isn't installed — and row presence was spot-checked separately in step 3; a connected connector was never assumed to mean usable data had landed.
-- The own company came from `confirm-my-company`'s hand-off — its `identity_set`, not a value resolved here — and on `resolution: unresolved` the documented fallback ran rather than a guess.
-- Duplicate company records were folded by `confirm-my-company`, which proposes them for an explicit yes; none were merged silently here, and no `well_update_company`/`well_delete_company` call was made.
+- The workspace came from the pinned hand-off, and its `workspace_id` rode every `well_*` call rather than being left off.
+- Connection state came from `connect-tools`' hand-off, and row presence was spot-checked separately in step 3; a connected connector was never assumed to mean usable data had landed.
+- The own company came from the own-company hand-off's `identity_set`, not a value resolved here — and on `resolution: unresolved` the documented fallback ran rather than a guess.
+- Duplicate company records were folded upstream, which proposes them for an explicit yes; none were merged silently here, and no `well_update_company`/`well_delete_company` call was made.
 - Null-`issuer_company_id` invoices were split on the receiver before counting as revenue: own-company receiver means a bill the workspace paid and was excluded, external receiver reported as a labeled unattributed row, both-null reported as a separate unsplit line outside the revenue total.
 - Invoices whose issuer equals their receiver were excluded from the ranking and the total.
 - `well_get_schema` was called on `invoices` before querying it, even if it was queried earlier for a different purpose.
@@ -145,7 +126,7 @@ Before finishing, verify:
 
 ### Expected behavior
 
-Run `define-workspace`, then `connect-tools`, and spot-check that rows have landed; resolve `own_company`, default to an all-time window, pull all `invoices` where this workspace is issuer and `payment_status` is `paid`, sum `grand_total` per customer, sort descending, and present the top 10 with customer name, total paid revenue, currency, share of total, as-of date, and the realized-revenue-not-predictive-CLV caveat.
+Pin the workspace, then check connections, and spot-check that rows have landed; resolve `own_company`, default to an all-time window, pull all `invoices` where this workspace is issuer and `payment_status` is `paid`, sum `grand_total` per customer, sort descending, and present the top 10 with customer name, total paid revenue, currency, share of total, as-of date, and the realized-revenue-not-predictive-CLV caveat.
 
 ### Example request
 
@@ -153,7 +134,7 @@ Run `define-workspace`, then `connect-tools`, and spot-check that rows have land
 
 ### Expected behavior
 
-In the multi-currency workspace's run: pass the per-customer totals to `normalize-currency` tagged by customer and rank on its `converted` entries — reporting the rate and date it used — or report the EUR customer separately rather than adding their total directly into a USD-only ranking. In the zero-paid-invoice workspace's run: state plainly that no realized revenue exists yet (all invoices are unpaid/partial), do not fabricate a ranking, and offer the same fallback link so the user can ask in Well directly.
+In the multi-currency workspace's run: pass the per-customer totals to normalize-currency tagged by customer and rank on its `converted` entries — reporting the rate and date it used — or report the EUR customer separately rather than adding their total directly into a USD-only ranking. In the zero-paid-invoice workspace's run: state plainly that no realized revenue exists yet (all invoices are unpaid/partial), do not fabricate a ranking, and offer the same fallback link so the user can ask in Well directly.
 
 ### Example request
 
@@ -162,3 +143,6 @@ In the multi-currency workspace's run: pass the per-customer totals to `normaliz
 ### Expected behavior
 
 Detect in step 4 that `own_company` is unresolved because the field is absent from the schema — not merely null — and ask which company is theirs rather than matching the workspace's name or logo to a `companies` row. Once confirmed, normalize both sides (punctuation folded to spaces, runs collapsed) so `"northwind trading ltd"` and `"northwind trading"` compare as containing one another, and offer the `LTD` record as a candidate alias for confirmation — on the customer side as well as the own-company side, since an unmerged customer alias splits one client across two rows and understates their rank. Then split the null-`issuer_company_id` invoices on the receiver before counting anything as revenue: an own-company receiver means a bill the workspace paid, which is excluded outright, while an external receiver is reported as a labeled unattributed row. Say the confirmation holds for this run only, and link to the Well app to set it permanently.
+
+## Voice
+{{> voice}}
