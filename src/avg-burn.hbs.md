@@ -70,7 +70,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 - `well_list_workspaces` — how the workspace step below resolves the workspace.
 - `well_get_burn` — the authoritative trailing average monthly burn, plus `trailing_months`, `months_in_window` and `months_with_data`. Call this directly; do not sum or group `transactions` yourself, and do not read the `avg_burn` field nested in `well_get_runway` instead — that one is pinned to the runway's own window and cannot be widened.
-- `well_query_records` — the data-freshness read in step 4, and nothing else. Step 2 reads connector state through `well_list_connectors` alone; a `well_query_records` call on `workspace_connectors` bypasses that logic and the step checks that it did not happen.
+- `well_query_records` — the data-freshness read in step 4, plus the period-activity probe `define-period`'s step 3 runs on `transactions` when the bank state is connected. Step 2 reads connector state through `well_list_connectors` alone; a `well_query_records` call on `workspace_connectors` bypasses that logic and the step checks that it did not happen.
 - `well_list_connectors` — how the connection step below surfaces install links.
 - `well_list_periods` — how the period step below renders the anchor-month picker when the user hasn't named one. Reads `purpose: "analysis"` so the card offers only months this skill can actually report on, with no invoice or close-readiness axis painted beside them.
 - `well_switch_workspace` — writes the picked month server-side; also how the workspace step resolves a named workspace hint.

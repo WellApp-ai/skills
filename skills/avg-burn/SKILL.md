@@ -70,7 +70,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 - `well_list_workspaces` — how the workspace step below resolves the workspace.
 - `well_get_burn` — the authoritative trailing average monthly burn, plus `trailing_months`, `months_in_window` and `months_with_data`. Call this directly; do not sum or group `transactions` yourself, and do not read the `avg_burn` field nested in `well_get_runway` instead — that one is pinned to the runway's own window and cannot be widened.
-- `well_query_records` — the data-freshness read in step 4, and nothing else. Step 2 reads connector state through `well_list_connectors` alone; a `well_query_records` call on `workspace_connectors` bypasses that logic and the step checks that it did not happen.
+- `well_query_records` — the data-freshness read in step 4, plus the period-activity probe `define-period`'s step 3 runs on `transactions` when the bank state is connected. Step 2 reads connector state through `well_list_connectors` alone; a `well_query_records` call on `workspace_connectors` bypasses that logic and the step checks that it did not happen.
 - `well_list_connectors` — how the connection step below surfaces install links.
 - `well_list_periods` — how the period step below renders the anchor-month picker when the user hasn't named one. Reads `purpose: "analysis"` so the card offers only months this skill can actually report on, with no invoice or close-readiness axis painted beside them.
 - `well_switch_workspace` — writes the picked month server-side; also how the workspace step resolves a named workspace hint.
@@ -160,7 +160,7 @@ Verify before moving on: `well_list_connectors` was the only connector-listing t
 The workspace is already pinned — pass its `workspace_id`, and `fiscal_year_start_month` from its hand-off (default `1`, calendar-aligned, and say so when it was null), on every call below.
 
 
-Reuse a selection this conversation already wrote: when the session holds `selected_periods` that THIS conversation itself established (its own card click or typed months) and the user isn't asking to change the month, use it silently and skip straight to computing coordinates. A `selected_periods` present at conversation start that this conversation didn't write is another conversation's leftover — ignore it, never mention it, and resolve as if unset.
+Reuse a selection this conversation already wrote: when the session holds `selected_periods` that THIS conversation itself established (its own card click or typed months) and it holds exactly one month and the user isn't asking to change the month, use it silently and skip straight to computing coordinates. A written selection carrying more than one month belongs to an earlier, different-purpose call in this same conversation — it is not a fit for a single-month pick, so fall through to the hint and picker below rather than silently anchoring on its first entry. A `selected_periods` present at conversation start that this conversation didn't write is another conversation's leftover — ignore it, never mention it, and resolve as if unset.
 
 Read the hint before anything else — a hint that resolves is written server-side at once via `well_switch_workspace({ periods: [...] })`:
 - A month plus a year ("2026-03", "March 2026") → that month, `resolution: hint_matched`.
