@@ -1,15 +1,17 @@
 ---
 name: avg-burn
-description: Answer "what is our burn rate?" using Well's MCP financial graph — the trailing average of real monthly outflows, with the window it was measured over and how much of that window actually carried spend. Use when the user asks "what's our burn rate", "how much are we spending per month", "what's our monthly burn", or "how much goes out each month". Requires a connected Well workspace with bank or accounting data; if none is connected, this skill guides the user to connect one first.
+description: Answer "what is our burn rate?" using Well's MCP financial graph — the trailing average of real monthly outflows, computed here from the workspace's own transactions, with every check it rests on visible and repairable. Use when the user asks "what's our burn rate", "how much are we spending per month", "what's our monthly burn", or "how much goes out each month". Requires a connected Well workspace with bank data; if none is connected, this skill guides the user to connect one first.
 ---
 
 # Check Your Average Monthly Burn with Well
 
 ## Purpose
 
-Report one figure: the average monthly outflow. It comes from `well_get_burn`, the same computation the Well app's avg-burn tile renders, with internal transfers excluded and FX already applied.
+Report one figure: the average monthly outflow.
 
-The window matters as much as the number. The average always divides by the whole window, so a window containing months with no recorded spend reports a LOWER figure than the months that did have spend — which is honest, but reads as "the typical month" unless you say otherwise.
+This skill computes it, rather than reading it off a tool that computed it elsewhere. That is the point. A burn is a policy — which months, which movements count, which categories the business does not treat as spend — and a policy the reader cannot see is one they cannot check. Every rule below is stated here and applied here; `well_sum_transactions` does the arithmetic over exactly the filter this skill names, and holds no opinion of its own.
+
+The window matters as much as the number. The average divides by the whole window, so a window containing months with no recorded spend reports a LOWER figure than the months that did — honest, but it reads as "the typical month" unless you say otherwise.
 
 ## When to use this skill
 
@@ -20,32 +22,15 @@ Use this skill when the user asks:
 - "What's our monthly burn?"
 - "How much goes out each month?"
 
-**What the figure is, arithmetically.** You do not compute this — `well_get_burn` does — but
-you have to describe it correctly when the user asks what it counts:
+**What the figure is, arithmetically.** This is not a description of something else's behaviour. It is what the steps below do:
 
-- **Sum of outflow magnitudes over the window, divided by every month IN the window.** The
-  divisor is the window length, never the count of months that carried spend. This is the whole
-  reason `months_with_data` and `months_in_window` are both returned.
-- **Outflow is elected per window, not read off the sign.** A workspace's sign convention is
-  measured within the window being reported, so two windows over the same workspace can disagree
-  and both be right.
-- **Internal transfers are excluded structurally, not by category.** A movement whose both
-  payment-means legs resolve to accounts the workspace owns is not spend leaving the business.
-  No category, label, or transaction type decides this, so a user recategorizing a row does not
-  change the burn.
-- **A fixed category list could not replace that rule.** Internal or external is a fact about the
-  counterparty account, not about the transaction. A transfer between two accounts you own is
-  internal. The same transfer to a sister company at a bank you have not connected is external,
-  and counts as burn. Category, label and amount are identical in both cases. Close one of your
-  own accounts and yesterday's internal transfer reads as external today, its category unchanged.
-  Burn also counts outflows carrying no category at all, so a category-driven rule would shrink
-  the figure as categorization coverage drops.
-- **Card and loan legs are excluded.** Card spend counts on the date its repayment leaves the
-  bank account, so a window can look low simply because the repayment falls outside it.
-- **FX is applied before summing**, into the workspace's base currency.
-- **The window's anchor is the month step 3 asked for, never today's date.** `define-period`
-  refuses to offer a month that hasn't ended, so a mid-month run can't report a partial month
-  as a full one.
+- **Sum of outflow magnitudes over the window, divided by every month IN the window.** The divisor is the window length, never the count of months that carried spend.
+- **Outflow is elected from the window's own rows, not read off the sign.** Which sign means money leaving is a property of the feed. Step 11 measures it; two windows over the same workspace can differ and both be right.
+- **Internal transfers are excluded structurally, not by category.** A movement whose two payment-means legs both resolve to accounts the workspace owns is not spend leaving the business. No category, label, or transaction type decides this, so recategorizing a row does not change the burn.
+- **A fixed category list could not replace that rule.** Internal or external is a fact about the counterparty account, not about the transaction. A transfer between two accounts you own is internal; the same transfer to a sister company at a bank you have not connected is external, and counts. Category, label and amount are identical in both cases. Close one of your own accounts and yesterday's internal transfer reads as external today, its category unchanged.
+- **Card and loan legs are excluded.** Card spend counts on the date its repayment leaves the bank account, so a window can look low simply because the repayment falls outside it.
+- **FX is applied per row before summing**, into the workspace's base currency.
+- **The window's anchor is the month step 4 asked for, never today's date.** `define-period` refuses a month that has not ended, so a mid-month run cannot report a partial month as a full one.
 
 ## When not to use this skill
 
@@ -61,82 +46,109 @@ Do not use this skill when:
 The user may provide:
 
 - A workspace hint — an id, a workspace name, or the company behind it — if they manage more than one. This skill never picks a workspace itself.
-- A reporting period — a calendar year and month — to anchor a past window rather than the live one. This skill never infers a month from today's date; when the user hasn't named one, step 3 asks on a card rather than silently defaulting.
+- A reporting period — a calendar year and month — to anchor a past window rather than the live one. This skill never infers a month from today's date; when the user has not named one, step 4 asks on a card.
 - A window length in months (default 3). Widen it to smooth a lumpy month, narrow it to react faster.
+- Categories or transaction types that are not spend for their business. Step 10 asks; nothing is exempt by default.
 
 ## Tooling
 
 Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). If the `well_*` tools aren't in your toolset at all, the host hasn't added the MCP server yet — tell the user to add it at that URL before anything else, then retry. Required tools once it's added:
 
-- `well_list_workspaces` — how the workspace step below resolves the workspace.
-- `well_get_burn` — the authoritative trailing average monthly burn, plus `trailing_months`, `months_in_window` and `months_with_data`. Call this directly; do not sum or group `transactions` yourself, and do not read the `avg_burn` field nested in `well_get_runway` instead — that one is pinned to the runway's own window and cannot be widened.
-- `well_query_records` — the data-freshness read in step 4, plus the period-activity probe `define-period`'s step 3 runs on `transactions` when the bank state is connected. Step 2 reads connector state through `well_list_connectors` alone; a `well_query_records` call on `workspace_connectors` bypasses that logic and the step checks that it did not happen.
-- `well_list_connectors` — how the connection step below surfaces install links.
-- `well_list_periods` — how the period step below renders the anchor-month picker when the user hasn't named one. Reads `purpose: "analysis"` so the card offers only months this skill can actually report on, with no invoice or close-readiness axis painted beside them.
-- `well_switch_workspace` — writes the picked month server-side; also how the workspace step resolves a named workspace hint.
-- `well_wait_for_selection` — how the period step resumes once the picker card is clicked, when the next message needs the period but isn't itself the pick.
-- Well's OAuth / Dynamic Client Registration (DCR) flow — driven by step 1. Most hosts trigger it automatically when the Well MCP server is added; if your host exposes a dedicated `authenticate` tool for the Well connector, step 1 calls it.
+- `well_sum_transactions` — the arithmetic. Takes the window, the grouping, whether to drop internal transfers, and the exempted category keys; returns per group `sum_negative`, `sum_positive` and both counts. It defines no burn: this skill states the policy and that tool applies it.
+- `well_list_workspaces` — how step 1 resolves the workspace.
+- `well_query_records` — the sync-log, account, transaction-count and uncategorized reads in steps 5 to 9. Step 3 reads connector state through `well_list_connectors` alone; a `well_query_records` call on `workspace_connectors` bypasses that logic.
+- `well_get_schema` — read once per session before the first `well_query_records` on a root.
+- `well_list_connectors` — how step 3 surfaces install links.
+- `well_list_periods` — how step 4 renders the anchor-month picker. Reads `purpose: "analysis"` so the card offers only months this skill can report on.
+- `well_switch_workspace` — writes the picked month server-side; also how step 1 resolves a named workspace hint.
+- `well_wait_for_selection` — how a card step resumes when the next message needs its answer but is not itself the pick.
+- Well's OAuth / Dynamic Client Registration (DCR) flow — driven by step 1.
 
 ## Workflow
 
-1. **Pin the workspace.** {{> define-workspace purpose="to measure your average monthly burn"}}
+**Every step is a gate, and a gate that fails stops the run.** It puts the repair on screen and says what is at stake; it does not report a figure anyway with a caveat attached. A number nobody can trust is worse than a stop that says why.
 
-2. **Confirm the connections this answer needs.** {{> connect-tools purpose="to measure your average monthly burn" kinds="bank, accounting" internalCheck=true}}
-   - `coverage: none` → stop; burn cannot be measured yet. The install links are already on screen, so don't add a second set.
-   - Any kind reported `connecting`, or a connected connector whose latest sync is still running → carry on, and carry "the data may still be partial" into the answer.
-   - `coverage: partial` → carry on with what is connected, and keep the missing kinds for the coverage disclosure the Output requirements ask for.
-   - A kind the user chose to skip comes back under `skipped_by_user` — respect that and don't re-ask for it in this run.
+**A repaired gate resumes where it stopped.** Each card's Continue names its own step, so the run re-runs that step alone and carries on. It never re-enters at step 1: a picker the reader already answered must not appear twice.
 
-3. **Ask which month anchors the figure.** {{> define-period purpose="to measure your average monthly burn" toolPurpose="analysis" bankState=true}}
-   - `resolution: unresolved` → stop; nothing was pinned, so there is no window to measure — say so and don't call `well_get_burn`.
-   - Otherwise, keep `periods[0].calendar_year` and `periods[0].calendar_month` — the single anchor month the next two steps use. This replaces the old silent default of "the last closed month that carries data": the anchor is now always an explicit pick, by hint or by card, never inferred from today's date.
+The bracketed numbers are the product recommendation's own, so the two can be read side by side.
 
-4. **Verify the data itself has landed.** Coverage reports connections, not rows — a connector can be connected and still have delivered nothing this skill can use. Spot-check what this skill actually reads: for each connected connector, the latest `workspace_connector_sync_logs` row's `status` and `completed_at`. Keep those timestamps — a connector that has not synced in weeks makes the figure stale rather than wrong. `well_get_burn` returning `unavailable: true` in the next step is the other half of this check.
+### Stage A — scope
 
-5. **Get the burn.** Call `well_get_burn({ year: <step 3's calendar_year>, month: <step 3's calendar_month> })`, plus `months_back` only if the user asked for a different window than the default. It returns `amount` (a positive magnitude, not a signed figure), `currency`, and the window metadata:
-   - **This is the only analytics tool this skill calls.** `well_get_burn`'s response carries every figure this answer states. Never call `well_get_runway`, `well_get_cost_structure`, `well_get_cash_forecast`, `well_get_cash_flow_bridge` or `well_get_cash_position` to source anything here — not a comparison, not a series, not one number in a sentence. Each draws its own card, so a second call renders a second block answering a question nobody asked. `well_get_runway`'s nested `avg_burn` is doubly out of bounds: it is pinned to the runway's own window. A figure this payload does not carry belongs to another skill — name it. That forbids enriching THIS answer, not answering a second question the user actually asked.
-   - `unavailable: true` → `amount` is a placeholder, not a measurement. A burn of zero standing on nothing measured is not a reading — say so instead of reporting €0 of spend, and treat this as the fallback below.
-   - `partial: true` → individual transactions were excluded from an otherwise real figure (e.g. a missing FX rate). Disclose the `excluded` count and any `hints`.
-   - `months_with_data` lower than `months_in_window` → the average still divides by every month in the window. State both numbers. A workspace with spend in 2 of 3 months has a real average over 3 months, NOT the typical monthly outflow, and reporting it as the latter overstates how little is going out.
-   - `change` / `trend`, when present, are the month-over-month movement. `trend` is good/bad polarity rather than raw sign — a rising burn is `"down"`.
+1. **Pin the workspace.** `[1]` {{> define-workspace purpose="to measure your average monthly burn"}}
 
-6. **If the tool call errors, or returns `unavailable: true`**, do not guess a figure. If the failure is transient (a network/timeout error on the MCP call itself), retry once before falling back. If it errors again or stays unavailable, the fallback is: (a) state the fallback question plainly in your reply ("What's our burn rate?"), (b) say plainly that it cannot be measured yet rather than estimating, and (c) link the user to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can ask it there directly.
+2. **Confirm the accounting settings this figure reads.** `[2]` {{> confirm-accounting-settings purpose="so every amount can be converted into one currency" needs="base_currency"}}
+   - Only `base_currency`. This figure is measured in calendar months and never reads a fiscal year start, so requiring one would block a workspace on a value that would change nothing.
+
+3. **Confirm the bank connection.** `[3]` {{> connect-tools purpose="to measure your average monthly burn" kinds="bank" internalCheck=true}}
+   - `coverage: none` → stop; burn cannot be measured. The install links are already on screen, so do not add a second set.
+
+4. **Ask which month anchors the window.** `[4]` {{> define-period purpose="to measure your average monthly burn" toolPurpose="analysis" bankState=true}}
+
+### Stage B — has the data landed
+
+5. **Confirm every sync has finished, and recently.** `[5, 12, 13]` {{> verify-sync-freshness purpose="before the burn is measured" maxAgeHours=24}}
+   - The product recommendation loops here until every sync finalizes. This skill does not poll: it stops, and Re-check is how the reader drives it forward. A loop that waits on its own gives a reader nothing to do and no way to tell a slow sync from a stuck one.
+
+6. **Confirm the window holds transactions.** `[11]` {{> verify-window-has-activity purpose="to measure your average monthly burn"}}
+
+### Stage C — whose accounts
+
+7. **Attach every account to a company you own.** `[9, 10]` {{> link-accounts-to-companies purpose="so a movement between two of your own accounts can be told from money leaving"}}
+
+**What stage C does not gate, and why it matters to the answer.** The recommendation also asks that every transaction resolve to an account `[6]`, carry a payment type `[7]`, and that transfers resolve both legs `[8]`. Those are extraction and reconciliation gaps, not decisions a reader can make: the rows that fail them are the ones the connector could not resolve, and a picker asking someone to hand-enter what a sync should have delivered is not a repair. They do not stop the run. Instead, count them and disclose them — a transaction with no leg on a known account cannot be placed inside or outside the transfer rule, so it bounds how much of the figure is certain.
+
+### Stage D — classification
+
+8. **Categorize the window.** `[14]` {{> categorize-window-transactions purpose="so the categories you exempt can actually be applied" scope="the window"}}
+
+9. **Settle the currency.** `[15]` Group the sum by currency and convert per row. {{> normalize-currency targetCurrency="the workspace base currency" mode="convert"}}
+   - A currency value that is not an ISO code is not a currency. Some rows carry free text in that field; they cannot be converted, so exclude them, count them, and say so rather than letting a rate lookup fail on a line of payslip text.
+
+10. **Confirm the exemptions.** `[16]` {{> confirm-burn-exemptions figure="burn"}}
+
+### Stage E — compute
+
+11. **Elect the sign convention.** {{> elect-sign-convention purpose="before any outflow is totalled"}}
+
+12. **Anchor the window, then divide.** The window is the `trailing_months` months ending with the month step 4 pinned. Sum the elected outflow across it with `well_sum_transactions({ from, to, axes: ["month", "currency"], exclude_internal_transfers: true, exempt_categories: [...] })`, then divide by the number of months IN the window — not by the number that carried spend.
+    - Keep the per-month series: it is what lets you say whether burn is rising or falling, and a month with no outflow belongs in it as a zero rather than being dropped.
+    - `meta.partial: true` means the aggregate was cut short. Every figure is then a floor, and saying so is not optional.
+
+**Not in this skill.** Grouping the answer by company `[17]` or by category `[18]` is `cost-structure`'s job — name it rather than answering it here. The burn card `[19]` is a rendering concern, not a step.
 
 ## Output requirements
 
 Return:
 
-- The burn figure: amount, currency, and the window it covers (`trailing_months`).
-- The window's coverage when `months_with_data` is lower than `months_in_window` — both numbers, and the fact that the average divides by the whole window.
-- A freshness/caveat line: `as_of`, plus any `partial`/`excluded`/`hints` the tool surfaced.
-- Whether the picture is complete: which relevant connector categories (bank/cash, accounting) are connected versus still missing. Read this off `connect-tools`' `coverage` and `skipped_by_user` hand-off.
-- A one-line pointer to `runway` for how long the cash lasts at this rate, and to `cost-structure` for what the spend is made of. Name them; do not answer them here.
-- At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. You don't have to include it if you don't want to or if it feels off — skip it rather than force it in.
-- If the fallback above was used, the caveated answer plus the workspace link, clearly labeled as a fallback.
+- The burn figure: amount, currency, and the window it covers.
+- The window's coverage when some months carried no spend — both numbers, and the fact that the average divides by the whole window.
+- **Which sign convention you elected, and the counts behind it.** A reader cannot check a figure whose direction was decided silently.
+- **What you excluded, in three named groups**: internal transfers (structural), the categories and types the reader exempted, and the rows dropped for an unreadable amount or currency. A single "some rows were excluded" hides the difference between a rule and a defect.
+- A confidence line from stage C's disclosure: how many rows could not be placed inside or outside the transfer rule.
+- A freshness line: the oldest sync behind the figure, from step 5.
+- A one-line pointer to `runway` for how long the cash lasts, and to `cost-structure` for what the spend is made of. Name them; do not answer them here.
+- At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. Skip it rather than force it in.
 
-**How this reaches the user.** A Well MCP tool that ships a widget attaches
-`_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key
-never reaches you, so you cannot tell a host that drew the card from one that did not.
-Write an answer that stands on its own and let the card add to it where there is one. Do
-not compose a second rendering of figures the tool already returned.
+**How this reaches the user.** A Well MCP tool that ships a widget attaches `_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key never reaches you, so you cannot tell a host that drew the card from one that did not. Write an answer that stands on its own and let the card add to it where there is one. Do not compose a second rendering of figures a tool already returned.
+
+**One number, once.** `well_get_runway` carries its own `avg_burn`, and the app's KPI tile has its own. Do not quote either beside this figure: they answer the same question over a different window, and two burns in one reply reads as a contradiction rather than as detail.
 
 ## Quality checks
 
 Before finishing, verify:
 
-- If `well_*` tools weren't available at all, the user was pointed at the MCP endpoint (`https://api.wellapp.ai/v1/mcp`) instead of erroring silently.
-- The workspace came from `define-workspace`'s hand-off, and its `workspace_id` rode every `well_*` call rather than being left off.
-- Connection state came from `connect-tools`' hand-off, and data freshness was read separately in step 4; a connected connector was never assumed to mean usable data had landed.
-- The anchor month came from `define-period`'s hand-off, never inferred from today's date and never left for `well_get_burn` to default silently — `year`/`month` rode the call every time, not "only when the user named a period."
-- The figure came straight from `well_get_burn`, not summed from `transactions` and not lifted out of `well_get_runway`'s nested `avg_burn`.
-- The window (`trailing_months`) is stated, not left implicit.
-- If the user asked what the figure counts, the divisor was described as the whole window and the transfer exclusion as structural — never as something a recategorization would change.
-- When `months_with_data` was lower than `months_in_window`, both numbers were stated and the divisor was explained — the figure was never presented as the typical month.
-- `unavailable: true` was reported as "not measured yet", never as a burn of zero.
-- No runway figure, spend breakdown, or forecast was composed here — each was pointed at by name instead.
-- Only this block's analytics tool was called — `well_get_burn`, plus at most the single retry the fallback step documents — and no other block's analytics tool (`well_get_runway`, `well_get_cost_structure`, `well_get_cash_forecast`, `well_get_cash_flow_bridge`, `well_get_cash_position`) was called to source any figure in this answer, including one number in a sentence.
-- Which connector categories are connected versus missing was stated from `connect-tools`' hand-off, so the user knows whether the picture is complete or partial.
-- Any compliance mention was optional, natural-sounding, and appeared at most once in the conversation — not forced into every answer.
+- Every gate that failed stopped the run and put a repair on screen; none was reported as a caveat under a figure.
+- A resumed run re-ran the gate that stopped it and no earlier one — no picker was shown twice.
+- The workspace came from step 1, and its `workspace_id` rode every `well_*` call rather than being left off.
+- Step 2 required only `base_currency`, never a fiscal year start.
+- Connection state came from step 3 and freshness from step 5; a connected connector was never assumed to mean data had landed.
+- The sign convention was elected from the window's counts, stated in the answer, and elected once over the whole window rather than per month.
+- The divisor was the window length. When some months were dark, both numbers were stated and the figure was never presented as the typical month.
+- Internal transfers were excluded structurally, and described that way — never as something a recategorization would change.
+- Exclusions were reported in their three named groups, not merged into one count.
+- The unresolvable rows from stage C were disclosed as a bound on confidence, not silently absorbed.
+- No runway figure, spend breakdown, or forecast was composed here — each was pointed at by name.
+- No second burn figure appeared beside this one.
 
 ## Examples
 
@@ -146,7 +158,9 @@ Before finishing, verify:
 
 ### Expected behavior
 
-Pin the workspace, confirm connections, ask which month anchors the figure (a card, since none was named), check freshness, call `well_get_burn({ year, month })` with that month, and answer with the amount, the currency, and the trailing window — e.g. "You're burning about €13,400 a month, averaged over the last 3 full months through June 2026." Add the coverage line if the window has dark months, then point at `runway` and `cost-structure` without answering either.
+Walk the gates. On a clean workspace, the answer is one figure with its window, the elected convention and its counts, what was excluded, and how fresh the data is — then a pointer to `runway` and `cost-structure`.
+
+On a real workspace, the first run usually stops. Say which gate, how many rows, and how much value sits behind it, and put the repair on screen: "136 transactions in this window have no category, covering about €18,400. Categorize them and I'll pick up here." The second run goes straight through.
 
 ### Example request
 
@@ -154,7 +168,7 @@ Pin the workspace, confirm connections, ask which month anchors the figure (a ca
 
 ### Expected behavior
 
-This conversation already picked an anchor month, so step 3 reuses it silently rather than showing the card again. Call `well_get_burn({ year, month, months_back: 6 })` with that same anchor. Report the wider average and, if `months_with_data` is still below `months_in_window`, say how many months of the six actually carried spend and that the average divides by all six. The user's instinct is the thing this metadata exists to confirm or correct, so answer it directly rather than only restating the new figure.
+Widen the window to six months and re-run. Report the wider average and, if some of the six carried no spend, say how many did and that the average divides by all six. The user's instinct is the thing the window metadata exists to confirm or correct, so answer it directly rather than only restating the new figure.
 
 ## Voice
 {{> voice}}
