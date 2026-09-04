@@ -80,7 +80,7 @@ Never call `well_invoke_connector_tool` or any provider-specific tool. This skil
 
 1. **Pin the workspace.** {{> define-workspace purpose="to assign the missing-invoice owners for that workspace"}}
 
-2. **Confirm a bank is connected.** {{> connect-tools purpose="to assign the expenses missing an invoice" kinds="bank" required="bank" internalCheck=true connectingCounts=false}}
+2. **Confirm a bank is connected.** {{> connect-tools purpose="to assign the expenses missing an invoice" kinds="bank" required="bank" internalCheck=true}}
    - `bank` connected → carry on to the period step.
    - `bank` connecting → the feed is still syncing, so no settled spend has landed to assign yet. `define-period` below is called with `bankState="connected"` and would read a still-syncing feed as an empty month, so do not pin a period or read the list. Say the bank is still syncing and to try again once it finishes, and stop.
    - `bank` missing, or in error with no live feed → there is no settled spend to assign yet. Do not pin a period or read the list: hand the flow to `connect-bank` so the user can connect one, and stop. This is the connect-bank fallback the Inputs name.
