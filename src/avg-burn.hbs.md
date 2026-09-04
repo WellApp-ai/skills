@@ -92,6 +92,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
    - A connector step 3 passed through as `connecting` has no sync row at all, so it matches none of the branches above. Treat it as not yet landed: it stops the run the same way a stale sync does, and Re-check is the affordance.
 
 6. **Confirm the window holds transactions.** `[11]` {{> verify-window-has-activity purpose="to measure your average monthly burn"}}
+   - Step 4's picker ran its own probe, over the anchor month alone. This one ranges the whole trailing window, so the two answer different questions and a month with activity does not settle the window. Count here rather than reusing that result.
 
 ### Stage C — whose accounts
 

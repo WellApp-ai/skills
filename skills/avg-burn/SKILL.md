@@ -252,6 +252,7 @@ Hand off: `transaction_count`, the window it covers, `resolution: has_activity |
 
 Verify before moving on: the count came from `totalCount` rather than from walking rows; the window ranged `executed_at` over its own interval only; an empty window was never reported as a burn of zero.
 
+   - Step 4's picker ran its own probe, over the anchor month alone. This one ranges the whole trailing window, so the two answer different questions and a month with activity does not settle the window. Count here rather than reusing that result.
 
 ### Stage C — whose accounts
 
