@@ -254,7 +254,7 @@ Do not return:
 - An owner set that includes a person who is not in the workspace, or the raw `transaction_id` shown to the user.
 - A `row_count` reported as if it were the period's total when `transactions_omitted` is above zero.
 
-**How this reaches the user.** A Well MCP tool that ships a widget attaches `_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key never reaches you, so you cannot tell a host that drew the assignment card from one that did not. Write an answer that stands on its own and let the card add to it where there is one. State the lines in text regardless. What you must not add is a second rendering of what a card already shows.
+**How this reaches the user.** A Well MCP tool that ships a widget attaches `_meta.ui.resourceUri` to its result, and the host decides whether to draw it. That key never reaches you, so you cannot tell a host that drew the assignment card from one that did not. Write an answer that stands on its own and let the card add to it where there is one: the summary line, the sampling note, and the assignment pointer go in text regardless, so a host without the card still gets the figures. The rows themselves are listed only on the text-only path of step 4. What you must not add is a second rendering of what a card already shows.
 
 ## Quality checks
 
