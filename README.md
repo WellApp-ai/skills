@@ -89,6 +89,34 @@ CLI rather than this repository. `make validate` checks the version first and sa
 In an environment with no CLI — a CI runner, a container — use `make validate SKIP_CLAUDE=1`
 to run the checks that need only node.
 
+### Create a shell skill
+
+A shell is a `SKILL.md` that carries no instructions of its own. It names the skill and
+tells the model to call `well_get_skill` for the real content, so the instructions can
+change server-side without a reinstall. The instructions themselves live in the shared
+package of the platform repository and are served from there.
+
+```
+make new SLUG=close-payroll DESCRIPTION="Close the payroll month in Well."
+```
+
+The optional variables are `TITLE="<Title>"`, `FORCE=1` to overwrite an existing file, and
+`FLOW=1 STEPS=<n>` for a skill that walks other skills in order. Make reads a bare word as
+another goal to build rather than as an argument, so `make new close-payroll` only prints
+the usage. Pass `SLUG=` instead. The script behind it also runs on its own:
+
+```
+node scripts/new-shell.mjs close-payroll --description "Close the payroll month in Well."
+```
+
+It writes `skills/<slug>/SKILL.md` with the frontmatter name and description, an H1 that
+defaults to the slug in title case plus "with Well", and three numbered steps: check the
+`well_*` tools are present, call `well_get_skill({ skill: "<slug>" })` and follow what
+comes back, and stop rather than improvise if the call fails. A flow shell gets a fourth
+step for walking `next.step`. The generator then runs `make compile`, which appends the
+house voice atom every shipped skill carries. Add the new slug to
+`.claude-plugin/plugin.json` and to the tables above before you ship it.
+
 ## Installation
 
 ### Assisted by AI (Recommended)

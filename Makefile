@@ -1,8 +1,20 @@
-.PHONY: install validate compile watch build
+.PHONY: install new validate compile watch build
 
 install:
 	git config core.hooksPath .githooks
 	npm ci
+
+# Make reads a bare word as another goal to build, not as an argument, so
+# `make new my-skill` prints this usage and stops; pass SLUG= instead.
+new:
+	@if [ -z "$(SLUG)" ] || [ -z "$(DESCRIPTION)" ]; then \
+		echo 'usage: make new SLUG=<skill-slug> DESCRIPTION="<one line>" [TITLE="<Title>"] [FLOW=1 STEPS=<n>] [FORCE=1]'; \
+		exit 1; \
+	fi
+	@node scripts/new-shell.mjs "$(SLUG)" --description "$(DESCRIPTION)" \
+		$(if $(TITLE),--title "$(TITLE)") \
+		$(if $(FLOW),--flow --steps "$(STEPS)") \
+		$(if $(FORCE),--force)
 
 # SKIP_CLAUDE=1 drops the two `claude` steps for an environment that has no CLI — a CI
 # runner, a container. The frontmatter, atoms, and content-size checks run either way,

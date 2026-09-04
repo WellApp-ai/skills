@@ -3,10 +3,11 @@
 //
 // A stub carries no instructions of its own. It names the skill and tells the
 // model to fetch the real content from Well's MCP server, so the instruction
-// set can change server-side without a reinstall. The frontmatter description
-// is copied byte for byte from the shipped skill, because that string is what
-// a host matches a user request against: a reworded stub would be discovered
-// for different requests than the skill it stands in for.
+// set can change server-side without a reinstall. The body prose comes from
+// scripts/shell-markdown.mjs, shared with the `make new` generator. The
+// frontmatter description is copied byte for byte from the shipped skill,
+// because that string is what a host matches a user request against: a reworded
+// stub would be discovered for different requests than the skill it stands in for.
 //
 // The archives mirror scripts/build-dist.sh: SKILL.md at the archive root,
 // the system zip binary, `.skill` stored and `.zip` deflated.
@@ -15,6 +16,7 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { shellMarkdown } from "../scripts/shell-markdown.mjs";
 
 const POC_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(POC_DIR, "..");
@@ -42,6 +44,7 @@ const SKILL_IDS = [
 // step-chaining instruction; the single-step stubs must not, or the model would
 // look for a next step that no single-step skill returns.
 const FLOW_SKILL_ID = "fetch-missing-invoices";
+const FLOW_STEPS = 7;
 
 function readSource(id) {
     const file = path.join(SOURCE_SKILLS, id, "SKILL.md");
@@ -60,38 +63,6 @@ function readSource(id) {
     if (!heading) throw new Error(`${file}: no H1 heading in body`);
 
     return { file, name: name[1], description: description[1], title: heading[1] };
-}
-
-function stubMarkdown({ id, name, description, title }) {
-    const steps = [
-        "Check that `well_*` tools are in your toolset. If none are, tell the user to add the Well MCP connector and stop.",
-        `Call \`well_get_skill({ skill: "${id}" })\` and follow the returned content exactly; it is the authoritative instruction set.${
-            id === FLOW_SKILL_ID ? " The flow has 7 steps." : ""
-        } A section titled "Sections not found in the source document" is a note for the operator; follow its instruction and do not repeat it to the user.`,
-    ];
-    if (id === FLOW_SKILL_ID) {
-        steps.push(
-            `The result's \`next.step\` names the next call; when the step is complete, call \`well_get_skill({ skill: "${FLOW_SKILL_ID}", step: <next.step> })\`. A \`next\` of null ends the walk.`,
-        );
-    }
-    steps.push(
-        "If the tool returns `success: false` or an error, tell the user the instructions are temporarily unavailable and stop; do not improvise from memory.",
-    );
-
-    const numbered = steps.map((step, index) => `${index + 1}. ${step}`).join("\n");
-    return [
-        "---",
-        `name: ${name}`,
-        `description: ${description}`,
-        "---",
-        "",
-        `# ${title}`,
-        "",
-        "This skill's instructions are served by Well's MCP server, so they are always current. The file you are reading is a stub.",
-        "",
-        numbered,
-        "",
-    ].join("\n");
 }
 
 function zipStub(id, stubPath) {
@@ -131,7 +102,7 @@ function main() {
         const dir = path.join(STUB_SKILLS, id);
         fs.mkdirSync(dir, { recursive: true });
         const stubPath = path.join(dir, "SKILL.md");
-        fs.writeFileSync(stubPath, stubMarkdown({ id, ...source }));
+        fs.writeFileSync(stubPath, shellMarkdown({ id, ...source, flowSteps: id === FLOW_SKILL_ID ? FLOW_STEPS : 0 }));
         zipStub(id, stubPath);
         console.log(`built skills/${id}/SKILL.md and dist-stub/${id}.{zip,skill} (description ${chars} chars)`);
     }
