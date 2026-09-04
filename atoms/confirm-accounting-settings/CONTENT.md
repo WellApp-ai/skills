@@ -8,7 +8,9 @@ placeholders:
 
 The workspace is already pinned — pass its `workspace_id` on the call below.
 
-Read `well_get_schema({ root: "workspaces" })` once per session, then one `well_query_records` on `workspaces` for this workspace's accounting settings.
+An earlier step may already have handed one of these fields forward. Take what the hand-off carries, and query only for what it does not — a value already in hand does not earn a second round-trip.
+
+For anything still missing: read `well_get_schema({ root: "workspaces" })` once per session, then one `well_query_records` on `workspaces` for this workspace's accounting settings.
 
 Ask for exactly what the figure consumes and nothing else: {{#if needs}}`{{needs}}`{{else}}the fields named by the caller{{/if}}. A field the computation never reads is not a gate — demanding a fiscal year start for a figure measured in calendar months blocks a workspace on a value that would change nothing.
 
