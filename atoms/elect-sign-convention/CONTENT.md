@@ -17,6 +17,8 @@ Read them over the whole window, not per month: one month of a signed feed can h
 
 State which convention you elected and the counts behind it, so a reader can check the choice rather than take it.
 
+**A read that fails is not a resolution.** When the call errors rather than returning a clean result, retry once; on a second failure stop and say the convention could not be read. Never hand off a resolution derived from data that did not arrive — the consuming skill cannot tell the two apart. This is stated here rather than left to a caller's preamble, because an atom is loaded standalone and composed by skills that have their own.
+
 Hand off: `convention: signed | magnitude | ambiguous`, both counts, and — for a signed feed only — the outflow as a positive magnitude.
 
 Verify before moving on: the election came from counts rather than from a provider name or a field label; it was made once over the window; the elected subtotal was handed on unchanged rather than re-signed; a magnitude-only feed stopped rather than totalling both subtotals; the choice and its evidence were both stated.

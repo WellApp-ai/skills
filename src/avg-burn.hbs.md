@@ -161,6 +161,7 @@ Before finishing, verify:
 - Internal transfers were excluded structurally, and described that way — never as something a recategorization would change.
 - Exclusions were reported in their three named groups, not merged into one count.
 - The unresolvable rows from stage C were disclosed as a bound on confidence, not silently absorbed.
+- The card was rendered once, at the end, and a refusal from it was read as a fault in this skill's own arithmetic rather than retried.
 - No runway figure, spend breakdown, or forecast was composed here — each was pointed at by name.
 - No second burn figure appeared beside this one.
 

@@ -18,6 +18,8 @@ Do not offer to categorize them yourself, and do not propose labels unless the r
 
 **Resuming.** The card's Continue names this step, so a run that comes back re-counts the window alone and continues from here. A reader who fixed some but not all comes back to the same stop with a smaller number, which is progress rather than a failure.
 
+**A read that fails is not a resolution.** When the call errors rather than returning a clean result, retry once; on a second failure stop and say the categorization coverage could not be read. Never hand off a resolution derived from data that did not arrive — the consuming skill cannot tell the two apart. This is stated here rather than left to a caller's preamble, because an atom is loaded standalone and composed by skills that have their own.
+
 Hand off: `uncategorized_count`, the value behind it, `resolution: complete | outstanding`.
 
 Verify before moving on: the count covered the window and nothing wider; the stop stated both the count and the value at stake; no category was assigned or proposed outside the card.

@@ -22,6 +22,8 @@ Either → stop, list the accounts, and surface the assignment card so the reade
 
 All accounts resolved → hand them back and carry on.
 
+**A read that fails is not a resolution.** When the call errors rather than returning a clean result, retry once; on a second failure stop and say the account links could not be read. Never hand off a resolution derived from data that did not arrive — the consuming skill cannot tell the two apart. This is stated here rather than left to a caller's preamble, because an atom is loaded standalone and composed by skills that have their own.
+
 Hand off: per account, its id, name, company, and ownership; `unresolved_count`; `resolution: complete | unresolved`.
 
 Verify before moving on: ownership was read rather than inferred; both failures were surfaced as one decision; no account was assigned a company on the reader's behalf.

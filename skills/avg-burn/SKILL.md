@@ -135,6 +135,8 @@ Ask for exactly what the figure consumes and nothing else: `base_currency`. A fi
 
 Present → hand the values back and carry on. Absent → stop. Say which field is missing and what it decides ("so every amount can be converted into one currency"), and point the user at `<well-app-base-url>/workspaces/<workspace_id>` to set it. A settings row that does not exist at all reads the same as one whose field is null: both are unset, and neither is guessed.
 
+**A read that fails is not a resolution.** When the call errors rather than returning a clean result, retry once; on a second failure stop and say the settings could not be read. Never hand off a resolution derived from data that did not arrive — the consuming skill cannot tell the two apart. This is stated here rather than left to a caller's preamble, because an atom is loaded standalone and composed by skills that have their own.
+
 Hand off: each requested field with its value or `null`, and `resolution: complete | incomplete`.
 
 Verify before moving on: only the fields the computation reads were required; a missing field stopped the run rather than being defaulted; no value was inferred from the workspace's name, country, or any other field.
@@ -229,6 +231,8 @@ Every connector finished and recent → hand the timestamps back and carry on.
 
 **Resuming.** The Re-check prefill names this step, so a run that comes back re-reads the sync logs alone and continues from here. It never re-enters at the workspace or the period: those were answered already, and asking twice reads as the routine having lost its place.
 
+**A read that fails is not a resolution.** When the call errors rather than returning a clean result, retry once; on a second failure stop and say freshness could not be read. Never hand off a resolution derived from data that did not arrive — the consuming skill cannot tell the two apart. This is stated here rather than left to a caller's preamble, because an atom is loaded standalone and composed by skills that have their own.
+
 Hand off: per connector, its latest `status`, `completed_at`, and age in hours; `resolution: fresh | syncing | stale`.
 
 Verify before moving on: freshness came from the sync logs rather than from connector state; a running sync and a stale one were reported as different situations; the age was stated, not summarized as "recent".
@@ -248,6 +252,8 @@ None → stop. A window with no transactions produces a figure of zero, and zero
 Offer **Re-check** when the feed is the likely cause, and offer the period picker when the window may simply be the wrong one.
 
 **Resuming.** Either affordance names this step in its prefill, so a run that comes back re-counts the window alone and continues from here.
+
+**A read that fails is not a resolution.** When the call errors rather than returning a clean result, retry once; on a second failure stop and say the activity check could not be read. Never hand off a resolution derived from data that did not arrive — the consuming skill cannot tell the two apart. This is stated here rather than left to a caller's preamble, because an atom is loaded standalone and composed by skills that have their own.
 
 Hand off: `transaction_count`, the window it covers, `resolution: has_activity | empty`.
 
@@ -275,6 +281,8 @@ Say what it decides — "so a movement between two of your own accounts can be t
 
 All accounts resolved → hand them back and carry on.
 
+**A read that fails is not a resolution.** When the call errors rather than returning a clean result, retry once; on a second failure stop and say the account links could not be read. Never hand off a resolution derived from data that did not arrive — the consuming skill cannot tell the two apart. This is stated here rather than left to a caller's preamble, because an atom is loaded standalone and composed by skills that have their own.
+
 Hand off: per account, its id, name, company, and ownership; `unresolved_count`; `resolution: complete | unresolved`.
 
 Verify before moving on: ownership was read rather than inferred; both failures were surfaced as one decision; no account was assigned a company on the reader's behalf.
@@ -298,6 +306,8 @@ Any → stop and surface the categorize card for the window. Say how many rows a
 Do not offer to categorize them yourself, and do not propose labels unless the reader asks. The card carries the classifier's own proposals where it has them; a second opinion typed into the chat competes with the one on screen.
 
 **Resuming.** The card's Continue names this step, so a run that comes back re-counts the window alone and continues from here. A reader who fixed some but not all comes back to the same stop with a smaller number, which is progress rather than a failure.
+
+**A read that fails is not a resolution.** When the call errors rather than returning a clean result, retry once; on a second failure stop and say the categorization coverage could not be read. Never hand off a resolution derived from data that did not arrive — the consuming skill cannot tell the two apart. This is stated here rather than left to a caller's preamble, because an atom is loaded standalone and composed by skills that have their own.
 
 Hand off: `uncategorized_count`, the value behind it, `resolution: complete | outstanding`.
 
@@ -359,6 +369,8 @@ Read them over the whole window, not per month: one month of a signed feed can h
 
 State which convention you elected and the counts behind it, so a reader can check the choice rather than take it.
 
+**A read that fails is not a resolution.** When the call errors rather than returning a clean result, retry once; on a second failure stop and say the convention could not be read. Never hand off a resolution derived from data that did not arrive — the consuming skill cannot tell the two apart. This is stated here rather than left to a caller's preamble, because an atom is loaded standalone and composed by skills that have their own.
+
 Hand off: `convention: signed | magnitude | ambiguous`, both counts, and — for a signed feed only — the outflow as a positive magnitude.
 
 Verify before moving on: the election came from counts rather than from a provider name or a field label; it was made once over the window; the elected subtotal was handed on unchanged rather than re-signed; a magnitude-only feed stopped rather than totalling both subtotals; the choice and its evidence were both stated.
@@ -381,6 +393,8 @@ Take no default. Nothing is exempt until they say so, and a proposed exemption i
 Exempting everything is a real answer and must read as one: say the figure has nothing left to measure rather than reporting zero.
 
 **Resuming.** The card's Continue names this step, so a run that comes back re-reads the selection alone and continues from here.
+
+**A read that fails is not a resolution.** When the call errors rather than returning a clean result, retry once; on a second failure stop and say the exemptions could not be read. Never hand off a resolution derived from data that did not arrive — the consuming skill cannot tell the two apart. This is stated here rather than left to a caller's preamble, because an atom is loaded standalone and composed by skills that have their own.
 
 Hand off: `exempted_category_keys`, the remaining total, `resolution: confirmed | none_exempted`.
 
@@ -433,6 +447,7 @@ Before finishing, verify:
 - Internal transfers were excluded structurally, and described that way — never as something a recategorization would change.
 - Exclusions were reported in their three named groups, not merged into one count.
 - The unresolvable rows from stage C were disclosed as a bound on confidence, not silently absorbed.
+- The card was rendered once, at the end, and a refusal from it was read as a fault in this skill's own arithmetic rather than retried.
 - No runway figure, spend breakdown, or forecast was composed here — each was pointed at by name.
 - No second burn figure appeared beside this one.
 

@@ -17,6 +17,8 @@ Offer **Re-check** when the feed is the likely cause, and offer the period picke
 
 **Resuming.** Either affordance names this step in its prefill, so a run that comes back re-counts the window alone and continues from here.
 
+**A read that fails is not a resolution.** When the call errors rather than returning a clean result, retry once; on a second failure stop and say the activity check could not be read. Never hand off a resolution derived from data that did not arrive — the consuming skill cannot tell the two apart. This is stated here rather than left to a caller's preamble, because an atom is loaded standalone and composed by skills that have their own.
+
 Hand off: `transaction_count`, the window it covers, `resolution: has_activity | empty`.
 
 Verify before moving on: the count came from `totalCount` rather than from walking rows; the window ranged `executed_at` over its own interval only; an empty window was never reported as a burn of zero.

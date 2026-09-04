@@ -16,6 +16,8 @@ Ask for exactly what the figure consumes and nothing else: {{#if needs}}`{{needs
 
 Present → hand the values back and carry on. Absent → stop. Say which field is missing and what it decides ({{#if purpose}}"{{purpose}}"{{/if}}), and point the user at `<well-app-base-url>/workspaces/<workspace_id>` to set it. A settings row that does not exist at all reads the same as one whose field is null: both are unset, and neither is guessed.
 
+**A read that fails is not a resolution.** When the call errors rather than returning a clean result, retry once; on a second failure stop and say the settings could not be read. Never hand off a resolution derived from data that did not arrive — the consuming skill cannot tell the two apart. This is stated here rather than left to a caller's preamble, because an atom is loaded standalone and composed by skills that have their own.
+
 Hand off: each requested field with its value or `null`, and `resolution: complete | incomplete`.
 
 Verify before moving on: only the fields the computation reads were required; a missing field stopped the run rather than being defaulted; no value was inferred from the workspace's name, country, or any other field.

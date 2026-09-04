@@ -21,6 +21,8 @@ Exempting everything is a real answer and must read as one: say the figure has n
 
 **Resuming.** The card's Continue names this step, so a run that comes back re-reads the selection alone and continues from here.
 
+**A read that fails is not a resolution.** When the call errors rather than returning a clean result, retry once; on a second failure stop and say the exemptions could not be read. Never hand off a resolution derived from data that did not arrive — the consuming skill cannot tell the two apart. This is stated here rather than left to a caller's preamble, because an atom is loaded standalone and composed by skills that have their own.
+
 Hand off: `exempted_category_keys`, the remaining total, `resolution: confirmed | none_exempted`.
 
 Verify before moving on: internal transfers were not offered; the selection was handed off as category keys and nothing else; every option showed its own amount; nothing was exempt by default; an all-exempt selection was reported as nothing measured rather than as zero.
