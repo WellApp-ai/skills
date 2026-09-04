@@ -6,6 +6,7 @@ placeholders:
   kinds: "bank, invoicing, accounting"
   required: "bank"
   internalCheck: true
+  connectingCounts: true
 ---
 
 The workspace is already pinned — pass its `workspace_id` on the call below; do not re-resolve it here.
@@ -20,7 +21,7 @@ For each of the requested kinds —
 1. `to_configure` or `disabled` → **missing**.
 2. `need_reconnect`, `error`, or `suspended` → **error** — offer `install_url` as a reconnect, not a first install.
 3. `enabled` with `last_successful_sync_at` set → **connected** (note "data may be partial" if `sync_in_progress: true`).
-4. Otherwise (`enabled` or `processing`, no successful sync yet) → **connecting** — treat as connected for the run.
+4. Otherwise (`enabled` or `processing`, no successful sync yet) → **connecting** —{{#if (eq connectingCounts false)}} stop and ask the user to wait for the first sync.{{else}} treat as connected for the run.{{/if}}
 
 At least one **connected** row for a kind → connected, and name any **error** row for that same kind alongside it (a live connector does not cancel a dead one). Only **connecting** rows → connecting. Only **error** rows → error, name the connector, offer the reconnect link. No qualifying row → missing, including a `to_configure` row the user started but never finished.
 
