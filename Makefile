@@ -30,6 +30,7 @@ validate:
 	node scripts/check-skill-frontmatter.js
 	node scripts/compile.mjs --check
 	node scripts/check-content-size.mjs
+	node scripts/check-catalog.mjs
 
 # atoms/<name>/CONTENT.md and src/<name>.hbs.md are the source; this renders
 # them into atoms/<name>/SKILL.md (a dev-only test artifact, gitignored — load

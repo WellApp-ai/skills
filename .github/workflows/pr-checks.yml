@@ -35,6 +35,9 @@ jobs:
       - name: Atoms and compiled skills are current
         run: node scripts/compile.mjs --check
 
+      - name: Catalogue and flow map are consistent
+        run: node scripts/check-catalog.mjs
+
       # Every skill the plugin distributes must exist, and every skill directory must be
       # distributed. A directory added without its manifest entry ships to nobody.
       - name: Distributed skills match the directory

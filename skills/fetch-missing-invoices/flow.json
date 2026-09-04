@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "skill": "fetch-missing-invoices",
+  "steps": [
+    {
+      "step": 1,
+      "title": "Workspace",
+      "brick": "define-workspace",
+      "purposePhrase": "to fetch the invoices you are missing for a month"
+    },
+    {
+      "step": 2,
+      "title": "Period",
+      "brick": "define-period",
+      "purposePhrase": "to read the gaps for the month you choose",
+      "atomProps": {
+        "mode": "select",
+        "bankState": "",
+        "showCloseReadiness": false
+      }
+    },
+    {
+      "step": 3,
+      "title": "Bank (only when the workspace or a selected month holds no bank transaction)",
+      "brick": "connect-bank",
+      "purposePhrase": "to bring in the bank transactions the month is missing"
+    },
+    {
+      "step": 4,
+      "title": "Counterparty categorization",
+      "brick": "categorize-counterparties",
+      "purposePhrase": "to sort out who you paid before the gaps can be read"
+    },
+    {
+      "step": 5,
+      "title": "Gap list, vendor pick and close",
+      "brick": "show-missing-invoices",
+      "purposePhrase": "to see which supplier invoices are still missing for the month"
+    },
+    {
+      "step": 6,
+      "title": "Connect the services behind the picked vendors",
+      "brick": "connect-tools",
+      "purposePhrase": "to connect the services behind the vendors you picked",
+      "atomProps": {
+        "internalCheck": false
+      },
+      "brickSource": "skill_workflow"
+    },
+    {
+      "step": 7,
+      "title": "Preview what would be fetched",
+      "brick": "deploy-agents",
+      "purposePhrase": "to see what Well would fetch for the vendors you picked"
+    }
+  ]
+}

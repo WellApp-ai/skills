@@ -117,6 +117,33 @@ step for walking `next.step`. The generator then runs `make compile`, which appe
 house voice atom every shipped skill carries. Add the new slug to
 `.claude-plugin/plugin.json` and to the tables above before you ship it.
 
+### The catalogue and the flow map
+
+`catalog.json`, at the root of this repository, lists the skills the Well MCP server
+serves. Each entry gives the kind of the skill and the path to its `SKILL.md`. A brick
+also gives the path to its atom, and a flow gives the path to its flow map.
+
+The flow map is `skills/<flow>/flow.json`. It holds the steps of the flow in order: the
+number of the step, its title, the brick that owns it, the purpose phrase the brick
+receives, and the atom props the step pins. The title of a step must equal the
+`### Step N — ` heading of the same step in the `SKILL.md` of the flow.
+
+Two markers tell the server which prose to drop when it serves one step. Both are HTML
+comments, so a reader of the shipped skill never sees them:
+
+- `<!-- well:bans -->` and `<!-- /well:bans -->` enclose the tool bans of the `## Tooling`
+  section. The server serves the first paragraph of that section and these bans, and drops
+  the rest.
+- `<!-- well:inline-fallback -->` and `<!-- /well:inline-fallback -->` enclose an inline
+  fallback. A standalone install follows the fallback. The server drops it, because every
+  brick is available over the server.
+
+The server strips everything between a pair of markers, so write nothing else there.
+
+The server reads `catalog.json` and the flow map from this repository, at the ref it is
+configured with. `make validate` runs `scripts/check-catalog.mjs`, which checks the paths,
+the numbers of the steps, the titles, and the markers.
+
 ## Installation
 
 ### Assisted by AI (Recommended)

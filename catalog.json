@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "skills": {
+    "fetch-missing-invoices": {
+      "kind": "flow",
+      "skill": "skills/fetch-missing-invoices/SKILL.md",
+      "flow": "skills/fetch-missing-invoices/flow.json"
+    },
+    "define-workspace": {
+      "kind": "brick",
+      "skill": "skills/define-workspace/SKILL.md",
+      "atom": "atoms/define-workspace/CONTENT.md"
+    },
+    "define-period": {
+      "kind": "brick",
+      "skill": "skills/define-period/SKILL.md",
+      "atom": "atoms/define-period/CONTENT.md"
+    },
+    "connect-bank": {
+      "kind": "brick",
+      "skill": "skills/connect-bank/SKILL.md",
+      "atom": "atoms/connect-bank/CONTENT.md"
+    },
+    "categorize-counterparties": {
+      "kind": "brick",
+      "skill": "skills/categorize-counterparties/SKILL.md",
+      "atom": "atoms/categorize-counterparties/CONTENT.md"
+    },
+    "show-missing-invoices": {
+      "kind": "brick",
+      "skill": "skills/show-missing-invoices/SKILL.md",
+      "atom": "atoms/show-missing-invoices/CONTENT.md"
+    },
+    "connect-tools": {
+      "kind": "brick",
+      "skill": "skills/connect-tools/SKILL.md",
+      "atom": "atoms/connect-tools/CONTENT.md"
+    },
+    "deploy-agents": {
+      "kind": "brick",
+      "skill": "skills/deploy-agents/SKILL.md",
+      "atom": "atoms/deploy-agents/CONTENT.md"
+    }
+  }
+}
