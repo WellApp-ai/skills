@@ -48,7 +48,7 @@ The user may provide:
 - A workspace hint — an id, a workspace name, or the company behind it — if they manage more than one. This skill never picks a workspace itself.
 - A reporting period — a calendar year and month — to anchor a past window rather than the live one. This skill never infers a month from today's date; when the user has not named one, step 4 asks on a card.
 - A window length in months (default 3). Widen it to smooth a lumpy month, narrow it to react faster.
-- Categories or transaction types that are not spend for their business. Step 11 asks; nothing is exempt by default.
+- Categories that are not spend for their business. Step 11 asks; nothing is exempt by default. The exclusion is keyed on the category, so something the reader thinks of as a transaction type has to be exempted through the category those rows carry.
 
 ## Tooling
 
@@ -118,7 +118,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 12. **Anchor the window, then divide.** The window is the `trailing_months` months ending with the month step 4 pinned, where `trailing_months` is the window length from Inputs: the number the user named, or 3 when they named none. Sum the elected outflow across it with `well_sum_transactions({ from, to, axes: ["month", "currency"], exclude_internal_transfers: true, exempt_categories: [...] })`, then divide by the number of months IN the window — not by the number that carried spend.
     - **Convert before you add, then again before you divide.** The response comes back per month AND per currency, in native units. Apply step 9's rate to each month-currency subtotal, add the converted subtotals within a month to get that month's outflow, and only then divide across months. Adding native units first and converting the total is how a burn ends up denominated in nothing — and it is why step 2 gates the workspace on having a `base_currency` at all.
-    - **The outflow is the magnitude step 10 elected.** A signed feed's subtotal arrives negative; step 10 negated it. If a month's figure is negative, the negation was skipped and the answer is wrong.
+    - **The outflow is the subtotal step 10 elected, used as returned.** Both subtotals arrive as positive magnitudes, because the sum totals the absolute amount on each side. A negative month is therefore not a missing conversion — it means something re-signed a figure that was already a magnitude.
     - Keep the per-month series: it is what lets you say whether burn is rising or falling, and a month with no outflow belongs in it as a zero rather than being dropped.
     - `meta.partial: true` means the aggregate was cut short. Every figure is then a floor, and saying so is not optional. If the call itself errors, there is no figure: retry once, and on a second failure say the sum could not be read rather than reporting a total assembled from the groups that did come back.
 
@@ -131,7 +131,7 @@ Return:
 - The burn figure: amount, currency, and the window it covers.
 - The window's coverage when some months carried no spend — both numbers, and the fact that the average divides by the whole window.
 - **Which sign convention you elected, and the counts behind it.** A reader cannot check a figure whose direction was decided silently.
-- **What you excluded, in three named groups**: internal transfers (structural), the categories and types the reader exempted, and the rows dropped for an unreadable amount or currency. A single "some rows were excluded" hides the difference between a rule and a defect.
+- **What you excluded, in three named groups**: internal transfers (structural), the categories the reader exempted, and the rows dropped for an unreadable amount or currency. A single "some rows were excluded" hides the difference between a rule and a defect.
 - A confidence line from stage C's count: `unplaceable_count` against the window's `transaction_count` — how many rows could not be placed inside or outside the transfer rule, and so how much of the figure is certain.
 - A freshness line: the oldest sync behind the figure, from step 5.
 - A one-line pointer to `runway` for how long the cash lasts, and to `cost-structure` for what the spend is made of. Name them; do not answer them here.

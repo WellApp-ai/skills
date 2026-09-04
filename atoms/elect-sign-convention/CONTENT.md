@@ -11,7 +11,7 @@ So it is measured, never assumed{{#if purpose}} — "{{purpose}}"{{/if}}. It cos
 
 Read them over the whole window, not per month: one month of a signed feed can hold no negatives at all, and electing per month would flip conventions mid-window and total two different things together.
 
-- Negatives are a substantial share of the rows → the feed is **signed**. The outflow is the MAGNITUDE of `sum_negative`, so negate that subtotal before handing it on. It is a negative number and a burn is a magnitude: a negative average burn is the tell that this was skipped.
+- Negatives are a substantial share of the rows → the feed is **signed**, and the outflow is `sum_negative` as returned. It is already a positive magnitude: the sum totals the ABSOLUTE amount of the rows on each side, so neither subtotal is ever negative. Hand it on unchanged. Negating it would report a negative burn on every signed-feed workspace, which is most of them.
 - Almost no negatives, and positives throughout → the feed records **magnitude only**, and this sum cannot separate direction. Stop. The sum groups by month, currency and category, and none of those carries direction, so adding the two subtotals would total every row in the window and count customer payments and refunds as spend. Say that this feed keeps direction in a field the sum cannot filter on, and that the burn cannot be computed from it as things stand.
 - Neither shape is clear → say so and stop. A convention elected from ambiguous evidence produces a confident figure that may be inverted, which is worse than no figure.
 
@@ -19,4 +19,4 @@ State which convention you elected and the counts behind it, so a reader can che
 
 Hand off: `convention: signed | magnitude | ambiguous`, both counts, and — for a signed feed only — the outflow as a positive magnitude.
 
-Verify before moving on: the election came from counts rather than from a provider name or a field label; it was made once over the window; a signed subtotal was negated to a magnitude before hand-off; a magnitude-only feed stopped rather than totalling both subtotals; the choice and its evidence were both stated.
+Verify before moving on: the election came from counts rather than from a provider name or a field label; it was made once over the window; the elected subtotal was handed on unchanged rather than re-signed; a magnitude-only feed stopped rather than totalling both subtotals; the choice and its evidence were both stated.

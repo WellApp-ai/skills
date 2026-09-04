@@ -48,7 +48,7 @@ The user may provide:
 - A workspace hint — an id, a workspace name, or the company behind it — if they manage more than one. This skill never picks a workspace itself.
 - A reporting period — a calendar year and month — to anchor a past window rather than the live one. This skill never infers a month from today's date; when the user has not named one, step 4 asks on a card.
 - A window length in months (default 3). Widen it to smooth a lumpy month, narrow it to react faster.
-- Categories or transaction types that are not spend for their business. Step 11 asks; nothing is exempt by default.
+- Categories that are not spend for their business. Step 11 asks; nothing is exempt by default. The exclusion is keyed on the category, so something the reader thinks of as a transaction type has to be exempted through the category those rows carry.
 
 ## Tooling
 
@@ -352,7 +352,7 @@ So it is measured, never assumed — "before any outflow is totalled". It costs 
 
 Read them over the whole window, not per month: one month of a signed feed can hold no negatives at all, and electing per month would flip conventions mid-window and total two different things together.
 
-- Negatives are a substantial share of the rows → the feed is **signed**. The outflow is the MAGNITUDE of `sum_negative`, so negate that subtotal before handing it on. It is a negative number and a burn is a magnitude: a negative average burn is the tell that this was skipped.
+- Negatives are a substantial share of the rows → the feed is **signed**, and the outflow is `sum_negative` as returned. It is already a positive magnitude: the sum totals the ABSOLUTE amount of the rows on each side, so neither subtotal is ever negative. Hand it on unchanged. Negating it would report a negative burn on every signed-feed workspace, which is most of them.
 - Almost no negatives, and positives throughout → the feed records **magnitude only**, and this sum cannot separate direction. Stop. The sum groups by month, currency and category, and none of those carries direction, so adding the two subtotals would total every row in the window and count customer payments and refunds as spend. Say that this feed keeps direction in a field the sum cannot filter on, and that the burn cannot be computed from it as things stand.
 - Neither shape is clear → say so and stop. A convention elected from ambiguous evidence produces a confident figure that may be inverted, which is worse than no figure.
 
@@ -360,7 +360,7 @@ State which convention you elected and the counts behind it, so a reader can che
 
 Hand off: `convention: signed | magnitude | ambiguous`, both counts, and — for a signed feed only — the outflow as a positive magnitude.
 
-Verify before moving on: the election came from counts rather than from a provider name or a field label; it was made once over the window; a signed subtotal was negated to a magnitude before hand-off; a magnitude-only feed stopped rather than totalling both subtotals; the choice and its evidence were both stated.
+Verify before moving on: the election came from counts rather than from a provider name or a field label; it was made once over the window; the elected subtotal was handed on unchanged rather than re-signed; a magnitude-only feed stopped rather than totalling both subtotals; the choice and its evidence were both stated.
 
     - Before the exemptions, not after. Step 11 shows each candidate category's share of the window's outflow, and there is no outflow to apportion until the sign that means "leaving" is settled.
 
@@ -390,7 +390,7 @@ Verify before moving on: internal transfers were not offered; the selection was 
 
 12. **Anchor the window, then divide.** The window is the `trailing_months` months ending with the month step 4 pinned, where `trailing_months` is the window length from Inputs: the number the user named, or 3 when they named none. Sum the elected outflow across it with `well_sum_transactions({ from, to, axes: ["month", "currency"], exclude_internal_transfers: true, exempt_categories: [...] })`, then divide by the number of months IN the window — not by the number that carried spend.
     - **Convert before you add, then again before you divide.** The response comes back per month AND per currency, in native units. Apply step 9's rate to each month-currency subtotal, add the converted subtotals within a month to get that month's outflow, and only then divide across months. Adding native units first and converting the total is how a burn ends up denominated in nothing — and it is why step 2 gates the workspace on having a `base_currency` at all.
-    - **The outflow is the magnitude step 10 elected.** A signed feed's subtotal arrives negative; step 10 negated it. If a month's figure is negative, the negation was skipped and the answer is wrong.
+    - **The outflow is the subtotal step 10 elected, used as returned.** Both subtotals arrive as positive magnitudes, because the sum totals the absolute amount on each side. A negative month is therefore not a missing conversion — it means something re-signed a figure that was already a magnitude.
     - Keep the per-month series: it is what lets you say whether burn is rising or falling, and a month with no outflow belongs in it as a zero rather than being dropped.
     - `meta.partial: true` means the aggregate was cut short. Every figure is then a floor, and saying so is not optional. If the call itself errors, there is no figure: retry once, and on a second failure say the sum could not be read rather than reporting a total assembled from the groups that did come back.
 
@@ -403,7 +403,7 @@ Return:
 - The burn figure: amount, currency, and the window it covers.
 - The window's coverage when some months carried no spend — both numbers, and the fact that the average divides by the whole window.
 - **Which sign convention you elected, and the counts behind it.** A reader cannot check a figure whose direction was decided silently.
-- **What you excluded, in three named groups**: internal transfers (structural), the categories and types the reader exempted, and the rows dropped for an unreadable amount or currency. A single "some rows were excluded" hides the difference between a rule and a defect.
+- **What you excluded, in three named groups**: internal transfers (structural), the categories the reader exempted, and the rows dropped for an unreadable amount or currency. A single "some rows were excluded" hides the difference between a rule and a defect.
 - A confidence line from stage C's count: `unplaceable_count` against the window's `transaction_count` — how many rows could not be placed inside or outside the transfer rule, and so how much of the figure is certain.
 - A freshness line: the oldest sync behind the figure, from step 5.
 - A one-line pointer to `runway` for how long the cash lasts, and to `cost-structure` for what the spend is made of. Name them; do not answer them here.
