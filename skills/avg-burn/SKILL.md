@@ -398,7 +398,7 @@ Verify before moving on: internal transfers were not offered; the selection was 
 13. **Put the figure on the card.** Call `well_render_burn` with the amount, the currency, the window, both month counts, the convention and the counts it was elected from, the row and unplaceable counts, and the three exclusion groups. Every one of those is a figure this stage already produced — the tool requires them because a number whose method is not stated cannot be checked, and it refuses rather than renders when one is missing.
     - **Render once, after the answer is settled.** The card is the last thing the run does, not a step it passes through, and a turn never draws two.
     - **A refusal is a finding, not a retry.** The tool rejects a negative amount, a magnitude feed, coverage wider than its window, a divisor that disagrees with the window, and `signed` elected from no negative rows. Each of those means this stage got something wrong, so read the message and fix the computation rather than restating the call.
-    - The badge on the card says the figure is not Well's own. That is correct and must not be argued with in the prose beside it: the number IS this skill's, computed under the policy stated here.
+    - The card states the method beside the figure rather than disclaiming it. Do not add a caveat about whose number it is: Well derives no burn of its own, so this figure is Well's, computed under the policy stated here.
 
 **Not in this skill.** Grouping the answer by company `[17]` or by category `[18]` is `cost-structure`'s job — name it rather than answering it here.
 
