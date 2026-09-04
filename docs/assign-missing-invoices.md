@@ -7,16 +7,16 @@
 
 # Assign Missing Invoices
 
-**Sort out who owns the card expenses that still have no invoice — before you close the month.**
+**Sort out who owns the expenses that still have no invoice — before you close the month.**
 
 ## What it does
 
-When card spend has settled but its supplier invoice is still missing, someone has to own getting it. This skill lists the cards whose expenses have no invoice for a month, split into what nobody owns yet and what is already yours, and lets you assign an owner to a card straight from the card. Assigning is a per-card, recurring choice: the owner covers everything that card pays going forward, not one transaction, and Well moves any invoice it is already chasing for that card to the new owner. It sorts ownership only — it never fetches or collects the documents, and it never closes the period. Owners are people already in the workspace.
+When spend has settled but its supplier invoice is still missing, someone has to own getting it. This skill lists the expense lines that have no invoice for a month, split into what nobody owns yet, what is already yours, and what is owned by others, and lets you assign a set of owners to a line — or to several lines at once — straight from the card. Assignment is per transaction and the owner is a set of people: picking owners on a line replaces its owner set, and each month is assigned fresh. Assigning a vendor's month to several people holds one task per owner, and one supplier invoice resolves every owner's task for that gap. It sorts ownership only — it never fetches or collects the documents, and it never closes the period. Owners are people already in the workspace.
 
 ## Required data in Well
 
-- **Banking connector** — required. Card spend comes from the bank feed, so with no bank connected there is nothing to assign; the skill routes you to connect one first.
-- A completed month with card transactions — required. A month with no card expenses missing an invoice has nothing to assign (which is not the same as the month being closed).
+- **Banking connector** — required. The missing-invoice lines come from the bank feed, so with no bank connected there is nothing to assign; the skill routes you to connect one first.
+- A completed month with settled transactions — required. A month with no expenses missing an invoice has nothing to assign (which is not the same as the month being closed).
 
 ---
 
