@@ -11,12 +11,16 @@
 
 ## What it does
 
-Ask your AI assistant what your burn rate is, and it reports the trailing average of your real monthly outflows — internal transfers excluded, currencies already converted. You also get the window it measured and how many of those months actually carried spend, because an average over a quiet month is not the same as a typical month.
+Ask your AI assistant what your burn rate is, and it reports the trailing average of your real monthly outflows — internal transfers excluded, currencies converted, and every month in the window counted in the divisor.
+
+It computes the figure rather than reading it off a black box, which means you can see what it rests on. Each check runs in the open: the connection, whether the syncs actually finished, whether your accounts are attached to companies you own, whether the window's transactions are categorized. A check that fails **stops** and shows you what to fix, with the number of rows and the amount at stake, instead of reporting a figure with a caveat you would have to notice.
+
+You also choose what does not count. Internal transfers leave the figure automatically, by a structural rule rather than a label; anything else your business does not treat as spend, you exempt yourself, with each option showing what it removes.
 
 ## Required data in Well
 
 - **Banking connector** — *required.* This is where your real outflows come from.
-- **Accounting connector** — optional. Improves coverage where spend runs through your ledger rather than your bank.
+- **Accounting settings** — *required.* Only the base currency, so amounts can be converted.
 
 ---
 
