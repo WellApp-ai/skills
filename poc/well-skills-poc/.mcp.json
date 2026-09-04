@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "well-poc": {
+      "type": "http",
+      "url": "http://localhost:8280/v1/mcp"
+    }
+  }
+}

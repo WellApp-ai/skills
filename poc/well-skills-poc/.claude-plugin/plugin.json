@@ -1,0 +1,33 @@
+{
+  "name": "well-skills-poc",
+  "description": "Stub build of Well's missing-invoice flow skills. Each skill is a pointer: the instructions come from Well's MCP server at run time, so they stay current without a reinstall.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Well App, Inc."
+  },
+  "homepage": "https://wellapp.ai",
+  "keywords": [
+    "finance",
+    "invoicing",
+    "connectors",
+    "mcp",
+    "well",
+    "poc"
+  ],
+  "skills": [
+    "./skills/categorize-counterparties",
+    "./skills/connect-bank",
+    "./skills/connect-tools",
+    "./skills/define-period",
+    "./skills/define-workspace",
+    "./skills/deploy-agents",
+    "./skills/fetch-missing-invoices",
+    "./skills/show-missing-invoices"
+  ],
+  "mcpServers": {
+    "well-poc": {
+      "type": "http",
+      "url": "http://localhost:8280/v1/mcp"
+    }
+  }
+}

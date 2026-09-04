@@ -1,0 +1,12 @@
+{
+  "name": "wellapp-poc",
+  "owner": { "name": "Well App, Inc." },
+  "description": "Stub build of Well's missing-invoice flow skills, served from Well's MCP server at run time.",
+  "plugins": [
+    {
+      "name": "well-skills-poc",
+      "source": "./",
+      "description": "Stub build of Well's missing-invoice flow skills. Each skill is a pointer: the instructions come from Well's MCP server at run time, so they stay current without a reinstall."
+    }
+  ]
+}
