@@ -43,8 +43,9 @@ you have to describe it correctly when the user asks what it counts:
 - **Card and loan legs are excluded.** Card spend counts on the date its repayment leaves the
   bank account, so a window can look low simply because the repayment falls outside it.
 - **FX is applied before summing**, into the workspace's base currency.
-- **The window is anchored to the last closed month that carries data**, not to today, so a
-  mid-month run does not report a partial month as a full one.
+- **The window's anchor is the month step 3 asked for, never today's date.** `define-period`
+  refuses to offer a month that hasn't ended, so a mid-month run can't report a partial month
+  as a full one.
 
 ## When not to use this skill
 
@@ -60,7 +61,7 @@ Do not use this skill when:
 The user may provide:
 
 - A workspace hint — an id, a workspace name, or the company behind it — if they manage more than one. This skill never picks a workspace itself.
-- A reporting period — a calendar year and month — to measure a past window rather than the live one. Both or neither: a month with no year, or a year with no month, is refused rather than guessed.
+- A reporting period — a calendar year and month — to anchor a past window rather than the live one. This skill never infers a month from today's date; when the user hasn't named one, step 3 asks on a card rather than silently defaulting.
 - A window length in months (default 3). Widen it to smooth a lumpy month, narrow it to react faster.
 
 ## Tooling
@@ -69,8 +70,11 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 - `well_list_workspaces` — how the workspace step below resolves the workspace.
 - `well_get_burn` — the authoritative trailing average monthly burn, plus `trailing_months`, `months_in_window` and `months_with_data`. Call this directly; do not sum or group `transactions` yourself, and do not read the `avg_burn` field nested in `well_get_runway` instead — that one is pinned to the runway's own window and cannot be widened.
-- `well_query_records` — the data-freshness read in step 3, and nothing else. Step 2 reads connector state through `well_list_connectors` alone; a `well_query_records` call on `workspace_connectors` bypasses that logic and the step checks that it did not happen.
+- `well_query_records` — the data-freshness read in step 4, plus the period-activity probe `define-period`'s step 3 runs on `transactions` when the bank state is connected. Step 2 reads connector state through `well_list_connectors` alone; a `well_query_records` call on `workspace_connectors` bypasses that logic and the step checks that it did not happen.
 - `well_list_connectors` — how the connection step below surfaces install links.
+- `well_list_periods` — how the period step below renders the anchor-month picker when the user hasn't named one. Reads `purpose: "analysis"` so the card offers only months this skill can actually report on, with no invoice or close-readiness axis painted beside them.
+- `well_switch_workspace` — writes the picked month server-side; also how the workspace step resolves a named workspace hint.
+- `well_wait_for_selection` — how the period step resumes once the picker card is clicked, when the next message needs the period but isn't itself the pick.
 - Well's OAuth / Dynamic Client Registration (DCR) flow — driven by step 1. Most hosts trigger it automatically when the Well MCP server is added; if your host exposes a dedicated `authenticate` tool for the Well connector, step 1 calls it.
 
 ## Workflow
@@ -152,16 +156,66 @@ Verify before moving on: `well_list_connectors` was the only connector-listing t
    - `coverage: partial` → carry on with what is connected, and keep the missing kinds for the coverage disclosure the Output requirements ask for.
    - A kind the user chose to skip comes back under `skipped_by_user` — respect that and don't re-ask for it in this run.
 
-3. **Verify the data itself has landed.** Coverage reports connections, not rows — a connector can be connected and still have delivered nothing this skill can use. Spot-check what this skill actually reads: for each connected connector, the latest `workspace_connector_sync_logs` row's `status` and `completed_at`. Keep those timestamps — a connector that has not synced in weeks makes the figure stale rather than wrong. `well_get_burn` returning `unavailable: true` in the next step is the other half of this check.
+3. **Ask which month anchors the figure.** 
+The workspace is already pinned — pass its `workspace_id`, and `fiscal_year_start_month` from its hand-off (default `1`, calendar-aligned, and say so when it was null), on every call below.
 
-4. **Get the burn.** Call `well_get_burn()`. Pass `year` and `month` only if the user named a past period, and `months_back` only if they asked for a different window. It returns `amount` (a positive magnitude, not a signed figure), `currency`, and the window metadata:
+
+Reuse a selection this conversation already wrote: when the session holds `selected_periods` that THIS conversation itself established (its own card click or typed months) and it holds exactly one month and the user isn't asking to change the month, use it silently and skip straight to computing coordinates. A written selection carrying more than one month belongs to an earlier, different-purpose call in this same conversation — it is not a fit for a single-month pick, so fall through to the hint and picker below rather than silently anchoring on its first entry. A `selected_periods` present at conversation start that this conversation didn't write is another conversation's leftover — ignore it, never mention it, and resolve as if unset.
+
+Read the hint before anything else — a hint that resolves is written server-side at once via `well_switch_workspace({ periods: [...] })`:
+- A month plus a year ("2026-03", "March 2026") → that month, `resolution: hint_matched`.
+- A bare month name ("March") → the most recent occurrence that has already ended — say which year you took.
+- "last month" → the last complete month. "this month" / the running month or later → refuse it the same way as a future month, and name the last complete month instead. Every month this routine pins has ended.
+- Several months ("March and April", "Q1") → refuse in one line — a report anchors on a single month — name the months you read, and ask which one to take.
+
+With no usable hint, end the turn on the picker: call `well_list_periods({ workspace_id, purpose: "analysis" })` when it's in your toolset (its result renders the period picker card, single-select — one month anchors the figure being reported, don't restate the months under it). End with one line — pick the month on the card, "to measure your average monthly burn" — and stop. When the tool is absent, propose the last complete month in one line and ask to confirm or name another. If the pick comes back with more than one month, refuse in one line and ask which to keep.
+
+Resolve the next message, in this order: the card's prefill ("Work on <Month Year>...") → the click already wrote it, acknowledge in half a sentence, `resolution: user_picked`; a typed month or months → more than one is refused the same way as a multi-month hint — take a single month, or ask which one; one month resolves and writes with `well_switch_workspace({ periods })`, `resolution: user_picked`; any other message needing the period → `well_wait_for_selection({ kind: "periods", timeout_s: 10 })` once, `selected` continues, `no_selection_yet` asks once more and stops; a decline ("later") → `resolution: unresolved`, say nothing was pinned, stop.
+
+For each selected month, compute `date_range` (first day to real last day, leap years included), `is_complete: true` (always true here — a month that hadn't ended was refused earlier), and the fiscal coordinate — exactly this formula, never improvised, since it's the same arithmetic Well applies server-side:
+
+```
+fiscal_period = ((calendar_month - fiscal_year_start_month + 12) % 12) + 1
+fiscal_year   = calendar_month >= fiscal_year_start_month ? calendar_year : calendar_year - 1
+```
+
+Then set `has_activity` once for the whole selection. When the bank state passed in is `missing` or `error`, no settled activity can have landed — set `unknown` and skip the probe. When it is `connected`, run the probe below; on any other value, treat it the same as absent. When the probe runs: call `well_get_schema({ root: "transactions" })` once per session, then one `well_query_records` on `transactions` (`workspace_id`, `limit: 1`) ranging `executed_at` over the selected months' own intervals only — one interval per run of consecutive months, `_or`-ed together, never one span from earliest to latest (a March-plus-May pick must never report April's activity). At least one row → `true`. Zero rows → `false` only when the bank state was `connected`; otherwise (or on a failed read) → `unknown` — never report `false` when you couldn't actually tell.
+
+Never call `well_start_close` or any close/lock/posting tool — this routine only reads and writes the period selection.
+
+Emit the hand-off:
+
+```yaml
+periods:
+  - calendar_year: <int>
+    calendar_month: <1-12>
+    fiscal_year: <int>
+    fiscal_period: <1-12>
+    label: <text>
+    date_range: { from: <YYYY-MM-DD>, to: <YYYY-MM-DD> }
+    is_complete: true
+period_label: <text — dash for consecutive months, "and" when the selection skips one>
+has_activity: <true|false|unknown>
+resolution: single | hint_matched | user_picked | unresolved
+```
+
+On `unresolved`, every other key is null/empty.
+
+Verify before moving on: no `well_switch_workspace` call here ever pinned a workspace — every call carried `periods`, none named a workspace to pin; a month that hadn't ended was refused, never pinned; `fiscal_period`/`fiscal_year` came from the formula for every month, period 13 never produced. `has_activity` was `false` only behind a `connected` feed and an empty probe, `unknown` on anything else including a missing/absent `bankState`; the probe ranged `executed_at` alone, over the selection's own intervals, never across a gap it doesn't cover. `well_list_periods` carried `purpose: "analysis"` on the call, a multi-month pick or typed multi-month answer was refused at every entry point exactly as `collect` mode does, and the `periods` list in the hand-off carried exactly one entry rather than the general multi-select shape.
+
+   - `resolution: unresolved` → stop; nothing was pinned, so there is no window to measure — say so and don't call `well_get_burn`.
+   - Otherwise, keep `periods[0].calendar_year` and `periods[0].calendar_month` — the single anchor month the next two steps use. This replaces the old silent default of "the last closed month that carries data": the anchor is now always an explicit pick, by hint or by card, never inferred from today's date.
+
+4. **Verify the data itself has landed.** Coverage reports connections, not rows — a connector can be connected and still have delivered nothing this skill can use. Spot-check what this skill actually reads: for each connected connector, the latest `workspace_connector_sync_logs` row's `status` and `completed_at`. Keep those timestamps — a connector that has not synced in weeks makes the figure stale rather than wrong. `well_get_burn` returning `unavailable: true` in the next step is the other half of this check.
+
+5. **Get the burn.** Call `well_get_burn({ year: <step 3's calendar_year>, month: <step 3's calendar_month> })`, plus `months_back` only if the user asked for a different window than the default. It returns `amount` (a positive magnitude, not a signed figure), `currency`, and the window metadata:
    - **This is the only analytics tool this skill calls.** `well_get_burn`'s response carries every figure this answer states. Never call `well_get_runway`, `well_get_cost_structure`, `well_get_cash_forecast`, `well_get_cash_flow_bridge` or `well_get_cash_position` to source anything here — not a comparison, not a series, not one number in a sentence. Each draws its own card, so a second call renders a second block answering a question nobody asked. `well_get_runway`'s nested `avg_burn` is doubly out of bounds: it is pinned to the runway's own window. A figure this payload does not carry belongs to another skill — name it. That forbids enriching THIS answer, not answering a second question the user actually asked.
    - `unavailable: true` → `amount` is a placeholder, not a measurement. A burn of zero standing on nothing measured is not a reading — say so instead of reporting €0 of spend, and treat this as the fallback below.
    - `partial: true` → individual transactions were excluded from an otherwise real figure (e.g. a missing FX rate). Disclose the `excluded` count and any `hints`.
    - `months_with_data` lower than `months_in_window` → the average still divides by every month in the window. State both numbers. A workspace with spend in 2 of 3 months has a real average over 3 months, NOT the typical monthly outflow, and reporting it as the latter overstates how little is going out.
    - `change` / `trend`, when present, are the month-over-month movement. `trend` is good/bad polarity rather than raw sign — a rising burn is `"down"`.
 
-5. **If the tool call errors, or returns `unavailable: true`**, do not guess a figure. If the failure is transient (a network/timeout error on the MCP call itself), retry once before falling back. If it errors again or stays unavailable, the fallback is: (a) state the fallback question plainly in your reply ("What's our burn rate?"), (b) say plainly that it cannot be measured yet rather than estimating, and (c) link the user to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can ask it there directly.
+6. **If the tool call errors, or returns `unavailable: true`**, do not guess a figure. If the failure is transient (a network/timeout error on the MCP call itself), retry once before falling back. If it errors again or stays unavailable, the fallback is: (a) state the fallback question plainly in your reply ("What's our burn rate?"), (b) say plainly that it cannot be measured yet rather than estimating, and (c) link the user to their workspace in Well (`<well-app-base-url>/workspaces/<workspace_id>`) so they can ask it there directly.
 
 ## Output requirements
 
@@ -187,7 +241,8 @@ Before finishing, verify:
 
 - If `well_*` tools weren't available at all, the user was pointed at the MCP endpoint (`https://api.wellapp.ai/v1/mcp`) instead of erroring silently.
 - The workspace came from `define-workspace`'s hand-off, and its `workspace_id` rode every `well_*` call rather than being left off.
-- Connection state came from `connect-tools`' hand-off, and data freshness was read separately in step 3; a connected connector was never assumed to mean usable data had landed.
+- Connection state came from `connect-tools`' hand-off, and data freshness was read separately in step 4; a connected connector was never assumed to mean usable data had landed.
+- The anchor month came from `define-period`'s hand-off, never inferred from today's date and never left for `well_get_burn` to default silently — `year`/`month` rode the call every time, not "only when the user named a period."
 - The figure came straight from `well_get_burn`, not summed from `transactions` and not lifted out of `well_get_runway`'s nested `avg_burn`.
 - The window (`trailing_months`) is stated, not left implicit.
 - If the user asked what the figure counts, the divisor was described as the whole window and the transfer exclusion as structural — never as something a recategorization would change.
@@ -206,7 +261,7 @@ Before finishing, verify:
 
 ### Expected behavior
 
-Pin the workspace, confirm connections, check freshness, call `well_get_burn()`, and answer with the amount, the currency, and the trailing window — e.g. "You're burning about €13,400 a month, averaged over the last 3 full months." Add the coverage line if the window has dark months, then point at `runway` and `cost-structure` without answering either.
+Pin the workspace, confirm connections, ask which month anchors the figure (a card, since none was named), check freshness, call `well_get_burn({ year, month })` with that month, and answer with the amount, the currency, and the trailing window — e.g. "You're burning about €13,400 a month, averaged over the last 3 full months through June 2026." Add the coverage line if the window has dark months, then point at `runway` and `cost-structure` without answering either.
 
 ### Example request
 
@@ -214,7 +269,7 @@ Pin the workspace, confirm connections, check freshness, call `well_get_burn()`,
 
 ### Expected behavior
 
-Call `well_get_burn({ months_back: 6 })`. Report the wider average and, if `months_with_data` is still below `months_in_window`, say how many months of the six actually carried spend and that the average divides by all six. The user's instinct is the thing this metadata exists to confirm or correct, so answer it directly rather than only restating the new figure.
+This conversation already picked an anchor month, so step 3 reuses it silently rather than showing the card again. Call `well_get_burn({ year, month, months_back: 6 })` with that same anchor. Report the wider average and, if `months_with_data` is still below `months_in_window`, say how many months of the six actually carried spend and that the average divides by all six. The user's instinct is the thing this metadata exists to confirm or correct, so answer it directly rather than only restating the new figure.
 
 ## Voice
 
