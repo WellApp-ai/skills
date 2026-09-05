@@ -1,6 +1,6 @@
 ---
 name: close-books
-requires: [define-workspace, confirm-my-company, connect-bank, connect-tools, accounting-settings, define-period]
+requires: [define-workspace, confirm-my-company, connect-bank, connect-accounting, connect-tools, accounting-settings, define-period]
 description: Drive a month-end close for a Well workspace to the point of approval — start the close for a named month, read what is blocking it, clear the blockers one at a time, prepare the close package, and mint the approval offer the user accepts in the Well app. Use when the user asks to "close the books", "close last month", "run the month-end close", "close March", "finish the close", or "what's left to close the period". This is a WRITE flow — it advances a real close run and can resolve tasks, so it shows the state before every step and asks first before retrying reconciliation or queuing a vendor invoice fetch, the two that need an explicit yes. It never locks the period itself; the final approval is a first-party click in Well by design. Requires a connected Well workspace with its bank synced — the only connection the close blocks on; an accounting connection is optional and makes the close richer. If none, it walks the user through connecting first.
 ---
 
@@ -88,7 +88,7 @@ user to add it at that URL, then retry. The close tools, and what each one does:
 - `well_get_schema` — call before reading any records root for the first time in a session; field
   names are workspace- and connector-dependent, never assume them.
 
-**Composed skills.** Six atomic Well skills own the setup this flow walks — invoke them in the order
+**Composed skills.** Seven atomic Well skills own the setup this flow walks — invoke them in the order
 below, don't reimplement them. The order mirrors the Well app's close flow so the chat and the app
 feel like one product. Only three things must be true **before `well_start_close`** — the own company
 is set, the fiscal year start is set, and the calendar month is named. The rest is ordered for parity
@@ -108,11 +108,18 @@ chosen, in any order.
   blocker to clear later, never a start refusal. **This flow gates it: an already-connected bank is
   skipped with a one-line note rather than re-shown as a connect card** (step 3) — `connect-bank`
   itself stays idempotent; the skip is decided here from a coverage read, not inside the brick.
-- `connect-tools` — connects the accounting (and invoicing) side. **The close never blocks on a
+- `connect-accounting` — connects the accounting side. **The close never blocks on a
   missing accounting tool**, so this step is for parity with the app and richer data, not a close
   prerequisite. Walk it, but never gate the close on it. **Same gate as the bank: an already-connected
   accounting tool is skipped with a note, and when it is missing, the connect card carries close-context
-  wording** (step 4) — the brick stays idempotent, the gate and the wording live here.
+  wording** (step 4) — the brick stays idempotent, the gate and the wording live here. Its card shares
+  the `connectors` acknowledgment slot; inside this close it is the only connectors-family card, so its
+  `connect_ack` read is unambiguous.
+- `connect-tools` — the multi-kind connector brick. The close does not run its flow-step card; it uses
+  it only for the one `internal_check` coverage read in step 3 (bank + accounting + invoicing in one
+  turn, no stop), and as the inline fallback for the accounting connect step when `connect-accounting`
+  is not installed. Invoicing is read there but not offered a connect card in the close — the close
+  never needs it.
 - `accounting-settings` — sets the workspace's `fiscal_year_start_month`. The close derives the
   fiscal period from it and an unset value falls back to January, so it must be set **before** the
   month is named, and it locks once a period closes. The app's flow places it after the connections
@@ -123,7 +130,7 @@ chosen, in any order.
   month **is** starting the close, so this flow passes the collected month straight into
   `well_start_close`.
 
-All six ship with the `well-skills` plugin. This skill is also installable on its own, so the
+All seven ship with the `well-skills` plugin. This skill is also installable on its own, so the
 workflow carries an inline fallback for each when it is absent.
 
 ## Workflow
@@ -138,8 +145,8 @@ company, the fiscal year start, and the named month are hard invariants, and the
 
 **This flow owns the order; the composed bricks do not.** Each brick ends its turn with its own
 "next step" suggestion, tuned for a standalone run or another flow — `define-workspace` points at
-`connect-tools`, `connect-bank` (with `define-period` installed) points at picking a month,
-`connect-tools` points back at the bank check. Those hints are superseded here: after any brick hands
+`connect-tools`, `connect-bank` (with `define-period` installed) points at picking a month, and
+`connect-accounting` deliberately points nowhere. Those hints are superseded here: after any brick hands
 back, always continue to the **next numbered step below**, never to where the brick pointed — so no
 step is skipped or re-run.
 
@@ -197,20 +204,26 @@ step is skipped or re-run.
 4. **Connect the accounting side only if it is missing.** Reuse step 3's coverage read — do not run a
    second `internal_check`.
    - **Accounting already connected** (an `input` `accounting` row `is_connected`, not `error`) →
-     **skip `connect-tools`.** Say so in one line — "Accounting connected: Pennylane" — and continue.
-     The close is never gated on accounting, so a redundant connect stop here only slows the user down.
-   - **Accounting missing** → run `connect-tools` (its default `flow_step`) with
-     `kinds: [accounting, invoicing]`, the pinned `workspace_id`, `required: []` (never required — the
-     close never blocks on a missing accounting tool), `purpose: "to close this workspace's books"`,
-     and **close-context card wording**: pass `title` / `subtitle` that name the close so the card
-     reads as part of it, not a generic connect prompt — e.g. `title: "Connect your accounting tool for
-     the close"`, `subtitle: "Optional. It makes the close richer, but the books close without it."`
-     Adapt the wording to the close here rather than leaving the catalog's default; the connect card
-     injects it. Walk it for parity and richer posted-ledger data, surface what is connected, and
-     continue — **the server never treats a missing accounting tool as a close blocker** (posting runs
-     on the standard chart of accounts), so never gate the close on it.
-   - If `connect-tools` isn't installed, read `well_list_connectors` and report the accounting /
-     invoicing coverage without blocking.
+     **skip `connect-accounting`.** Say so in one line — "Accounting connected — Pennylane" — and
+     continue. The close is never gated on accounting, so a redundant connect stop here only slows the
+     user down.
+   - **Accounting missing** → run `connect-accounting` (its default flow-step behaviour) with the
+     pinned `workspace_id`, `purpose: "to close this workspace's books"`, and **close-context card
+     wording**: pass `title` / `subtitle` that name the close so the card reads as part of it, not a
+     generic connect prompt — e.g. `title: "Connect your accounting tool for the close"`,
+     `subtitle: "Optional — it makes the close richer, but the books close without it."` `connect-accounting`
+     is accounting-only, single-select, and never required — it takes no `required` input and its card
+     shares the `connectors` acknowledgment slot (inside this close it is the only connectors-family
+     card, so its `connect_ack` is unambiguous). Walk it for parity and richer posted-ledger data,
+     surface what is connected, and continue — **the server never treats a missing accounting tool as a
+     close blocker** (posting runs on the standard chart of accounts), so never gate the close on it.
+     Take its typed `state` when the flow resumes. Invoicing is not offered a connect card here; its
+     state was already read in step 3 and the close never needs it.
+   - **If `connect-accounting` isn't installed**, fall back to `connect-tools` (its default `flow_step`)
+     scoped to `kinds: [accounting]`, `required: []`, same `workspace_id`, `purpose`, and close-context
+     `title` / `subtitle` — that is the same accounting card by another route. If `connect-tools` isn't
+     installed either, read `well_list_connectors({ kind: accounting })` yourself and report the
+     accounting coverage without blocking.
 
 5. **Set the fiscal year start — run `accounting-settings`.** The close derives the fiscal period from
    `fiscal_year_start_month`, and an unset value falls back to January, so it must be right **before**
