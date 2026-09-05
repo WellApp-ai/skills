@@ -61,6 +61,7 @@ This repo packages that judgment as **Agent Skills** — playbooks any AI assist
 | `show-missing-invoices` | "What am I missing for March?" — settled spend with no supplier invoice, one row per supplier, each row saying how the gap can be closed. | [View details →](docs/show-missing-invoices.md) |
 | `deploy-agents` | "Go get those invoices" — a preview of which invoice-fetching agents Well would launch, per provider, before any of them runs. | [View details →](docs/deploy-agents.md) |
 | `close-books` | "Close the books for last month" — drives the month-end close: starts the period, clears the blockers one at a time, prepares the package, and leaves the final lock as your one-click approval in Well. | [View details →](docs/close-books.md) |
+| `import-bank-statement` | "Import this bank statement" — turns a dropped-in CSV, XML, TXT, PDF, or image bank export into real, promoted transactions, matched and deduped, without a bank connector. | [View details →](docs/import-bank-statement.md) |
 
 ## Utils
 
@@ -128,6 +129,7 @@ Install the following official skills from Well. Instructions:
     x. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounting-settings/SKILL.md
     y. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/confirm-my-company/SKILL.md
     z. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/normalize-currency/SKILL.md
+    aa. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/import-bank-statement/SKILL.md
 2. Download and display the SKILL.md files to the user. Each must be named "SKILL.md" — no prefix, no suffix, exact name.
 3. Create a summary table with skill names and descriptions extracted from the frontmatter
 4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
@@ -209,6 +211,7 @@ Download the `.skill` file and double-click it to install — Claude Desktop ins
 | `show-missing-invoices` | Settled spend for a period that still has no supplier invoice, one row per supplier, with how each gap can be closed. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/show-missing-invoices.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/show-missing-invoices.zip) |
 | `deploy-agents` | Preview the invoice-fetching agents Well would launch for a period, without launching any. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/deploy-agents.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/deploy-agents.zip) |
 | `close-books` | Drive the month-end close to approval — start the period, clear the blockers, prepare the package, then lock it with your one-click approval in Well. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/close-books.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/close-books.zip) |
+| `import-bank-statement` | Turn a dropped-in CSV, XML, TXT, PDF, or image bank export into real, promoted transactions — matched and deduped, no bank connector required. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/import-bank-statement.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/import-bank-statement.zip) |
 
 **Utils** — each `.skill`/`.zip` above only bundles its own folder, so a util it depends on isn't included; download and install the util separately alongside it.
 
