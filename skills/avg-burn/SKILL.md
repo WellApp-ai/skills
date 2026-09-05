@@ -225,9 +225,9 @@ One `well_query_records` on `workspace_connector_sync_logs` for the connected co
 
 A sync still running → stop and say which connector, "before the burn is measured". Offer **Re-check** rather than a wait: nothing here polls, and a reader who watched the sync finish is the fastest signal there is.
 
-A latest sync older than 24 hours → stop, name the connector and the age, and offer both Re-check and the reconnect link. Stale data makes a figure old rather than wrong, and saying which it is matters more than the figure.
+A latest sync older than 24 hours → name the connector and the age, offer both Re-check and the reconnect link, and carry on. Stale data makes a figure old rather than wrong, and saying which it is matters more than blocking on it.
 
-Every connector finished and recent → hand the timestamps back and carry on.
+Every connector finished, whether recent or stale → hand the timestamps back and carry on.
 
 **Resuming.** The Re-check prefill names this step, so a run that comes back re-reads the sync logs alone and continues from here. It never re-enters at the workspace or the period: those were answered already, and asking twice reads as the routine having lost its place.
 
@@ -238,7 +238,7 @@ Hand off: per connector, its latest `status`, `completed_at`, and age in hours; 
 Verify before moving on: freshness came from the sync logs rather than from connector state; a running sync and a stale one were reported as different situations; the age was stated, not summarized as "recent".
 
    - A polling loop would sit here until every sync finalizes. This skill does not poll: it stops, and Re-check is how the reader drives it forward. A loop that waits on its own gives a reader nothing to do and no way to tell a slow sync from a stuck one.
-   - A connector step 3 passed through as `connecting` has no sync row at all, so it matches none of the branches above. Treat it as not yet landed: it stops the run the same way a stale sync does, and Re-check is the affordance.
+   - A connector step 3 passed through as `connecting` has no sync row at all, so it matches none of the branches above. Treat it as not yet landed: it stops the run the same way a still-running sync does, and Re-check is the affordance.
 
 6. **Confirm the window holds transactions.** `[11]` 
 The workspace and the window are already pinned, to measure your average monthly burn.
