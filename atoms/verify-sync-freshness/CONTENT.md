@@ -12,9 +12,9 @@ One `well_query_records` on `workspace_connector_sync_logs` for the connected co
 
 A sync still running → stop and say which connector, {{#if purpose}}"{{purpose}}"{{/if}}. Offer **Re-check** rather than a wait: nothing here polls, and a reader who watched the sync finish is the fastest signal there is.
 
-A latest sync older than {{#if maxAgeHours}}{{maxAgeHours}}{{else}}24{{/if}} hours → stop, name the connector and the age, and offer both Re-check and the reconnect link. Stale data makes a figure old rather than wrong, and saying which it is matters more than the figure.
+A latest sync older than {{#if maxAgeHours}}{{maxAgeHours}}{{else}}24{{/if}} hours → name the connector and the age, offer both Re-check and the reconnect link, and carry on. Stale data makes a figure old rather than wrong, and saying which it is matters more than blocking on it.
 
-Every connector finished and recent → hand the timestamps back and carry on.
+Every connector finished, whether recent or stale → hand the timestamps back and carry on.
 
 **Resuming.** The Re-check prefill names this step, so a run that comes back re-reads the sync logs alone and continues from here. It never re-enters at the workspace or the period: those were answered already, and asking twice reads as the routine having lost its place.
 
