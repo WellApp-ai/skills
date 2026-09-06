@@ -12,9 +12,11 @@ One `well_query_records` on `workspace_connector_sync_logs` for the connected co
 
 A sync still running → say which connector, {{#if purpose}}"{{purpose}}"{{/if}}, and say what the wait is. A reconnect re-fetches the whole history rather than the days since the last run, so it is normally minutes rather than seconds, and on a long history it runs considerably longer.
 
-Then poll, with a ceiling. Re-read the sync logs about every 20 seconds and carry on by yourself the moment every connector reports finished — a reader told the figure is coming should not have to ask for it again. Give up after a handful of attempts, or once the wait has run past a couple of minutes, and hand the decision back: say how long it has been running, that a sync can legitimately take much longer, and offer **Re-check** to keep waiting.
+Then re-read the sync logs ONCE, and carry on by yourself if every connector now reports finished. That second read costs nothing and catches a sync that landed between the two calls.
 
-Never poll unbounded. A sync can run for hours or never finish, and a routine waiting silently on one is indistinguishable from a routine that has hung. The ceiling is what keeps a slow sync legible as slow.
+Do not build a waiting loop, because nothing here can wait. This toolset has no timer, and `well_wait_for_selection` is a selection wait of about ten seconds rather than a sleep — every atom that uses it says so. Re-reads fired back to back give the sync no time to progress, so a loop would be the same answer repeated with a longer transcript, and a routine looping silently on a sync that never finishes is indistinguishable from one that has hung.
+
+So: state the expected wait, re-read once, then hand the decision back with how long it has been running. **Re-check** is what drives it forward — a reader who watched the sync finish is still the fastest signal there is.
 
 A latest sync older than {{#if maxAgeHours}}{{maxAgeHours}}{{else}}24{{/if}} hours → name the connector and the age, offer both Re-check and the reconnect link, and carry on. Stale data makes a figure old rather than wrong, and saying which it is matters more than blocking on it.
 

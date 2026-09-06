@@ -103,7 +103,7 @@ Verify before moving on: exactly one workspace is pinned, or `resolution: unreso
 2. **Confirm the connections this answer needs.** 
 The workspace is already pinned — pass its `workspace_id` on the call below; do not re-resolve it here.
 
-Read the current coverage in one call: `well_list_connectors({ workspace_id, from_selection: true })` when this run follows a vendor pick; `well_list_connectors({ workspace_id, kind })` when the job covers exactly one kind; `well_list_connectors({ workspace_id })` otherwise (one unscoped call for two or three kinds — one call renders one card, and a turn never renders two).
+Read the current coverage in one call: `well_list_connectors({ workspace_id, from_selection: true })` when this run follows a vendor pick; `well_list_connectors({ workspace_id, kind })` when the job covers exactly one kind; `well_list_connectors({ workspace_id })` otherwise (one unscoped call for two or three kinds — one call renders one card, and a turn draws at most one card that AWAITS AN ANSWER).
 
 For each of the requested kinds —
 - `bank`
