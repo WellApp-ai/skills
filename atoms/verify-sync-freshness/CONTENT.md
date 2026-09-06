@@ -10,7 +10,11 @@ The workspace is already pinned, and the connectors are already known to be conn
 
 One `well_query_records` on `workspace_connector_sync_logs` for the connected connectors: read each one's latest row's `status` and `completed_at`.
 
-A sync still running → stop and say which connector, {{#if purpose}}"{{purpose}}"{{/if}}. Offer **Re-check** rather than a wait: nothing here polls, and a reader who watched the sync finish is the fastest signal there is.
+A sync still running → say which connector, {{#if purpose}}"{{purpose}}"{{/if}}, and say what the wait is. A reconnect re-fetches the whole history rather than the days since the last run, so it is normally minutes rather than seconds, and on a long history it runs considerably longer.
+
+Then poll, with a ceiling. Re-read the sync logs about every 20 seconds and carry on by yourself the moment every connector reports finished — a reader told the figure is coming should not have to ask for it again. Give up after a handful of attempts, or once the wait has run past a couple of minutes, and hand the decision back: say how long it has been running, that a sync can legitimately take much longer, and offer **Re-check** to keep waiting.
+
+Never poll unbounded. A sync can run for hours or never finish, and a routine waiting silently on one is indistinguishable from a routine that has hung. The ceiling is what keeps a slow sync legible as slow.
 
 A latest sync older than {{#if maxAgeHours}}{{maxAgeHours}}{{else}}24{{/if}} hours → stop, name the connector and the age, and offer both Re-check and the reconnect link. Stale data makes a figure old rather than wrong, and saying which it is matters more than the figure.
 
