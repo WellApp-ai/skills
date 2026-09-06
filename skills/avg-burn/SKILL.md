@@ -30,7 +30,7 @@ Use this skill when the user asks:
 - **A fixed category list could not replace that rule.** Internal or external is a fact about the counterparty account, not about the transaction. A transfer between two accounts you own is internal; the same transfer to a sister company at a bank you have not connected is external, and counts. Category, label and amount are identical in both cases. Close one of your own accounts and yesterday's internal transfer reads as external today, its category unchanged.
 - **Card spend lands on its repayment date, not its purchase date.** What the feed delivers is the repayment leaving the bank account, so a window can look low simply because a repayment falls just outside it. This is a property of the data, not a rule these steps apply.
 - **FX is applied per row before summing**, into the workspace's base currency.
-- **The window's anchor is the month step 4 asked for, never today's date.** `define-period` refuses a month that has not ended, so a mid-month run cannot report a partial month as a full one.
+- **The window's anchor is the month step 4 asked for, never today's date.** Step 4 refuses a month that has not ended, so a mid-month run cannot report a partial month as a full one.
 
 ## When not to use this skill
 
@@ -77,7 +77,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 ### Stage A — scope
 
 1. **Pin the workspace.** `[1]` 
-Call each list or read tool once per step, and render at most one widget card per turn. The cards refresh themselves. A card click executes server-side and prefills a message in the user's composer — rendering a card therefore ends the turn, and the sent message is how the routine resumes.
+Call each list or read tool once per step, and render at most one card that AWAITS AN ANSWER per turn. The cards refresh themselves. A card whose click executes server-side and prefills a message in the user's composer is what ends the turn, and the sent message is how the routine resumes — so it is the WAITING that a turn may only do once, not the drawing. A read that renders a card and hands its result straight back in the same turn is not waiting on anything and does not consume that budget.
 
 Confirm the Well MCP server is configured — if `well_list_workspaces` (or any `well_*` tool) is not available, tell the user a Well connection is mandatory at `https://api.wellapp.ai/v1/mcp` and stop until it's there.
 
@@ -101,6 +101,8 @@ Resolve the next message after the card, in this order, never by re-asking:
 - The message declines ("later", "not now") → `resolution: unresolved`. Say nothing was pinned and stop; do not call `well_wait_for_selection`, do not run any workspace-scoped call.
 - Any other message that needs the workspace → call `well_wait_for_selection({ kind: "workspace", timeout_s: 10 })` once. `selected` → continue on `selection.workspace_id` (an empty `selection.workspace_queue` is `user_picked`, non-empty is `multi_picked`). `no_selection_yet` → one line asking to click the card, end the turn.
 
+`has_bank_transactions` rides the hand-off because a later step needs it and only this one reads the workspace rows. It is `true` only when a connector the workspace BANKS with has already delivered a transaction — an accounting platform or a payment processor does not count, and neither does a transaction whose connector is unknown, disconnected or retired. `false` means no such transaction was found and `null` means the signal could not be read, so an absent value is never a zero, and no value here licenses skipping a bank-connection step.
+
 Emit the hand-off:
 
 ```yaml
@@ -113,6 +115,7 @@ identity:
   country: <ISO code or null>
   base_currency: <ISO code or null>
   fiscal_year_start_month: <1-12 or null>
+has_bank_transactions: <true|false|null>
 resolution: single | hint_matched | user_picked | multi_picked | unresolved
 workspaces: [{ workspace_id, workspace_name, identity, ... }, …]  # multi_picked only — pinned entry first, then the queue in order
 ```
@@ -146,7 +149,7 @@ Verify before moving on: only the fields the computation reads were required; a 
 3. **Confirm the bank connection.** `[3]` 
 The workspace is already pinned — pass its `workspace_id` on the call below; do not re-resolve it here.
 
-Read the current coverage in one call: `well_list_connectors({ workspace_id, from_selection: true })` when this run follows a vendor pick; `well_list_connectors({ workspace_id, kind })` when the job covers exactly one kind; `well_list_connectors({ workspace_id })` otherwise (one unscoped call for two or three kinds — one call renders one card, and a turn never renders two).
+Read the current coverage in one call: `well_list_connectors({ workspace_id, from_selection: true })` when this run follows a vendor pick; `well_list_connectors({ workspace_id, kind })` when the job covers exactly one kind; `well_list_connectors({ workspace_id })` otherwise (one unscoped call for two or three kinds — one call renders one card, and a turn draws at most one card that AWAITS AN ANSWER).
 
 For each of the requested kinds —
 - `bank`
@@ -167,6 +170,7 @@ Hand off, kept for the caller and never printed as a block: per requested kind, 
 Verify before moving on: `well_list_connectors` was the only connector-listing tool called — no `well_query_records` on `workspace_connectors`, no provider-specific tool; each kind's state came from the four-line precedence above, not from a name or `is_connected` alone; `coverage: none` was used (not `partial`) when every requested kind was in error; a transient failure was retried once before the fallback link.
 
    - `coverage: none` → stop; burn cannot be measured. The install links are already on screen, so do not add a second set.
+   - **Cross-check `has_bank_transactions` from step 1 before you say no bank is connected.** It is `true` only when a connector the workspace BANKS with has already delivered a transaction, so `coverage: none` beside a `true` is a contradiction: the connectors read missed something a bank has demonstrably fed. Say the coverage read disagrees with the workspace's own history and offer Re-check, rather than telling someone with a working bank connection that they have none. `false` and `null` license nothing either way — `false` means no such transaction was found, `null` means the signal could not be read, and neither is permission to skip this step.
 
 4. **Ask which month anchors the window.** `[4]` 
 The workspace is already pinned — pass its `workspace_id`, and `fiscal_year_start_month` from its hand-off (default `1`, calendar-aligned, and say so when it was null), on every call below.
@@ -223,7 +227,13 @@ The workspace is already pinned, and the connectors are already known to be conn
 
 One `well_query_records` on `workspace_connector_sync_logs` for the connected connectors: read each one's latest row's `status` and `completed_at`.
 
-A sync still running → stop and say which connector, "before the burn is measured". Offer **Re-check** rather than a wait: nothing here polls, and a reader who watched the sync finish is the fastest signal there is.
+A sync still running → say which connector, "before the burn is measured", and say what the wait is. A reconnect re-fetches the whole history rather than the days since the last run, so it is normally minutes rather than seconds, and on a long history it runs considerably longer.
+
+Then re-read the sync logs ONCE, and carry on by yourself if every connector now reports finished. That second read costs nothing and catches a sync that landed between the two calls.
+
+Do not build a waiting loop, because nothing here can wait. This toolset has no timer, and `well_wait_for_selection` is a selection wait of about ten seconds rather than a sleep — every atom that uses it says so. Re-reads fired back to back give the sync no time to progress, so a loop would be the same answer repeated with a longer transcript, and a routine looping silently on a sync that never finishes is indistinguishable from one that has hung.
+
+So: state the expected wait, re-read once, then hand the decision back with how long it has been running. **Re-check** is what drives it forward — a reader who watched the sync finish is still the fastest signal there is.
 
 A latest sync older than 24 hours → name the connector and the age, offer both Re-check and the reconnect link, and carry on. Stale data makes a figure old rather than wrong, and saying which it is matters more than blocking on it.
 
@@ -237,8 +247,8 @@ Hand off: per connector, its latest `status`, `completed_at`, and age in hours; 
 
 Verify before moving on: freshness came from the sync logs rather than from connector state; a running sync and a stale one were reported as different situations; the age was stated, not summarized as "recent".
 
-   - A polling loop would sit here until every sync finalizes. This skill does not poll: it stops, and Re-check is how the reader drives it forward. A loop that waits on its own gives a reader nothing to do and no way to tell a slow sync from a stuck one.
-   - A connector step 3 passed through as `connecting` has no sync row at all, so it matches none of the branches above. Treat it as not yet landed: it stops the run the same way a still-running sync does, and Re-check is the affordance.
+   - **One re-read, then hand back — there is no waiting loop, because nothing here can wait.** The step says what the wait is and re-reads the logs once, which costs nothing and catches a sync that landed between the two calls. It cannot do more: this toolset has no timer, and re-reads fired back to back give the sync no time to progress, so a "poll" would be the same read repeated with a longer transcript. Re-check is what drives it forward, and the expected duration is what makes the wait legible instead of merely long.
+   - A connector step 3 passed through as `connecting` has no sync row at all, so it matches none of the branches above — and nothing to poll for either, since the poll watches sync rows. Treat it as not yet landed and stop rather than wait: Re-check is the affordance.
 
 6. **Confirm the window holds transactions.** `[11]` 
 The workspace and the window are already pinned, to measure your average monthly burn.
@@ -290,7 +300,7 @@ Verify before moving on: ownership was read rather than inferred; both failures 
 
 **What stage C does not gate, and why it matters to the answer.** Three more conditions bear on the figure without gating it: every transaction resolving to an account `[6]`, carrying a payment type `[7]`, and transfers resolving both legs `[8]`. Those are extraction and reconciliation gaps, not decisions a reader can make: the rows that fail them are the ones the connector could not resolve, and a picker asking someone to hand-enter what a sync should have delivered is not a repair. So they are counted rather than gated.
 
-**Count them here, because the answer has to carry the number.** One `well_query_records` on `transactions` over the window, scoped to the workspace, reading `totalCount` under a filter for a null account. Hand the count forward as `unplaceable_count` alongside the window's own `transaction_count` from step 6. A transaction with no leg on a known account cannot be placed inside or outside the transfer rule, so that ratio is the bound on how much of the figure is certain, and it is what the confidence line reports.
+**Count them here, because the answer has to carry the number.** One `well_query_records` on `transactions` over the window, scoped to the workspace, reading `totalCount` under `account_balance_pk: { _is_null: true }`. Name that field rather than asking for "a null account": the transactions root carries no `account_pk`, so a filter written from the phrase alone has nothing to bind to and comes back either empty or unfiltered. Hand the count forward as `unplaceable_count` alongside the window's own `transaction_count` from step 6. A transaction with no leg on a known account cannot be placed inside or outside the transfer rule, so that ratio is the bound on how much of the figure is certain, and it is what the confidence line reports.
 
 ### Stage D — classification
 
@@ -407,12 +417,17 @@ Verify before moving on: internal transfers were not offered; the selection was 
     - **Convert before you add, then again before you divide.** The response comes back per month AND per currency, in native units. Apply step 9's rate to each month-currency subtotal, add the converted subtotals within a month to get that month's outflow, and only then divide across months. Adding native units first and converting the total is how a burn ends up denominated in nothing — and it is why step 2 gates the workspace on having a `base_currency` at all.
     - **The outflow is the subtotal step 10 elected, used as returned.** Both subtotals arrive as positive magnitudes, because the sum totals the absolute amount on each side. A negative month is therefore not a missing conversion — it means something re-signed a figure that was already a magnitude.
     - Keep the per-month series: it is what lets you say whether burn is rising or falling, and a month with no outflow belongs in it as a zero rather than being dropped.
-    - `meta.partial: true` means the aggregate was cut short. Every figure is then a floor, and saying so is not optional. If the call itself errors, there is no figure: retry once, and on a second failure say the sum could not be read rather than reporting a total assembled from the groups that did come back.
+    - **Then measure the window before it, the same way.** A second `well_sum_transactions` over the `trailing_months` months ENDING WHERE THIS WINDOW STARTS, under the SAME exemptions, the same convention and the same conversion. That is what makes the two comparable: a baseline computed under a different policy is a different measure, not a comparison. Divide it by its own month count to get `baseline.value`, and compute `change` as the signed percentage from it to this window's figure.
+    - **The two windows are adjacent and share no month**, which is the point. A Jun–Aug window is compared against Mar–May. A baseline shifted back by one month instead would share two of its three with the window, so most of the change would be the same data compared against itself — a percentage that moves when nothing did. Name both windows in the answer so the reader can see which months each covers.
+    - Skip the comparison rather than guessing when the earlier window cannot be measured — no data, a cut-short sum, or a baseline of zero. A missing comparison costs the reader a sentence; an unfounded one costs them the figure.
+    - `meta.partial: true` means the aggregate was cut short. Every figure is then a floor, and saying so is not optional.
+    - `excluded_zero_leg` and `excluded_multi_leg` come back as `null` when the exclusion could not be counted, which is NOT `0`: zero says the rule removed nothing, null says nobody counted. On a null, say the exclusion is unmeasured rather than reporting none — the sums themselves are unaffected. If the call itself errors, there is no figure: retry once, and on a second failure say the sum could not be read rather than reporting a total assembled from the groups that did come back.
 
-13. **Put the figure on the card.** Call `well_render_burn` with the amount, the currency, the window, both month counts, the convention and the counts it was elected from, the row and unplaceable counts, and the three exclusion groups. Every one of those is a figure this stage already produced — the tool requires them because a number whose method is not stated cannot be checked, and it refuses rather than renders when one is missing.
+13. **Put the figure on the card.** Call `well_render_burn` with the amount, the currency, the window, both month counts, the convention and the counts it was elected from, the row and unplaceable counts, the three exclusion groups, and — when step 12 measured one — `baseline` and `change` together. Every one of those is a figure this stage already produced — the tool requires them because a number whose method is not stated cannot be checked, and it refuses rather than renders when one is missing.
     - **Render once, after the answer is settled.** The card is the last thing the run does, not a step it passes through, and a turn never draws two.
+    - **Send `baseline` and `change` as a pair or send neither.** The tool refuses a percentage with no baseline, checks the percentage against the two figures, and refuses a sign its own arithmetic contradicts. Do not send a direction: down is good for a burn, and the card's colour is decided server-side from the figures rather than read off the sign.
     - **A refusal is a finding, not a retry.** The tool rejects a negative amount, a magnitude feed, coverage wider than its window, a divisor that disagrees with the window, and `signed` elected from no negative rows. Each of those means this stage got something wrong, so read the message and fix the computation rather than restating the call.
-    - The card states the method beside the figure rather than disclaiming it. Do not add a caveat about whose number it is: Well derives no burn of its own, so this figure is Well's, computed under the policy stated here.
+    - **The card carries the figure, its window and the comparison — not the method.** The convention, the coverage and the exclusion groups are still required to render, because a figure whose method is not stated cannot be checked, but they are yours to narrate rather than the card's to stack. The Output requirements below are what carry them. Do not add a caveat about whose number it is: Well derives no burn of its own, so this figure is Well's, computed under the policy stated here.
 
 **Not in this skill.** Grouping the answer by company `[17]` or by category `[18]` is `cost-structure`'s job — name it rather than answering it here.
 
@@ -425,6 +440,7 @@ Return:
 - **Which sign convention you elected, and the counts behind it.** A reader cannot check a figure whose direction was decided silently.
 - **What you excluded, in three named groups**: internal transfers (structural), the categories the reader exempted, and the rows dropped for an unreadable amount or currency. A single "some rows were excluded" hides the difference between a rule and a defect.
 - A confidence line from stage C's count: `unplaceable_count` against the window's `transaction_count` — how many rows could not be placed inside or outside the transfer rule, and so how much of the figure is certain.
+- **The comparison, when one was measured**: the earlier window by name, its own average, and the signed change. Name the months each window covers — a percentage whose two windows the reader cannot place is a number they cannot check.
 - A freshness line: the oldest sync behind the figure, from step 5.
 - A one-line pointer to `runway` for how long the cash lasts, and to `cost-structure` for what the spend is made of. Name them; do not answer them here.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. Skip it rather than force it in.
@@ -444,6 +460,9 @@ Before finishing, verify:
 - Connection state came from step 3 and freshness from step 5; a connected connector was never assumed to mean data had landed.
 - The sign convention was elected from the window's counts, stated in the answer, and elected once over the whole window rather than per month.
 - The divisor was the window length. When some months were dark, both numbers were stated and the figure was never presented as the typical month.
+- A comparison, where one was made, measured the ADJACENT earlier window under the SAME policy, named both windows, and was skipped rather than guessed where that window could not be measured.
+- An unmeasured exclusion count was reported as unmeasured, never as none.
+- The sync gate re-read once and handed back, rather than claiming a wait the toolset cannot perform.
 - Internal transfers were excluded structurally, and described that way — never as something a recategorization would change.
 - Exclusions were reported in their three named groups, not merged into one count.
 - The unresolvable rows from stage C were disclosed as a bound on confidence, not silently absorbed.
