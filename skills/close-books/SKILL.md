@@ -1,6 +1,6 @@
 ---
 name: close-books
-requires: [define-workspace, confirm-my-company, connect-bank, connect-accounting, connect-tools, accounting-settings, define-period, assign-missing-invoices]
+requires: [define-workspace, confirm-my-company, connect-bank, connect-accounting, connect-tools, accounting-settings, define-period, assign-missing-invoices, invite-members]
 description: Drive a month-end close for a Well workspace to the point of approval — start the close for a named month, read what is blocking it, clear the blockers one at a time, prepare the close package, and mint the approval offer the user accepts in the Well app. Use when the user asks to "close the books", "close last month", "run the month-end close", "close March", "finish the close", or "what's left to close the period". This is a WRITE flow — it advances a real close run and can resolve tasks, so it shows the state before every step and asks first before retrying reconciliation or queuing a vendor invoice fetch, the two that need an explicit yes. It never locks the period itself; the final approval is a first-party click in Well by design. Requires a connected Well workspace with its bank synced — the only connection the close blocks on; an accounting connection is optional and makes the close richer. If none, it walks the user through connecting first.
 ---
 
@@ -92,11 +92,18 @@ user to add it at that URL, then retry. The close tools, and what each one does:
     calling it**, the same as the other consequential remediation tools here.
   - `well_set_own_company` — set the workspace's own company (see step 2). A consequential,
     accounting-critical write — only call it on an explicit user confirmation, never silently.
+- `well_list_member_candidates` — read the invite candidates for the owners assigned in step 9, with
+  `source: provided` on their `person_ids`, so step 12 can see which of them is still `pending`.
+  Owned by the `invite-members` brick; called through it, not directly.
+- `well_invite_members` — invite those pending owners by email, one send for all of them, each
+  address reporting its own result. Also the `invite-members` brick's, called through it. Owner or
+  admin only.
 - `well_get_schema` — call before reading any records root for the first time in a session; field
   names are workspace- and connector-dependent, never assume them.
 
-**Composed skills.** Seven atomic Well skills own the setup this flow walks, and an eighth owns the
-ownership beat inside step 9 — invoke them in the order below, don't reimplement them. The order
+**Composed skills.** Seven atomic Well skills own the setup this flow walks, an eighth owns the
+ownership beat inside step 9, and a ninth invites the pending owners after the approval is minted
+(step 12) — invoke them in the order below, don't reimplement them. The order
 mirrors the Well app's close flow so the chat and the app feel like one product. Only three things
 must be true **before `well_start_close`** — the own company is set, the fiscal year start is set, and
 the calendar month is named. The rest is ordered for parity with the app, and the connections and
@@ -143,8 +150,13 @@ categorisation are cleared as blockers after the scope is chosen, in any order.
   offered. One task is held per owner of a (counterparty × month) gap, and one supplier invoice
   resolves every owner's task, so assigning is for accountability, not N separate collections. It
   refuses a frozen month and a person outside the workspace.
+- `invite-members` — the member-invite beat after the approval is minted (step 12), not a setup
+  step. It reads the invite candidates for the owners assigned in step 9 whose membership is still
+  `pending` (`well_list_member_candidates` with `source: provided`) and sends the invitations
+  (`well_invite_members`), so the closer leaves the session with the pending owners invited and the
+  card is the last thing before the lock, as on the web. An empty candidate list skips the step.
 
-All eight ship with the `well-skills` plugin. This skill is also installable on its own, so the
+All nine ship with the `well-skills` plugin. This skill is also installable on its own, so the
 workflow carries an inline fallback for each when it is absent.
 
 ## Workflow
@@ -324,17 +336,29 @@ step is skipped or re-run.
 11. **Mint the approval offer — `well_prepare_close_period`.** This does not close the period; it
     creates the offer the user must accept. Report that the close is prepared and ready for approval.
 
-12. **Hand off the lock to the user.** The period is locked only when the user accepts the offer in
+12. **Invite the pending owners — run `invite-members`.** The package is prepared and the approval
+    is minted; before handing the lock to the user, invite the owners you assigned during step 9's
+    assign beat whose membership is still `pending`, so an owner leaves the session able to open the
+    task that one invoice will resolve. Run `invite-members` for this workspace with `source: provided`
+    on those owners' `person_ids` (keep them from step 9 as reasoning vocabulary; never print a raw
+    person id). It reads their membership state and, in an MCP-Apps host, renders the invite card and
+    ends the turn on it — the card is the last thing before the lock, as on the web; on the next turn
+    report who was invited. When step 9 assigned no owner, or none of them is still `pending`, the
+    candidate list is empty: say so in one line and go straight to the lock hand-off. If
+    `invite-members` isn't installed, or `well_list_member_candidates` isn't in your toolset, skip
+    this step.
+
+13. **Hand off the lock to the user.** The period is locked only when the user accepts the offer in
     Well — a one-click first-party approval, by design; you cannot accept it over MCP and must not
     try. Tell the user plainly to open Well and accept the approval (point at the approval locator
     the tool returned, or `<well-app-base-url>/workspaces/<workspace_id>`). Explain in one line that
     Well requires a human to lock a period, which is why this last step is theirs.
 
-13. **Confirm the lock — `well_get_action_receipt`** after the user says they accepted, to read the
+14. **Confirm the lock — `well_get_action_receipt`** after the user says they accepted, to read the
     durable receipt and confirm the period reached `period_closed`. Report the outcome honestly; if
     the receipt does not show it closed, say so rather than implying success.
 
-14. **On failure, redirect instead of guessing.** A transient (network/timeout) error on a *read*
+15. **On failure, redirect instead of guessing.** A transient (network/timeout) error on a *read*
     (`well_list_flow_runs`, `well_get_close_state`, `well_get_close_proof_gaps`) → retry that call
     once, then fall back. Never silently retry a *write* — `well_start_close`,
     `well_select_close_scope`, `well_resolve_close_task`, `well_prepare_close_package`,
@@ -357,6 +381,10 @@ Return:
 - After the package is prepared and the offer is minted: that the close is ready for approval, and
   the one action left for the user — accept the approval in Well. State plainly that you cannot lock
   the period yourself; a human approval is required by design.
+- Before that hand-off, whenever step 9 assigned an owner whose membership is still `pending`: the
+  invite beat's line — how many owners can be invited and the invite card, or who was invited once
+  the send lands. When no owner was assigned or none is pending, say nothing here; the step is
+  skipped.
 - After the user accepts: the receipt outcome from `well_get_action_receipt` — closed, or not, told
   honestly.
 - Every error surfaced exactly as returned, with a question about how to proceed — no silent retry
@@ -418,6 +446,11 @@ Before finishing, verify:
   state-changing orchestration action, not a read.
 - `well_prepare_close_package` was called only at zero blockers, and `well_prepare_close_period`
   was understood to mint an offer, not to close the period.
+- After the offer was minted and before the lock hand-off, the invite beat ran whenever step 9 had
+  assigned an owner still `pending`: `invite-members` read those owners with `source: provided` and
+  offered to invite them, the card was the last thing before the lock. When no owner was assigned or
+  none was pending, or `invite-members` was absent, the step was skipped in one line and no raw
+  person id was shown.
 - The period lock was handed to the user as a first-party approval in Well; no attempt was made to
   accept the offer over MCP.
 - The receipt was read to confirm the outcome, and success was not claimed without it.
@@ -452,7 +485,10 @@ March 2026 (it reads the owners, which the proof-gap read does not carry): its c
 `listed` with three unowned Uber lines, the user assigns them to Marie, and you say Marie now holds
 one task that one invoice will resolve. Then, after the user agrees, call
 `well_enqueue_close_invoice_fetch`. Re-read the state each time. Once zero blockers remain, call
-`well_prepare_close_package`, then `well_prepare_close_period` to mint the offer. Tell the user the
+`well_prepare_close_package`, then `well_prepare_close_period` to mint the offer. Before the lock,
+run `invite-members` with `source: provided` on Marie's `person_id` from step 9: she is only
+invited-pending, so her invite card renders and you send the invitation, so she can open the task
+one Uber invoice will resolve. Tell the user the
 close is ready and to accept the approval in Well — you cannot lock the period yourself. After they
 accept, read `well_get_action_receipt` and confirm March 2026 is closed.
 

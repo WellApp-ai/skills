@@ -26,7 +26,7 @@ It only advances on what's ready. The bank feed is the one connection the close 
 
 ## Composes onto
 
-This skill delegates seven setup steps to Well's atomic skills rather than repeating them, and hands its invoice-ownership beat to an eighth:
+This skill delegates seven setup steps to Well's atomic skills rather than repeating them, and hands its invoice-ownership and member-invite beats to an eighth and a ninth:
 
 - **[`define-workspace`](define-workspace.md)** — pins which Well workspace the close runs in.
 - **[`confirm-my-company`](confirm-my-company.md)** — resolves which company is yours, which the close requires before it will start, and sets it on your explicit confirmation when it isn't set yet.
@@ -36,8 +36,9 @@ This skill delegates seven setup steps to Well's atomic skills rather than repea
 - **[`accounting-settings`](accounting-settings.md)** — sets the fiscal year start month the close derives its period from, when it's unset or wrong.
 - **[`define-period`](define-period.md)** — collects the calendar month the close runs on.
 - **[`assign-missing-invoices`](assign-missing-invoices.md)** — the ownership beat inside blocker clearing: when settled spend is missing its invoice, it assigns owners to those lines before any fetch is offered, so one task is held per owner and one invoice resolves them all.
+- **[`invite-members`](invite-members.md)** — the member-invite beat after the approval is minted: it invites the owners assigned during blocker clearing whose membership is still pending, so the closer leaves with them invited and the card is the last thing before the lock.
 
-Install all eight alongside this one. The skill still runs without them — each step falls back inline — but with them installed you get one consistent workspace flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install every skill together; if you download the `.skill` file on its own, grab those eight as well.
+Install all nine alongside this one. The skill still runs without them — each step falls back inline — but with them installed you get one consistent workspace flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install every skill together; if you download the `.skill` file on its own, grab those nine as well.
 
 ---
 
@@ -65,6 +66,7 @@ Install the following official skills from Well.
     g. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounting-settings/SKILL.md
     h. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-period/SKILL.md
     i. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/assign-missing-invoices/SKILL.md
+    j. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/invite-members/SKILL.md
 2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
 3. Install these skills.
 4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
