@@ -62,6 +62,7 @@ This repo packages that judgment as **Agent Skills** — playbooks any AI assist
 | `assign-missing-invoices` | "Assign these expenses to Marie and Théo" — the expense lines still missing an invoice for a month, split into unassigned, yours, and owned by others, each assignable to a set of people from the card. | [View details →](docs/assign-missing-invoices.md) |
 | `deploy-agents` | "Go get those invoices" — a preview of which invoice-fetching agents Well would launch, per provider, before any of them runs. | [View details →](docs/deploy-agents.md) |
 | `close-books` | "Close the books for last month" — drives the month-end close: starts the period, clears the blockers one at a time, prepares the package, and leaves the final lock as your one-click approval in Well. | [View details →](docs/close-books.md) |
+| `invite-members` | "Invite Marie to this workspace" — the teammates you can invite on a card, out of the box the ones Well detected, each with a role and a target, sent with one click. | [View details →](docs/invite-members.md) |
 
 ## Utils
 
@@ -132,6 +133,7 @@ Install the following official skills from Well. Instructions:
     z. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/confirm-my-company/SKILL.md
     aa. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/normalize-currency/SKILL.md
     bb. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/assign-missing-invoices/SKILL.md
+    cc. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/invite-members/SKILL.md
 2. Download and display the SKILL.md files to the user. Each must be named "SKILL.md" — no prefix, no suffix, exact name.
 3. Create a summary table with skill names and descriptions extracted from the frontmatter
 4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
@@ -214,6 +216,7 @@ Download the `.skill` file and double-click it to install — Claude Desktop ins
 | `assign-missing-invoices` | The expense lines missing an invoice for a month, split into unassigned, yours, and owned by others, each assignable to a set of people from the card. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/assign-missing-invoices.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/assign-missing-invoices.zip) |
 | `deploy-agents` | Preview the invoice-fetching agents Well would launch for a period, without launching any. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/deploy-agents.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/deploy-agents.zip) |
 | `close-books` | Drive the month-end close to approval — start the period, clear the blockers, prepare the package, then lock it with your one-click approval in Well. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/close-books.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/close-books.zip) |
+| `invite-members` | Invite teammates into a workspace from a card — the ones Well detected out of the box, each with a role and a target, sent with one click. | [⬇ Download for Claude Desktop](https://github.com/WellApp-ai/skills/raw/main/dist/invite-members.skill) · [.zip](https://github.com/WellApp-ai/skills/raw/main/dist/invite-members.zip) |
 
 **Utils** — each `.skill`/`.zip` above only bundles its own folder, so a util it depends on isn't included; download and install the util separately alongside it.
 
