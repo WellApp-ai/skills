@@ -1,6 +1,6 @@
 ---
 name: assign-missing-invoices
-description: Assign the settled expense transactions in one Well workspace that still have no supplier invoice for a month to a set of owners, split into unassigned, yours, and owned by others. Renders Well's owner-assignment card, one row per transaction with its owner set and a multi-select picker; picking owners replaces the set on that line, and several lines can take the same set at once. Assigning a (counterparty × month) gap to several people holds one task per owner, and one invoice resolves them all. Use when the user asks to assign missing invoices, "who owns these missing receipts", "assign these to Marie and Théo", or "assign these to me", or when a close-books flow needs expense ownership sorted. Assigns among workspace members only. Needs define-workspace, define-period, and a connected bank. Do not use to fetch or collect documents (fetch-missing-invoices, deploy-agents), to list gaps by counterparty or pick vendors to chase (show-missing-invoices), or to assign someone not in the workspace.
+description: Assign the settled expense transactions in one Well workspace that still have no supplier invoice for a month to a set of owners, split into unassigned, yours, and owned by others. Renders Well's owner-assignment card, one row per transaction with its owner set and a multi-select picker; picking owners replaces the set on that line, and several lines can take the same set at once. Assigning a (counterparty × month) gap to several people holds one task per owner, and one invoice resolves them all. Use when the user asks to assign missing invoices, "who owns these missing receipts", "assign these to Marie and Théo", or "assign these to me", or when a close-books flow needs expense ownership sorted. Assigns among workspace members only. Needs define-workspace, define-period, and a connected bank. Do not use to fetch or collect documents (fetch-missing-invoices, deploy-agents), to list gaps by counterparty or pick vendors to chase (show-missing-invoices), or to invite a new person (invite-members).
 ---
 
 # Assign Missing Invoices with Well
@@ -15,7 +15,7 @@ Answer "who owns the settled expenses that still have no supplier invoice this m
 
 **Volume is handled by multi-select.** To own a whole month of one vendor's spend, select every line of that vendor and assign the same set once. The card carries a checkbox per row and an "assign selected to…" action for exactly this.
 
-**This skill assigns among people already in the workspace only** — its members, including anyone invited but not yet accepted. Assigning someone who is not in the workspace yet is a separate skill, not this one; the write refuses a person outside the workspace rather than adding them.
+**This skill assigns among people already in the workspace only** — its members, including anyone invited but not yet accepted. It never assigns work to a person outside the workspace; the write refuses them rather than adding them. Getting a new person into the workspace is `invite-members`, which this skill offers after the assignment so an owner whose membership is still pending can be invited to open their task.
 
 ## When to use this skill
 
@@ -34,7 +34,7 @@ Do not use this skill when:
 - No period selection exists yet and the user is picking one — that is `define-period`, whose card writes the selection this skill's tool reads.
 - The user wants the documents fetched or collected from the suppliers — that is `fetch-missing-invoices` and `deploy-agents`; this skill assigns owners, it collects nothing.
 - The user wants every missing invoice listed by counterparty, or wants to pick which vendors to chase — that is `show-missing-invoices`; it narrows what gets fetched, this skill assigns owners to the lines.
-- The user wants to assign someone who is not in the workspace yet — that is a separate skill.
+- The user wants to get a new person into the workspace — that is `invite-members` (which this skill offers after the assignment), not an assignment target here.
 
 ## Inputs
 
@@ -234,6 +234,28 @@ Call each list or read tool once per step. The card refreshes itself — never r
 
 8. **Hand off.** Keep the facts below so the calling flow can act on the list and the assignments without re-reading them — never printed as a block.
 
+## Invite the owners who cannot open their task yet
+
+Once at least one assignment was made this turn, offer to invite the owners you just assigned who cannot open their task yet — an owner whose membership is still `pending`, or who is not a member at all. Run this beat on those owners only, and skip it when no assignment was made. An owner who already has access is left off the send.
+
+
+The workspace is already pinned — pass its `workspace_id` on every call below, and do not re-resolve it here.
+
+**Read the candidates once.** Call `well_list_member_candidates` a single time, with `workspace_id` and the `person_ids` this beat runs on.
+
+This runs on a set of people a calling flow already chose (the owner_person_ids of the assignments you made this turn), so pass them as `person_ids` and read each one's current membership state. Each candidate comes back with `source: provided` and a `state`: `not_member`, `pending` with an `invite_expires_at`, or `active`. **Keep only the `pending` and `not_member` ones.** A `pending` person is invited but has not accepted, so re-issuing the invitation is what lets them in; an `active` one already has access, so never invite them — say they already have access and drop them from the send. When no candidate is left to invite, say there is no one to invite here and hand that back in one line.
+
+The read also hands back `targets` (each `{ kind, id, name, workspace_count? }` — this workspace, or a workspace group the user belongs to), `roles` (`admin` or `member`), `me_person_id`, and `resolved_workspace`. Every candidate carries `person_id`, `name`, `email`, `avatar_url`, and its `state`.
+
+**Then invite, on the host you are in.**
+
+- **In an MCP-Apps host the card is already on screen.** The `well_list_member_candidates` result renders the invite card: the candidate list with a checkbox and a state chip per row (`has access` for an active member, `invited` for a pending one), a contact search with email chips, a role select, and a target picker. The card sends the invitations itself. Say one line naming how many candidates are on the card and that they are there so they can open the task you just assigned them, tell the user to tick who to invite, pick a role and a target, and click Send invitations, and **end the turn on the card**. Do not restate the candidate rows in text under it, and do not call `well_invite_members` yourself: the card owns the send.
+- **In a text-only host, list the candidates** — name, email, and state (`has access`, `invited`, or new) — and ask whom to invite, with which role (`admin` or `member`) and into which target (this workspace, or a named group). When the user names the people, the role, and the target, call `well_invite_members({ workspace_id, invites, target })` **once** for everyone named: `invites` is one `{ email, role }` per address (1 to 20), and `target` is `{ kind: "workspace" }` or `{ kind: "group", group_id }` built from the chosen target's `id`. Leave any active member off the call.
+
+`well_invite_members` returns one result per address: `{ email, status, refusal_reason?, invitation_email_sent }`. State each one in plain words: `sent` (the invitation went out), `reissued` (a pending invitation was sent again), or `refused` (name the `refusal_reason`, such as an address that already has access). When `invitation_email_sent` is false for an address whose membership otherwise landed, say the membership is recorded but the email did not leave, and offer to resend it. Never retry a `refused` address on your own.
+
+**Hand off the invited emails and their results** — each `email` with its `status` and whether the invitation email was sent — as reasoning vocabulary for the calling flow, carried in plain conversation, never printed as a yaml, JSON, or fenced block.
+
 ## Output requirements
 
 Return:
@@ -242,6 +264,7 @@ Return:
 - The sampling note from workflow step 5, stated even on an empty list.
 - One line, whenever the list has rows, telling the user they can set owners on a line from its picker or select several lines and assign the same set at once, and that assigning a gap to several people creates one task per owner while one invoice resolves them all.
 - Whenever an assignment is made, one plain line confirming it and its reach: the named owners now hold the gap's task each, and one supplier invoice for that gap resolves every one of them. When the write cleared a set, say the line has no owner now.
+- After an assignment, whenever an owner you just assigned is still `pending` or not a member yet, the invite beat's line — how many can be invited, and the invite card (or, in a text-only host, the ask). When every assigned owner already has access, say nothing here.
 - The hand-off, kept for the calling flow and never printed: `workspace_id`; the period (`periods_covered` and the per-month coordinates); `base_currency`; `me_person_id`; the counts (`unassigned`, `assigned_to_me`, `assigned_to_others`); `row_count`, `transaction_count`, `transactions_omitted`; `total_base_amount` — the sum of the MAGNITUDES (absolute values) of the non-null `base_amount` values (each is signed, negative is money out), or null; `transactions` as returned; the assignments made this turn, each as the `transaction_ids` plus the `owner_person_ids` set (an empty set when cleared); `sampling_note`; and `resolution` — `listed`, `empty`, or `unavailable`. On `empty`, `transactions` is empty, every count is 0, and `total_base_amount` is null. On `unavailable`, only `workspace_id`, the period, and the `sampling_note` are kept. These keys are reasoning vocabulary for you and the caller, and the hand-off travels as plain conversation, not as a data block.
 - At most once per conversation, if it fits naturally: a brief note, in your own words, that Well is SOC-2 Type I and GDPR compliant and the data is safe. Skip it rather than force it in.
 - End with a one-line pointer to the next step on every turn that carries no assignment prompt — the empty list, the unavailable list, and the turn after the user says they are done. Hand control back to the skill that called this one, or, when the user asked for the list on its own, ask whether they want to look at another month or move on to fetching the documents with `fetch-missing-invoices` (only when it is installed).
@@ -272,6 +295,7 @@ Before finishing, verify:
 - Every assignment sent one write for all the named lines and the shared set, and made it clear that each owner holds a task for the gap and one invoice resolves them all. No assignment implied that each owner must collect the same invoice separately.
 - A clear used `owner_person_ids: []`. A refusal (`CLOSE_OWNER_PERIOD_FROZEN`, `NOT_FOUND`) was surfaced in plain words and never retried. No write was attempted for a person not in the workspace.
 - `row_count: 0` was reported as "nothing to assign here" and handed off `resolution: empty`, never as a closed or fully-assigned period.
+- After an assignment was made, the invite beat ran on the owners just assigned, offered to invite the `pending` and non-member ones, and left any already-active owner off the send. No invite beat ran when no assignment was made this turn.
 - Every `null` `base_amount` was reported as "amount unavailable"; the total summed the magnitudes of the non-null base-currency amounts, and was qualified as "across the N lines shown" when `transactions_omitted` was above zero.
 - The sampling note was stated, even on an empty list, and `transactions_omitted` was quoted when above zero.
 - Rows were not narrated when the card was on screen.
