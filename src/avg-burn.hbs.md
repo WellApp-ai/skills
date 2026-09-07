@@ -169,7 +169,7 @@ Before finishing, verify:
 - The divisor was the window length. When some months were dark, both numbers were stated and the figure was never presented as the typical month.
 - A comparison, where one was made, measured the ADJACENT earlier window under the SAME policy, named both windows, and was skipped rather than guessed where that window could not be measured.
 - An unmeasured exclusion count was reported as unmeasured, never as none.
-- The sync gate re-read once and handed back, rather than claiming a wait the toolset cannot perform.
+- The sync gate watched the run at the stated interval and stopped at its ceiling — never reads fired back to back, never a wait past the budget, and never a card drawn for a poll nobody asked to see.
 - Internal transfers were excluded structurally, and described that way — never as something a recategorization would change.
 - Exclusions were reported in their three named groups, not merged into one count.
 - The unresolvable rows from stage C were disclosed as a bound on confidence, not silently absorbed.
