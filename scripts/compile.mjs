@@ -54,6 +54,12 @@ Handlebars.registerHelper("list", (value) =>
 // tests truthiness, not which value.
 Handlebars.registerHelper("eq", (a, b) => a === b);
 
+// For a prose branch two independent props each independently trigger — e.g.
+// single-select cardinality, true under `mode="collect"` OR a purpose that
+// implies it on its own. Keeps the two conditions readable inline rather than
+// nesting an `{{#if}}` inside every branch that needs both.
+Handlebars.registerHelper("or", (...args) => args.slice(0, -1).some(Boolean));
+
 function splitFrontmatter(source, label) {
   const match = source.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
   if (!match) throw new Error(`${label}: missing frontmatter block`);
