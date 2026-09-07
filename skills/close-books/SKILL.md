@@ -291,13 +291,14 @@ step is skipped or re-run.
    the close only surfaces, and the fix lands on another surface (the bank connection, categorisation).
    By kind:
    - **Settled spend missing its invoice** → `well_get_close_proof_gaps` to read the gap. **Assign the
-     owners before any fetch is offered.** When the gap holds lines with no owner, run
-     `assign-missing-invoices` for this workspace and the close's month; it renders its owner card and
-     ends the turn on it. On the next turn, read its hand-off: on `resolution: listed` with
-     assignments made, say who now holds a task and that one supplier invoice resolves every owner's
-     task, then offer the fetch exactly as before. On `resolution: empty` (nothing to assign) or
-     `unavailable` (`well_list_missing_invoice_owners` not in the toolset), skip the assign beat and
-     fall through to the fetch offer unchanged. Then, **only after the user agrees**,
+     owners before any fetch is offered.** Run `assign-missing-invoices` for this workspace and the
+     close's month; the proof-gap read carries no owners, so the brick is what reads them. It renders
+     its owner card and ends the turn on it. On the next turn, read its hand-off: on `resolution:
+     listed` the card rendered, so say how many lines had no owner and who now holds a task (or that
+     every line was already owned) and that one supplier invoice resolves every owner's task, then
+     offer the fetch exactly as before. On `resolution: empty` (`row_count` 0, no settled line missing
+     an invoice) or `unavailable` (`well_list_missing_invoice_owners` not in the toolset), fall
+     through to the fetch offer unchanged. Then, **only after the user agrees**,
      `well_enqueue_close_invoice_fetch` to queue the vendor-portal fetch. It hands work to a browser
      agent and runs in the background; say so, and that the invoices land later. If the assign tools
      are absent the beat is skipped; if the fetch tools are absent, point at the
@@ -406,10 +407,11 @@ Before finishing, verify:
 - `well_get_close_state` was re-read after every change, and each blocker was cleared with the tool
   the ladder named — never a fabricated resolution, never a task resolved that the ladder routed
   elsewhere.
-- When the missing-invoice gap held lines with no owner, the assign beat ran before the fetch was
-  offered: `assign-missing-invoices` rendered its owner card, and the fetch was offered only after its
-  hand-off came back. A `resolution: empty` or `unavailable` skipped the beat and fell through to the
-  fetch offer unchanged, never blocking the close on it.
+- Whenever the close was blocked on settled spend missing its invoice, the assign beat ran before the
+  fetch was offered: `assign-missing-invoices` read the owners (the proof-gap read carries none) and
+  rendered its card, and the fetch was offered only after its hand-off came back. The flow never
+  pre-checked an owner count it could not see. A `resolution: empty` or `unavailable` skipped the beat
+  and fell through to the fetch offer unchanged, never blocking the close on it.
 - `well_enqueue_close_invoice_fetch` was called only after an explicit user yes, because it hands
   work to a browser agent.
 - `well_retry_close_reconciliation` was called only after an explicit user yes, because it is a
@@ -445,11 +447,11 @@ the user confirms it — that confirmation is the go-ahead to start. Pass it str
 Read `well_get_close_state` — two blockers: one uncategorised-transactions task and one settled
 payment missing its invoice. Confirm the scope with `well_select_close_scope` (the server's fiscal
 scope, copied verbatim). Point the user at `categorize-counterparties` for the categories; for the
-missing invoice, read `well_get_close_proof_gaps`. The gap holds three lines with no owner, so run
-`assign-missing-invoices` for Acme SAS and March 2026 first: the user assigns the three Uber lines to
-Marie, its hand-off comes back `listed`, and you say Marie now holds one task and one invoice will
-resolve it. Then, after the user agrees, call `well_enqueue_close_invoice_fetch`. Re-read the state
-each time. Once zero blockers remain, call
+missing invoice, read `well_get_close_proof_gaps`, then run `assign-missing-invoices` for Acme SAS and
+March 2026 (it reads the owners, which the proof-gap read does not carry): its card comes back
+`listed` with three unowned Uber lines, the user assigns them to Marie, and you say Marie now holds
+one task that one invoice will resolve. Then, after the user agrees, call
+`well_enqueue_close_invoice_fetch`. Re-read the state each time. Once zero blockers remain, call
 `well_prepare_close_package`, then `well_prepare_close_period` to mint the offer. Tell the user the
 close is ready and to accept the approval in Well — you cannot lock the period yourself. After they
 accept, read `well_get_action_receipt` and confirm March 2026 is closed.
