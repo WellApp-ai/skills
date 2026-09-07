@@ -43,7 +43,7 @@ The calling skill or the user provides:
 
 - `workspace_id` — required, and **passed explicitly on every call** to both tools below. Comes from `define-workspace`. If absent, reuse a session pin (`well_list_workspaces`' `session.pinned_workspace_id`) silently only when THIS conversation established it — hosts share one MCP session across conversations, so a pin this conversation never made is another conversation's leftover: ignore it, never mention it, and run `define-workspace` first. A pin changes what an omitted `workspace_id` falls back to; it does not make the argument optional. Omitting it is the sibling-entity fallback, so pass it on the read and on every write.
 - A period selection written server-side — required, but **not passed to the tool** in the normal flow: the user's click on the period card, or `define-period` on a typed month, already wrote it, and the read uses it on its own. If no selection exists yet, the read says so — run `define-period` then; never guess a period from today's date.
-- A connected bank — required. The missing-invoice lines come from the bank feed. `connect-tools` reads whether a bank is connected before the period is pinned; when none is, the flow routes to `connect-bank` instead of listing an empty month.
+- A connected bank — required. The missing-invoice lines come from the bank feed. `connect-tools` reads whether a bank is connected before the period is pinned; when none is, the flow routes to `connect-bank` instead of listing an empty month — or, on a standalone install with no `connect-bank`, stays in `connect-tools` scoped to `kinds: [bank]`, its own documented bank-only path.
 - `purpose` — one line from the calling skill, used when a question is needed. Optional.
 
 Every month in the selection has ended. `define-period` pins no running month, and the read refuses the whole call when the selection holds one.
@@ -77,14 +77,14 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 Never call `well_invoke_connector_tool` or any provider-specific tool. This skill reads and writes Well's own ownership; it never touches a provider.
 
-**Composed skills.** Three atomic Well skills own the setup this skill must not inline — invoke them, don't reimplement them. A fourth, `connect-bank`, is a full Well skill rather than an atom: step 2 hands the flow to it when no bank is connected at all, so it ships alongside this skill (`requires: [connect-bank]`).
+**Composed skills.** Three atomic Well skills own the setup this skill must not inline — invoke them, don't reimplement them. A fourth, `connect-bank`, is a full Well skill rather than an atom: step 2 hands the flow to it when no bank is connected at all, so it ships alongside this skill (`requires: [connect-bank]`). On a standalone install with no `connect-bank`, step 2 falls back to `connect-tools` scoped to `kinds: [bank]` instead — its own documented bank-only path — rather than a hand-off to a skill the host does not have.
 
 1. **Pin the workspace.** {{> define-workspace purpose="to assign the missing-invoice owners for that workspace"}}
 
 2. **Confirm a bank is connected.** {{> connect-tools purpose="to assign the expenses missing an invoice" kinds="bank" required="bank" internalCheck=true}}
    - `bank` connected → carry on to the period step.
    - `bank` connecting → the feed is still syncing, so no settled spend has landed to assign yet. `define-period` below is called with `bankState="connected"` and would read a still-syncing feed as an empty month, so do not pin a period or read the list. Say the bank is still syncing and to try again once it finishes, and stop.
-   - `bank` missing, or in error with no live feed → there is no settled spend to assign yet. Do not pin a period or read the list: hand the flow to `connect-bank` so the user can connect one, and stop. This is the connect-bank fallback the Inputs name.
+   - `bank` missing, or in error with no live feed → there is no settled spend to assign yet. Do not pin a period or read the list: hand the flow to `connect-bank` so the user can connect one, and stop. This is the connect-bank fallback the Inputs name. **On a standalone install with no `connect-bank`**, run `connect-tools` again instead, scoped to `kinds: [bank]` with no `internalCheck` — its own documented bank-only path — so it renders its own bank card and takes the Continue ack itself; end the turn on that card rather than a bare hand-off to a skill the host does not have.
 
 3. **Pin the period.** {{> define-period purpose="to assign the expenses missing an invoice for that month" bankState="connected" mode="select" showCloseReadiness=false}}
    - Read its `has_activity`: `false` means the month holds no settled transactions at all, so there is nothing to assign for it — say so, offer `connect-bank` if the bank feed looks empty, or ask for another month, and stop. `true` or `unknown` → read the list.
@@ -97,7 +97,7 @@ Call each list or read tool once per step. The card refreshes itself — never r
 
 1. **Confirm the MCP server is configured.** If `well_*` tools are not available, the Well MCP server has not been added to this host. Tell the user a Well connection is mandatory — endpoint `https://api.wellapp.ai/v1/mcp` — because the list is computed in Well from their bank data. Stop until it is there.
 
-2. **Run the composed setup in order** — `define-workspace`, then `connect-tools` for the bank, then `define-period` (see Tooling). A missing bank sends the flow to `connect-bank` and stops here; a bank still connecting stops here with a wait message; a period with `has_activity: false` stops here too, because a month with no transactions has nothing to assign.
+2. **Run the composed setup in order** — `define-workspace`, then `connect-tools` for the bank, then `define-period` (see Tooling). A missing bank sends the flow to `connect-bank` and stops here — or, on a standalone install with no `connect-bank`, stops here on `connect-tools`' own bank-only card instead; a bank still connecting stops here with a wait message; a period with `has_activity: false` stops here too, because a month with no transactions has nothing to assign.
 
 3. **Read the list.** Call `well_list_missing_invoice_owners({ workspace_id })` once, with no period — the server reads the period selection the user clicked.
    - An error saying no period selection exists yet → run `define-period`, then re-call. Never guess a month.
@@ -151,7 +151,7 @@ Before finishing, verify:
 - If `well_*` tools were absent, the user was pointed at `https://api.wellapp.ai/v1/mcp` instead of a tool error.
 - If `well_list_missing_invoice_owners` was absent, the answer said this Well server does not expose it yet, handed off `resolution: unavailable`, and computed nothing.
 - The workspace came from `define-workspace`, the caller, or a session pin this conversation established — no leftover pin was reused or mentioned. Every call to both tools carried `workspace_id` explicitly.
-- A missing bank sent the flow to `connect-bank` and stopped, and a bank still connecting stopped with a wait message, rather than listing an empty month. A period with `has_activity: false` stopped with "nothing to assign for this month", not an error and not a claim that the month is done.
+- A missing bank sent the flow to `connect-bank` and stopped — or, with `connect-bank` absent, stopped on `connect-tools`' own bank-only card instead — and a bank still connecting stopped with a wait message, rather than listing an empty month. A period with `has_activity: false` stopped with "nothing to assign for this month", not an error and not a claim that the month is done.
 - The read was called once, with no period argument. A no-selection error went to `define-period`; a not-ended period went to `define-period`, never retried.
 - Lines were bucketed on `bucket` as returned, never re-derived from `owners`, and all three buckets were reported.
 - No line whose `bucket` read `assigned_to_me` or `assigned_to_others` was reported as if it had no owner, even when its `owners` array came back empty.
@@ -207,7 +207,7 @@ The write refuses the batch with `refusal_reason: CLOSE_OWNER_PERIOD_FROZEN`. Sa
 
 ### Expected behavior
 
-`connect-tools` comes back with the bank missing. Do not pin a period or read the list. Hand the flow to `connect-bank` so the user can connect a bank, and say the expenses can be assigned once the feed is in. Stop there.
+`connect-tools` comes back with the bank missing. Do not pin a period or read the list. Hand the flow to `connect-bank` so the user can connect a bank, and say the expenses can be assigned once the feed is in. Stop there. On a standalone install with no `connect-bank`, run `connect-tools` again instead, scoped to `kinds: [bank]`, so its own bank card renders and takes the Continue click, and stop there the same way.
 
 ## Voice
 {{> voice}}

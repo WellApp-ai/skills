@@ -24,7 +24,7 @@ This skill delegates one setup step to a Well atomic skill rather than repeating
 
 - **[`connect-bank`](connect-bank.md)** — connects a bank feed when this skill finds none, so its missing-bank branch hands the user to a real connect step instead of a skill they don't have.
 
-Install it alongside this one. Without it, a workspace with no bank connected has nowhere to go from here. The **Claude Code plugin** and **Codex plugin** paths below install both together; if you download the `.skill` file on its own, grab `connect-bank` as well.
+Install it alongside this one. The skill still runs without it: the missing-bank branch falls back to `connect-tools` scoped to banks, its own documented bank-only path, instead of a bare hand-off to a skill the host does not have. The **Claude Code plugin** and **Codex plugin** paths below install both together; if you download the `.skill` file on its own, grab `connect-bank` as well.
 
 ---
 
