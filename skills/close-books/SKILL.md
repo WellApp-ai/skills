@@ -1,6 +1,6 @@
 ---
 name: close-books
-requires: [define-workspace, confirm-my-company, connect-bank, connect-accounting, connect-tools, accounting-settings, define-period]
+requires: [define-workspace, confirm-my-company, connect-bank, connect-accounting, connect-tools, accounting-settings, define-period, fetch-missing-invoices]
 description: Drive a month-end close for a Well workspace to the point of approval — start the close for a named month, read what is blocking it, clear the blockers one at a time, prepare the close package, and mint the approval offer the user accepts in the Well app. Use when the user asks to "close the books", "close last month", "run the month-end close", "close March", "finish the close", or "what's left to close the period". This is a WRITE flow — it advances a real close run and can resolve tasks, so it shows the state before every step and asks first before retrying reconciliation or queuing a vendor invoice fetch, the two that need an explicit yes. It never locks the period itself; the final approval is a first-party click in Well by design. Requires a connected Well workspace with its bank synced — the only connection the close blocks on; an accounting connection is optional and makes the close richer. If none, it walks the user through connecting first.
 ---
 
@@ -88,8 +88,8 @@ user to add it at that URL, then retry. The close tools, and what each one does:
 - `well_get_schema` — call before reading any records root for the first time in a session; field
   names are workspace- and connector-dependent, never assume them.
 
-**Composed skills.** Seven atomic Well skills own the setup this flow walks — invoke them in the order
-below, don't reimplement them. The order mirrors the Well app's close flow so the chat and the app
+**Composed skills.** Seven atomic Well skills own the setup this flow walks, and an eighth owns the
+missing-invoice remediation inside step 9 — invoke them in the order below, don't reimplement them. The order mirrors the Well app's close flow so the chat and the app
 feel like one product. Only three things must be true **before `well_start_close`** — the own company
 is set, the fiscal year start is set, and the calendar month is named. The rest is ordered for parity
 with the app, and the connections and categorisation are cleared as blockers after the scope is
@@ -129,8 +129,15 @@ chosen, in any order.
   picker UX and hands its `calendar_year` + `calendar_month` back. It is *not* the commit: naming the
   month **is** starting the close, so this flow passes the collected month straight into
   `well_start_close`.
+- `fetch-missing-invoices` in **`mode: composed`** — the missing-invoice remediation for step 9, not a
+  setup step. When the close is blocked on settled spend missing its invoice, this flow hands it the
+  pinned `workspace_id` and the close's month, and it starts mid-walk at its assign beat: it sets the
+  owners, lists the gap, takes the vendor pick, offers the connect step, and on the user's Deploy
+  click queues Well's browser agents with `well_enqueue_invoice_fetch`. That dispatch replaces the
+  close's own `well_enqueue_close_invoice_fetch` on this path; the close keeps that tool only as the
+  inline fallback for when `fetch-missing-invoices` is not installed.
 
-All seven ship with the `well-skills` plugin. This skill is also installable on its own, so the
+All eight ship with the `well-skills` plugin. This skill is also installable on its own, so the
 workflow carries an inline fallback for each when it is absent.
 
 ## Workflow
@@ -276,11 +283,19 @@ step is skipped or re-run.
    tool that acts on them — missing invoices, chat-resolvable tasks, and unmatched invoices; others
    the close only surfaces, and the fix lands on another surface (the bank connection, categorisation).
    By kind:
-   - **Settled spend missing its invoice** → `well_get_close_proof_gaps` to read the gap, then, **only
-     after the user agrees**, `well_enqueue_close_invoice_fetch` to queue the vendor-portal fetch. It
-     hands work to a browser agent and runs in the background; say so, and that the invoices land
-     later. If those tools are absent, point at the `fetch-missing-invoices` skill (or `deploy-agents`)
-     or the Well app.
+   - **Settled spend missing its invoice** → **delegate the whole remediation to `fetch-missing-invoices`
+     in `mode: composed`**, handing it the pinned `workspace_id` and the close's month. It starts mid-walk
+     at its assign beat: it sets the owners on the settled lines still missing an invoice (before any
+     fetch, so each gap has an owner on record), lists the gap, takes the user's vendor pick, offers the
+     connect step for vendors Well holds a connector for, and on the user's **explicit Deploy click**
+     queues Well's browser agents with `well_enqueue_invoice_fetch`. The queued invoices land later and
+     clear this blocker when they attach, whoever queued the fetch. Report what its dispatch queued, then
+     re-read `well_get_close_state`.
+     - **Inline fallback, when `fetch-missing-invoices` is not installed:** read `well_get_close_proof_gaps`
+       to see the gap and, **only after the user agrees**, call `well_enqueue_close_invoice_fetch` to queue
+       the vendor-portal fetch yourself — the close's own tool, which the deploy path above otherwise
+       replaces. If those tools are absent too, point at the `fetch-missing-invoices` skill (or
+       `deploy-agents`) or the Well app.
    - **Missing or unsynced bank transactions** → the bank side. No close tool repairs it — go back to
      step 3's `connect-bank`, or point at the connector surface / Well app. The close only surfaces
      this one.
@@ -385,8 +400,11 @@ Before finishing, verify:
 - `well_get_close_state` was re-read after every change, and each blocker was cleared with the tool
   the ladder named — never a fabricated resolution, never a task resolved that the ladder routed
   elsewhere.
-- `well_enqueue_close_invoice_fetch` was called only after an explicit user yes, because it hands
-  work to a browser agent.
+- The missing-invoice blocker was remediated by delegating to `fetch-missing-invoices` in
+  `mode: composed` (owners set before the fetch, gap listed, vendor pick taken, agents queued on the
+  user's Deploy click), not by the close queuing its own fetch. `well_enqueue_close_invoice_fetch` was
+  called only on the inline fallback where `fetch-missing-invoices` was absent, and then only after an
+  explicit user yes, because it hands work to a browser agent.
 - `well_retry_close_reconciliation` was called only after an explicit user yes, because it is a
   state-changing orchestration action, not a read.
 - `well_prepare_close_package` was called only at zero blockers, and `well_prepare_close_period`
@@ -420,8 +438,11 @@ the user confirms it — that confirmation is the go-ahead to start. Pass it str
 Read `well_get_close_state` — two blockers: one uncategorised-transactions task and one settled
 payment missing its invoice. Confirm the scope with `well_select_close_scope` (the server's fiscal
 scope, copied verbatim). Point the user at `categorize-counterparties` for the categories; for the
-missing invoice, read `well_get_close_proof_gaps`, and after the user agrees, call
-`well_enqueue_close_invoice_fetch`. Re-read the state each time. Once zero blockers remain, call
+missing invoice, run `fetch-missing-invoices` in `mode: composed` with Acme SAS and March 2026 — it
+sets the owners on the three unowned Uber lines (the user assigns them to Marie), lists the gap, takes
+the vendor pick, and on the user's Deploy click queues the fetch agents with
+`well_enqueue_invoice_fetch`; report what it queued. Re-read the state each time. Once zero blockers
+remain, call
 `well_prepare_close_package`, then `well_prepare_close_period` to mint the offer. Tell the user the
 close is ready and to accept the approval in Well — you cannot lock the period yourself. After they
 accept, read `well_get_action_receipt` and confirm March 2026 is closed.

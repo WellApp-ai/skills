@@ -26,7 +26,7 @@ It only advances on what's ready. The bank feed is the one connection the close 
 
 ## Composes onto
 
-This skill delegates seven setup steps to Well's atomic skills rather than repeating them:
+This skill delegates seven setup steps to Well's atomic skills rather than repeating them, and hands its missing-invoice remediation to an eighth:
 
 - **[`define-workspace`](define-workspace.md)** — pins which Well workspace the close runs in.
 - **[`confirm-my-company`](confirm-my-company.md)** — resolves which company is yours, which the close requires before it will start, and sets it on your explicit confirmation when it isn't set yet.
@@ -35,8 +35,9 @@ This skill delegates seven setup steps to Well's atomic skills rather than repea
 - **[`connect-tools`](connect-tools.md)** — the multi-kind connector brick; the close uses it for the one coverage read that checks bank, accounting, and invoicing together, and as the inline fallback when `connect-accounting` isn't installed.
 - **[`accounting-settings`](accounting-settings.md)** — sets the fiscal year start month the close derives its period from, when it's unset or wrong.
 - **[`define-period`](define-period.md)** — collects the calendar month the close runs on.
+- **[`fetch-missing-invoices`](fetch-missing-invoices.md)** — the missing-invoice remediation for the close's blocker: when settled spend is missing its invoice, the close runs it in composed mode to set the owners, list the gap, take the vendor pick, and queue the fetch agents on your Deploy click.
 
-Install all seven alongside this one. The skill still runs without them — each step falls back inline — but with them installed you get one consistent workspace flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install all eight together; if you download the `.skill` file on its own, grab those seven as well.
+Install all eight alongside this one. The skill still runs without them — each step falls back inline — but with them installed you get one consistent workspace flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install every skill together; if you download the `.skill` file on its own, grab those eight as well.
 
 ---
 
@@ -63,6 +64,7 @@ Install the following official skills from Well.
     f. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
     g. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounting-settings/SKILL.md
     h. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-period/SKILL.md
+    i. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/fetch-missing-invoices/SKILL.md
 2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
 3. Install these skills.
 4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.

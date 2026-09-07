@@ -1,7 +1,7 @@
 ---
 name: deploy-agents
 requires: [define-workspace, define-period, show-missing-invoices]
-description: Preview what Well would fetch for the vendors the user picked — which agents would run, over which counterparties and transactions, which rows need a manual upload, and which providers need connecting — then hand those vendors to the Well app. Nothing collects anything yet. The preview card gives a checkbox to each vendor the collect link names, and its primary action opens that link for the portals the user ticked. The Well browser extension collects from those portals, and only after the user starts them on that page. Use when the user asks to fetch, collect, or chase the invoices they are missing, says "launch the agents", "go get those invoices", "deploy the collectors", or when the fetch-missing-invoices flow reaches its last step after the missing rows have been listed and picked. Do not use to run a collection from the session, to invoke a connector's own actions, to create or edit an invoice, to connect a provider, or to list which invoices are missing in the first place.
+description: Preview what Well would fetch for the vendors the user picked — which agents would run, over which counterparties and transactions, which rows need a manual upload, and which providers need connecting — then, on an explicit Deploy click, queue Well's browser agents to fetch that pick. Nothing is queued until the user clicks Deploy. The preview card gives a checkbox to each vendor, and its Deploy action calls `well_enqueue_invoice_fetch`, which creates the fetch tasks; Well's browser agents then collect against them. Use when the user asks to fetch, collect, or chase the invoices they are missing, says "launch the agents", "go get those invoices", "deploy the collectors", or when the fetch-missing-invoices flow reaches its last step after the missing rows have been listed and picked. Do not use to run a collection from the session, to invoke a connector's own actions, to create or edit an invoice, to connect a provider, or to list which invoices are missing in the first place.
 ---
 
 # Deploy Agents with Well
@@ -14,12 +14,14 @@ counterparties and transactions behind each — and state, in the user's languag
 which agents, which rows the user has to upload by hand, which providers are not connected yet. The
 scope is the user's pick, not everything the period yields.
 
-**This skill collects nothing.** It and its card start no agent, open no browser session and queue
-no task. The card's primary action opens the collect link, which names the portals the user ticked.
-The Well browser extension runs those portals, and only after the user starts them on that page. So
-the honest sentence is not "the run has started" — it is "nothing has started here, and the
-collection runs in the browser extension once you start it there". This skill never learns what a
-run produced. This is the last brick of Well's fetch-missing-invoices flow.
+**This skill queues nothing until Deploy, and then it only queues.** Before the Deploy click it and
+its card start no agent, open no browser session and queue no task. The card's **Deploy** action calls
+`well_enqueue_invoice_fetch`, which creates the fetch tasks for the picked vendors; Well's browser
+agents then collect against those tasks. So the honest sentence before Deploy is "nothing has started
+yet", and after Deploy it is "the fetch tasks are queued, and Well's browser agents collect against
+them" — never "the invoices are in". This skill creates the tasks on Deploy but never learns what a
+run produced, and it makes no other write. This is the last brick of Well's fetch-missing-invoices
+flow.
 
 ## When to use this skill
 
@@ -39,9 +41,9 @@ Do not use this skill when:
 - The user wants to know *which* invoices are missing — that is the `show-missing-invoices` skill,
   the step before this one; this skill reads that skill's hand-off rather than recomputing it.
 - The user wants a fetch result, a downloaded file, or a status update on a running collection —
-  this skill starts nothing and receives nothing back. The collect link its card opens hands the
-  picked portals to the Well browser extension, and the extension's side panel reports the runs.
-  Point the user there instead of promising progress.
+  this skill queues the tasks on Deploy and receives nothing back after that. Well's browser agents
+  collect against the queued tasks, and the extension's side panel reports the runs. Point the user
+  there instead of promising progress.
 - The user wants to connect a provider so it can be fetched from — that is the `connect-tools`
   skill.
 - The user wants to create, edit, or attach an invoice by hand — those are Well's invoice skills
@@ -95,8 +97,9 @@ nothing is merged across two entities.
 
 ## Tooling
 
-Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). Two read-only tools
-are involved. The preview tool is optional, and the session read is a resync fallback:
+Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). A read tool builds
+the preview, a write tool queues the fetch on the Deploy click, and a session read is a resync
+fallback. The preview tool is optional; the write is called only on Deploy:
 
 - `well_preview_invoice_fetch` — **when it is present in your toolset.** Input: `workspace_id`
   explicitly, as on every `well_*` call, and **no periods argument** — omitted, the server uses the
@@ -141,42 +144,43 @@ are involved. The preview tool is optional, and the session read is a resync fal
   from the row count. `selection_scope` comes back beside it and says how large the truncation is —
   `rows_dropped_by_filter` of the `row_count_before_filter` counterparty rows in the months read are
   not covered — so quote those two numbers rather than presenting the counts as the whole period.
-- `collect_url` — **the one link to hand the user.** Its shape is
-  `<well-app-base-url>/collect?workspace=<workspace_id>&providers=<entry>,<entry>,…`, and each entry
-  is `<provider_id>[~<name>[~<url>]]`. The `provider_id` is required and is the only field that
-  decides which portal runs; the page refuses an entry that does not start with one. The name and the
-  host label the row and nothing more. Give it exactly as returned: never build a link yourself and
-  never add or edit a parameter. The `workspace` parameter is required, and it gates WHO may act on
-  the link: the link is forwardable, so the page starts nothing until the reader is signed in to Well
-  as a member of that workspace, and it refuses every other reader. It does NOT choose where the
-  invoices land — the extension files into whichever workspace it is signed in to — so never tell the
-  user the link picks the destination. It is null when no previewed agent carries a `provider_id`.
-  One link names at most 25 portals; `collect_url_omits` names the ones it left out, and no run
-  reaches them from that link. The page needs the Well browser extension installed and signed in, and
-  it says so on screen when it is not.
-- **The preview card, in MCP-Apps hosts.** The result renders the vendors the collect link names
-  with a checkbox per row, and shows the rest as vendors the link cannot take — no checkbox, because
-  a tick there would promise a run the link never carries. A select-all appears only when the link
-  names more than one vendor. The card's primary action opens the collect link for the portals still
-  ticked, and the card starts nothing itself. So end your turn on the card and let the user tick and
-  open it; do not restate the rows it draws, and never describe the open as a collection that
-  finished.
+- `well_enqueue_invoice_fetch` — **the Deploy write, and the only write this skill makes.** Input
+  `{ workspace_id, counterparty_company_ids: uuid[] (1..200) }` — the picked counterparties by
+  `company_id`. It creates the browser-agent fetch tasks on the call, so **call it ONLY on the user's
+  explicit Deploy click** (or a typed deploy), never on your own initiative and never to preview. It
+  dedupes on active tasks: a counterparty that already holds a non-terminal fetch task comes back
+  `already_active: true` and nothing new is created. Output: `enqueued[]` (each `company_id`,
+  `task_id`, `provider` or null, `already_active`), `skipped[]` (each with a `reason`), and
+  `enqueued_count` / `already_active_count` / `skipped_count`. A queued task whose `provider` carries
+  `has_blueprint: true` gets a browser agent that visits the portal; a null provider or no blueprint
+  routes it to manual upload at creation. When this tool is absent from the toolset, the Deploy step
+  cannot queue from the session: say so and point the user at the Well app to start the fetch there.
+- **The preview card, in MCP-Apps hosts.** The result renders the vendors with a checkbox per row,
+  and shows the rest — those with no agent route — as vendors the run cannot take. A select-all
+  appears only when more than one vendor can be queued. The card's **Deploy** action calls
+  `well_enqueue_invoice_fetch` for the vendors still ticked; before that click the card queues
+  nothing. So end your turn on the card and let the user tick and deploy; do not restate the rows it
+  draws, and never describe the Deploy as a collection that finished — it queues the tasks, and the
+  browser agents collect against them afterwards.
 - `well_list_workspaces` — **the resync read, and the only other tool this skill calls.** Its
   `session` block carries `selected_counterparties` (the pick, with the workspace its company ids
   belong to; null until one is recorded), `pinned_workspace_id` and `workspace_queue`. Read it only
   to resync — for a click the `show-missing-invoices` hand-off missed, or for a run that reaches
   this skill with no hand-off at all — never as a first move when the hand-off already carries the
   pick.
-- **When the preview tool is absent**, no call to it is needed at all. Derive the same preview
-  from the `show-missing-invoices` hand-off's `agent_candidates`, which carry the provider and its
-  counterparties, narrowed to the picked `company_id` values. That path carries no `provider_id` and
-  no `collect_url`, and a link cannot be built without the ids: give the workspace link instead and
-  say the collection starts from the app's collect page, which this run cannot address.
+- **When the preview tool is absent**, no call to it is needed for the preview. Derive it from the
+  `show-missing-invoices` hand-off's `agent_candidates`, which carry the provider and its
+  counterparties, narrowed to the picked `company_id` values. The dispatch is unaffected: on the
+  Deploy click, `well_enqueue_invoice_fetch({ workspace_id, counterparty_company_ids })` still queues
+  the picked counterparties by their `company_id`. Only if `well_enqueue_invoice_fetch` is also absent
+  can nothing be queued from here — then give the workspace link and say the fetch starts in the Well
+  app.
 
-Never call a tool that changes anything. Specifically: no `well_invoke_connector_tool`, no
-`well_create_*`, no `well_update_*`, no `well_delete_*`, no connector action of any kind. This skill
-reads or derives, and it never writes. It does not re-pin the session either: on a multi-workspace
-run the caller calls `well_switch_workspace` between passes, as the Inputs section says.
+The only write this skill makes is `well_enqueue_invoice_fetch`, and only on the user's explicit
+Deploy click. Otherwise it changes nothing: no `well_invoke_connector_tool`, no `well_create_*`, no
+`well_update_*`, no `well_delete_*`, no connector action of any kind, and no enqueue on your own
+initiative or to preview. It does not re-pin the session either: on a multi-workspace run the caller
+calls `well_switch_workspace` between passes, as the Inputs section says.
 
 **Composed skills.** Three Well skills own the steps this skill must not inline — invoke them,
 don't reimplement them:
@@ -228,8 +232,10 @@ Call each list or read tool once per step. The widget cards refresh themselves �
 3. **Build the preview, and keep it to the pick.**
    - Tool present → call `well_preview_invoice_fetch({ workspace_id })` — no periods argument; the
      server reads the clicked selection — and use its `agents`, `upload_rows`, `connect_rows`,
-     `counts`, `scoped_to_selected_counterparties` and `collect_url` as they come, `provider_id`,
-     `domain` and `url` included. Do not recompute or re-sort them.
+     `counts` and `scoped_to_selected_counterparties` as they come, `provider_id`, `domain` and `url`
+     included. (The tool also returns a `collect_url`, but the Deploy dispatch is
+     `well_enqueue_invoice_fetch` now, not that link, so do not hand the link to the user.) Do not
+     recompute or re-sort them.
      **`scoped_to_selected_counterparties: true` means the pick already bounded the result**: the
      server filtered every route to the recorded pick, for the months the pick was made against. Say the
      plan covers the picked vendors only for those months, and that a month of the window the pick
@@ -255,11 +261,11 @@ Call each list or read tool once per step. The widget cards refresh themselves �
      `company_id` is in the pick. The hand-off's `counts.upload` and `counts.connect` are
      period-wide numbers with no counterparty behind them: they cannot be narrowed, so never quote
      one under a pick-scoped answer.
-   - An agent whose `provider_id` is null cannot be named on the collect link, so no run can carry
-     it. Report it as a vendor the link cannot take, and never promise it will be fetched. A null
-     `domain` is a missing label and nothing more: that agent still travels on its id. The portals
-     the tool lists in `collect_url_omits` are outside the link too — report them the same way, as
-     vendors this link does not cover.
+   - An agent whose `provider_id` is null has no portal a browser agent can visit: on Deploy,
+     `well_enqueue_invoice_fetch` still creates its task but routes it to manual upload. Report it as a
+     vendor the run cannot fetch automatically, and never promise a browser agent will chase it. A null
+     `domain` is a missing label and nothing more: an agent that carries a `provider_id` still travels
+     on its id.
    - A pick that yields no agent — every picked vendor is an upload or a connect row — still has
      something to report: keep `agents` empty, state those lines, and resolve `previewed`. Reserve
      `nothing_to_do` for a pick with nothing on any of the three routes.
@@ -292,15 +298,15 @@ Call each list or read tool once per step. The widget cards refresh themselves �
    - Print an amount only when `base_total_amount` is set. Never print `null`, and never sum across
      currencies that were not already converted to the workspace base currency.
 
-   Then say what the link does, in one line, and end the turn. The card's own footer carries the
-   mechanics — **Deploy** opens the collect link for the vendors still ticked, and waits there,
-   disabled, while nothing is ticked; **Continue** stands in its place only when no vendor in this
-   read is named on a collect link; **Keep for later** sits beside either one and, like Continue,
-   only sends its own label into the conversation and opens nothing — so ask the user to confirm
-   the vendors and deploy, and leave the labels to the card. Where no card is drawn, give the
-   tool's `collect_url` when the tool ran and the workspace link
-   otherwise, and say the collect page hands the picked portals to the Well browser extension once
-   the user starts them there. Append no query parameter of your own to either link.
+   Then say what Deploy does, in one line, and end the turn. The card's own footer carries the
+   mechanics — **Deploy** queues the fetch for the vendors still ticked (it calls
+   `well_enqueue_invoice_fetch`), and waits there, disabled, while nothing is ticked; **Continue**
+   stands in its place only when no vendor in this read has an agent route; **Keep for later** sits
+   beside either one and only sends its own label into the conversation, queuing nothing — so ask the
+   user to confirm the vendors and deploy, and leave the labels to the card. **Nothing is queued until
+   Deploy.** Where no card is drawn, take a typed deploy and call `well_enqueue_invoice_fetch({
+   workspace_id, counterparty_company_ids })` yourself; when that tool is absent, say the fetch cannot
+   be queued from here and give the workspace link so the user starts it in the Well app.
 
 5. **Then the rows an agent does not fetch on its own — two lines always, a third when it
    applies.** On a previewed run: one line for the rows the user has to upload by hand
@@ -331,23 +337,16 @@ Call each list or read tool once per step. The widget cards refresh themselves �
    a different record. Say the bound plainly and leave the period's uncategorized spend to the Well
    app.
 
-7. **State plainly what has and has not started.** One sentence of its own, not a parenthesis: no
-   agent has started here, no task is queued, and no browser session is open. Then say where a
-   collection does start — the collect page hands the picked portals to the Well browser extension,
-   and the extension's side panel reports the runs. Say it even where the card names agents. Never
-   claim a launch, a result, a downloaded invoice, a success rate, or an ETA — neither this skill,
-   its card, nor the page the link opens reports any of those. When the user reports that the link
-   opened, say the page names the portals they picked and waits for them to start it; do not narrate
-   a run nothing started, and do not report a refused link as a launch.
-
-   The page can also refuse the reader before it shows any portal, and each refusal has one true
-   reading. It asks the user to sign in to Well when no Well session is open, and it returns to the
-   same link afterwards. It says the link is for another workspace when the signed-in account is not
-   a member of the workspace the link names — that reader cannot start the collection, and a second
-   link for the same portals would refuse them again, so point them at an account that is a member of
-   this workspace. It says it cannot check the access when Well is unreachable, and a reload is the
-   whole remedy. None of these is a failed collection: nothing ran, so report it as a link the reader
-   could not open and never as an agent that tried and stopped.
+7. **State plainly what has and has not started.** Before the Deploy click, one sentence of its own,
+   not a parenthesis: no agent has started here, no task is queued, and no browser session is open.
+   After the Deploy click, say what `well_enqueue_invoice_fetch` queued — the fetch tasks are created
+   and Well's browser agents collect against them, and the extension's side panel is where a run is
+   reported. Say it even where the card names agents. Never claim a launch, a result, a downloaded
+   invoice, a success rate, or an ETA — this skill creates the tasks on Deploy but never learns a
+   run's outcome. A queued task whose `provider` carries no blueprint routes to manual upload rather
+   than a browser agent; say so rather than promising an agent for it. When the user asks about a run
+   that is already queued, point them at the extension's side panel; do not narrate a run this skill
+   cannot see.
 
 8. **On failure, redirect instead of guessing.** A transient error on `well_preview_invoice_fetch`
    → retry once. A second failure → fall back to deriving the preview from the hand-off. With
@@ -368,18 +367,18 @@ Return:
   connect — counterparty rows, one per month, or a distinct-vendor count the line names as such.
   Both lines appear even when the
   count is zero. A third line, only when `unmatched_rows` is non-zero, for the transactions whose
-  provider Well could not identify. A fourth, only when an agent carries no `provider_id` or the
-  tool listed it in `collect_url_omits`, for the vendors the collect link cannot name. On
+  provider Well could not identify. A fourth, only when an agent carries no `provider_id`,
+  for the vendors a browser agent cannot fetch — their tasks route to manual upload on Deploy. On
   `nothing_to_do` the single nothing-to-fetch sentence replaces all of them.
 - One line stating that the preview covers categorized expense transactions only.
 - One line stating what the plan covers — the picked vendors only, for the months the pick was made
   against, when `scoped_to_selected_counterparties` is true; the whole period when that flag is
   absent and no hand-off narrowed the result.
-- One line asking the user to confirm the vendors and deploy from the card — or, where no card is
-  drawn, carrying the collect link itself.
-- One plain sentence stating that no agent has started here, no task is queued and no browser session
-  is open, and naming where a collection does start — the collect page hands the picked portals to
-  the Well browser extension, whose side panel reports the runs.
+- One line asking the user to confirm the vendors and Deploy from the card — or, where no card is
+  drawn, saying a typed deploy queues the fetch; nothing is queued until that.
+- One plain sentence: before Deploy, no agent has started, no task is queued and no browser session
+  is open; after Deploy, the fetch tasks are queued and Well's browser agents collect against them,
+  and the extension's side panel reports the runs.
 - The hand-off, kept for the calling flow and never printed: `workspace_id` — the one this skill ran
   on, the same value every hand-off in this flow opens with; the period — the single-month fields
   when the result carried them, `periods_covered` plus the per-month `months` counts when it did
@@ -389,13 +388,12 @@ Return:
   and never on a vendor's name; the `agents` — each with its `provider_name`, `provider_id`, its
   `domain` or null, its counterparties (name, `tx_count`, `base_total_amount`), its summed
   `tx_count`, and its summed amount or null; `upload_rows`, `connect_rows`, and `unmatched_rows`;
-  `collect_url` — the collect link when the tool returned one, else null;
   `scoped_to_selected_counterparties` — true when the tool scoped the result to the pick, absent
   otherwise; the `coverage_note` — categorized expense transactions only, plus the tool's `hints`
   when it ran; and `resolution` — `previewed`, `nothing_to_do`, or `unavailable`. `run_mode` names
   how this skill ran and is always `preview`; it mirrors the tool's `mode: "preview"` under a
   different key, because `mode` upstream means a row's `agent | connect | upload` badge.
-  `provider_id` is the identifier the collect link names and a run dispatches on, and `domain` only
+  `provider_id` is the identifier a run dispatches on, and `domain` only
   labels the portal on screen; `provider_id` is null only when neither the tool nor the hand-off
   carries one. `unmatched_rows` counts the `"unknown"` group's transactions, which no agent covers.
   On `nothing_to_do`, `agents` is empty and every row count is zero or empty. On `unavailable` —
@@ -415,9 +413,10 @@ Return:
   `connect-tools` skill is installed, offer that instead: "Want me to connect the tools behind those
   vendors first?" — connecting is the route the preview suggests for them. Never offer
   `categorize-counterparties` as a way to uncover agents this preview does not show. When the user
-  asks to run the collection, point at the card's Deploy action — or at the collect link where no card is
-  drawn — and say plainly that the collection runs in the browser extension, once they start it on
-  that page. Never offer to run a collection from the session, and never claim one has finished.
+  asks to run the collection, point at the card's Deploy action — or take a typed deploy where no card
+  is drawn — which queues the fetch tasks with `well_enqueue_invoice_fetch`, and say plainly that
+  Well's browser agents collect against those tasks. Never offer to run a collection from the session,
+  and never claim one has finished.
 - Beyond the per-agent, upload, unmatched, connect, coverage, scope, deploy and nothing-started
   lines above, the answer stays plain sentences a non-technical user understands. Never print yaml,
   JSON, or a fenced code block to the user.
@@ -426,16 +425,15 @@ Do not return:
 
 - A yaml or JSON block, or any fenced code block — the hand-off travels as plain conversation.
 - Any claim that an agent ran, is running, or produced a result — including a percentage, a file, or
-  an ETA — any claim that this skill or the collect page knows a run's outcome, and any claim that a
-  link the host refused started a run.
+  an ETA — any claim that this skill knows a run's outcome after it queued the tasks.
 - The row detail restated under the preview card that already shows it.
 - A `null` amount printed as a number, or amounts summed across currencies.
 - An agent for a provider that is not in the preview or in `agent_candidates`.
 - The same vendor reported as two gaps, or the connect count added to the agent count, when the
   preview lists that counterparty on both routes.
 - An agent named for a provider Well never matched — the `"unknown"` group is not an agent.
-- A vendor promised to the run when its `provider_id` is null or the link left it out, or a collect
-  link you built yourself.
+- A browser-agent fetch promised for a vendor whose `provider_id` is null — its task routes to manual
+  upload on Deploy, so no agent chases it.
 - A selection edited from the user's sentence instead of a fresh pick on the missing-invoices card,
   or a pick taken on an earlier gap-list card carried into this preview.
 - A period-wide result described as the pick when `scoped_to_selected_counterparties` is absent.
@@ -452,7 +450,8 @@ are some. State the agents in text regardless — you cannot know whether anythi
 
 Before finishing, verify:
 
-- No write tool was called: no `well_invoke_connector_tool`, no `well_create_*`, no
+- The only write was `well_enqueue_invoice_fetch`, and only on the explicit Deploy click (never on
+  your own initiative or to preview): no `well_invoke_connector_tool`, no `well_create_*`, no
   `well_update_*`, no `well_delete_*`, no connector action.
 - `workspace_id` came from the caller, or from a session pin this conversation established — no
   leftover pin from another conversation was reused or mentioned. The period came from the
@@ -473,10 +472,10 @@ Before finishing, verify:
   portal across the months, and handed off `periods_covered` and the per-month `months` counts.
 - One line per agent, in the user's language, each saying nothing has started, written whatever the
   host drew and never expanded into the row detail the card carries.
-- The turn ended on the card with one line asking the user to confirm the vendors and deploy — or,
-  where no card was drawn, carrying the collect link exactly as `collect_url` returned it, its
-  required `workspace` parameter intact, or the workspace link — with no parameter added, edited or
-  removed on either.
+- The turn ended on the card with one line asking the user to confirm the vendors and Deploy — or,
+  where no card was drawn, saying a typed deploy queues the fetch (`well_enqueue_invoice_fetch`), with
+  the workspace link as the fallback only when that tool is absent. Nothing was queued before the
+  Deploy click.
 - A counterparty the preview listed under a portal and in `connect_rows` was reported once, as one
   gap with two routes, and the two lists were never added together.
 - On a previewed run the upload line and the connect line are both present, even at zero, each
@@ -491,11 +490,12 @@ Before finishing, verify:
   bounded by transaction categorization.
 - Every agent carries a `provider_id` — from the tool, or from the hand-off's
   `matched_connector_service_id` — and null only when neither source has one.
-- The answer contains one plain sentence stating that nothing has started here, and naming the
-  browser extension as where a collection starts once the user acts on the collect page.
-- No launch, result, yield, or ETA is claimed anywhere, and a vendor whose `provider_id` is null — or
-  one the tool listed in `collect_url_omits` — was reported as one the link cannot take rather than
-  one an agent will fetch.
+- The answer contains one plain sentence: before Deploy nothing is queued, and after Deploy the tasks
+  are queued and Well's browser agents collect against them, with the extension's side panel as where
+  a run is reported.
+- No launch, result, yield, or ETA is claimed anywhere, and a vendor whose `provider_id` is null was
+  reported as one a browser agent cannot fetch (its task routes to manual upload on Deploy) rather
+  than one an agent will chase.
 - Counts are described as transactions missing an invoice, not as invoices already found.
 - Amounts appear only when set, and never mix currencies.
 - After a connection or an upload landed, the preview was re-derived in the same turn.
@@ -503,15 +503,16 @@ Before finishing, verify:
   workspace link — in that order.
 - The hand-off facts were kept — `workspace_id`, the period, `run_mode: preview`,
   `nothing_launched: true`, `selection`, the agents with their `provider_id` and `domain`,
-  `collect_url`, `scoped_to_selected_counterparties`, `coverage_note`, and `resolution` — and no
+  `scoped_to_selected_counterparties`, `coverage_note`, and `resolution` — and no
   yaml, JSON, or fenced code block appears anywhere in the answer.
 - A run with neither the preview tool nor a hand-off handed off `resolution: unavailable`, never
   `nothing_to_do`, and claimed no counts.
 - Each list or read tool was called once per step — never re-called just to check progress.
 - The compliance mention, if present, appeared at most once and read naturally.
 - The answer ends with the hand-back to the caller, and any request to run the collection was
-  answered with the card's Deploy action or the collect link plus the fact that the extension runs it
-  once the user starts it there, never with a run from the session or a finished run claimed anywhere.
+  answered with the card's Deploy action (or a typed deploy calling `well_enqueue_invoice_fetch`)
+  plus the fact that Well's browser agents collect against the queued tasks, never with a run from the
+  session or a finished run claimed anywhere.
 
 ## Examples
 
@@ -538,15 +539,15 @@ call nothing. Answer:
 > Ce plan ne couvre que les dépenses déjà catégorisées de la période : ce qui ne l'est pas encore
 > n'y apparaît pas.
 >
-> Aucun agent n'a démarré ici, aucune tâche n'est en file, aucune session de navigation n'est
-> ouverte. La collecte se lance depuis l'extension Well, une fois que vous la démarrez sur la page
-> de collecte. Ouvrez l'espace de travail dans l'app Well,
-> `<well-app-base-url>/workspaces/<workspace_id>`, pour voir les mêmes lignes manquantes. Ces
+> Confirmez les fournisseurs et cliquez sur Deploy pour mettre la collecte en file.
+>
+> Aucun agent n'a démarré : rien n'est mis en file tant que vous n'avez pas cliqué sur Deploy. Une
+> fois cliqué, les tâches sont créées et les agents de navigation Well collectent contre elles. Ces
 > chiffres comptent les transactions sans facture, pas les factures déjà récupérées.
 
 Then keep the hand-off — `workspace_id`, `run_mode: preview`, `nothing_launched: true`, the
 `selection`, each agent's `provider_id` (the group's `matched_connector_service_id`, or null),
-`collect_url: null`, `coverage_note`, `resolution: previewed` — and hand back to the caller.
+`coverage_note`, `resolution: previewed` — and hand back to the caller.
 Nothing more is printed. The upload line reads zero because no `upload` row names a picked
 counterparty, and it still appears at zero. Leave the hand-off's `counts.upload` out of the answer:
 it is a period-wide number with no counterparty behind it, so no pick-scoped line can be built from
@@ -561,14 +562,15 @@ Same flow, in a Claude Desktop session where `well_preview_invoice_fetch` **is**
 
 Call `well_preview_invoice_fetch({ workspace_id })` — the server reads the clicked selection. The
 result carries `scoped_to_selected_counterparties: true`, so it already covers the picked vendors
-only. The preview card renders the vendors the link names with their checkboxes, its select-all, its
+only. The preview card renders the vendors with their checkboxes, its select-all, its
 Preview badge and its Deploy action. Do not restate the rows. Say one line per agent — provider,
 count, nothing started yet — then the upload line, the connect line, the line saying the plan covers
 the picked vendors only, the coverage line carrying the tool's `hints`, one line asking the user to
-confirm the vendors and deploy, and the plain sentence that nothing has started here and the
-extension runs the collection once the user starts it on the collect page. Carry each agent's
-`provider_id` and `domain`, plus the envelope's `collect_url` and
-`scoped_to_selected_counterparties`, into the hand-off. End the turn there.
+confirm the vendors and Deploy, and the plain sentence that nothing is queued until Deploy and that
+Well's browser agents collect against the tasks once it queues them. Carry each agent's
+`provider_id` and `domain`, plus the envelope's `scoped_to_selected_counterparties`, into the
+hand-off. End the turn there. On the Deploy click, call `well_enqueue_invoice_fetch` for the ticked
+vendors and report what it queued.
 
 ### Example request
 
@@ -576,12 +578,14 @@ extension runs the collection once the user starts it on the collect page. Carry
 
 ### Expected behavior
 
-Say plainly that nothing runs from the session. Deploy on the card opens the collect link for the
-vendors still ticked, and the Well browser extension collects from those portals once the user
-starts them on that page. Where no card is drawn, give the collect link from `collect_url`, or
-`<well-app-base-url>/workspaces/<workspace_id>` when the preview carried none. Do not call any tool,
-do not promise a run from the session, and do not re-emit the preview as though it were a finished
-run.
+Deploy on the card queues the fetch for the vendors still ticked: it calls
+`well_enqueue_invoice_fetch`, which creates the tasks, and Well's browser agents collect against
+them. Report what it queued (`enqueued_count`, `already_active_count`, any `skipped`). Where no card
+is drawn, take a typed deploy and call `well_enqueue_invoice_fetch({ workspace_id,
+counterparty_company_ids })` with the picked `company_id`s; when that tool is absent, give
+`<well-app-base-url>/workspaces/<workspace_id>` and say the fetch starts in the Well app. Nothing is
+queued until the Deploy click. Do not promise a finished run, do not claim the invoices are in, and
+never call the enqueue tool on your own initiative — only on the explicit Deploy.
 
 ### Example request
 

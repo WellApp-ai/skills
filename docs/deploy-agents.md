@@ -15,14 +15,14 @@ You've just been shown the transactions with no invoice attached. The obvious ne
 go get them" — and the answer starts with a preview. This skill takes the vendors you picked, groups
 them into the agents Well would run — one per provider, with the counterparties and the number of
 transactions behind each — and writes it out in your language, one line per agent, plus the rows only
-you can upload by hand and the providers still waiting to be connected. Nothing collects anything
-yet: no agent has run, no task is queued, no browser session is open.
+you can upload by hand and the providers still waiting to be connected. Nothing is queued yet: no
+agent has run, no task is queued, no browser session is open.
 
-Then it hands the vendors over. The preview card gives a checkbox to each vendor Well can reach a
-portal for. Tick the ones to chase, and the card's **Deploy** action opens Well's collect page for
-those portals. The Well browser extension is the only thing that collects from them, and it starts
-on that page, when you tell it to. This skill is the last brick of Well's fetch-missing-invoices
-flow: read the plan first, then hand it over.
+Then it hands the vendors over. The preview card gives a checkbox to each vendor. Tick the ones to
+chase, and the card's **Deploy** action queues the fetch for those vendors — nothing is queued until
+that click. Well's browser agents then collect against the queued tasks, and the extension's side
+panel is where a run is reported. This skill is the last brick of Well's fetch-missing-invoices
+flow: read the plan first, then queue it.
 
 ## Required data in Well
 
