@@ -20,12 +20,12 @@ For each of the requested kinds —
 1. `to_configure` or `disabled` → **missing**.
 2. `need_reconnect`, `error`, or `suspended` → **error** — offer `install_url` as a reconnect, not a first install.
 3. `enabled` with `last_successful_sync_at` set → **connected** (note "data may be partial" if `sync_in_progress: true`).
-4. Otherwise (`enabled` or `processing`, no successful sync yet) → **connecting** — treat as connected for the run.
+4. Otherwise (`enabled` or `processing`, no successful sync yet) → **connecting**.
 
 At least one **connected** row for a kind → connected, and name any **error** row for that same kind alongside it (a live connector does not cancel a dead one). Only **connecting** rows → connecting. Only **error** rows → error, name the connector, offer the reconnect link. No qualifying row → missing, including a `to_configure` row the user started but never finished.
 
 {{#if internalCheck}}
-This is a coverage read for a data skill, not a connect step: hand the per-kind states straight back in the same turn and keep going. No closing question, no `well_wait_for_selection`, no card acknowledgment to wait for. When a `required` kind is missing, say so in the hand-off and let the caller decide what to do — do not turn the read into a stop.
+This is a coverage read for a data skill, not a connect step: hand the per-kind states straight back in the same turn. No closing question, no `well_wait_for_selection`, no card acknowledgment to wait for. When a `required` kind is missing, say so in the hand-off.
 {{else}}
 Render the card and end the turn on it (`flow_step` mode): say one line per requested kind — connected, missing, or in error, and why it matters{{#if purpose}} for "{{purpose}}"{{/if}} — then add a closing line inviting the user to connect what's missing and click Continue, and stop. Even with every kind green, the card stays on screen and the turn still ends here.
 

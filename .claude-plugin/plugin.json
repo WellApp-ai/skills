@@ -24,6 +24,7 @@
   "skills": [
     "./skills/accounting-settings",
     "./skills/accounts-receivable-aging",
+    "./skills/assign-missing-invoices",
     "./skills/avg-burn",
     "./skills/bills-due",
     "./skills/cash-flow-waterfall",
