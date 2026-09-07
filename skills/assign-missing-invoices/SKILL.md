@@ -79,7 +79,7 @@ Never call `well_invoke_connector_tool` or any provider-specific tool. This skil
 **Composed skills.** Three atomic Well skills own the setup this skill must not inline — invoke them, don't reimplement them:
 
 1. **Pin the workspace.** 
-Call each list or read tool once per step, and render at most one widget card per turn. The cards refresh themselves. A card click executes server-side and prefills a message in the user's composer — rendering a card therefore ends the turn, and the sent message is how the routine resumes.
+Call each list or read tool once per step, and render at most one card that AWAITS AN ANSWER per turn. The cards refresh themselves. A card whose click executes server-side and prefills a message in the user's composer is what ends the turn, and the sent message is how the routine resumes — so it is the WAITING that a turn may only do once, not the drawing. A read that renders a card and hands its result straight back in the same turn is not waiting on anything and does not consume that budget.
 
 Confirm the Well MCP server is configured — if `well_list_workspaces` (or any `well_*` tool) is not available, tell the user a Well connection is mandatory at `https://api.wellapp.ai/v1/mcp` and stop until it's there.
 
@@ -103,6 +103,8 @@ Resolve the next message after the card, in this order, never by re-asking:
 - The message declines ("later", "not now") → `resolution: unresolved`. Say nothing was pinned and stop; do not call `well_wait_for_selection`, do not run any workspace-scoped call.
 - Any other message that needs the workspace → call `well_wait_for_selection({ kind: "workspace", timeout_s: 10 })` once. `selected` → continue on `selection.workspace_id` (an empty `selection.workspace_queue` is `user_picked`, non-empty is `multi_picked`). `no_selection_yet` → one line asking to click the card, end the turn.
 
+`has_bank_transactions` rides the hand-off because a later step needs it and only this one reads the workspace rows. It is `true` only when a connector the workspace BANKS with has already delivered a transaction — an accounting platform or a payment processor does not count, and neither does a transaction whose connector is unknown, disconnected or retired. `false` means no such transaction was found and `null` means the signal could not be read, so an absent value is never a zero, and no value here licenses skipping a bank-connection step.
+
 Emit the hand-off:
 
 ```yaml
@@ -115,6 +117,7 @@ identity:
   country: <ISO code or null>
   base_currency: <ISO code or null>
   fiscal_year_start_month: <1-12 or null>
+has_bank_transactions: <true|false|null>
 resolution: single | hint_matched | user_picked | multi_picked | unresolved
 workspaces: [{ workspace_id, workspace_name, identity, ... }, …]  # multi_picked only — pinned entry first, then the queue in order
 ```
@@ -129,7 +132,7 @@ Verify before moving on: exactly one workspace is pinned, or `resolution: unreso
 2. **Confirm a bank is connected.** 
 The workspace is already pinned — pass its `workspace_id` on the call below; do not re-resolve it here.
 
-Read the current coverage in one call: `well_list_connectors({ workspace_id, from_selection: true })` when this run follows a vendor pick; `well_list_connectors({ workspace_id, kind })` when the job covers exactly one kind; `well_list_connectors({ workspace_id })` otherwise (one unscoped call for two or three kinds — one call renders one card, and a turn never renders two).
+Read the current coverage in one call: `well_list_connectors({ workspace_id, from_selection: true })` when this run follows a vendor pick; `well_list_connectors({ workspace_id, kind })` when the job covers exactly one kind; `well_list_connectors({ workspace_id })` otherwise (one unscoped call for two or three kinds — one call renders one card, and a turn draws at most one card that AWAITS AN ANSWER).
 
 For each of the requested kinds —
 - `bank`

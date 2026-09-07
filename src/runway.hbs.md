@@ -135,6 +135,8 @@ Pin the workspace, confirm connections, note how fresh the connected data is, ca
 
 Two questions, and only the first is this skill's. Call `well_get_runway({ year: 2026, month: 3 })` for the runway as it stood at that month's end. For the six-month burn, call `avg-burn` — and say why the two are separate: this runway divides by the endpoint's own trailing burn, so quoting a six-month average as its divisor would print a division that cannot reproduce the headline above it.
 
+The windows are not the only difference any more. `avg-burn` computes its outflow itself, from the workspace's own transactions under exemptions the reader confirms, while this runway divides by the burn the endpoint computed. The two can disagree over the SAME window and both be correct, so never present one as a check on the other, and never substitute one for the other's divisor.
+
 ### Example request
 
 "We haven't connected our bank yet — can you tell me our runway?"
