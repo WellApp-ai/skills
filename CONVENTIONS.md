@@ -71,7 +71,7 @@ Do not write new prose for it either. That copy is tuned for install UX, and rew
 
 ## Never blind find-and-replace a shared phrase
 
-`delegates N setup steps` currently appears across **10** docs pages at four different values of N — 7 pages at one, 1 at two, 1 at three, 1 at six. Recount rather than trusting this line: it dropped from 24 to 10 in one pass when 13 skills atomized onto compile-time composition and lost their `## Composes onto` section entirely, rather than changing their count — a swing that size isn't a mistake, it's what an atom migration actually does to this number. Only the pages whose dependency count actually changed may be touched. A repo-wide substitution to fix five pages will silently make ten wrong, and nothing validates prose.
+`delegates N setup steps` currently appears across **11** docs pages at four different values of N — 8 pages at one, 1 at two, 1 at three, 1 at seven. Recount rather than trusting this line: it dropped from 24 to 10 in one pass when 13 skills atomized onto compile-time composition and lost their `## Composes onto` section entirely, rather than changing their count — a swing that size isn't a mistake, it's what an atom migration actually does to this number — and it ticked up to 11 when `connect-accounting` split out of `close-books` as its own delegated step. Only the pages whose dependency count actually changed may be touched. A repo-wide substitution to fix five pages will silently make ten wrong, and nothing validates prose.
 
 The same applies to `Install all N alongside this one`, `install all N+1 together`, and `grab those N as well`.
 
