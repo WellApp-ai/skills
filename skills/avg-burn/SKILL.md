@@ -451,6 +451,8 @@ Return:
 
 **One number, once.** `well_get_runway` carries its own `avg_burn`, and the app's KPI tile has its own. Do not quote either beside this figure: they answer the same question over a different window, and two burns in one reply reads as a contradiction rather than as detail.
 
+**The month picker's transaction count is not this figure's row count.** Step 4's card shows how many transactions a month holds, which is what makes a month pickable — but the sum drops internal transfers and the categories the reader exempted, and it widens to a parent's granted rows where that count does not. The two are never the same set, and they diverge by exactly the amount the reader chose at step 11. Report what the figure counted from step 12's own numbers, never from the count that helped pick the month.
+
 ## Quality checks
 
 Before finishing, verify:
