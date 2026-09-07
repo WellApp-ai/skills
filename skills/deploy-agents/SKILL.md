@@ -88,6 +88,13 @@ The calling skill or the user provides:
 - A period selection written server-side — required, but **not passed to the tool**: the user's
   click on the period card (or `define-period`) already wrote it, and the preview tool reads it on
   its own. The `define-period` hand-off's `period_label` is narration context only.
+- `period` — optional, the **composed-mode** input. A caller that has already fixed the month (the
+  `fetch-missing-invoices` flow in composed mode, driven by a close) passes it as
+  `{ calendar_year, calendar_month }` or `{ fiscal_year, fiscal_period }`, both halves together. When
+  present, forward it verbatim to `well_preview_invoice_fetch` instead of relying on a server-side
+  selection the composed caller never wrote. It reaches the **preview only**: the Deploy write
+  `well_enqueue_invoice_fetch` takes no period (a fetch task is per counterparty). Absent, the skill
+  behaves as above (no period argument, session selection).
 - `purpose` — one line from the calling skill, used in the ask when one is needed. Optional.
 
 **Several workspaces.** A multi-workspace run is driven by the caller: the pin plus the session's
@@ -242,7 +249,8 @@ Call each list or read tool once per step. The widget cards refresh themselves �
 
 3. **Build the preview, and keep it to the pick.**
    - Tool present → call `well_preview_invoice_fetch({ workspace_id })` — no periods argument; the
-     server reads the clicked selection — and use its `agents`, `upload_rows`, `connect_rows`,
+     server reads the clicked selection (when a caller passed a `period` in composed mode, add it to
+     this call verbatim, since no period card was clicked) — and use its `agents`, `upload_rows`, `connect_rows`,
      `counts`, `scoped_to_selected_counterparties` and `collect_url` as they come, `provider_id`,
      `domain` and `url` included. Do not recompute or re-sort them.
      **`scoped_to_selected_counterparties: true` means the pick already bounded the result**: the
