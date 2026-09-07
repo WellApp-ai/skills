@@ -36,7 +36,7 @@ Do not use this skill when:
 - The ask is only about the bank ("connect my Qonto", "is my bank connected?") **and** the `connect-bank` skill is installed — it scopes the catalog to banks and returns one state instead of three. When it is not installed, answer here instead: scope this run to `kinds: [bank]` rather than sending the user to a skill they do not have.
 - The user wants a figure (cash, runway, spend) — the data skills run this check internally, passing `mode: internal_check`, which reads coverage and returns in the same turn. Do not invoke this skill standalone for that.
 - The user wants to disconnect a tool, force a re-sync, or run an action on a connected provider (`well_invoke_connector_tool`) — out of scope; point them to the Well app.
-- The user wants Well to fetch invoices from a portal — that is the deploy-agents step of the flow, after this one. That step queues the fetch on the user's Deploy click, and Well's browser agents collect against the queued tasks.
+- The user wants Well to fetch invoices from a portal — that is the deploy-agents step of the flow, after this one. That step creates the durable fetch tasks on the user's Deploy click and opens the collect link that starts the runs in the Well browser extension.
 
 ## Inputs
 

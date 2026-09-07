@@ -19,10 +19,10 @@ you can upload by hand and the providers still waiting to be connected. Nothing 
 agent has run, no task is queued, no browser session is open.
 
 Then it hands the vendors over. The preview card gives a checkbox to each vendor. Tick the ones to
-chase, and the card's **Deploy** action queues the fetch for those vendors — nothing is queued until
-that click. Well's browser agents then collect against the queued tasks, and the extension's side
-panel is where a run is reported. This skill is the last brick of Well's fetch-missing-invoices
-flow: read the plan first, then queue it.
+chase, and the card's **Deploy** action creates the durable fetch tasks and opens the collect link
+that starts the runs — nothing is queued until that click. The Well browser extension collects from
+the link, and the extension's side panel is where a run is reported. This skill is the last brick of
+Well's fetch-missing-invoices flow: read the plan first, then queue and hand off the link.
 
 ## Required data in Well
 
