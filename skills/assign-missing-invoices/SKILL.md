@@ -321,7 +321,15 @@ Run the composed setup: the workspace is already pinned, the bank comes back con
 
 ### Expected behavior
 
-Match "the three Uber charges" against the listed lines and Marie and Théo against the workspace's people. Call `well_assign_missing_invoice_owners({ workspace_id, transaction_ids: [the three ids], owner_person_ids: [marie, theo] })` once. Confirm in one line: "Done. Marie and Théo each own the March Uber gap now, so each has a task for it, and one Uber invoice for March resolves both." Do not imply they have to chase the invoice separately.
+Match "the three Uber charges" against the listed lines and Marie and Théo against the workspace's people. Call `well_assign_missing_invoice_owners({ workspace_id, transaction_ids: [the three ids], owner_person_ids: [marie, theo] })` once. Confirm in one line: "Done. Marie and Théo each own the March Uber gap now, so each has a task for it, and one Uber invoice for March resolves both." Then, because an assignment was made this turn, run the invite beat on Marie and Théo: `well_list_member_candidates({ workspace_id, person_ids: [marie, theo] })` returns both as `active`, so there is no one to invite — say so in half a sentence and stop. Do not imply they have to chase the invoice separately.
+
+### Example request
+
+"Assign the Figma line to Théo", in a text-only host after the list rendered, where Théo is in the workspace but his membership is still `pending` (he was invited and has not accepted).
+
+### Expected behavior
+
+Assign the line to Théo with `well_assign_missing_invoice_owners`, and confirm he now owns the March Figma gap. Because an assignment was made this turn, run the invite beat on Théo's `person_id` — the trigger is that an assignment was made, not his membership state, which the assignment does not tell you. `well_list_member_candidates({ workspace_id, person_ids: [theo] })` comes back with his `state: pending`, so offer to invite him: "Théo is only invited so far, so he cannot open the task yet. Want me to send his invitation, as a member or an admin?" On the user's answer, call `well_invite_members` once and read the result from `results[]`: `reissued`, so say his invitation went out again. Had the read returned him `active`, you would have said there was no one to invite and stopped.
 
 ### Example request
 
