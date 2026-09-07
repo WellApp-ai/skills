@@ -151,10 +151,12 @@ categorisation are cleared as blockers after the scope is chosen, in any order.
   resolves every owner's task, so assigning is for accountability, not N separate collections. It
   refuses a frozen month and a person outside the workspace.
 - `invite-members` — the member-invite beat after the approval is minted (step 12), not a setup
-  step. It reads the invite candidates for the owners assigned in step 9 whose membership is still
-  `pending` (`well_list_member_candidates` with `source: provided`) and sends the invitations
-  (`well_invite_members`), so the closer leaves the session with the pending owners invited and the
-  card is the last thing before the lock, as on the web. An empty candidate list skips the step.
+  step. Triggered whenever step 9 assigned an owner this turn, it reads those owners
+  (`well_list_member_candidates` with `source: provided`), keeps the ones whose state that read
+  returns as `pending` or `not_member`, and sends the invitations (`well_invite_members`), so the
+  closer leaves the session with the pending owners invited and the card is the last thing before
+  the lock, as on the web. When the read finds every assigned owner already active, there is no one
+  to invite and the step is skipped.
 
 All nine ship with the `well-skills` plugin. This skill is also installable on its own, so the
 workflow carries an inline fallback for each when it is absent.
@@ -336,17 +338,20 @@ step is skipped or re-run.
 11. **Mint the approval offer — `well_prepare_close_period`.** This does not close the period; it
     creates the offer the user must accept. Report that the close is prepared and ready for approval.
 
-12. **Invite the pending owners — run `invite-members`.** The package is prepared and the approval
-    is minted; before handing the lock to the user, invite the owners you assigned during step 9's
-    assign beat whose membership is still `pending`, so an owner leaves the session able to open the
-    task that one invoice will resolve. Run `invite-members` for this workspace with `source: provided`
-    on those owners' `person_ids` (keep them from step 9 as reasoning vocabulary; never print a raw
-    person id). It reads their membership state and, in an MCP-Apps host, renders the invite card and
-    ends the turn on it — the card is the last thing before the lock, as on the web; on the next turn
-    report who was invited. When step 9 assigned no owner, or none of them is still `pending`, the
-    candidate list is empty: say so in one line and go straight to the lock hand-off. If
-    `invite-members` isn't installed, or `well_list_member_candidates` isn't in your toolset, skip
-    this step.
+12. **Invite the owners you assigned — run `invite-members`.** The package is prepared and the
+    approval is minted; before handing the lock to the user, invite the owners you assigned during
+    step 9's assign beat, so an owner who cannot open their task yet leaves the session able to open
+    the task that one invoice will resolve. **The trigger is only that step 9 assigned an owner this
+    turn** — the `owner_person_ids` it set — not their membership state, which the assign hand-off
+    does not carry. Run `invite-members` for this workspace with `source: provided` on those owners'
+    `person_ids` (keep them from step 9 as reasoning vocabulary; never print a raw person id). The
+    brick's own `well_list_member_candidates` read returns each owner's state, keeps the `pending`
+    and `not_member` ones, and never invites one already `active`; in an MCP-Apps host it renders the
+    invite card and ends the turn on it — the card is the last thing before the lock, as on the web —
+    and on the next turn report who was invited. When step 9 assigned no owner, or the brick's read
+    finds every assigned owner already `active`, there is no one to invite: say so in one line and go
+    straight to the lock hand-off. If `invite-members` isn't installed, or `well_list_member_candidates`
+    isn't in your toolset, skip this step.
 
 13. **Hand off the lock to the user.** The period is locked only when the user accepts the offer in
     Well — a one-click first-party approval, by design; you cannot accept it over MCP and must not
@@ -381,10 +386,10 @@ Return:
 - After the package is prepared and the offer is minted: that the close is ready for approval, and
   the one action left for the user — accept the approval in Well. State plainly that you cannot lock
   the period yourself; a human approval is required by design.
-- Before that hand-off, whenever step 9 assigned an owner whose membership is still `pending`: the
-  invite beat's line — how many owners can be invited and the invite card, or who was invited once
-  the send lands. When no owner was assigned or none is pending, say nothing here; the step is
-  skipped.
+- Before that hand-off, whenever step 9 assigned an owner this turn: the invite beat's line — how
+  many of those owners can be invited and the invite card, or who was invited once the send lands.
+  When no owner was assigned, or the brick's read found every assigned owner already active, say
+  nothing here; the step is skipped.
 - After the user accepts: the receipt outcome from `well_get_action_receipt` — closed, or not, told
   honestly.
 - Every error surfaced exactly as returned, with a question about how to proceed — no silent retry
@@ -447,10 +452,12 @@ Before finishing, verify:
 - `well_prepare_close_package` was called only at zero blockers, and `well_prepare_close_period`
   was understood to mint an offer, not to close the period.
 - After the offer was minted and before the lock hand-off, the invite beat ran whenever step 9 had
-  assigned an owner still `pending`: `invite-members` read those owners with `source: provided` and
-  offered to invite them, the card was the last thing before the lock. When no owner was assigned or
-  none was pending, or `invite-members` was absent, the step was skipped in one line and no raw
-  person id was shown.
+  assigned an owner this turn, triggered on the `owner_person_ids` alone and never on a membership
+  state the assign hand-off does not carry: `invite-members` read those owners with `source: provided`,
+  and that read — not the caller — kept the `pending` and non-member ones and offered to invite them,
+  the card being the last thing before the lock. When no owner was assigned, or the read found every
+  assigned owner already `active`, or `invite-members` was absent, the step was skipped in one line
+  and no raw person id was shown.
 - The period lock was handed to the user as a first-party approval in Well; no attempt was made to
   accept the offer over MCP.
 - The receipt was read to confirm the outcome, and success was not claimed without it.
