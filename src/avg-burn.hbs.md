@@ -90,8 +90,8 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 ### Stage B — has the data landed
 
 5. **Confirm every sync has finished, and recently.** `[5, 12, 13]` {{> verify-sync-freshness purpose="before the burn is measured" maxAgeHours=24}}
-   - **One re-read, then hand back — there is no waiting loop, because nothing here can wait.** The step says what the wait is and re-reads the logs once, which costs nothing and catches a sync that landed between the two calls. It cannot do more: this toolset has no timer, and re-reads fired back to back give the sync no time to progress, so a "poll" would be the same read repeated with a longer transcript. Re-check is what drives it forward, and the expected duration is what makes the wait legible instead of merely long.
-   - A connector step 3 passed through as `connecting` has no sync row at all, so it matches none of the branches above — and nothing to poll for either, since the poll watches sync rows. Treat it as not yet landed and stop rather than wait: Re-check is the affordance.
+   - **Watch it quietly, and draw nothing while you do.** The reader asked for a burn figure, not for a table of sync rows, so every read this step makes passes `render_widget: false`. Say once that you are waiting; a poll that narrates each pass, or redraws the same rows each minute, turns a wait into a wall of status.
+   - A connector step 3 passed through as `connecting` has begun no run of its own yet, so it has no sync row for the watch to follow. Treat it as not yet landed and stop rather than wait on a row that does not exist.
 
 6. **Confirm the window holds transactions.** `[11]` {{> verify-window-has-activity purpose="to measure your average monthly burn"}}
    - Step 4's picker ran its own probe, over the anchor month alone. This one ranges the whole trailing window, so the two answer different questions and a month with activity does not settle the window. Count here rather than reusing that result.
