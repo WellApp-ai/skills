@@ -229,11 +229,13 @@ One `well_query_records` on `workspace_connector_sync_logs` for the connected co
 
 A sync still running → say which connector, "before the burn is measured", and say what the wait is. A reconnect re-fetches the whole history rather than the days since the last run, so it is normally minutes rather than seconds, and on a long history it runs considerably longer.
 
-Then re-read the sync logs ONCE, and carry on by yourself if every connector now reports finished. That second read costs nothing and catches a sync that landed between the two calls.
+Then watch it, in the background, until it lands or the budget runs out. Re-read the sync logs every five minutes for at most 20 minutes, carrying on the moment every connector reports finished. Space the re-reads rather than firing them tightly: each one draws a records table of sync rows, so a fast poll buries the reader's own conversation under a status they never asked to see. Say once that you are waiting and how long the wait usually is; do not narrate each re-read.
 
-Do not build a waiting loop, because nothing here can wait. This toolset has no timer, and `well_wait_for_selection` is a selection wait of about ten seconds rather than a sleep — every atom that uses it says so. Re-reads fired back to back give the sync no time to progress, so a loop would be the same answer repeated with a longer transcript, and a routine looping silently on a sync that never finishes is indistinguishable from one that has hung.
+**The interval is the point, and the Well toolset cannot supply it.** `well_wait_for_selection` is a selection wait of about ten seconds rather than a sleep, so these tools alone cannot pass a minute. Where your host can — a shell, a scheduler, anything that genuinely waits — use it at the interval above. Where it cannot, re-read once and stop there: reads fired back to back give the sync no time to progress, so a tight loop is the same answer repeated with a longer transcript.
 
-So: state the expected wait, re-read once, then hand the decision back with how long it has been running. **Re-check** is what drives it forward — a reader who watched the sync finish is still the fastest signal there is.
+**The budget is a ceiling, not a promise.** A run declares itself in progress until something marks it finished, and a run that has died never does, so an unbounded watch would sit on a dead sync forever. When the 20 minutes are up, stop re-reading and say how long the run has been going. That is a finding worth reporting, not a failure to wait harder.
+
+This step does not offer a way past. A figure measured while its own feed is still loading is a figure nobody can check, so the run waits or it stops — and if it stops, the answer is what is still running and for how long, never a burn with a caveat attached.
 
 A latest sync older than 24 hours → name the connector and the age, offer both Re-check and the reconnect link, and carry on. Stale data makes a figure old rather than wrong, and saying which it is matters more than blocking on it.
 
@@ -247,8 +249,8 @@ Hand off: per connector, its latest `status`, `completed_at`, and age in hours; 
 
 Verify before moving on: freshness came from the sync logs rather than from connector state; a running sync and a stale one were reported as different situations; the age was stated, not summarized as "recent".
 
-   - **One re-read, then hand back — there is no waiting loop, because nothing here can wait.** The step says what the wait is and re-reads the logs once, which costs nothing and catches a sync that landed between the two calls. It cannot do more: this toolset has no timer, and re-reads fired back to back give the sync no time to progress, so a "poll" would be the same read repeated with a longer transcript. Re-check is what drives it forward, and the expected duration is what makes the wait legible instead of merely long.
-   - A connector step 3 passed through as `connecting` has no sync row at all, so it matches none of the branches above — and nothing to poll for either, since the poll watches sync rows. Treat it as not yet landed and stop rather than wait: Re-check is the affordance.
+   - **Watch it quietly.** The reader asked for a burn figure, not for a running commentary. Say once that you are waiting, then stay quiet until it lands or the budget runs out; a poll that narrates each pass turns a wait into a wall of status.
+   - A connector step 3 passed through as `connecting` has begun no run of its own yet, so it has no sync row for the watch to follow. Treat it as not yet landed and stop rather than wait on a row that does not exist.
 
 6. **Confirm the window holds transactions.** `[11]` 
 The workspace and the window are already pinned, to measure your average monthly burn.
@@ -449,6 +451,8 @@ Return:
 
 **One number, once.** `well_get_runway` carries its own `avg_burn`, and the app's KPI tile has its own. Do not quote either beside this figure: they answer the same question over a different window, and two burns in one reply reads as a contradiction rather than as detail.
 
+**The month picker's `transaction_count` is not this figure's row count.** Step 4's card shows a month's `transaction_count` — every transaction, whatever delivered it, NOT the `bank_transaction_count` beside it — which is what makes a month pickable — but the sum drops internal transfers and the categories the reader exempted, and it widens to a parent's granted rows where that count does not. The two are never the same set, and they diverge by exactly the amount the reader chose at step 11. Report what the figure counted from step 12's own numbers, never from the count that helped pick the month.
+
 ## Quality checks
 
 Before finishing, verify:
@@ -462,7 +466,7 @@ Before finishing, verify:
 - The divisor was the window length. When some months were dark, both numbers were stated and the figure was never presented as the typical month.
 - A comparison, where one was made, measured the ADJACENT earlier window under the SAME policy, named both windows, and was skipped rather than guessed where that window could not be measured.
 - An unmeasured exclusion count was reported as unmeasured, never as none.
-- The sync gate re-read once and handed back, rather than claiming a wait the toolset cannot perform.
+- The sync gate watched the run at the stated interval and stopped at its ceiling — never reads fired back to back, and never a wait past the budget.
 - Internal transfers were excluded structurally, and described that way — never as something a recategorization would change.
 - Exclusions were reported in their three named groups, not merged into one count.
 - The unresolvable rows from stage C were disclosed as a bound on confidence, not silently absorbed.
