@@ -8,11 +8,11 @@ placeholders:
 
 The workspace is already pinned, and the connectors are already known to be connected — this checks whether what they carry has landed, which coverage does not answer.
 
-One `well_query_records` on `workspace_connector_sync_logs` for the connected connectors, with `render_widget: false`: read each one's latest row's `status` and `completed_at`. Pass that flag on every read this step makes. The reader did not ask to see a table of sync rows, and a poll that redraws one each time buries their own conversation under a status they never requested — the rows still come back, only the card is withheld.
+One `well_query_records` on `workspace_connector_sync_logs` for the connected connectors: read each one's latest row's `status` and `completed_at`.
 
 A sync still running → say which connector, {{#if purpose}}"{{purpose}}"{{/if}}, and say what the wait is. A reconnect re-fetches the whole history rather than the days since the last run, so it is normally minutes rather than seconds, and on a long history it runs considerably longer.
 
-Then watch it, in the background, until it lands or the budget runs out. Re-read the sync logs every 60 seconds for at most 20 minutes, carrying on the moment every connector reports finished. Say once that you are waiting and how long the wait usually is; do not narrate each re-read.
+Then watch it, in the background, until it lands or the budget runs out. Re-read the sync logs every five minutes for at most 20 minutes, carrying on the moment every connector reports finished. Space the re-reads rather than firing them tightly: each one draws a records table of sync rows, so a fast poll buries the reader's own conversation under a status they never asked to see. Say once that you are waiting and how long the wait usually is; do not narrate each re-read.
 
 **The interval is the point, and the Well toolset cannot supply it.** `well_wait_for_selection` is a selection wait of about ten seconds rather than a sleep, so these tools alone cannot pass a minute. Where your host can — a shell, a scheduler, anything that genuinely waits — use it at the interval above. Where it cannot, re-read once and stop there: reads fired back to back give the sync no time to progress, so a tight loop is the same answer repeated with a longer transcript.
 
