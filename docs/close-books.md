@@ -38,7 +38,7 @@ This skill delegates seven setup steps to Well's atomic skills rather than repea
 - **[`assign-missing-invoices`](assign-missing-invoices.md)** — the ownership beat inside blocker clearing: when settled spend is missing its invoice, it assigns owners to those lines before any fetch is offered, so one task is held per owner and one invoice resolves them all.
 - **[`invite-members`](invite-members.md)** — the member-invite beat after the approval is minted: it invites the owners assigned during blocker clearing whose membership is still pending, so the closer leaves with them invited and the card is the last thing before the lock.
 
-Install all nine alongside this one. The skill still runs without them — each step falls back inline — but with them installed you get one consistent workspace flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install every skill together; if you download the `.skill` file on its own, grab those nine as well.
+Install all nine alongside this one. The skill still runs without them — each step falls back inline — but with them installed you get one consistent workspace flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install all ten together; if you download the `.skill` file on its own, grab those nine as well.
 
 ---
 

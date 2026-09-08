@@ -38,7 +38,7 @@ This skill delegates its nine steps to **nine** of Well's atomic skills rather t
 
 The order is this skill's own: it walks the bricks one at a time, asks for the bank only when a month holds no bank transaction and puts that question before the month when the workspace holds no bank transaction at all, offers the connect step for the vendors Well holds a connector for, and previews what Well would fetch for the rest.
 
-Install all nine alongside this one. The skill still runs without them — only the workspace step stops the flow, seven steps fall back to an inline copy of what the order needs, and the bank step falls back to `connect-tools` — but with them installed each step is owned in one place. The **Claude Code plugin** and **Codex plugin** paths below install every skill together; if you download the `.skill` file on its own, grab those nine as well.
+Install all nine alongside this one. The skill still runs without them — only the workspace step stops the flow, seven steps fall back to an inline copy of what the order needs, and the bank step falls back to `connect-tools` — but with them installed each step is owned in one place. The **Claude Code plugin** and **Codex plugin** paths below install all ten together; if you download the `.skill` file on its own, grab those nine as well.
 
 ---
 
