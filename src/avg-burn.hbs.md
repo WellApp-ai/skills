@@ -90,8 +90,8 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 ### Stage B — has the data landed
 
 5. **Confirm every sync has finished, and recently.** `[5, 12, 13]` {{> verify-sync-freshness purpose="before the burn is measured" maxAgeHours=24}}
-   - **One re-read, then hand back — there is no waiting loop, because nothing here can wait.** The step says what the wait is and re-reads the logs once, which costs nothing and catches a sync that landed between the two calls. It cannot do more: this toolset has no timer, and re-reads fired back to back give the sync no time to progress, so a "poll" would be the same read repeated with a longer transcript. Re-check is what drives it forward, and the expected duration is what makes the wait legible instead of merely long.
-   - A connector step 3 passed through as `connecting` has no sync row at all, so it matches none of the branches above — and nothing to poll for either, since the poll watches sync rows. Treat it as not yet landed and stop rather than wait: Re-check is the affordance.
+   - **Watch it quietly.** The reader asked for a burn figure, not for a running commentary. Say once that you are waiting, then stay quiet until it lands or the budget runs out; a poll that narrates each pass turns a wait into a wall of status.
+   - A connector step 3 passed through as `connecting` has begun no run of its own yet, so it has no sync row for the watch to follow. Treat it as not yet landed and stop rather than wait on a row that does not exist.
 
 6. **Confirm the window holds transactions.** `[11]` {{> verify-window-has-activity purpose="to measure your average monthly burn"}}
    - Step 4's picker ran its own probe, over the anchor month alone. This one ranges the whole trailing window, so the two answer different questions and a month with activity does not settle the window. Count here rather than reusing that result.
@@ -154,6 +154,8 @@ Return:
 
 **One number, once.** `well_get_runway` carries its own `avg_burn`, and the app's KPI tile has its own. Do not quote either beside this figure: they answer the same question over a different window, and two burns in one reply reads as a contradiction rather than as detail.
 
+**The month picker's `transaction_count` is not this figure's row count.** Step 4's card shows a month's `transaction_count` — every transaction, whatever delivered it, NOT the `bank_transaction_count` beside it — which is what makes a month pickable — but the sum drops internal transfers and the categories the reader exempted, and it widens to a parent's granted rows where that count does not. The two are never the same set, and they diverge by exactly the amount the reader chose at step 11. Report what the figure counted from step 12's own numbers, never from the count that helped pick the month.
+
 ## Quality checks
 
 Before finishing, verify:
@@ -167,7 +169,7 @@ Before finishing, verify:
 - The divisor was the window length. When some months were dark, both numbers were stated and the figure was never presented as the typical month.
 - A comparison, where one was made, measured the ADJACENT earlier window under the SAME policy, named both windows, and was skipped rather than guessed where that window could not be measured.
 - An unmeasured exclusion count was reported as unmeasured, never as none.
-- The sync gate re-read once and handed back, rather than claiming a wait the toolset cannot perform.
+- The sync gate watched the run at the stated interval and stopped at its ceiling — never reads fired back to back, and never a wait past the budget.
 - Internal transfers were excluded structurally, and described that way — never as something a recategorization would change.
 - Exclusions were reported in their three named groups, not merged into one count.
 - The unresolvable rows from stage C were disclosed as a bound on confidence, not silently absorbed.
