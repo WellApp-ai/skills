@@ -44,6 +44,7 @@
     "./skills/draft-invoice",
     "./skills/fetch-missing-invoices",
     "./skills/fx-exposure",
+    "./skills/invite-members",
     "./skills/missing-receipts",
     "./skills/normalize-currency",
     "./skills/payment-invoice-lookup",

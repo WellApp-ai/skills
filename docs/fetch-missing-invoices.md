@@ -13,7 +13,7 @@
 
 Chasing supplier invoices at month end is seven questions, not one: which entity, which month, is the bank feed actually live, which of that month's vendors carry no industry label, what is actually missing, who owns each gap, and who can go and get the rest. This skill asks them in that order and routes on each answer instead of guessing. It pins the workspace, fixes the month, gets the bank feed in when a month holds no bank transaction, asking for it before the month when the workspace holds no bank transaction at all, offers to label the month's counterparties that carry no industry category, assigns owners to the settled lines still missing an invoice, lists the settled spend that still has no supplier invoice, and finishes by queuing the invoice-fetching agents on your Deploy click. Every stop is named: no workspace, no month, no bank, no gap list, or nothing missing at all. Nothing is queued until you click Deploy. Pick several entities at the workspace step and the whole flow runs once per workspace, in order, with one recap per entity — never a merged view.
 
-It carries the order, not the steps. It runs eight steps, and each one is its own Well skill — `define-workspace`, `define-period`, `connect-bank`, `categorize-counterparties`, `assign-missing-invoices`, `show-missing-invoices`, `connect-tools`, and `deploy-agents` — which this file runs in a fixed order rather than repeating what they do. Install it on its own and only the workspace step stops the flow: six steps fall back to an inline copy of the part the order depends on, and the bank step falls back to `connect-tools` scoped to banks. The categorization step runs only when your Well server exposes the counterparty list; without it the flow says so instead of guessing. A caller that has already fixed the workspace, period and scope — the close-books flow — runs this in composed mode, starting at the assign beat.
+It carries the order, not the steps. It runs nine steps, and each one is its own Well skill — `define-workspace`, `define-period`, `connect-bank`, `categorize-counterparties`, `assign-missing-invoices`, `show-missing-invoices`, `connect-tools`, `deploy-agents`, and `invite-members` — which this file runs in a fixed order rather than repeating what they do. Install it on its own and only the workspace step stops the flow: seven steps fall back to an inline copy of the part the order depends on, and the bank step falls back to `connect-tools` scoped to banks. The categorization step runs only when your Well server exposes the counterparty list; without it the flow says so instead of guessing. A caller that has already fixed the workspace, period and scope — the close-books flow — runs this in composed mode, starting at the assign beat.
 
 ## Required data in Well
 
@@ -24,7 +24,7 @@ It carries the order, not the steps. It runs eight steps, and each one is its ow
 
 ## Composes onto
 
-This skill delegates its eight steps to **eight** of Well's atomic skills rather than repeating them, one brick per step:
+This skill delegates its nine steps to **nine** of Well's atomic skills rather than repeating them, one brick per step:
 
 - **[`define-workspace`](define-workspace.md)** — pins which Well workspace the run is for, and drives the sign-in when there is no connection yet.
 - **[`define-period`](define-period.md)** — fixes which month or months the run covers.
@@ -34,10 +34,11 @@ This skill delegates its eight steps to **eight** of Well's atomic skills rather
 - **[`show-missing-invoices`](show-missing-invoices.md)** — lists the settled spend with no supplier invoice, and takes your pick of the vendors to chase.
 - **[`connect-tools`](connect-tools.md)** — reads which services Well holds a connector for behind the vendors you picked, and carries the connect links, so you can connect a service instead of running an agent for it.
 - **[`deploy-agents`](deploy-agents.md)** — previews what Well would fetch for the vendors you picked, and on your Deploy click queues the fetch agents against them.
+- **[`invite-members`](invite-members.md)** — invites any owner assigned to a gap whose membership is still pending, so they can open the task, as the last step of the walk.
 
 The order is this skill's own: it walks the bricks one at a time, asks for the bank only when a month holds no bank transaction and puts that question before the month when the workspace holds no bank transaction at all, offers the connect step for the vendors Well holds a connector for, and previews what Well would fetch for the rest.
 
-Install all eight alongside this one. The skill still runs without them — only the workspace step stops the flow, six steps fall back to an inline copy of what the order needs, and the bank step falls back to `connect-tools` — but with them installed each step is owned in one place. The **Claude Code plugin** and **Codex plugin** paths below install all nine together; if you download the `.skill` file on its own, grab those eight as well.
+Install all nine alongside this one. The skill still runs without them — only the workspace step stops the flow, seven steps fall back to an inline copy of what the order needs, and the bank step falls back to `connect-tools` — but with them installed each step is owned in one place. The **Claude Code plugin** and **Codex plugin** paths below install all ten together; if you download the `.skill` file on its own, grab those nine as well.
 
 ---
 
@@ -65,6 +66,7 @@ Install the following official skills from Well.
     g. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/show-missing-invoices/SKILL.md
     h. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
     i. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/deploy-agents/SKILL.md
+    j. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/invite-members/SKILL.md
 2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
 3. Install these skills.
 4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
