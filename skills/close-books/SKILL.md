@@ -350,8 +350,15 @@ step is skipped or re-run.
     invite card and ends the turn on it — the card is the last thing before the lock, as on the web —
     and on the next turn report who was invited. When step 9 assigned no owner, or the brick's read
     finds every assigned owner already `active`, there is no one to invite: say so in one line and go
-    straight to the lock hand-off. If `invite-members` isn't installed, or `well_list_member_candidates`
-    isn't in your toolset, skip this step.
+    straight to the lock hand-off. **Inline fallback, when `invite-members` is not installed:** make
+    the one `well_list_member_candidates({ workspace_id, person_ids })` call yourself on step 9's
+    owners to see which are `pending` or `not_member`, retrying a transient read once, and point the
+    user at the `invite-members` skill or the Well app (`<well-app-base-url>/workspaces/<workspace_id>`)
+    to send the invitations, since the send is the brick's card write (`well_invite_members`) and this
+    flow never invites beyond what that card owns. When `well_list_member_candidates` isn't in your
+    toolset either, say the invite step is unavailable on this Well server and give the user that same
+    workspace link to invite the pending owners in Well before the lock, rather than skipping in
+    silence.
 
 13. **Hand off the lock to the user.** The period is locked only when the user accepts the offer in
     Well — a one-click first-party approval, by design; you cannot accept it over MCP and must not
@@ -456,8 +463,11 @@ Before finishing, verify:
   state the assign hand-off does not carry: `invite-members` read those owners with `source: provided`,
   and that read — not the caller — kept the `pending` and non-member ones and offered to invite them,
   the card being the last thing before the lock. When no owner was assigned, or the read found every
-  assigned owner already `active`, or `invite-members` was absent, the step was skipped in one line
-  and no raw person id was shown.
+  assigned owner already `active`, the step was closed in one line and no raw person id was shown.
+  When `invite-members` was absent, the flow ran the `well_list_member_candidates` read itself and
+  pointed the user at the `invite-members` skill or the workspace link to send the invitations; when
+  that read was absent too, it said the invite step is unavailable and gave the workspace link rather
+  than skipping in silence, the fallback each other composed step also carries.
 - The period lock was handed to the user as a first-party approval in Well; no attempt was made to
   accept the offer over MCP.
 - The receipt was read to confirm the outcome, and success was not claimed without it.

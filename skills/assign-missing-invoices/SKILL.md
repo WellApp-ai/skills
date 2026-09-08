@@ -76,7 +76,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 Never call `well_invoke_connector_tool` or any provider-specific tool. This skill reads and writes Well's own ownership; it never touches a provider.
 
-**Composed skills.** Three atomic Well skills own the setup this skill must not inline — invoke them, don't reimplement them:
+**Composed skills.** Three atomic Well skills own the setup this skill must not inline — invoke them, don't reimplement them — and a fourth, `invite-members`, owns the invite beat this skill runs after an assignment (see **Invite the owners who cannot open their task yet** below):
 
 1. **Pin the workspace.** 
 Call each list or read tool once per step, and render at most one card that AWAITS AN ANSWER per turn. The cards refresh themselves. A card whose click executes server-side and prefills a message in the user's composer is what ends the turn, and the sent message is how the routine resumes — so it is the WAITING that a turn may only do once, not the drawing. A read that renders a card and hands its result straight back in the same turn is not waiting on anything and does not consume that budget.
@@ -240,6 +240,8 @@ Once at least one assignment was made this turn, offer to invite the owners you 
 
 
 The workspace is already pinned — pass its `workspace_id` on every call below, and do not re-resolve it here.
+
+**If `well_list_member_candidates` is not in your toolset at all**, this Well server does not expose the invite step yet: say that in one line, point the user at `<well-app-base-url>/workspaces/<workspace_id>` to invite the people in Well instead, and stop. Do not build the candidate list from raw `people` records — a hand-built list carries no membership state and is not the same thing. This is the first case a caller hits where the invite tools are not deployed, so check it before the read below.
 
 **Read the candidates once.** Call `well_list_member_candidates` a single time, with `workspace_id` and the `person_ids` this beat runs on.
 

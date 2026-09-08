@@ -76,7 +76,7 @@ Runs over Well's MCP server (`https://api.wellapp.ai/v1/mcp`, streamable HTTP). 
 
 Never call `well_invoke_connector_tool` or any provider-specific tool. This skill reads and writes Well's own ownership; it never touches a provider.
 
-**Composed skills.** Three atomic Well skills own the setup this skill must not inline — invoke them, don't reimplement them:
+**Composed skills.** Three atomic Well skills own the setup this skill must not inline — invoke them, don't reimplement them — and a fourth, `invite-members`, owns the invite beat this skill runs after an assignment (see **Invite the owners who cannot open their task yet** below):
 
 1. **Pin the workspace.** {{> define-workspace purpose="to assign the missing-invoice owners for that workspace"}}
 

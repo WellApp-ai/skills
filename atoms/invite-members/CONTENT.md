@@ -9,6 +9,8 @@ placeholders:
 
 The workspace is already pinned — pass its `workspace_id` on every call below, and do not re-resolve it here.
 
+**If `well_list_member_candidates` is not in your toolset at all**, this Well server does not expose the invite step yet: say that in one line, point the user at `<well-app-base-url>/workspaces/<workspace_id>` to invite the people in Well instead, and stop. Do not build the candidate list from raw `people` records — a hand-built list carries no membership state and is not the same thing. This is the first case a caller hits where the invite tools are not deployed, so check it before the read below.
+
 **Read the candidates once.** Call `well_list_member_candidates` a single time, with `workspace_id`{{#if (eq source "provided")}} and the `person_ids` this beat runs on{{else}} and `include_detected: true`{{/if}}.
 
 {{#if (eq source "provided")}}

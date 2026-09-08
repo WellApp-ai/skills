@@ -102,6 +102,8 @@ Verify before moving on: exactly one workspace is pinned, or `resolution: unreso
 2. **Read the candidates and invite.** 
 The workspace is already pinned — pass its `workspace_id` on every call below, and do not re-resolve it here.
 
+**If `well_list_member_candidates` is not in your toolset at all**, this Well server does not expose the invite step yet: say that in one line, point the user at `<well-app-base-url>/workspaces/<workspace_id>` to invite the people in Well instead, and stop. Do not build the candidate list from raw `people` records — a hand-built list carries no membership state and is not the same thing. This is the first case a caller hits where the invite tools are not deployed, so check it before the read below.
+
 **Read the candidates once.** Call `well_list_member_candidates` a single time, with `workspace_id` and `include_detected: true`.
 
 Out of the box this offers the teammates Well detected: with `include_detected: true` the read returns the people who share the workspace owner's corporate email domain and hold no membership yet, each `source: detected`. When a calling flow instead hands you a specific set of people to invite, pass those as `person_ids` and drop `include_detected` — that is the `provided` source, and each candidate then carries its own `state` (`not_member`, `pending`, or `active`). Either way, never invite an `active` candidate: they already have access, so say so and leave them off the send.
