@@ -11,9 +11,9 @@
 
 ## What it does
 
-Chasing supplier invoices at month end is six questions, not one: which entity, which month, is the bank feed actually live, which of that month's vendors carry no industry label, what is actually missing, and who can go and get the rest. This skill asks them in that order and routes on each answer instead of guessing. It pins the workspace, fixes the month, gets the bank feed in when a month holds no bank transaction, asking for it before the month when the workspace holds no bank transaction at all, offers to label the month's counterparties that carry no industry category, lists the settled spend that still has no supplier invoice, and finishes with a preview of the invoice-fetching agents — which provider, how many invoices, what you would still upload by hand. Every stop is named: no workspace, no month, no bank, no gap list, or nothing missing at all. The preview is a dry run: it launches no agent, queues no task, and opens no browser session. Pick several entities at the workspace step and the whole flow runs once per workspace, in order, with one recap per entity — never a merged view.
+Chasing supplier invoices at month end is seven questions, not one: which entity, which month, is the bank feed actually live, which of that month's vendors carry no industry label, what is actually missing, who owns each gap, and who can go and get the rest. This skill asks them in that order and routes on each answer instead of guessing. It pins the workspace, fixes the month, gets the bank feed in when a month holds no bank transaction, asking for it before the month when the workspace holds no bank transaction at all, offers to label the month's counterparties that carry no industry category, lists the settled spend that still has no supplier invoice, assigns owners to the lines that still have none, and finishes with a preview of the invoice-fetching agents — which provider, how many invoices, what you would still upload by hand. Every stop is named: no workspace, no month, no bank, no gap list, or nothing missing at all. The preview is a dry run: it launches no agent, queues no task, and opens no browser session. Pick several entities at the workspace step and the whole flow runs once per workspace, in order, with one recap per entity — never a merged view.
 
-It carries the order, not the steps. It runs seven steps, and each one is its own Well skill — `define-workspace`, `define-period`, `connect-bank`, `categorize-counterparties`, `show-missing-invoices`, `connect-tools`, and `deploy-agents` — which this file runs in a fixed order rather than repeating what they do. Install it on its own and only the workspace step stops the flow: five steps fall back to an inline copy of the part the order depends on, and the bank step falls back to `connect-tools` scoped to banks. The categorization step runs only when your Well server exposes the counterparty list; without it the flow says so instead of guessing.
+It carries the order, not the steps. It runs eight steps, and each one is its own Well skill — `define-workspace`, `define-period`, `connect-bank`, `categorize-counterparties`, `show-missing-invoices`, `assign-missing-invoices`, `connect-tools`, and `deploy-agents` — which this file runs in a fixed order rather than repeating what they do. Install it on its own and only the workspace step stops the flow: six steps fall back to an inline copy of the part the order depends on, and the bank step falls back to `connect-tools` scoped to banks. The categorization step runs only when your Well server exposes the counterparty list; without it the flow says so instead of guessing.
 
 ## Required data in Well
 
@@ -24,19 +24,20 @@ It carries the order, not the steps. It runs seven steps, and each one is its ow
 
 ## Composes onto
 
-This skill delegates its seven steps to **seven** of Well's atomic skills rather than repeating them, one brick per step:
+This skill delegates its eight steps to **eight** of Well's atomic skills rather than repeating them, one brick per step:
 
 - **[`define-workspace`](define-workspace.md)** — pins which Well workspace the run is for, and drives the sign-in when there is no connection yet.
 - **[`define-period`](define-period.md)** — fixes which month or months the run covers.
 - **[`connect-bank`](connect-bank.md)** — the bank feed on its own, which is what makes a missing invoice visible. It runs once: before the month when the workspace holds no bank transaction at all, and after the month when a month you picked holds none.
 - **[`categorize-counterparties`](categorize-counterparties.md)** — raises category coverage when the month's vendors carry no industry label.
 - **[`show-missing-invoices`](show-missing-invoices.md)** — lists the settled spend with no supplier invoice, and takes your pick of the vendors to chase.
+- **[`assign-missing-invoices`](assign-missing-invoices.md)** — assigns owners to the lines that still have none, before the fetch is offered, so one task is held per owner and one invoice resolves them all.
 - **[`connect-tools`](connect-tools.md)** — reads which services Well holds a connector for behind the vendors you picked, and carries the connect links, so you can connect a service instead of running an agent for it.
 - **[`deploy-agents`](deploy-agents.md)** — previews what Well would fetch for the vendors you picked, and hands those portals to the collect link.
 
 The order is this skill's own: it walks the bricks one at a time, asks for the bank only when a month holds no bank transaction and puts that question before the month when the workspace holds no bank transaction at all, offers the connect step for the vendors Well holds a connector for, and previews what Well would fetch for the rest.
 
-Install all seven alongside this one. The skill still runs without them — only the workspace step stops the flow, five steps fall back to an inline copy of what the order needs, and the bank step falls back to `connect-tools` — but with them installed each step is owned in one place. The **Claude Code plugin** and **Codex plugin** paths below install all eight together; if you download the `.skill` file on its own, grab those seven as well.
+Install all eight alongside this one. The skill still runs without them — only the workspace step stops the flow, six steps fall back to an inline copy of what the order needs, and the bank step falls back to `connect-tools` — but with them installed each step is owned in one place. The **Claude Code plugin** and **Codex plugin** paths below install all nine together; if you download the `.skill` file on its own, grab those eight as well.
 
 ---
 
@@ -61,8 +62,9 @@ Install the following official skills from Well.
     d. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-bank/SKILL.md
     e. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/categorize-counterparties/SKILL.md
     f. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/show-missing-invoices/SKILL.md
-    g. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
-    h. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/deploy-agents/SKILL.md
+    g. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/assign-missing-invoices/SKILL.md
+    h. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
+    i. https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/deploy-agents/SKILL.md
 2. Download and display these files to the user. The file name must be "SKILL.md". No prefix, no suffix. Exact name as specified.
 3. Install these skills.
 4. Before replying to the user, ensure you have named the downloaded files "SKILL.md". This is crucial for the rest of the steps.
