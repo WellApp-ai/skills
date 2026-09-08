@@ -382,6 +382,14 @@ Call each list or read tool once per step. The widget cards refresh themselves �
    `<well-app-base-url>/workspaces/<workspace_id>` and tell them Well shows the same missing rows
    there. Do not append a query parameter you have not confirmed the app reads.
 
+   **A failed `well_enqueue_invoice_fetch` on the Deploy click is the one write, and it gets the same
+   treatment, once.** Retry the call — safe under the tool's active-task dedupe, since a counterparty
+   that already holds a non-terminal task comes back `already_active: true` rather than queued twice.
+   On a second failure, do not open the collect link and do not claim any task was created: say the
+   Deploy did not go through, name the vendors that were not queued, and give the user
+   `<well-app-base-url>/workspaces/<workspace_id>` to deploy them in Well instead. Never report a
+   fetch as queued that the tool did not return in `enqueued[]` (or `already_active`).
+
 9. **Hand off.** Keep the hand-off facts below for the caller — never printed as a block — and give control back.
 
 ## Output requirements
@@ -528,8 +536,11 @@ Before finishing, verify:
 - Counts are described as transactions missing an invoice, not as invoices already found.
 - Amounts appear only when set, and never mix currencies.
 - After a connection or an upload landed, the preview was re-derived in the same turn.
-- On a transient tool failure the call was retried once, then the hand-off was used, then the
-  workspace link — in that order.
+- On a transient failure of a read the call was retried once, then the hand-off was used, then the
+  workspace link — in that order. A failed `well_enqueue_invoice_fetch` on the Deploy click was
+  retried once too (safe under its active-task dedupe), and on a second failure the collect link was
+  not opened, no task was reported as queued, and the user got the workspace link to deploy in Well
+  instead.
 - The hand-off facts were kept — `workspace_id`, the period, `run_mode: preview`,
   `nothing_launched: true`, `selection`, the agents with their `provider_id` and `domain`,
   `collect_url`, `scoped_to_selected_counterparties`, `coverage_note`, and `resolution` — and no

@@ -37,7 +37,7 @@ This skill delegates seven setup steps to Well's atomic skills rather than repea
 - **[`define-period`](define-period.md)** — collects the calendar month the close runs on.
 - **[`fetch-missing-invoices`](fetch-missing-invoices.md)** — the missing-invoice remediation for the close's blocker: when settled spend is missing its invoice, the close runs it in composed mode to set the owners, list the gap, take the vendor pick, and queue the fetch agents on your Deploy click.
 
-Install all eight alongside this one. The skill still runs without them — each step falls back inline — but with them installed you get one consistent workspace flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install every skill together; if you download the `.skill` file on its own, grab those eight as well.
+Install all eight alongside this one. The skill still runs without them — each step falls back inline — but with them installed you get one consistent workspace flow across every Well skill. The **Claude Code plugin** and **Codex plugin** paths below install all nine together; if you download the `.skill` file on its own, grab those eight as well.
 
 ---
 

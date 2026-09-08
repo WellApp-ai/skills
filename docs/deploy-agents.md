@@ -7,7 +7,7 @@
 
 # Deploy Agents
 
-**See exactly which invoice-fetching agents Well would launch — before a single one runs.**
+**See exactly which invoice-fetching agents Well would run, then queue them on your Deploy click.**
 
 ## What it does
 
