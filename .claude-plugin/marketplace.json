@@ -1,12 +1,14 @@
 {
   "name": "wellapp",
-  "owner": { "name": "Well App, Inc." },
-  "description": "Grounded financial answers from your real ledger and bank data.",
+  "owner": {
+    "name": "Well App, Inc."
+  },
+  "description": "Well's finance skills for AI agents: cash, spending, receivables, invoices, and month-end close, served live from Well's MCP server.",
   "plugins": [
     {
       "name": "well-skills",
       "source": "./",
-      "description": "Grounded financial answers — expenses, runway, cash position, receivables, payables, FX exposure, reconciliation, and invoice drafting — computed live from Well's MCP financial graph."
+      "description": "Well's finance skills for AI agents: cash, spending, receivables, invoices, and month-end close, served live from Well's MCP server."
     }
   ]
 }
