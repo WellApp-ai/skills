@@ -1,6 +1,6 @@
 ---
 name: "cash-position"
-description: "Answer \"how much cash do we have right now?\" using Well's MCP financial graph — a fast, point-in-time snapshot of current bank/cash balances across all connected accounts, per currency, backed by real synced balances rather than guesswork. Use when the user asks \"what's our cash position\", \"how much cash do we have right now\", \"current bank balance\", \"how much money is in the bank\", or \"what's our total cash on hand today\". Requires a connected Well workspace with a banking connector; if none is connected, this skill walks the user through connecting one first."
+description: "Answer \"how much cash do we have right now?\" using Well's MCP financial graph — the total of your real bank balances, computed here from the workspace's own accounts, with every rule it rests on visible and repairable. Use when the user asks \"what's our cash position\", \"how much cash do we have right now\", \"current bank balance\", \"how much money is in the bank\", or \"what's our total cash on hand today\". Requires a connected Well workspace with a banking connector; if none is connected, this skill guides the user to connect one first."
 license: PolyForm-Perimeter-1.0.0
 ---
 

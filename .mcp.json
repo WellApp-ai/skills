@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "well": {
+      "type": "http",
+      "url": "https://api.wellapp.ai/v1/mcp"
+    }
+  }
+}

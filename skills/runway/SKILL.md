@@ -1,6 +1,6 @@
 ---
 name: "runway"
-description: "Answer \"how much runway do we have?\" using Well's MCP financial graph — months of cash left, computed from real synced balances divided by actual trailing burn, with the dividend and divisor shown so the number can be challenged. Use when the user asks \"what's my runway\", \"how much runway do we have\", \"when do we run out of cash\", or \"how many months of cash are left\". Requires a connected Well workspace with bank or accounting data; if none is connected, this skill guides the user to connect one first."
+description: "Answer \"how much runway do we have?\" using Well's MCP financial graph — months of cash left, computed here from the workspace's own balances divided by its own trailing burn, with both figures and every rule they rest on visible and repairable. Use when the user asks \"what's my runway\", \"how much runway do we have\", \"when do we run out of cash\", or \"how many months of cash are left\". Requires a connected Well workspace with bank data; if none is connected, this skill guides the user to connect one first."
 license: PolyForm-Perimeter-1.0.0
 ---
 
