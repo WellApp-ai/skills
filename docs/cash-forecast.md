@@ -11,7 +11,7 @@
 
 ## What it does
 
-Ask your AI assistant to project your cash forward, and it returns your real settled month-end balances followed by a worst-case projection — the same series the Well app charts. The projection assumes no incoming revenue, so it is a floor rather than a prediction, and the answer says so every time rather than letting you mistake one for the other.
+Ask your AI assistant to project your cash forward, and it returns your real settled month-end balances followed by a worst-case projection, computed from your own accounts and the same trailing burn your runway divides by. The projection assumes no incoming revenue, so it is a floor rather than a prediction, and the answer says so every time rather than letting you mistake one for the other.
 
 ## Required data in Well
 
@@ -24,10 +24,10 @@ Ask your AI assistant to project your cash forward, and it returns your real set
 A: No, and that is the point. It assumes nothing comes in, so the date it gives you is the earliest possible one. Revenue only pushes it later.
 
 **Q: How is this different from runway?**
-A: Runway gives you one number, the months left. This gives you the shape month by month, so you can see which month gets tight.
+A: Runway gives you one number, the months left. This gives you the shape month by month, so you can see which month gets tight. Both use the same burn.
 
 **Q: Are the past months projected too?**
-A: No. Everything up to the current month is settled balance from your bank feed. The chart marks where the projection starts.
+A: Only where your bank feed left a gap. Every month it covered is settled balance, and the chart marks where the projection starts. When the last months carry no reading, the projection covers them too, and the answer says which months those are.
 
 ---
 
@@ -48,6 +48,10 @@ The file under `skills/cash-forecast/SKILL.md` is a shell: it carries the skill'
 codex plugin marketplace add WellApp-ai/skills
 codex plugin add well-skills@wellapp
 ```
+
+### Claude Desktop
+
+[⬇ Install cash-forecast](https://github.com/WellApp-ai/skills/raw/main/dist/cash-forecast.skill) and open the downloaded file. Desktop installs the skill straight away, with nothing to unzip.
 
 ### Assisted by AI
 

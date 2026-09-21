@@ -1,6 +1,6 @@
 ---
 name: "cash-forecast"
-description: "Answer \"what will our cash look like?\" using Well's MCP financial graph — settled month-end balances followed by a worst-case projection that assumes no incoming revenue. Use when the user asks \"what will our cash look like\", \"show me our cash forecast\", \"project our cash forward\", \"when do we hit zero\", or \"what does our cash runway look like month by month\". Requires a connected Well workspace with a banking connector; if none is connected, this skill guides the user to connect one first."
+description: "Answer \"what will our cash look like?\" using Well's MCP financial graph — settled month-end balances followed by a worst-case projection that assumes no incoming revenue, computed here from the workspace's own balances and its own trailing burn. Use when the user asks \"what will our cash look like\", \"show me our cash forecast\", \"project our cash forward\", \"when do we hit zero\", or \"what does our cash runway look like month by month\". Requires a connected Well workspace with a banking connector; if none is connected, this skill guides the user to connect one first."
 license: PolyForm-Perimeter-1.0.0
 ---
 

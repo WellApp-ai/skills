@@ -48,6 +48,10 @@ codex plugin marketplace add WellApp-ai/skills
 codex plugin add well-skills@wellapp
 ```
 
+### Claude Desktop
+
+[⬇ Install define-workspace](https://github.com/WellApp-ai/skills/raw/main/dist/define-workspace.skill) and open the downloaded file. Desktop installs the skill straight away, with nothing to unzip.
+
 ### Assisted by AI
 
 Paste this into any AI agent (Claude, Codex, Cursor, OpenCode, and others):

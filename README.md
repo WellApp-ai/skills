@@ -50,37 +50,43 @@ So there is nothing to update, and nothing goes stale on you. A skill you instal
 
 Ask for any of these by name. Several are setup steps another skill invokes on its own when it needs them, and they answer just as well when you ask for them directly.
 
-| Skill | What you get | Details |
-|---|---|---|
-| `accounting-settings` | Set the accounting basics every period-scoped answer depends on. | [View details →](docs/accounting-settings.md) |
-| `accounts-receivable-aging` | See who owes you money, and how long they've been sitting on it. | [View details →](docs/accounts-receivable-aging.md) |
-| `assign-missing-invoices` | Put a name on every settled expense that still has no invoice. | [View details →](docs/assign-missing-invoices.md) |
-| `avg-burn` | Know what you actually spend each month, averaged over real months. | [View details →](docs/avg-burn.md) |
-| `bills-due` | See exactly what's coming due, in what order, and how much cash it adds up to. | [View details →](docs/bills-due.md) |
-| `cash-flow-waterfall` | See the bridge from last month's balance to this one. | [View details →](docs/cash-flow-waterfall.md) |
-| `cash-forecast` | See where your cash lands if nothing new comes in. | [View details →](docs/cash-forecast.md) |
-| `cash-position` | Know exactly how much cash you have, and which accounts it came from. | [View details →](docs/cash-position.md) |
-| `categorize-counterparties` | Close the category gaps behind your spend before you close a month. | [View details →](docs/categorize-counterparties.md) |
-| `close-books` | Drive the month-end close to the point of approval. | [View details →](docs/close-books.md) |
-| `company-profile` | Everything you know about one company, in one view. | [View details →](docs/company-profile.md) |
-| `confirm-my-company` | Set the identity that tells your invoices from everyone else's. | [View details →](docs/confirm-my-company.md) |
-| `connect-accounting` | Get your accounting tool connected, and confirm the feed is live. | [View details →](docs/connect-accounting.md) |
-| `connect-bank` | Get the bank feed in, and confirm it is really live. | [View details →](docs/connect-bank.md) |
-| `connect-tools` | See what is connected, what is syncing, and what is missing. | [View details →](docs/connect-tools.md) |
-| `cost-structure` | See where your company's money actually goes, no spreadsheets required. | [View details →](docs/cost-structure.md) |
-| `define-period` | Fix the month every following answer is measured over. | [View details →](docs/define-period.md) |
-| `define-workspace` | Pin the one company account every following answer reads from. | [View details →](docs/define-workspace.md) |
-| `deploy-agents` | See exactly which agents would run, before any of them does. | [View details →](docs/deploy-agents.md) |
-| `draft-invoice` | Turn a sentence into a real invoice in Well, PDF attached, no template hunting. | [View details →](docs/draft-invoice.md) |
-| `fetch-missing-invoices` | Walk the whole month-end sweep in one prompt. | [View details →](docs/fetch-missing-invoices.md) |
-| `fx-exposure` | See how much of your cash and receivables sit outside your home currency. | [View details →](docs/fx-exposure.md) |
-| `invite-teammates` | Get your teammates into the workspace, without leaving the conversation. | [View details →](docs/invite-teammates.md) |
-| `missing-receipts` | Find the bills with no paperwork attached, before an auditor does. | [View details →](docs/missing-receipts.md) |
-| `normalize-currency` | Turn mixed currencies into one number you can actually audit. | [View details →](docs/normalize-currency.md) |
-| `payment-invoice-lookup` | Find what payment settled an invoice, or catch every payment that never got one. | [View details →](docs/payment-invoice-lookup.md) |
-| `rank-clients-by-ltv` | Find out who your best customers really are, ranked by what they've actually paid. | [View details →](docs/rank-clients-by-ltv.md) |
-| `runway` | Know exactly how many months and days of cash you have left. | [View details →](docs/runway.md) |
-| `show-missing-invoices` | See which suppliers owe you paperwork, before your accountant asks. | [View details →](docs/show-missing-invoices.md) |
+| Skill | What you get | Details | Claude Desktop |
+|---|---|---|---|
+| `accounting-settings` | Set the accounting basics every period-scoped answer depends on. | [View details →](docs/accounting-settings.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/accounting-settings.skill) |
+| `accounts-receivable-aging` | See who owes you money, and how long they've been sitting on it. | [View details →](docs/accounts-receivable-aging.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/accounts-receivable-aging.skill) |
+| `assign-missing-invoices` | Put a name on every settled expense that still has no invoice. | [View details →](docs/assign-missing-invoices.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/assign-missing-invoices.skill) |
+| `avg-burn` | Know what you actually spend each month, averaged over real months. | [View details →](docs/avg-burn.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/avg-burn.skill) |
+| `bills-due` | See exactly what's coming due, in what order, and how much cash it adds up to. | [View details →](docs/bills-due.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/bills-due.skill) |
+| `cash-flow-waterfall` | See the bridge from last month's balance to this one. | [View details →](docs/cash-flow-waterfall.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/cash-flow-waterfall.skill) |
+| `cash-forecast` | See where your cash lands if nothing new comes in. | [View details →](docs/cash-forecast.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/cash-forecast.skill) |
+| `cash-position` | Know exactly how much cash you have, and which accounts it came from. | [View details →](docs/cash-position.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/cash-position.skill) |
+| `categorize-counterparties` | Close the category gaps behind your spend before you close a month. | [View details →](docs/categorize-counterparties.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/categorize-counterparties.skill) |
+| `close-books` | Drive the month-end close to the point of approval. | [View details →](docs/close-books.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/close-books.skill) |
+| `company-profile` | Everything you know about one company, in one view. | [View details →](docs/company-profile.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/company-profile.skill) |
+| `confirm-my-company` | Set the identity that tells your invoices from everyone else's. | [View details →](docs/confirm-my-company.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/confirm-my-company.skill) |
+| `connect-accounting` | Get your accounting tool connected, and confirm the feed is live. | [View details →](docs/connect-accounting.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/connect-accounting.skill) |
+| `connect-bank` | Get the bank feed in, and confirm it is really live. | [View details →](docs/connect-bank.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/connect-bank.skill) |
+| `connect-tools` | See what is connected, what is syncing, and what is missing. | [View details →](docs/connect-tools.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/connect-tools.skill) |
+| `cost-structure` | See where your company's money actually goes, no spreadsheets required. | [View details →](docs/cost-structure.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/cost-structure.skill) |
+| `define-period` | Fix the month every following answer is measured over. | [View details →](docs/define-period.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/define-period.skill) |
+| `define-workspace` | Pin the one company account every following answer reads from. | [View details →](docs/define-workspace.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/define-workspace.skill) |
+| `deploy-agents` | See exactly which agents would run, before any of them does. | [View details →](docs/deploy-agents.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/deploy-agents.skill) |
+| `draft-invoice` | Turn a sentence into a real invoice in Well, PDF attached, no template hunting. | [View details →](docs/draft-invoice.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/draft-invoice.skill) |
+| `fetch-missing-invoices` | Walk the whole month-end sweep in one prompt. | [View details →](docs/fetch-missing-invoices.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/fetch-missing-invoices.skill) |
+| `fx-exposure` | See how much of your cash and receivables sit outside your home currency. | [View details →](docs/fx-exposure.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/fx-exposure.skill) |
+| `invite-teammates` | Get your teammates into the workspace, without leaving the conversation. | [View details →](docs/invite-teammates.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/invite-teammates.skill) |
+| `missing-receipts` | Find the bills with no paperwork attached, before an auditor does. | [View details →](docs/missing-receipts.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/missing-receipts.skill) |
+| `mrr` | Know what you can count on earning each month, averaged over real months. | [View details →](docs/mrr.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/mrr.skill) |
+| `normalize-currency` | Turn mixed currencies into one number you can actually audit. | [View details →](docs/normalize-currency.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/normalize-currency.skill) |
+| `payment-invoice-lookup` | Find what payment settled an invoice, or catch every payment that never got one. | [View details →](docs/payment-invoice-lookup.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/payment-invoice-lookup.skill) |
+| `rank-clients-by-ltv` | Find out who your best customers really are, ranked by what they've actually paid. | [View details →](docs/rank-clients-by-ltv.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/rank-clients-by-ltv.skill) |
+| `runway` | Know exactly how many months and days of cash you have left. | [View details →](docs/runway.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/runway.skill) |
+| `show-missing-invoices` | See which suppliers owe you paperwork, before your accountant asks. | [View details →](docs/show-missing-invoices.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/show-missing-invoices.skill) |
+| `signing-back` | Come back to a workspace and know in one turn what changed, where it stands, and what to do next. | [View details →](docs/signing-back.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/signing-back.skill) |
+| `whats-next` | Five things worth doing next in this workspace, each one a click that starts it. | [View details →](docs/whats-next.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/whats-next.skill) |
+| `workspace-data-migration` | Bring a connected bank across from the signup workspace instead of connecting it again. | [View details →](docs/workspace-data-migration.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/workspace-data-migration.skill) |
+
+The Claude Desktop column is a one-file download: open it and Desktop installs the skill. Nothing to unzip, and it never needs updating.
 
 ---
 
@@ -140,11 +146,15 @@ Install the following official skills from Well. Instructions:
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/fx-exposure/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/invite-teammates/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/missing-receipts/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/mrr/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/normalize-currency/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/payment-invoice-lookup/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/rank-clients-by-ltv/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/runway/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/show-missing-invoices/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/signing-back/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/whats-next/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/workspace-data-migration/SKILL.md
 2. Save each one as a file named exactly "SKILL.md" inside a folder named after the skill. No prefix, no suffix.
 3. Create a summary table with the skill names and descriptions extracted from the frontmatter.
 4. If you can, install these skills yourself.

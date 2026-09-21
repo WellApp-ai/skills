@@ -29,6 +29,9 @@ A: The bridge is settled bank movement. Your ledger can recognise things in a di
 **Q: Can I bridge a quarter?**
 A: Yes. Ask for the period you want and the skill bridges it, as long as your feed covers both ends of it.
 
+**Q: What if the numbers don't add up?**
+A: Then the skill says so and shows the gap as its own bar. The closing balance is read on its own rather than worked out from the flows, so a gap is a real finding about your data, and it is never folded into the money in or the money out to make the bridge look tidy.
+
 ---
 
 ## Installation
@@ -48,6 +51,10 @@ The file under `skills/cash-flow-waterfall/SKILL.md` is a shell: it carries the 
 codex plugin marketplace add WellApp-ai/skills
 codex plugin add well-skills@wellapp
 ```
+
+### Claude Desktop
+
+[⬇ Install cash-flow-waterfall](https://github.com/WellApp-ai/skills/raw/main/dist/cash-flow-waterfall.skill) and open the downloaded file. Desktop installs the skill straight away, with nothing to unzip.
 
 ### Assisted by AI
 
