@@ -38,6 +38,7 @@
     "./skills/draft-invoice",
     "./skills/fetch-missing-invoices",
     "./skills/fx-exposure",
+    "./skills/import-statement",
     "./skills/invite-teammates",
     "./skills/missing-receipts",
     "./skills/mrr",

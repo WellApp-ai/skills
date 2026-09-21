@@ -11,24 +11,27 @@
 
 ## What it does
 
-Ask your AI assistant where the money is going, and it breaks one month's outflow down by category, largest first, with each category's share of the total. The grouping comes from your own chart of accounts where you have one, and Well's categorization where you don't — and the answer tells you which, so you know what you are looking at.
+Ask your AI assistant where the money is going, and it breaks one closed month's outflow down by category, largest first, with each category's share of the total.
+
+The grouping is elected, not assumed. It tries your own chart of accounts first, then Well's category catalog, then the stored labels, then the transaction's own type, and it stops at the first one that actually covers enough of the month to mean something. The answer tells you which one won and how much of the month it covered, so you know whether you are looking at your accountant's categories or a technical fallback.
+
+Each check runs in the open: the connection, whether the syncs finished, whether your accounts are attached to companies you own, whether the month's transactions are categorized. A check that fails stops and shows you what to fix, with the rows and the amount at stake, instead of drawing a chart on top of a gap you would have to notice.
 
 ## Required data in Well
 
-- **Accounting connector** (recommended). Powers the category breakdown from your real ledger. Without it, the skill falls back to estimating from your invoices instead.
-- **Invoicing / bills** (required). Needed to show your biggest outstanding bills (accounts payable).
-- **Banking connector** (optional). Either a banking or an accounting connector is enough to get started.
+- **Accounting connector** (recommended). Supplies the chart of accounts, which is the grouping closest to how your business already thinks about its spend.
+- **Banking connector** (required). This is where the real outflows come from.
 
 ## FAQ
 
-**Q: What if no accounting tool is connected?**
-A: The skill falls back to estimating categories from your invoices, and tells you that is what it did rather than presenting an estimate as ledger truth.
-
 **Q: Where do the categories come from?**
-A: From your own chart of accounts as synced from your accounting tool, so the breakdown matches the categories your accountant already uses.
+A: From the first of four columns that covers enough of the month to be worth grouping on: your own chart of accounts, Well's category catalog, the stored category labels, or the transaction type. The answer always says which one it used.
+
+**Q: What if nothing is categorized?**
+A: The skill says so, and offers to categorize the month rather than drawing a chart with one unlabelled slice in it.
 
 **Q: Can I change the period?**
-A: Yes. Ask for a month, a quarter, or a custom range and the breakdown recomputes over it.
+A: Yes. Name a month and the breakdown recomputes over it. It is always one closed month, never a quarter.
 
 ---
 

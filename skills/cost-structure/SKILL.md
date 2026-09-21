@@ -1,6 +1,6 @@
 ---
 name: "cost-structure"
-description: "Answer \"what are we spending on?\" using Well's MCP financial graph — a deterministic category breakdown of one month's outflow, with the share each category takes and which grouping produced it. Use when the user asks \"what are we spending on\", \"break down our expenses\", \"where is the money going\", \"what are our biggest costs\", or \"show me our cost structure\". Requires a connected Well workspace with bank or accounting data; if none is connected, this skill guides the user to connect one first."
+description: "Answer \"what are we spending on?\" using Well's MCP financial graph, breaking one closed month's outflow into categories computed here, under a grouping ladder the answer states and every check it rests on visible and repairable. Use when the user asks \"what are we spending on\", \"break down our expenses\", \"where is the money going\", \"what are our biggest costs\", or \"show me our cost structure\". Requires a connected Well workspace with bank or accounting data; if none is connected, this skill guides the user to connect one first."
 license: PolyForm-Perimeter-1.0.0
 ---
 
