@@ -39,6 +39,7 @@
     "./skills/connect-accounting",
     "./skills/connect-bank",
     "./skills/connect-tools",
+    "./skills/context-graph",
     "./skills/contractor-year-end-statements",
     "./skills/cost-structure",
     "./skills/customer-invoicing-identity",

@@ -43,7 +43,7 @@ A: This skill gives you the bridge: opening, in, out, closing. For the breakdown
 A: The bridge is settled bank movement. Your ledger can recognise things in a different period, so the two answer different questions on purpose.
 
 **Q: Can I bridge a quarter?**
-A: Yes. Ask for the period you want and the skill bridges it, as long as your feed covers both ends of it.
+A: Yes. A quarter is three months, the month you name included. Ask for the period you want and the skill bridges it, as long as your feed covers both ends of it.
 
 ---
 

@@ -75,6 +75,7 @@ Ask for any of these by name. Several are setup steps another skill invokes on i
 | `connect-accounting` | Get your accounting tool connected, and confirm the feed is live. | [View details →](docs/connect-accounting.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/connect-accounting.skill) |
 | `connect-bank` | Get the bank feed in, and confirm it is really live. | [View details →](docs/connect-bank.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/connect-bank.skill) |
 | `connect-tools` | See what is connected, what is syncing, and what is missing. | [View details →](docs/connect-tools.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/connect-tools.skill) |
+| `context-graph` | Connect your AI apps and your tools, then see your business as one context graph. | [View details →](docs/context-graph.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/context-graph.skill) |
 | `contractor-year-end-statements` | Read the purchase invoices for one calendar year, list the contractors and suppliers you paid with the total for each, name the ones with no tax identifier on file, and say which year-end statement each jurisdiction expects and when. | [View details →](docs/contractor-year-end-statements.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/contractor-year-end-statements.skill) |
 | `cost-structure` | See where your company's money actually goes, no spreadsheets required. | [View details →](docs/cost-structure.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/cost-structure.skill) |
 | `customer-invoicing-identity` | What Well holds about a customer's legal identity, and what is still blank. | [View details →](docs/customer-invoicing-identity.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/customer-invoicing-identity.skill) |
@@ -177,6 +178,7 @@ Install the following official skills from Well. Instructions:
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-accounting/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-bank/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/connect-tools/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/context-graph/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/contractor-year-end-statements/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cost-structure/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/customer-invoicing-identity/SKILL.md

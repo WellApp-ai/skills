@@ -19,7 +19,7 @@ The measures are not recomputed here in some shortcut form. A cash position is t
 
 Nothing is written back. Open the same board tomorrow and every figure on it is tomorrow's, which is why no block on it carries a date: there is no stored number for a date to qualify.
 
-Before it measures anything, the skill runs the checks those measures rest on: which workspace the board belongs to, whether the sources behind each feed are connected, and which company is yours, because that is what separates your accounts from a counterparty's. A check that fails stops and shows you what to fix, rather than drawing a board with holes in it.
+Each measure runs its own checks, the same ones it runs when you ask for that figure alone, and each measure's own skill states them. A check that fails shows you what to fix, and the run carries on once it is fixed. The board is drawn only when every block on it is measured, so it never shows a block with a hole where its figure should be.
 
 ## Required data in Well
 
@@ -36,7 +36,10 @@ A: No. Nothing is saved with a board, so every figure you see was measured in th
 A: Each block is a real measure, run under that measure's own rules. A board with six blocks is six measures, which is the same work as asking for all six one at a time.
 
 **Q: What if a source behind one block is not connected?**
-A: The board is not drawn with that block empty. An empty block reads as a figure of zero, which is a different statement from "this could not be measured", so the skill says which source is missing and what to connect.
+A: The board is not drawn with that block empty. An empty block reads as a figure of zero, which is a different statement from "this could not be measured", so the skill first shows which source is missing and what to connect. Once it is connected, the run carries on and draws the board.
+
+**Q: What if one figure needs something fixed first?**
+A: That figure's own skill shows its fix, the same one you would see if you asked for that figure alone. Once you fix it, the run carries on where it stopped, and the board is drawn when every block is measured.
 
 ---
 

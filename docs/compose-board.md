@@ -15,7 +15,7 @@ A dashboard usually freezes the day it is built. The numbers on it are the numbe
 
 This skill saves a board as a QUESTION rather than as an answer. Each block carries the feed it draws — your cash position, your average burn, your recurring revenue, your cost structure, your forecast, your cash bridge — and the window it asks that feed for. Nothing on the board is a stored figure, which is what makes a board safe to keep: there is no number on it that can quietly stop being true.
 
-A board answers its own questions when it is opened. `resolve-board` runs each block's feed over each block's window and draws what came back, so the figures on a board are always measured in the run that drew them. This skill is the half that makes a board exist for that one to open.
+A board answers its own questions when it is opened. `resolve-board` runs each block's feed over each block's window and draws what came back, so the figures on a board are always measured in the run that drew them. This skill is the half that makes a board exist, and once the board is saved it hands over to that one, so the board you just built is drawn with its figures.
 
 The window is what makes a board more than a list of tiles. Two blocks can name the same feed and cover different months, which is how July burn sits beside August burn on one screen and neither one is the other moved. A block about right now names no window at all, because inventing one would store a question you never asked.
 
@@ -30,7 +30,7 @@ Before it writes anything, the skill runs the checks those measures rest on: whi
 ## FAQ
 
 **Q: Are the numbers saved with the board?**
-A: No, and that is deliberate: a stored number is one that can quietly stop being true. The board keeps which feed each block draws and the window it asks for, and opening it measures every block again. The figures you see are always from the run that drew them.
+A: No, and that is deliberate: a stored number is one that can quietly stop being true. The board keeps which feed each block draws and the window it asks for, and drawing it measures every block again, right after the save and every time you open it. The figures you see are always from the run that drew them.
 
 **Q: Can one board show two different months?**
 A: Yes. Each block carries its own window, so July burn and August burn are two blocks on the same feed and the board keeps them apart.
