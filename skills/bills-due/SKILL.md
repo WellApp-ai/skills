@@ -1,6 +1,6 @@
 ---
 name: "bills-due"
-description: "Show what bills are coming due and when, as a date-ordered cash-planning view of accounts payable with a running cumulative total, using Well's MCP financial graph. Use when the user asks \"what bills are due\", \"upcoming payments\", \"what do we owe this week/month\", \"AP due dates\", \"what's our cash outflow looking like\", \"when are our bills due\", or \"payment calendar\". Requires a connected Well workspace with invoicing/bills data; if none is connected, this skill walks the user through connecting one first."
+description: "Answer \"what bills are coming due, and how much do they add up to by date?\" using Well's MCP financial graph: every bill the workspace still owes, ordered by due date, with a running total so the reader can see how much cash leaves and by when. Use when the user asks \"what bills are due\", \"upcoming payments\", \"what do we owe this week\", \"AP due dates\", \"when are our bills due\", or \"payment calendar\". Requires a connected Well workspace with invoicing or accounting data and a confirmed own company; if either is missing, this skill walks the user through connecting one or confirming their company first."
 license: PolyForm-Perimeter-1.0.0
 ---
 

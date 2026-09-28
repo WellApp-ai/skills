@@ -7,24 +7,42 @@
 
 # Bills due
 
-**See exactly what's coming due, in what order, and how much cash it adds up to.**
+**See what you owe and when, ordered by due date with a running total.**
 
 ## What it does
 
-Instead of scanning a stack of invoices to figure out what's due next, ask your AI assistant "what bills are coming due?" and it pulls a date-ordered payment calendar straight from your synced invoices — overdue, due this week, due this month, and due later — with a running total so you can see how much cash is about to go out and by when.
+Ask your AI assistant what bills are coming due, and it reads the answer from your synced invoices. Every bill still carrying a balance is placed on a date-ordered calendar (overdue, this week, this month, later), with the supplier, the amount, the currency and the due date on each row, and a running cumulative total beside it.
+
+Which side of an invoice your workspace occupies is resolved from your confirmed own company, not from a party name, so a supplier that appears under a registered name in one source and a trade name in another still lands on the correct side. Invoices Well cannot place on either side are counted and reported beside the total rather than dropped, because an unplaced invoice may still be owed by you.
+
+The calendar states its own edges. A due date is optional on an invoice record, and payment terms are held as free text that nothing parses into a date, so a bill with no due date is listed separately instead of being slotted into a week it was never assigned to. A bill a source system calls settled with no bank payment matched to it keeps its full balance on the record, so the calendar runs on payment status rather than on the balance alone, and reports that group under its own heading.
+
+It covers bills that exist as invoices. Rent, subscriptions and the next payroll have no invoice behind them until one arrives, so near-term outflow is understated by whatever those come to, and the answer says so. For what you are owed rather than what you owe, ask `accounts-receivable-aging`. For the cash you hold against it, ask `cash-position`.
 
 ## Required data in Well
 
-- **Invoicing / bills connector** (required). This is where your unpaid and partially paid bills come from.
-- **Banking or accounting connector** (optional). Not required to see the bills calendar, but helps confirm which bills have actually been paid.
+- **Invoicing or accounting connector** (required). Where your received bills and their payment state come from. Either one is enough.
+- **Company profile confirmed in Well** (required). Well resolves which side of an invoice you occupy from your own company. Without it, bills you received cannot be told apart from invoices you issued.
 
 ## FAQ
 
-**Q: Does it know which bills are already paid?**
-A: It reads payment status from your invoicing data. Connecting a bank or accounting tool as well lets it confirm a payment actually settled.
+**Q: Does it tell me whether I can afford each payment?**
+A: No. It orders what you owe and totals it; it does not match the calendar against the cash available on each date. A cash position is a reading taken at a moment that has already happened, so no figure exists for a future date, and the forward cash series Well draws is monthly rather than per date. Read the calendar beside `cash-position` and make that call yourself.
 
-**Q: What does the running total mean?**
-A: Cumulative cash out by that date, so you can read off how much you need available by any point in the calendar.
+**Q: Does it include rent, subscriptions and payroll?**
+A: No. It reads bills that exist as invoices in your workspace. An obligation with no invoice behind it yet is not on the calendar, so near-term outflow is understated by whatever those come to. The answer states this every time rather than letting the total read as everything you owe.
+
+**Q: What happens to a bill with no due date?**
+A: It is listed on its own line with its supplier and amount, outside the calendar. A due date is optional on an invoice record, and payment terms sit as free text that nothing parses into a date, so placing the bill in a week would be a guess wearing the look of a real deadline.
+
+**Q: Could it ask me to pay something twice?**
+A: Not from the calendar. A bill a source system calls settled with no bank payment matched to it keeps its full balance on the record, so filtering on the balance alone would put a paid bill back on the list. The calendar runs on payment status instead, and reports that group under its own heading so you can see it.
+
+**Q: Why does it need to know my own company?**
+A: To tell bills from invoices you issued. Your own company is what Well resolves the two sides of an invoice against, so without it the skill cannot separate what you owe from what you are owed. It asks you to confirm rather than guessing from a name or a logo.
+
+**Q: Does it convert everything into one currency?**
+A: Only with the rate and rate date shown. Currencies are never blended into a single figure. A currency with no rate available is reported on its own and named as excluded from the converted total.
 
 **Q: Can it pay the bills?**
 A: No. The skill builds the calendar. Approving and paying stays with you.

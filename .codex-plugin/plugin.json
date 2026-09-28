@@ -1,6 +1,6 @@
 {
   "name": "well-skills",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Well's finance skills for AI agents: cash, spending, receivables, invoices, and month-end close, served live from Well's MCP server.",
   "keywords": [
     "finance",

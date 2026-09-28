@@ -5,32 +5,45 @@
   </picture>
 </p>
 
-# Cash movement
+# Cash flow bridge
 
-**See the bridge from last month's balance to this one.**
+**See how the month moved from opening cash to closing cash, with whatever does not reconcile named as its own step.**
 
 ## What it does
 
-Ask your AI assistant why your balance changed, and it bridges the gap: opening position, total in, total out, closing position. Where the flows don't fully account for the movement between the two measured anchors, it tells you the residual instead of quietly adjusting a number to make the bridge balance.
+Ask your AI assistant why your balance changed, and it bridges the gap: opening position, total in, total out, closing position. The two ends are read from your balances and the two flows are summed from your transactions, so the four are measured independently and the law between them is checked rather than assumed.
+
+Where the flows do not fully account for the movement between the two anchors, the residual is reported as its own step on the card. Nothing is adjusted to make the bridge balance, and the gap is never folded into money in or money out.
+
+For what the outflows were spent on, see [`cost-structure`](cost-structure.md). For cash projected forward, see [`cash-forecast`](cash-forecast.md).
 
 ## Required data in Well
 
-- **Banking connector** (required). The bridge is built from settled bank movement on both sides.
-- **A full period of synced history** (required). The bridge needs both ends of the period. A feed that starts mid-month cannot tie out.
+- **Bank connector** (required). Opening and closing balances, and the movements between them, all read from the feed.
+- **Own company set** (required). A bridge reconciles against the workspace's own balances, so the skill has to know which company is yours before it can tell your accounts from a counterparty's.
 
 ## FAQ
 
-**Q: Does it break out inflows by source?**
+**Q: Does it break fees out as their own step?**
+A: No. A fee carried on the transaction row is inside the flows, not beside them. The card holds five figures (opening, in, out, the gap, closing) and no fee segment, so a fee bar would be a number nothing measured.
+
+**Q: What if the numbers do not add up?**
+A: Then the skill says so and shows the gap as its own step. The closing balance is read on its own rather than worked out from the flows, so a residual is a real finding about your data. It is never absorbed into money in or money out to make the bridge look tidy.
+
+**Q: How does it decide what came in and what went out?**
+A: From the period's own rows, once. Some feeds record an outflow as a negative amount and some as a positive magnitude, so the convention is elected over the whole period rather than guessed per row. A period that mixes both is reported as such instead of split on a guess.
+
+**Q: Does a parent workspace's cash count?**
+A: No. The sums run under the own scope, so a child workspace bridges its own accounts only. Adopted balances from a parent moved the parent's accounts, and counting them here would report money the child never held.
+
+**Q: Does it break inflows out by source?**
 A: This skill gives you the bridge: opening, in, out, closing. For the breakdown of what the outflows were spent on, ask the cost structure skill.
 
-**Q: Why doesn't it tie to my accounting?**
+**Q: Why does it not tie to my accounting?**
 A: The bridge is settled bank movement. Your ledger can recognise things in a different period, so the two answer different questions on purpose.
 
 **Q: Can I bridge a quarter?**
 A: Yes. Ask for the period you want and the skill bridges it, as long as your feed covers both ends of it.
-
-**Q: What if the numbers don't add up?**
-A: Then the skill says so and shows the gap as its own bar. The closing balance is read on its own rather than worked out from the flows, so a gap is a real finding about your data, and it is never folded into the money in or the money out to make the bridge look tidy.
 
 ---
 

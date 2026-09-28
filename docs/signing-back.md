@@ -15,7 +15,7 @@ Coming back to a finance workspace after days away means rebuilding a picture in
 
 Ask your assistant what happened since last time and get the whole picture in one turn: what landed and which connector brought it, what failed and needs you, and where the workspace stands today. Every figure is exactly what Well returned, dated in your workspace's own time zone.
 
-The five next steps that close the turn are ranked by Well, not the assistant: the gaps blocking your books come first, then the month ready to close, then the questions worth asking once the data holds. A skill you ran today is left off the list. Click one and it starts. For the same five steps without the recap, see [`whats-next`](whats-next.md).
+The five next steps that close the turn are ranked by Well, not the assistant: the gaps blocking your books come first, then the open month's close, then the questions worth asking once the data holds. A skill you ran today is left off the list. Click one and it starts. For the same five steps without the recap, see [`whats-next`](whats-next.md).
 
 ## Required data in Well
 

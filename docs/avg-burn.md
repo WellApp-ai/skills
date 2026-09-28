@@ -7,20 +7,19 @@
 
 # Burn rate
 
-**Know what you actually spend each month, averaged over real months.**
+**Know what you spend in an average month over a window you can see, with the months that carried no spend counted.**
 
 ## What it does
 
-Ask your AI assistant what your burn rate is, and it reports the trailing average of your real monthly outflows — internal transfers excluded, currencies converted, and every month in the window counted in the divisor.
-
+Ask your AI assistant what your burn rate is, and it reports the trailing average of your real monthly outflows: internal transfers excluded, currencies converted, and every month in the window counted in the divisor.
 It computes the figure rather than reading it off a black box, which means you can see what it rests on. Each check runs in the open: the connection, whether the syncs actually finished, whether your accounts are attached to companies you own, whether the window's transactions are categorized. A check that fails **stops** and shows you what to fix, with the number of rows and the amount at stake, instead of reporting a figure with a caveat you would have to notice.
-
 You also choose what does not count. Internal transfers leave the figure automatically, by a structural rule rather than a label; anything else your business does not treat as spend, you exempt yourself, with each option showing what it removes.
+It refuses more than it reports. It does not guess which sign means money leaving, it does not turn an uncounted exclusion into a zero, it does not add two currencies together in silence, and it does not put a figure on screen when the read behind it came back empty.
 
 ## Required data in Well
 
 - **Banking connector** (required). This is where the real outflows come from.
-- **Accounting connector** (recommended). Adds the ledger view, so spend that never touched the bank in the period still counts.
+- **Your own company, set on the workspace** (required). A movement between two accounts you own is not money leaving the business. Telling one from the other is a test on the accounts behind each side, so the accounts have to be attached to a company you own.
 
 ## FAQ
 
@@ -32,6 +31,15 @@ A: Yes. Ask for a different number of months and the skill recomputes, and it al
 
 **Q: What if a month had no spend?**
 A: The skill reports how much of the window actually carried spend. An average over a mostly empty window is flagged rather than presented as fact.
+
+**Q: How does it know which rows are money going out?**
+A: It measures it, and it refuses to guess. Some feeds record an outflow as a negative amount and some record it as a positive magnitude, so the direction is elected once over the whole window from the counts on each side. A window that carries a large share of both is two feeds pooled together, and the skill reports it as mixed rather than reducing it to one figure.
+
+**Q: What does it do when something could not be counted?**
+A: It says so. An exclusion count that comes back empty means nobody measured it, not that nothing was excluded, and the skill reports it as unmeasured rather than as none. The same holds for the whole reading: a sum that came back with nothing in it is not a burn of zero, so the skill stops and offers to read again.
+
+**Q: What about a workspace spending in several currencies?**
+A: The sum always groups by currency, so a multi-currency window comes back as one row per currency. The skill converts each one into your base currency at a rate it states, and never presents a single total as though no conversion happened.
 
 ---
 

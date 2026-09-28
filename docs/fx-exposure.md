@@ -28,7 +28,16 @@ A: From synced rate data, and the skill always shows the rate and its date so a 
 A: It computes what it can and says which half is missing. With neither connected there is no exposure to measure and it says that instead of returning zero.
 
 **Q: Does it hedge anything?**
-A: No. It measures exposure so you can decide what to do about it.
+A: No. It measures exposure so you can decide what to do about it. Well holds no forward or hedge record, so the skill states exposure and stops there.
+
+**Q: What about an invoice with no totals in your home currency?**
+A: It is named in its own currency rather than restated. An invoice whose home-currency totals were never written, because its amount was unusable or no rate covered its currency on its issue date, is listed as unconverted exposure.
+
+**Q: How is a rate found for a pair like dollars to pounds?**
+A: Only euro-anchored pairs are stored, so a pair that does not touch the euro is converted through the euro in two steps. The answer states which route it took, and a currency with no route at all is counted in its own bucket instead of being folded into the total.
+
+**Q: Can the converted total be incomplete?**
+A: Yes, and it says so. When a counted account had no readable balance, or its currency had no rate, the converted total is a floor rather than the whole picture, and the accounts behind the gap are named beside it.
 
 ---
 

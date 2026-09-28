@@ -11,7 +11,7 @@
 
 ## What it does
 
-Ask your AI assistant where the money is going, and it breaks one closed month's outflow down by category, largest first, with each category's share of the total.
+Ask your AI assistant where the money is going, and it breaks one complete month's outflow down by category, largest first, with each category's share of the total.
 
 The grouping is elected, not assumed. It tries your own chart of accounts first, then Well's category catalog, then the stored labels, then the transaction's own type, and it stops at the first one that actually covers enough of the month to mean something. The answer tells you which one won and how much of the month it covered, so you know whether you are looking at your accountant's categories or a technical fallback.
 
@@ -30,8 +30,8 @@ A: From the first of four columns that covers enough of the month to be worth gr
 **Q: What if nothing is categorized?**
 A: The skill says so, and offers to categorize the month rather than drawing a chart with one unlabelled slice in it.
 
-**Q: Can I change the period?**
-A: Yes. Name a month and the breakdown recomputes over it. It is always one closed month, never a quarter.
+**Q: Which month does it cover?**
+A: The one you choose. Name a month in your question, or pick one when the skill asks. It is always one complete month, never a quarter.
 
 ---
 

@@ -7,16 +7,19 @@
 
 # Runway
 
-**Know exactly how many months and days of cash you have left.**
+**Know how many months of cash you have at your current burn, with both sides of the division shown.**
 
 ## What it does
 
 Ask your AI assistant what your runway is, and it divides your real synced cash balances by your actual trailing burn, computed here from your own accounts and your own transactions rather than estimated. You get months and days, plus both numbers behind the division, so the figure is something you can challenge rather than take on faith.
+The division is all it is. Money you have committed but not yet paid, an unpaid supplier bill or next month's payroll, is not deducted, and the answer says so. When a rate is missing, the cash stays per currency rather than arriving as one total nobody can stand behind. When a balance could not be read, the cash is reported as a floor and the months are not presented as exact.
+Neither side is handed over by a server. Well reads your balances and sums your transactions, and this skill totals, averages and divides them in the open, under policies you confirm: which account types count as cash, and which categories are not spend.
 
 ## Required data in Well
 
-- **Banking connector** (required). This is where your real cash balance comes from.
-- **Accounting connector or bank transaction history** (required). This is how the skill works out your burn rate, how fast you are spending.
+- **Banking connector** (required). Cash and burn are both read from the bank feed.
+- **Own company set** (required). Ownership decides which accounts count as cash and which movements count as spend, so both sides of the division rest on it.
+- **Exchange rates** (recommended). Without a rate, accounts spanning currencies are reported per currency rather than as one figure.
 
 ## FAQ
 
@@ -25,6 +28,18 @@ A: As a trailing average over the last 3 full months by default, so a single unu
 
 **Q: Is this a forecast?**
 A: No. Runway is computed from real balances and real trailing spend. Nothing is modelled or predicted, and the skill shows the arithmetic it used.
+
+**Q: Does it subtract money we have already committed?**
+A: No, and it refuses to. An unpaid supplier bill and next month's payroll are not inputs to the division. The figure is cash over burn and nothing else, so a commitment you know about is yours to hold beside it.
+
+**Q: What happens when an exchange rate is missing?**
+A: It refuses to report one base-currency cash figure. It says the rate is missing and stays per currency, because a blended total nobody can re-derive is worse than two numbers you can.
+
+**Q: What if one of the balances cannot be read?**
+A: The months are not presented as exact. An unreadable balance or a missing rate bounds the cash side, so the answer says the cash is a floor and names how many accounts it left out.
+
+**Q: Does Well compute the runway for me?**
+A: No. Neither side is derived on the server. Well reads the balances and sums the transactions, this skill measures both halves and divides them, and the card draws the division it was handed.
 
 **Q: What if a bank is still syncing?**
 A: The skill says so rather than answering from partial data. A runway number built on half your accounts is worse than no number.

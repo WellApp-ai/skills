@@ -13,7 +13,7 @@
 
 A finance workspace always has a next move, and it is rarely the obvious one. Chasing a missing invoice matters more than reading a burn figure computed from half your spend. Closing a month you can close matters more than forecasting one you cannot.
 
-This skill answers what to do next with five things you can start on the spot. Well ranks them from your workspace as it stands: the gaps holding your books open lead, then the month ready to close, then the reads that only tell the truth once the data is sound. A skill you ran in the last day drops off the list, so it moves with you instead of repeating itself.
+This skill answers what to do next with five things you can start on the spot. Well ranks them from your workspace as it stands: the gaps holding your books open lead, then the open month's close, then the reads that only tell the truth once the data is sound. A skill you ran in the last day drops off the list, so it moves with you instead of repeating itself.
 
 Each line reads like something you would have typed yourself, and clicking it starts that skill in the same turn. Every Well flow ends on these five, and you can ask for them any time. For the same five with a recap of what changed since your last session, see [`signing-back`](signing-back.md).
 

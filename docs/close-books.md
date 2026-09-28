@@ -7,13 +7,13 @@
 
 # Close the books
 
-**Drive the month-end close to the point of approval.**
+**Drive the month-end close from open to sent to your accounting tool.**
 
 ## What it does
 
 Tell your AI assistant to close last month and it drives Well's month-end close for you: it starts the close for the month you name, reads what Well says is still blocking it — uncategorized spend, a payment with no supplier invoice, an unreconciled bank line, an open task — and works through them one at a time, checking the real state after each fix rather than trusting what it did a moment ago. Well computes readiness and every fiscal figure server-side; the skill never guesses whether the books are ready.
 
-It takes the close right up to the finish line — a prepared close package and an approval waiting for you — and then hands the last step back to you. Locking a period is a one-click approval you give inside the Well app, on purpose: Well requires a person to lock the books, so the assistant prepares everything and you press the button. Once you have, it reads the receipt back to confirm the period is closed.
+It takes the close right up to the finish line — a prepared close package and an approval waiting for you — and hands that one step back to you. Locking a period is a one-click approval you give inside the Well app, on purpose: Well requires a person to lock the books, so the assistant prepares everything and you press the button. Once you have, it reads the receipt back to confirm the period is closed, then sends the closed period's journal entries to your connected accounting tool, on a card you confirm, and reports what landed.
 
 It only advances on what's ready. The bank feed is the one connection the close blocks on — if it isn't connected or synced, it says so and points you at what to connect; an accounting connection is optional and just makes the close richer, so it never holds the close up.
 

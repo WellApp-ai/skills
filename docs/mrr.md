@@ -33,6 +33,12 @@ A: It does not, and it does not guess. It shows you each billing context with th
 **Q: What about revenue with no billing context?**
 A: It is listed as one more choice, with its amount. Well cannot tell how those invoices were billed, so they count only if you tick them, for example when you only bill subscriptions. Either way the answer states the amount.
 
+**Q: Does it split MRR into new, expansion and churn?**
+A: No. That split needs a month by month record of each subscription's state, and Well keeps none of that. The figure is built from the invoices you issued, so it reports the level of recurring revenue and how it moved between two windows, never what moved it.
+
+**Q: Does the card work the number out?**
+A: No. The card draws the figure this skill computed and records that the caller computed it. The arithmetic runs in the open here, over the invoice sum and the billing contexts you ticked, which is what lets you check it.
+
 ---
 
 ## Installation
