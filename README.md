@@ -113,6 +113,7 @@ Ask for any of these by name. Several are setup steps another skill invokes on i
 | `runway` | Know how many months of cash you have at your current burn, with both sides of the division shown. | [View details →](docs/runway.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/runway.skill) |
 | `show-missing-invoices` | See which suppliers owe you paperwork, before your accountant asks. | [View details →](docs/show-missing-invoices.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/show-missing-invoices.skill) |
 | `signing-back` | Come back to a workspace and know in one turn what changed, where it stands, and what to do next. | [View details →](docs/signing-back.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/signing-back.skill) |
+| `subscription-spend` | See which suppliers bill you on a schedule, what each one costs a month, and which amounts have changed. | [View details →](docs/subscription-spend.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/subscription-spend.skill) |
 | `supplier-spend-register` | See what you paid each supplier over a year, ranked, with the invoices that could not be placed counted beside the total. | [View details →](docs/supplier-spend-register.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/supplier-spend-register.skill) |
 | `tax-id-chase` | The companies you deal with that carry no tax identifier, listed before year end. | [View details →](docs/tax-id-chase.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/tax-id-chase.skill) |
 | `unposted-and-blocked` | See what in a month has not reached the ledger, and which pile each item sits in. | [View details →](docs/unposted-and-blocked.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/unposted-and-blocked.skill) |
@@ -216,6 +217,7 @@ Install the following official skills from Well. Instructions:
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/runway/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/show-missing-invoices/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/signing-back/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/subscription-spend/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/supplier-spend-register/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/tax-id-chase/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/unposted-and-blocked/SKILL.md
