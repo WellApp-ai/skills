@@ -7,27 +7,37 @@
 
 # Rank clients by LTV
 
-**Find out who your best customers really are, ranked by what they've actually paid.**
+**Find out what each customer is worth over its whole life, ranked from the most valuable down.**
 
 ## What it does
 
-Ask your AI assistant to rank your clients by lifetime value, and it pulls the answer straight from your synced invoices — every paid invoice, summed and grouped by customer, sorted from your biggest customer down — with real currency amounts and an as-of date attached, not a guess. To be upfront: this is a ranking of realized revenue paid to date, not a predictive model of future customer value (there's no churn or retention data behind it) — but it answers "who's paid us the most so far" honestly and reliably.
+Ask your AI assistant to rank your clients by lifetime value, and Well measures it from the invoices you issued over up to the last five years: for each customer, the average invoice net of tax, times how many invoices they receive per month, times how long a customer stays. The result is a bar chart with one bar per customer, from the most valuable down, and the average lifetime value per customer.
+
+The lifespan is measured, not assumed. A customer counts as churned when no invoice has followed for twice its usual interval between invoices, and at least three months. The lifespan is one over the monthly churn across your portfolio, capped at five years. A customer that started recently is measured over its own short span, and the answer says so.
+
+It is a revenue lifetime value, stated as such: no margin or cost is applied, so it tells you what a customer is expected to bill over its life, not the profit it brings.
 
 ## Required data in Well
 
-- **Invoicing / accounting connector** (required). This is where your issued customer invoices and their payment status come from.
+- **Invoicing / accounting connector** (required). This is where your issued customer invoices come from.
 - **Company profile confirmed in Well** (required). The skill needs to know which company is yours so it can tell your issued (customer-facing) invoices apart from bills you have received.
 
 ## FAQ
 
-**Q: Is this really lifetime value?**
-A: It is realized revenue to date, which is the honest version of the question. A true LTV model needs churn and retention data that invoices alone cannot provide.
+**Q: How is lifetime value calculated?**
+A: Average order value times monthly purchase frequency times the expected lifespan in months. The average order value is a customer's invoiced revenue net of tax divided by its number of invoices, and the frequency is its invoices per month since its first invoice.
+
+**Q: How does it decide a customer has churned?**
+A: A customer counts as churned when no invoice has followed for twice its usual interval between invoices, and at least three months. The lifespan is one over the monthly churn across your customers, capped at five years.
+
+**Q: Does it include margin or costs?**
+A: No. It is a revenue lifetime value: what a customer is expected to bill over its life. Taking margin into account would need your cost per customer, which invoices alone do not carry.
 
 **Q: Does it count unpaid invoices?**
-A: No. Only invoices actually paid count toward the ranking, so the order reflects cash received rather than cash promised.
+A: Yes. It counts every invoice you issued and did not cancel, net of tax, with credit notes taken off. Payment status plays no part, so a customer is not counted as lost because one payment is late.
 
 **Q: Can it rank by something else?**
-A: Yes. Ask for a specific window, a currency, or a segment and the ranking recomputes.
+A: Yes. Ask for a shorter window or a currency and the ranking is measured again over it.
 
 ---
 

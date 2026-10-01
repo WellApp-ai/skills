@@ -81,6 +81,7 @@
     "./skills/supplier-spend-register",
     "./skills/tax-id-chase",
     "./skills/unposted-and-blocked",
+    "./skills/vat-radar",
     "./skills/whats-next",
     "./skills/workspace-data-migration"
   ],
