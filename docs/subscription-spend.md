@@ -7,51 +7,49 @@
 
 # Subscription spend
 
-**See which suppliers bill you on a schedule, what each one costs a month, and which amounts have changed.**
+**See which suppliers you pay on a schedule, what each costs a month, and how that spend moved.**
 
 ## What it does
 
-Ask your AI assistant what you pay for on a schedule, and it reads the purchase side of your synced invoices for the window you name, groups them by supplier, and keeps the suppliers whose invoices repeat. A supplier counts as monthly when it invoiced in at least three months, never more than once a month, with no gap longer than one skipped month and most gaps of one month. It counts as bimonthly when every gap is two months, quarterly when every gap is three, and yearly when every gap is twelve, which only a 24 month window can show. The rule is stated in the answer, so a supplier you expected and do not see can be checked against it.
+Ask your AI assistant what you pay for on a schedule, and Well reads the payments that left your bank accounts over the last 24 complete months, groups them by supplier, and keeps the suppliers whose payments repeat. A supplier counts as monthly when it was paid in at least three months, never more than once a month, with no gap longer than one skipped month and most gaps of one month. It counts as bimonthly when every gap is two months, quarterly when every gap is three, and yearly when every gap is twelve. The rule is stated in the answer, so a supplier you expected and do not see can be checked against it.
 
-Each supplier carries its cadence, its cost per month and per year net of tax, and how its amount behaved: the same every time, changed and then held, or varying from one invoice to the next. A changed amount is named with both figures and the month it moved. A varying amount is reported as usage shaped and never as a price change, because a bill that moves every month has no price to increase.
+Each supplier carries its cadence, its cost per month and per year, and how its amount behaved: the same every time, changed and then held, or varying from one payment to the next. A changed amount is named with both figures and the month it moved. A varying amount is reported as usage shaped and never as a price change, because a bill that moves every month has no price to increase.
 
-The total is set beside everything you bought in the same window, so the share is a share of real purchase spend rather than of a figure the skill made up. Invoices Well could not place on either side are counted beside it, because an incomplete own company pushes purchases into that bucket.
+Two cards follow. The first draws the last 12 complete months of subscription spend, one line per category, so a step up shows where it came from. The second lists each supplier with its logo, its category and one column per month, with the running month apart and marked in progress.
 
-It reads invoices, so a subscription you pay by card with no invoice in Well is invisible to the main read. The skill looks at the last three complete months of categorized bank spend for suppliers that appear every month with no invoice attached, and lists them as candidates. A charge not categorized yet is not in that read, and the list can be partial, so it is never a complete list. Candidates stay out of the total.
-A supplier that keeps a steady run but bills more than once in a month is flagged as a possible duplicate subscription, and a supplier whose invoices stopped is flagged as possibly ended. Beside the total, the answer gives what those flagged suppliers bill a month, as arithmetic and never as a saving. It does not see contract terms, renewal dates or cancellation deadlines, and it does not say whether a subscription is still in use.
+Transfers between your own accounts, taxes, salaries, social charges, loan repayments and treasury moves are never counted as subscriptions. A subscription paid by card is not in the read, because a card charge moves the card, not a bank account, and the answer says how many rows it left out because they moved no bank account, card charges among them. A supplier paid more than once in a month is flagged as a possible duplicate, and a supplier whose payments stopped is flagged as possibly ended. Beside the total, the answer gives what those flagged suppliers cost a month, as arithmetic and never as a saving. It does not see contract terms, renewal dates or cancellation deadlines, and it does not say whether a subscription is still in use.
 
 ## Required data in Well
 
-- **Invoicing or accounting connector** (required). This is where the supplier invoices you received come from. Either one is enough.
-- **Company profile confirmed in Well** (required). The purchase side of an invoice is resolved from the company you confirm as your own. Without it, invoices land in the unplaced bucket instead of the read.
-- **Banking connector** (recommended). Lets the skill list categorized bank spend that repeats every month with no invoice attached.
-- **Exchange rates** (recommended). A window that spans several currencies is reported per currency unless rates cover it, in which case each figure carries the rate and the rate date used.
+- **Banking connector** (required). The subscriptions are read from the payments that leave your bank accounts.
+- **Company profile confirmed in Well** (recommended). Lets the read leave out payments to your own accounts at a bank that is not connected, which would otherwise read as a supplier.
+- **Exchange rates** (recommended). Spend in several currencies is reported per currency, with one trend and one table each. A headline across currencies carries the rate and the rate date used.
 
 ## FAQ
 
 **Q: Which suppliers count as a subscription?**
-A: A supplier that invoiced in at least three months, never more than once a month, with no gap longer than one skipped month and most gaps of one month, counts as monthly. Every gap of two months counts as bimonthly, every gap of three as quarterly, and every gap of twelve as yearly, which needs a 24 month window. The answer states the rule it used.
+A: A supplier paid from a bank account in at least three months, never more than once a month, with no gap longer than one skipped month and most gaps of one month, counts as monthly. Every gap of two months counts as bimonthly, every gap of three as quarterly, and every gap of twelve as yearly. The answer states the rule it used.
 
 **Q: Can it tell me a price went up?**
-A: Yes, for a supplier whose invoices held one amount and then moved to another and held there. It names both amounts, net of tax, and the month it changed. A supplier whose amount varies every month is reported as usage shaped, not as a price change.
+A: Yes, for a supplier whose payments held one amount and then moved to another and held there. It names both amounts and the month it changed. A supplier whose amount varies every month is reported as usage shaped, not as a price change.
 
-**Q: What about a subscription I pay by card with no invoice?**
-A: It cannot appear in the main list, because the list is read from invoices. If a bank is connected, the skill looks at the last three complete months and lists categorized bank spend that shows up every month with no invoice attached, as candidates to check. A charge that is not categorized yet is not in that read, and the list can be partial. Candidates are never added to the total.
+**Q: What about a subscription I pay by card?**
+A: It is not in the read. A card charge moves the card account, not a bank account, so the read cannot see which supplier the card paid. The answer says how many rows it left out because they moved no bank account, card charges among them. A payment to your own card is never counted as a subscription.
+
+**Q: What does it leave out?**
+A: Transfers between your own accounts, payments to your own company, taxes, salaries, social charges, loan repayments and treasury moves. Each one repeats every month and none of them is a subscription. The answer says how many transfers, rows that moved no bank account and payments to your own card or loan accounts it left out, and names the categories it never counts.
 
 **Q: Does it show renewal dates or cancellation deadlines?**
-A: No. Well holds the invoices and the payments, not the contract behind them, so a renewal date or a notice period is not something it can read.
+A: No. Well holds the payments, not the contract behind them, so a renewal date or a notice period is not something it can read.
 
 **Q: Can it find duplicates or tell me what to cut?**
-A: In part. A supplier that keeps a steady run but bills more than once in a month is flagged as a possible duplicate, and a supplier whose invoices stopped is flagged as possibly ended. The answer gives what the flagged suppliers bill a month. It does not compare two different suppliers for overlap and it never calls that figure a saving, because Well cannot see whether a subscription is in use.
-
-**Q: Are the amounts before or after tax?**
-A: Before tax. Every figure is the net amount on the invoice, so a change in a tax rate is never read as a change in what the supplier charges.
+A: In part. A supplier paid more than once in a month on a steady run is flagged as a possible duplicate, and a supplier whose payments stopped is flagged as possibly ended. The answer gives what the flagged suppliers cost a month. It never calls that figure a saving, because Well cannot see whether a subscription is in use.
 
 **Q: What if we pay in several currencies?**
-A: You get one figure per currency, or a converted total with the rate and the rate date attached. Never a blended number with no rate behind it.
+A: You get one trend and one table per currency, and the totals per currency. A headline across currencies carries the rate and the rate date. Never a blended number with no rate behind it.
 
-**Q: Can I run it over a longer window?**
-A: Yes. A yearly subscription shows only in a window of two years, so ask for that when you want yearly charges. A longer window reads more invoices, and the skill says so before it starts.
+**Q: Which months does it cover?**
+A: The read covers the last 24 complete calendar months, so a yearly subscription shows. The cards draw the last 12 complete months, and the table draws the running month apart, marked in progress.
 
 ---
 
