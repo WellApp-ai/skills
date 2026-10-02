@@ -22,7 +22,7 @@ An invoice is a document somebody outside the company reads, and how it is set i
 ## FAQ
 
 **Q: Can I set one design for every invoice?**
-A: Not yet. The design is a column on the invoice, and Well holds no workspace-level default, so the skill designs the invoice in hand and says so rather than writing the same value in a loop.
+A: A workspace owner or admin can. The skill saves the design once as the house design, and new invoices print in it unless their customer has a saved design. A member cannot set the house design, so the skill saves the member's choice for the invoice's customer instead. It never writes the same value on every invoice in a loop.
 
 **Q: Can it write my terms as free text?**
 A: No. Terms, tax rate and payment means are records the workspace keeps. The card offers the ones that exist; it never types a new one into a field that takes a record.
