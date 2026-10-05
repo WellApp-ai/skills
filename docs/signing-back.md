@@ -20,7 +20,7 @@ The five next steps that close the turn are ranked by Well, not the assistant: t
 ## Required data in Well
 
 - **A Well workspace** (required). The digest is one workspace's log, so the workspace is pinned first when the grant spans several.
-- **A previous session** (optional). A first session gets the tour line and no recap; the recap needs an earlier read cursor or sign-in.
+- **A previous session** (optional). A first session gets no recap; the recap needs an earlier read cursor or sign-in.
 
 ## FAQ
 
