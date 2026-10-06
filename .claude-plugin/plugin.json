@@ -16,6 +16,7 @@
     "well"
   ],
   "skills": [
+    "./skills/accounting-reports",
     "./skills/accounting-settings",
     "./skills/accounts-payable-aging",
     "./skills/accounts-receivable-aging",

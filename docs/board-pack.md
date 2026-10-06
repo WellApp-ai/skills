@@ -32,7 +32,7 @@ It changes nothing. It closes no period, posts no entry and produces no file. Wh
 A: No. It produces the figures and what each one rests on, in the conversation and on the cards. Nothing here assembles an archive, a PDF or a downloadable bundle, and the skill does not pretend otherwise.
 
 **Q: Does it include a profit and loss statement?**
-A: No. A profit and loss statement is an aggregate over ledger entry lines, and no such aggregate exists to read. Reaching a total by paging through rows is refused, because a total assembled from a sample is a wrong number rather than an approximate one.
+A: No. A profit and loss statement is an aggregate over ledger entry lines, and no such aggregate exists to read. Reaching a total by paging through rows is refused, because a total assembled from a sample is a wrong number rather than an approximate one. When your QuickBooks or Xero is connected, the accounting reports skill reads the profit and loss straight from that tool.
 
 **Q: Can it compare the numbers against our budget?**
 A: No. Well holds no budget, so there is nothing to compare against. What it does compare is each rate figure against the window immediately before it, measured under the same policy, so the change is a real one.

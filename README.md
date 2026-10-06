@@ -52,6 +52,7 @@ Ask for any of these by name. Several are setup steps another skill invokes on i
 
 | Skill | What you get | Details | Claude Desktop |
 |---|---|---|---|
+| `accounting-reports` | Read your profit and loss or balance sheet straight from QuickBooks or Xero. | [View details →](docs/accounting-reports.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/accounting-reports.skill) |
 | `accounting-settings` | Set the accounting basics every period-scoped answer depends on. | [View details →](docs/accounting-settings.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/accounting-settings.skill) |
 | `accounts-payable-aging` | See what you owe your suppliers, and how long each bill has been past due. | [View details →](docs/accounts-payable-aging.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/accounts-payable-aging.skill) |
 | `accounts-receivable-aging` | See who owes you money, and how long they have been sitting on it. | [View details →](docs/accounts-receivable-aging.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/accounts-receivable-aging.skill) |
@@ -161,6 +162,7 @@ Paste this into any AI agent (Claude, Codex, Cursor, OpenCode, and others) to in
 Install the following official skills from Well. Instructions:
 
 1. Fetch these files:
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounting-reports/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounting-settings/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounts-payable-aging/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounts-receivable-aging/SKILL.md
