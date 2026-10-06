@@ -7,11 +7,11 @@
 
 # FX exposure
 
-**See how much of your cash and receivables sit outside your home currency.**
+**See how much of your cash and receivables sit outside your reporting currency.**
 
 ## What it does
 
-If you hold invoices or bank balances in more than one currency, "how exposed are we to FX risk?" is easy to ask and hard to answer without a spreadsheet. This skill pulls your unpaid invoices and current cash balances, groups everything that isn't your home currency, and converts it using a real exchange rate — so you see the original amount, what it's worth in your own currency, and the rate and date behind the conversion.
+If you hold invoices or bank balances in more than one currency, "how exposed are we to FX risk?" is easy to ask and hard to answer without a spreadsheet. This skill pulls your unpaid invoices and current cash balances, groups everything that isn't your reporting currency, and converts it using a real exchange rate — so you see the original amount, what it's worth in your own currency, and the rate and date behind the conversion.
 
 ## Required data in Well
 
@@ -30,8 +30,8 @@ A: It computes what it can and says which half is missing. With neither connecte
 **Q: Does it hedge anything?**
 A: No. It measures exposure so you can decide what to do about it. Well holds no forward or hedge record, so the skill states exposure and stops there.
 
-**Q: What about an invoice with no totals in your home currency?**
-A: It is named in its own currency rather than restated. An invoice whose home-currency totals were never written, because its amount was unusable or no rate covered its currency on its issue date, is listed as unconverted exposure.
+**Q: What about an invoice with no totals in the accounting settings' currency?**
+A: It is named in its own currency rather than restated. An invoice whose totals in the accounting settings' currency were never written, because its amount was unusable or no rate covered its currency on its issue date, is listed as unconverted exposure.
 
 **Q: How is a rate found for a pair like dollars to pounds?**
 A: Only euro-anchored pairs are stored, so a pair that does not touch the euro is converted through the euro in two steps. The answer states which route it took, and a currency with no route at all is counted in its own bucket instead of being folded into the total.

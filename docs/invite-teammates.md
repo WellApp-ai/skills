@@ -28,6 +28,9 @@ A: They are left off the send. An invitation that is only pending is re-issued i
 **Q: Which roles can I give?**
 A: Admin or member, and the invitation can target this workspace or a workspace group you belong to.
 
+**Q: What if I say "later" or "no" to a suggestion?**
+A: Well remembers it in Well, in Claude, in ChatGPT and on WhatsApp alike. After "later" or a first "no" the person is not suggested again for 30 days; after a second "no" they are never suggested again. Well suggests a teammate on its own at most once a week.
+
 ---
 
 ## Installation

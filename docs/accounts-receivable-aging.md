@@ -33,7 +33,7 @@ A: To tell receivables from payables. Your own company is what Well resolves the
 A: Current (not yet due), 1-30, 31-60, 61-90, and 90+ days past due, measured from the due date against a stated as-of date.
 
 **Q: What happens to an invoice with no due date?**
-A: It gets its own line, listed with its amount and customer, and is left out of the bands. A due date is optional on an invoice record, and no other date substitutes for one: aging a row from its issue date instead would read as a real overdue figure while resting on a guess.
+A: It gets its own line, listed with its amount and customer. It is in the outstanding total and in no band. A due date is optional on an invoice record, and no other date substitutes for one: aging a row from its issue date instead would read as a real overdue figure while resting on a guess.
 
 **Q: What about an invoice whose payment status could not be worked out?**
 A: It is named, not summed. Well recomputes payment status from the payments allocated against an invoice, and that recompute halts on a few conditions, such as an invoice total that is missing or not positive, an allocation in a currency with no exchange rate available, or a locked period. A halted row keeps no fresh payment status or balance, so the skill lists those invoices separately instead of treating them as settled or as overdue.

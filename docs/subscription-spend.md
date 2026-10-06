@@ -17,7 +17,7 @@ Each supplier carries its cadence, its cost per month and per year, and how its 
 
 Two cards follow. The first draws the last 12 complete months of subscription spend, one line per category, so a step up shows where it came from. The second lists each supplier with its logo, its category and one column per month, with the running month apart and marked in progress.
 
-Transfers between your own accounts, taxes, salaries, social charges, loan repayments and treasury moves are never counted as subscriptions. A subscription paid by card is not in the read, because a card charge moves the card, not a bank account, and the answer says how many rows it left out because they moved no bank account, card charges among them. A supplier paid more than once in a month is flagged as a possible duplicate, and a supplier whose payments stopped is flagged as possibly ended. Beside the total, the answer gives what those flagged suppliers cost a month, as arithmetic and never as a saving. It does not see contract terms, renewal dates or cancellation deadlines, and it does not say whether a subscription is still in use.
+Transfers between your own accounts, taxes, salaries, social charges, loan repayments and treasury moves are never counted as subscriptions. A subscription paid by debit card is in the read when the charge left a bank account. One paid by credit card is not, because a credit card charge moves the card account, not a bank account, and the answer says how many rows it left out because they moved no bank account, credit card charges among them. A supplier paid more than once in a month is flagged as a possible duplicate, and a supplier whose payments stopped is flagged as possibly ended. Beside the total, the answer gives what those flagged suppliers cost a month, as arithmetic and never as a saving. Asked when a subscription can be cancelled, it gives the date to give notice by when Well holds the supplier's contract, and asks for the contract when it does not. It never estimates that date, and it does not say whether a subscription is still in use.
 
 ## Required data in Well
 
@@ -34,13 +34,13 @@ A: A supplier paid from a bank account in at least three months, never more than
 A: Yes, for a supplier whose payments held one amount and then moved to another and held there. It names both amounts and the month it changed. A supplier whose amount varies every month is reported as usage shaped, not as a price change.
 
 **Q: What about a subscription I pay by card?**
-A: It is not in the read. A card charge moves the card account, not a bank account, so the read cannot see which supplier the card paid. The answer says how many rows it left out because they moved no bank account, card charges among them. A payment to your own card is never counted as a subscription.
+A: A debit card charge that left a bank account is in the read like any other bank outflow. A credit card charge is not: it moves the card account, not a bank account, so the read cannot see which supplier the card paid. The answer says how many rows it left out because they moved no bank account, credit card charges among them. A payment to your own card is never counted as a subscription.
 
 **Q: What does it leave out?**
 A: Transfers between your own accounts, payments to your own company, taxes, salaries, social charges, loan repayments and treasury moves. Each one repeats every month and none of them is a subscription. The answer says how many transfers, rows that moved no bank account and payments to your own card or loan accounts it left out, and names the categories it never counts.
 
 **Q: Does it show renewal dates or cancellation deadlines?**
-A: No. Well holds the payments, not the contract behind them, so a renewal date or a notice period is not something it can read.
+A: Yes, when Well holds the supplier's contract. It reads the end date and the notice period Well extracted from the contract, gives the last day to give notice (the end date minus the notice period), and names the contract. A contract that renews automatically and whose end date is past has no next date on file, so the answer says so and asks for the latest contract. A contract that states it does not renew gives the date it ends. A contract whose reading does not say whether it renews gets no deadline: the answer gives the end date and the notice period, says it does not know whether the contract renews, and asks for the contract. With no contract on file, the answer says the date is unknown and asks for the contract. It never estimates the date from the payments.
 
 **Q: Can it find duplicates or tell me what to cut?**
 A: In part. A supplier paid more than once in a month on a steady run is flagged as a possible duplicate, and a supplier whose payments stopped is flagged as possibly ended. The answer gives what the flagged suppliers cost a month. It never calls that figure a saving, because Well cannot see whether a subscription is in use.
