@@ -1,6 +1,6 @@
 ---
 name: "saas-billing"
-description: "Read subscriptions, cancellations, failed payments, refunds and disputes live from the billing tool a workspace connected (Stripe, Paddle or Lago), and write the rows as text with the status each provider gave. Use when the user asks \"who cancelled this month\", \"which payments failed\", \"list refunds and disputes\", \"is customer X subscribed\", \"which subscriptions are past due\" or \"show the chargebacks from last month\". Requires a connected Well workspace with Stripe, Paddle or Lago connected; if none is, this skill offers to connect one. It asks for a time window before a large read, reads only, saves nothing, and leaves recurring revenue figures to the mrr skill."
+description: "Read subscriptions, cancellations, failed payments and refunds live from the billing tool a workspace connected (Stripe, Paddle or Lago), and write the rows as text with the status each provider gave. Disputes come from Paddle and Lago only. Use when the user asks \"who cancelled this month\", \"which payments failed\", \"list refunds and disputes\", \"is customer X subscribed\", \"which subscriptions are past due\" or \"show the chargebacks from last month\". Requires a connected Well workspace with Stripe, Paddle or Lago connected; if none is, this skill offers to connect one. It asks for a time window before a large read, reads only, saves nothing, and leaves recurring revenue figures to the mrr skill."
 license: PolyForm-Perimeter-1.0.0
 ---
 

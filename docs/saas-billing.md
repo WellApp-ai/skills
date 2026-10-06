@@ -30,7 +30,7 @@ A: Stripe, Paddle and Lago. It reads the one you connected. With two of them con
 A: No. It calls read tools only. It cancels no subscription, issues no refund, retries no payment and answers no dispute. It saves nothing in Well either.
 
 **Q: How does it decide that a payment failed?**
-A: From the status field the billing tool returns, such as a Paddle transaction on automatic collection that is past due, or a Lago invoice whose payment status is failed. It never reads a failure out of a description or a decline message, and it states the status as the provider wrote it.
+A: From the status field the billing tool returns, such as a Stripe charge whose status is failed, a Paddle transaction on automatic collection that is past due, or a Lago invoice whose payment status is failed. It never reads a failure out of a description or a decline message, and it states the status as the provider wrote it.
 
 **Q: Why does it ask for a period?**
 A: A list of every refund or every failed payment since the account opened can run to thousands of rows. The skill asks for a window first, such as this month or the last 90 days, and reads only that.

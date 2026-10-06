@@ -1,6 +1,6 @@
 ---
 name: "missing-receipts"
-description: "Find invoices (and optionally transactions) with no source document attached — a compliance/expense-hygiene check backed by Well's MCP financial graph. Use when the user asks \"which expenses are missing receipts\", \"find missing receipts\", \"compliance check on receipts\", \"which invoices have no document attached\", \"do we have documentation for all our expenses\", or \"missing documentation\". This is a find-only check — it surfaces the gap but cannot fetch a missing receipt from a vendor portal or inbox. Requires a connected Well workspace with invoicing data; if none is connected, this skill walks the user through connecting one first."
+description: "Find invoices (and optionally transactions) with no source document attached — a compliance/expense-hygiene check backed by Well's MCP financial graph. Use when the user asks \"which expenses are missing receipts\", \"find missing receipts\", \"compliance check on receipts\", \"which invoices have no document attached\", \"do we have documentation for all our expenses\", or \"missing documentation\". It cannot fetch a missing receipt from a vendor portal or inbox; for a transaction the user picks it can offer a draft email that asks the vendor for the receipt, which the user reviews and sends from their own mailbox. Requires a connected Well workspace with invoicing data; if none is connected, this skill walks the user through connecting one first."
 license: PolyForm-Perimeter-1.0.0
 ---
 

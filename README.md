@@ -81,6 +81,7 @@ Ask for any of these by name. Several are setup steps another skill invokes on i
 | `context-graph` | Connect your AI apps and your tools, then see your business as one context graph. | [View details →](docs/context-graph.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/context-graph.skill) |
 | `contractor-year-end-statements` | Read the purchase invoices for one calendar year, list the contractors and suppliers you paid with the total for each, name the ones with no tax identifier on file, and say which year-end statement each jurisdiction expects and when. | [View details →](docs/contractor-year-end-statements.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/contractor-year-end-statements.skill) |
 | `cost-structure` | See where your company's money actually goes, no spreadsheets required. | [View details →](docs/cost-structure.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/cost-structure.skill) |
+| `crm-task-reminder` | Get one morning message with the Attio tasks that are due today or overdue. | [View details →](docs/crm-task-reminder.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/crm-task-reminder.skill) |
 | `customer-invoicing-identity` | What Well holds about a customer's legal identity, and what is still blank. | [View details →](docs/customer-invoicing-identity.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/customer-invoicing-identity.skill) |
 | `declare-new-hire` | Lay out what a new hire needs before day one in the country you hire in, name the forms to collect and the notices to hand over, and, on your explicit yes, record the person in Well and file the signed contract as a document. | [View details →](docs/declare-new-hire.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/declare-new-hire.skill) |
 | `define-period` | Fix the month every following answer is measured over. | [View details →](docs/define-period.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/define-period.skill) |
@@ -95,6 +96,7 @@ Ask for any of these by name. Several are setup steps another skill invokes on i
 | `founder-own-pay` | Read the founder's own payslips, state gross pay, tax withheld, contributions and net pay per period beside the legal form and country on the own company record, and name the self-pay paperwork that goes with them. | [View details →](docs/founder-own-pay.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/founder-own-pay.skill) |
 | `fx-exposure` | See how much of your cash and receivables sit outside your reporting currency. | [View details →](docs/fx-exposure.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/fx-exposure.skill) |
 | `import-statement` | Drop a statement you already have, and get its transactions as records. | [View details →](docs/import-statement.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/import-statement.skill) |
+| `insurance-switch` | Lay your insurance offers next to your current contract, and get the letter that ends it. | [View details →](docs/insurance-switch.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/insurance-switch.skill) |
 | `invite-teammates` | Get your teammates into the workspace, without leaving the conversation. | [View details →](docs/invite-teammates.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/invite-teammates.skill) |
 | `invoice-design` | Pick how an invoice prints, from the designs and records you already have. | [View details →](docs/invoice-design.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/invoice-design.skill) |
 | `memory` | Tell Well once, and it remembers what matters about you and your business. | [View details →](docs/memory.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/memory.skill) |
@@ -113,6 +115,7 @@ Ask for any of these by name. Several are setup steps another skill invokes on i
 | `reconcile-payroll-month` | Read one month's payslips and the bank transactions that paid them, name every payslip with no matching debit and every payroll debit with no payslip, and, on your explicit yes, categorise and post those debits as net salaries, employer social charges or wage withholding. | [View details →](docs/reconcile-payroll-month.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/reconcile-payroll-month.skill) |
 | `repost-journals` | Re-run the posting pipeline for the rows that were ready but never posted. | [View details →](docs/repost-journals.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/repost-journals.skill) |
 | `resolve-board` | A board you saved, drawn with today's figures rather than the day it was built. | [View details →](docs/resolve-board.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/resolve-board.skill) |
+| `reuse-invoice-design` | Drop one of your invoices and keep its look for every next invoice. | [View details →](docs/reuse-invoice-design.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/reuse-invoice-design.skill) |
 | `revenue-by-customer` | See which customers your revenue came from in a period, ranked, with the part you could not place named. | [View details →](docs/revenue-by-customer.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/revenue-by-customer.skill) |
 | `runway` | Know how many months of cash you have at your current burn, with both sides of the division shown. | [View details →](docs/runway.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/runway.skill) |
 | `saas-billing` | See who cancelled, which payments failed and what was refunded, read live from Stripe, Paddle or Lago. | [View details →](docs/saas-billing.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/saas-billing.skill) |
@@ -121,6 +124,7 @@ Ask for any of these by name. Several are setup steps another skill invokes on i
 | `subscription-spend` | See which suppliers you pay on a schedule, what each costs a month, and how that spend moved. | [View details →](docs/subscription-spend.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/subscription-spend.skill) |
 | `supplier-spend-register` | See what you paid each supplier over a year, ranked, with the invoices that could not be placed counted beside the total. | [View details →](docs/supplier-spend-register.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/supplier-spend-register.skill) |
 | `tax-id-chase` | The companies you deal with that carry no tax identifier, listed before year end. | [View details →](docs/tax-id-chase.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/tax-id-chase.skill) |
+| `trust-curve` | Choose, kind by kind, what Well may do alone and what it must always ask you first. | [View details →](docs/trust-curve.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/trust-curve.skill) |
 | `unposted-and-blocked` | See what in a month has not reached the ledger, and which pile each item sits in. | [View details →](docs/unposted-and-blocked.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/unposted-and-blocked.skill) |
 | `vat-radar` | See the net VAT your posted ledger shows for a quarter and which invoices to fix first. | [View details →](docs/vat-radar.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/vat-radar.skill) |
 | `whats-next` | Five things worth doing next in this workspace, each one a click that starts it. | [View details →](docs/whats-next.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/whats-next.skill) |
@@ -191,6 +195,7 @@ Install the following official skills from Well. Instructions:
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/context-graph/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/contractor-year-end-statements/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cost-structure/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/crm-task-reminder/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/customer-invoicing-identity/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/declare-new-hire/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/define-period/SKILL.md
@@ -205,6 +210,7 @@ Install the following official skills from Well. Instructions:
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/founder-own-pay/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/fx-exposure/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/import-statement/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/insurance-switch/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/invite-teammates/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/invoice-design/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/memory/SKILL.md
@@ -223,6 +229,7 @@ Install the following official skills from Well. Instructions:
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/reconcile-payroll-month/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/repost-journals/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/resolve-board/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/reuse-invoice-design/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/revenue-by-customer/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/runway/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/saas-billing/SKILL.md
@@ -231,6 +238,7 @@ Install the following official skills from Well. Instructions:
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/subscription-spend/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/supplier-spend-register/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/tax-id-chase/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/trust-curve/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/unposted-and-blocked/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/vat-radar/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/whats-next/SKILL.md

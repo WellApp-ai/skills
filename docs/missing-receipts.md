@@ -21,7 +21,7 @@ Ask your AI assistant which expenses are missing receipts, and it checks your sy
 ## FAQ
 
 **Q: Can it fetch the receipt for me?**
-A: No. It cannot reach into a vendor portal or your inbox. It tells you precisely which documents are missing so the chase is short.
+A: No. It cannot reach into a vendor portal or your inbox. For a transaction you pick it can draft the email that asks the vendor for it — you review the card and send it from your own mailbox.
 
 **Q: Does it check transactions too?**
 A: Invoices are the primary check. With a bank or accounting tool connected it adds a secondary sweep for transactions with no linked document.
