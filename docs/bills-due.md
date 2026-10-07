@@ -45,7 +45,7 @@ A: To tell bills from invoices you issued. Your own company is what Well resolve
 A: Only with the rate and rate date shown. Currencies are never blended into a single figure. A currency with no rate available is reported on its own and named as excluded from the converted total.
 
 **Q: Can it pay the bills?**
-A: No. The skill builds the calendar. Approving and paying stays with you.
+A: No. The skill builds the calendar, and on request it prepares the transfer details for one bill: supplier, amount, reference and due date, with the IBAN left for you to check. Approving and paying stays with you.
 
 ---
 

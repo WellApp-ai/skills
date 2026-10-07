@@ -30,7 +30,7 @@ A: Durable facts and preferences: how you like your reports, your role, your fis
 A: A fact about you is yours alone. A fact about the business is shared with everyone in the workspace, and an owner or admin can remove it.
 
 **Q: Can I tell Well to stop asking before it sends?**
-A: Not through memory. Whether Well asks before it sends, pays or changes anything is a trust choice you make in Well. A memory line never changes it.
+A: Not through memory. Whether Well asks before it sends or changes something is an action level, set one kind of action at a time: ask Well, or open Settings > Profile > Actions Well can take alone. Payments always ask. A memory line never changes it.
 
 ---
 

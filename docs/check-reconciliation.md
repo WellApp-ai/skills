@@ -22,6 +22,7 @@ A read that fails is never reported as a clean month. A count from a read that w
 - **Bank connector** (required). The check compares the bank movements with the books. Without a bank behind the month there is nothing to compare.
 - **A company workspace** (required). The ledger, the matching and the posting belong to one company's workspace.
 - **Accounting connector** (optional). Only for the last line of the report: the entries of a closed month that are not on the accounting tool yet.
+- **Invoicing connector** (optional). The matching looks for the bank payment behind each paid invoice. With no invoice in Well there is nothing for it to match, so a month reads clean without having been checked against any invoice.
 
 ## FAQ
 

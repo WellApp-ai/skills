@@ -60,6 +60,7 @@ Ask for any of these by name. Several are setup steps another skill invokes on i
 | `avg-burn` | Know what you spend in an average month over a window you can see, with the months that carried no spend counted. | [View details →](docs/avg-burn.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/avg-burn.skill) |
 | `bills-due` | See what you owe and when, ordered by due date with a running total. | [View details →](docs/bills-due.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/bills-due.skill) |
 | `board-pack` | The board numbers in one pass, each with its scope and its window stated. | [View details →](docs/board-pack.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/board-pack.skill) |
+| `call-and-claim` | Claim a refund or a compensation with the evidence in hand, and know what to say when you call. | [View details →](docs/call-and-claim.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/call-and-claim.skill) |
 | `cash-flow-waterfall` | See how the month moved from opening cash to closing cash, with whatever does not reconcile named as its own step. | [View details →](docs/cash-flow-waterfall.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/cash-flow-waterfall.skill) |
 | `cash-forecast` | See the settled month-end cash series and where the line goes from the last complete month. | [View details →](docs/cash-forecast.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/cash-forecast.skill) |
 | `cash-position` | Know how much cash you hold right now, with the accounts counted and the ones left out both stated. | [View details →](docs/cash-position.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/cash-position.skill) |
@@ -99,8 +100,11 @@ Ask for any of these by name. Several are setup steps another skill invokes on i
 | `insurance-switch` | Lay your insurance offers next to your current contract, and get the letter that ends it. | [View details →](docs/insurance-switch.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/insurance-switch.skill) |
 | `invite-teammates` | Get your teammates into the workspace, without leaving the conversation. | [View details →](docs/invite-teammates.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/invite-teammates.skill) |
 | `invoice-design` | Pick how an invoice prints, from the designs and records you already have. | [View details →](docs/invoice-design.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/invoice-design.skill) |
+| `mail-senders` | List newsletter senders from records and save one private sender choice. | [View details →](docs/mail-senders.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/mail-senders.skill) |
+| `mailbox` | Summarize the member's observed mail week and respect private skipped senders. | [View details →](docs/mailbox.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/mailbox.skill) |
 | `memory` | Tell Well once, and it remembers what matters about you and your business. | [View details →](docs/memory.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/memory.skill) |
 | `missing-receipts` | Find the bills with no paperwork attached, before an auditor does. | [View details →](docs/missing-receipts.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/missing-receipts.skill) |
+| `money-back` | Find the supplier refunds and VAT credits your company is still owed, with the evidence for each. | [View details →](docs/money-back.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/money-back.skill) |
 | `mrr` | Know what you can count on earning each month, averaged over real months. | [View details →](docs/mrr.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/mrr.skill) |
 | `normalize-currency` | Turn mixed currencies into one number you can actually audit. | [View details →](docs/normalize-currency.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/normalize-currency.skill) |
 | `payment-invoice-lookup` | Find what payment settled an invoice, or catch every payment that never got one. | [View details →](docs/payment-invoice-lookup.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/payment-invoice-lookup.skill) |
@@ -111,6 +115,7 @@ Ask for any of these by name. Several are setup steps another skill invokes on i
 | `prefill-form-1120` | Get page 1 of your 1120 back as a PDF with your own book figures already in the boxes, and a list of every box left for your preparer. | [View details →](docs/prefill-form-1120.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/prefill-form-1120.skill) |
 | `prepare-exit-pack` | Read the final payslip for a leaver, state what it printed and what the contract says, and name the exit documents due and who sends each one. | [View details →](docs/prepare-exit-pack.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/prepare-exit-pack.skill) |
 | `rank-clients-by-ltv` | Find out what each customer is worth over its whole life, ranked from the most valuable down. | [View details →](docs/rank-clients-by-ltv.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/rank-clients-by-ltv.skill) |
+| `reach-out-for-me` | Ask a contact for a document, a quote or an appointment, by email from your Gmail, after you confirm it. | [View details →](docs/reach-out-for-me.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/reach-out-for-me.skill) |
 | `reconcile-hours-to-payslip` | Read one pay period's payslip lines for an hourly or part-time employee, state the hours, rate and amount on each line, name the overtime lines, and set the total against the hours the contract carries. | [View details →](docs/reconcile-hours-to-payslip.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/reconcile-hours-to-payslip.skill) |
 | `reconcile-payroll-month` | Read one month's payslips and the bank transactions that paid them, name every payslip with no matching debit and every payroll debit with no payslip, and, on your explicit yes, categorise and post those debits as net salaries, employer social charges or wage withholding. | [View details →](docs/reconcile-payroll-month.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/reconcile-payroll-month.skill) |
 | `repost-journals` | Re-run the posting pipeline for the rows that were ready but never posted. | [View details →](docs/repost-journals.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/repost-journals.skill) |
@@ -121,9 +126,11 @@ Ask for any of these by name. Several are setup steps another skill invokes on i
 | `saas-billing` | See who cancelled, which payments failed and what was refunded, read live from Stripe, Paddle or Lago. | [View details →](docs/saas-billing.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/saas-billing.skill) |
 | `show-missing-invoices` | See which suppliers owe you paperwork, before your accountant asks. | [View details →](docs/show-missing-invoices.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/show-missing-invoices.skill) |
 | `signing-back` | Come back to a workspace and know in one turn what changed, where it stands, and what to do next. | [View details →](docs/signing-back.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/signing-back.skill) |
+| `subscription-actions` | Cancel a subscription, ask for a better price or contest a double debit, with your bank's facts in the email. | [View details →](docs/subscription-actions.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/subscription-actions.skill) |
 | `subscription-spend` | See which suppliers you pay on a schedule, what each costs a month, and how that spend moved. | [View details →](docs/subscription-spend.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/subscription-spend.skill) |
 | `supplier-spend-register` | See what you paid each supplier over a year, ranked, with the invoices that could not be placed counted beside the total. | [View details →](docs/supplier-spend-register.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/supplier-spend-register.skill) |
 | `tax-id-chase` | The companies you deal with that carry no tax identifier, listed before year end. | [View details →](docs/tax-id-chase.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/tax-id-chase.skill) |
+| `todays-priorities` | See what matters today: your meetings and the work waiting on you, in one list. | [View details →](docs/todays-priorities.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/todays-priorities.skill) |
 | `trust-curve` | Choose, kind by kind, what Well may do alone and what it must always ask you first. | [View details →](docs/trust-curve.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/trust-curve.skill) |
 | `unposted-and-blocked` | See what in a month has not reached the ledger, and which pile each item sits in. | [View details →](docs/unposted-and-blocked.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/unposted-and-blocked.skill) |
 | `vat-radar` | See the net VAT your posted ledger shows for a quarter and which invoices to fix first. | [View details →](docs/vat-radar.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/vat-radar.skill) |
@@ -174,6 +181,7 @@ Install the following official skills from Well. Instructions:
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/avg-burn/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/bills-due/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/board-pack/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/call-and-claim/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cash-flow-waterfall/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cash-forecast/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/cash-position/SKILL.md
@@ -213,8 +221,11 @@ Install the following official skills from Well. Instructions:
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/insurance-switch/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/invite-teammates/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/invoice-design/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/mail-senders/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/mailbox/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/memory/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/missing-receipts/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/money-back/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/mrr/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/normalize-currency/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/payment-invoice-lookup/SKILL.md
@@ -225,6 +236,7 @@ Install the following official skills from Well. Instructions:
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/prefill-form-1120/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/prepare-exit-pack/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/rank-clients-by-ltv/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/reach-out-for-me/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/reconcile-hours-to-payslip/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/reconcile-payroll-month/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/repost-journals/SKILL.md
@@ -235,9 +247,11 @@ Install the following official skills from Well. Instructions:
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/saas-billing/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/show-missing-invoices/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/signing-back/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/subscription-actions/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/subscription-spend/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/supplier-spend-register/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/tax-id-chase/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/todays-priorities/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/trust-curve/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/unposted-and-blocked/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/vat-radar/SKILL.md

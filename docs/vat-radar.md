@@ -15,7 +15,7 @@ Ask for your VAT position and the useful answer is one net figure with its worki
 
 The figure is only as good as the invoices behind it. An invoice line with no VAT rate, or an invoice with no supplier, leaves VAT that no rate can claim. The skill lists those invoices by their supplier, number and date, says which of the two is wrong on each, and says what to set. Where the ledger holds a figure the return cannot place, it says so before it quotes a total.
 
-It stops where the data stops. It is a working paper for your accountant, not a return. It files nothing, gives no printed box number, and does not tell you a refund is due: when deductible VAT exceeds collected VAT, it states a VAT credit position and leaves the claim to your accountant. Only French workspaces are read. Purchases with no invoice in Well are not in the figure, and the skill offers to fetch them.
+It stops where the data stops. It is a working paper for your accountant, not a return. This skill files nothing itself, gives no printed box number, and does not tell you a refund is due. Where Well has a browser skill for the return and the chat can run one, it offers that skill, and nothing runs until you start it from the card. When deductible VAT exceeds collected VAT, it states a VAT credit position and leaves the claim to your accountant. Only French workspaces are read. Purchases with no invoice in Well are not in the figure, and the skill offers to fetch them.
 
 ## Required data in Well
 
@@ -26,7 +26,7 @@ It stops where the data stops. It is a working paper for your accountant, not a 
 ## FAQ
 
 **Q: Does this file my VAT return?**
-A: No. It is a working paper. Nothing in Well transmits a return to the tax office. Your accountant files it, and this gives them the figure and the invoices to check first.
+A: Not by itself. This skill is a working paper, and it transmits nothing to the tax office. Your accountant places each figure on the return, and this gives them the figure and the invoices to check first. Where Well has a browser skill for the return and the chat can run one, this skill offers it, and nothing runs until you start it from the card.
 
 **Q: Why does it not give box numbers?**
 A: Because Well does not guess a printed box. It states the VAT by rate and by direction, and your accountant places each figure on the form.

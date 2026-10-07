@@ -28,6 +28,15 @@ A: They are left off the send. An invitation that is only pending is re-issued i
 **Q: Which roles can I give?**
 A: Admin or member, and the invitation can target this workspace or a workspace group you belong to.
 
+**Q: Can I get an invitation link instead of an email?**
+A: Yes, in Well, in Claude and on WhatsApp alike. Ask for the invitation link and Well asks which one you mean. The general link lets someone open their own account on Well, with their own workspace. The workspace link lets people join your workspace: Well asks which workspace when you have several, then which role, admin or member. That link works for several people and does not expire, and you can ask Well to stop it. An owner or admin of a company workspace can ask for it; a demo workspace and your own personal space give none.
+
+**Q: Can I get a link for one person only?**
+A: Yes. Name the teammate and give their email address. Well creates the invitation for that address without emailing it and gives you its link. That link works once and does not expire, and a new link replaces any earlier one for that address.
+
+**Q: Can I invite someone with a mobile number and no email?**
+A: Yes. Give the number and the role, admin or member. Well creates the seat in your workspace for that number and gives you its invitation link. You send the link to that number, by WhatsApp or SMS. Your teammate opens it, signs in and accepts, and is then in your workspace with that role. The link works once and for seven days.
+
 **Q: What if I say "later" or "no" to a suggestion?**
 A: Well remembers it in Well, in Claude, in ChatGPT and on WhatsApp alike. After "later" or a first "no" the person is not suggested again for 30 days; after a second "no" they are never suggested again. Well suggests a teammate on its own at most once a week.
 

@@ -1,6 +1,6 @@
 ---
 name: "avg-burn"
-description: "Answer \"what is our burn rate?\" using Well's MCP financial graph: the trailing average of real monthly outflows, computed here from the workspace's own transactions, with every check it rests on visible and repairable. Use when the user asks \"what's our burn rate\", \"how much are we spending per month\", \"what's our monthly burn\", or \"how much goes out each month\". Requires a connected Well workspace with bank data; if none is connected, this skill guides the user to connect one first."
+description: "Answer \"what is our burn rate?\" using Well's MCP financial graph: the trailing average of real monthly outflows, computed here from the workspace's own transactions, with every check it rests on visible and repairable. Use when the user asks \"what's our burn rate\", \"how much are we spending per month\", \"what's our monthly burn\", \"how much goes out each month\", or for a full analysis of the spend over several months (\"analyse complète de mes dépenses sur 12 mois\"). Requires a connected Well workspace with bank data; if none is connected, this skill guides the user to connect one first."
 license: PolyForm-Perimeter-1.0.0
 ---
 

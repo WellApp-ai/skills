@@ -45,7 +45,7 @@ A: The one Well recomputes from allocated payments, and it says so. Where a sour
 A: Only with the rate and rate date shown. Currencies are never blended into a single figure. A currency with no rate available is reported on its own and named as excluded from the converted total.
 
 **Q: Does it chase the payment for me?**
-A: No. The skill surfaces who is late and by how much. Sending the follow-up stays with you.
+A: No. The skill surfaces who is late and by how much, and drafts a reminder when you ask for one. Sending the follow-up stays with you.
 
 ---
 

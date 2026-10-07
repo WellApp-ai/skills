@@ -27,7 +27,7 @@ Then it names the paperwork. For the country on the record, it lists the self-pa
 A: France: the bulletin de paie, and the déclaration de revenus TNS for a gérant majoritaire. Germany: the Lohnkonto, the Lohnsteueranmeldung and the A1 Bescheinigung. Italy: the co.co.co contract under the Gestione Separata, and UniEmens. Spain: the alta RETA for an autonomo societario with its rendimientos, and the notificaciones electronicas (NOTESS and DEHU). United States: the W-2 and W-3, and the accountable plan expense report. Two of these are read from a document you already hold: the bulletin de paie and the Lohnkonto, when the pay document behind them is in Well as a payslip. Every other document on this list is named only, so you know it is due and can take it to your accountant. Belgium returns nothing here, because no self employed founder document is held for it.
 
 **Q: Does Well file any of this for me?**
-A: No. Well never files, submits or transmits a return, a declaration or a payslip to any authority. It reads what it holds, states the figures, names the paperwork and stops. You or your accountant click submit.
+A: No. This skill never files, submits or transmits a return, a declaration or a payslip to any authority. It reads what it holds, states the figures, names the paperwork and stops. You or your accountant click submit.
 
 **Q: Will it tell me when the next one is due?**
 A: No. It holds no filing calendar, so it states no deadline and sends no reminder. It names the documents, and the dates come from your accountant or the authority itself.

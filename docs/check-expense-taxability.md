@@ -26,10 +26,10 @@ Coverage follows the data. France is the country whose benefit and reimbursement
 ## FAQ
 
 **Q: Does Well file anything with the tax office?**
-A: No. Well never files a return and never submits anything to a tax or social security authority. It reads, checks, reconciles, reminds and prepares the hand off. You or your accountant clicks submit.
+A: No. This skill never files a return and never submits anything to a tax or social security authority. It reads, checks, reconciles, reminds and prepares the hand off. You or your accountant clicks submit.
 
 **Q: Which forms does this cover?**
-A: France: notes de frais with their justificatifs, and avantages en nature including titres restaurant. United States: the accountable plan expense report. Germany: Reisekosten and Sachbezug records. Belgium: the note de frais and the forfait remboursement record. Italy: the nota spese for trasferte, and the fringe benefit and welfare record. Spain: the justificantes for dietas and gastos. Of these, Well reads only what a French payslip printed as a line, plus the receipt and document gaps it already found in your own business data. Every other form on this list is named so you know what is due and what to keep. Well holds no copy of it and files none of it.
+A: France: notes de frais with their justificatifs, and avantages en nature including titres restaurant. United States: the accountable plan expense report. Germany: Reisekosten and Sachbezug records. Belgium: the note de frais and the forfait remboursement record. Italy: the nota spese for trasferte, and the fringe benefit and welfare record. Spain: the justificantes for dietas and gastos. Of these, Well reads only what a French payslip printed as a line, plus the receipt and document gaps it already found in your own business data. Every other form on this list is named so you know what is due and what to keep. Well holds no copy of it and this skill files none of it.
 
 **Q: Does it tell me whether an item is taxable?**
 A: No. The taxable flag sits on the payroll rubric dictionary and is not readable over Well's tools, so the skill hands you the line, the amount and the rule to judge it against. The decision is yours and your accountant's.

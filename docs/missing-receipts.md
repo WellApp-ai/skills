@@ -11,23 +11,27 @@
 
 ## What it does
 
-Ask your AI assistant which expenses are missing receipts, and it checks your synced invoices for any that have no source document attached — no receipt or bill PDF on file. You get a list of exactly which invoices need paperwork, with amounts, dates, and currency, straight from your invoicing data. One thing this skill won't do: fetch the missing receipt for you. It only finds the gap — you (or your accounts payable team) still have to go get the document.
+Ask your AI assistant which expenses are missing receipts, and it checks your synced invoices for any that have no source document attached — no receipt or bill PDF on file. You get a list of exactly which invoices need paperwork, with amounts, dates, and currency, straight from your invoicing data. To get a missing receipt, name the expense: Well hands it to the Chrome extension, which opens the vendor's site in your own browser, or to a saved browser skill when one covers that vendor. Ask for all the missing receipts and Well uses its fetch flow. The run starts only when you start it in the extension, and nothing is reported as fetched until the document is in Well. When you send a receipt photo or PDF, it offers the payments that fit and attaches the receipt to the one you pick.
 
 ## Required data in Well
 
 - **Invoicing / bills connector** (required). This is the primary source: every invoice's attached-document status.
 - **Banking or accounting connector** (optional). If present, it enables an additional, secondary check for transactions with no linked document, on top of the main invoice check.
+- **Bank connector** (optional). With a bank connected, a receipt you send is matched to the payment it settles. Without one, Well keeps the receipt until the payment appears.
 
 ## FAQ
 
 **Q: Can it fetch the receipt for me?**
-A: No. It cannot reach into a vendor portal or your inbox. For a transaction you pick it can draft the email that asks the vendor for it — you review the card and send it from your own mailbox.
+A: Yes, through the Well Chrome extension. Name the expense and Well hands it to the extension, which opens the vendor's site in your own browser and gets the document once you start the run there. Where Well already has a saved browser skill for the vendor, it uses that. Ask for all the missing receipts and Well uses its fetch flow. Nothing runs before you start it. For a transaction you pick it can also draft the email that asks the vendor — you review the card and send it from your own mailbox.
 
 **Q: Does it check transactions too?**
 A: Invoices are the primary check. With a bank or accounting tool connected it adds a secondary sweep for transactions with no linked document.
 
 **Q: Why does this matter before an audit?**
 A: An expense without a source document is the first thing questioned. Finding the gap early turns an audit finding into a short admin task.
+
+**Q: Can I send a receipt photo?**
+A: Yes. Send the photo or the PDF and Well offers the payments that fit. It attaches the receipt only to the payment you pick, and keeps it until the payment shows up when none fits yet.
 
 ---
 
