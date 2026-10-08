@@ -19,6 +19,7 @@ Nothing is sent automatically. Every message comes back as a draft for you to re
 
 - **Invoicing connector** (required). This is where your issued customer invoices and their payment status come from.
 - **Company profile confirmed in Well** (required). The skill needs to know which company is yours so it can tell invoices you issued apart from bills you received.
+- **Gmail** (recommended). Where drafting is available, Well prepares the email for your own mailbox. Otherwise, each email card opens the draft in your mail app.
 
 ## FAQ
 

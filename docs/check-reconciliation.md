@@ -11,7 +11,7 @@
 
 ## What it does
 
-Well matches invoices to bank payments and posts the result to its own ledger. Both steps can miss a row, for example when the matching ran before the bank payment arrived. This skill is the quick fix for that. It reads the gaps first. When a gap is there, the ask is the go-ahead: it asks the matcher to look again, re-runs the posting for the rows that were ready, and reports the result. It adds no matching or posting rule of its own.
+Well matches invoices to bank payments and posts the result to its own ledger. Both steps can miss a row, for example when the matching ran before the bank payment arrived. This skill is the quick fix for that. It reads the gaps first. When a gap is there, the ask is the go-ahead: it asks the matcher to look again, re-runs the posting for the rows that were ready, and reports the result. It adds no matching or posting rule of its own. When the request says to change nothing, it only reads: it re-runs nothing, draws no card, reports each gap as a proposal and offers the re-run as one question.
 
 The matching only queues work, so on a host that cannot wait, Well says the matching was relaunched and gives no count of what matched. The posting runs at once. Where Well can read the posting again, it gives the before and after counts. Where it cannot, it gives the rows that were ready before the re-run, and what the re-run sent across the workspace. Rows that wait on a category or a ledger account are handed to the cards that fix them, and entries of a closed month that are not on the accounting tool yet are handed to the export card. Nothing is sent to the accounting tool from here.
 
