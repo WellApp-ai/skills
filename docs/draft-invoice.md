@@ -7,13 +7,13 @@
 
 # Draft invoice
 
-**Turn a sentence into a draft invoice in Well, in your customer's design, PDF attached.**
+**Turn a sentence into a draft invoice in Well, in your customer's design, with its PDF.**
 
 ## What it does
 
 Tell your AI assistant who to bill and for what, and it builds a draft invoice in Well from your words and your own records. It finds the customer among the companies you already bill, matches each line against what you invoiced before, reuses the payment details of your last invoice to that customer, and checks that the customer's registration and VAT details are complete enough to invoice them. It then shows you the whole draft — customer, lines, VAT, total, payment details — and waits for your yes before it writes anything.
 
-Once you confirm, it saves the invoice and issues it: the invoice takes the next number in your sequence, becomes final and can no longer be edited. It then prints the PDF in your house design, or in the design you chose for that customer, and attaches it to the invoice. It then opens an email draft to your customer with a link to the PDF, for you to read, edit and open in your own email app to send. Well never sends anything itself. A price you give in another currency is converted at Well's stored reference rate, shown with its source and date. It does not push the invoice to your accounting tool; that stays a separate step.
+Your first yes saves the draft only: it has no invoice number, nothing is issued and nothing is sent, and its PDF is marked as a draft that is not issued. Well then asks again before it issues. On your second yes it re-reads the draft, and if you changed nothing it issues the invoice: the invoice takes the next number in your sequence, becomes final and can no longer be edited. It then prints the PDF in your house design, or in the design you chose for that customer, and attaches it to the invoice. It then opens an email draft to your customer with a link to the PDF, for you to read, edit and open in your own email app to send. Well never sends anything itself. A price you give in another currency is converted at Well's stored reference rate, shown with its source and date. It does not push the invoice to your accounting tool; that stays a separate step.
 
 ## Required data in Well
 
@@ -25,7 +25,7 @@ Once you confirm, it saves the invoice and issues it: the invoice takes the next
 ## FAQ
 
 **Q: Can it invent an amount or a due date?**
-A: No. Every value comes from what you said or from a record in Well, such as your last invoice to that customer, and the whole draft is shown to you before anything is written.
+A: No. Every value comes from what you said or from a record in Well, such as your last invoice to that customer, and the whole draft is shown to you before anything is written. Text found inside a past invoice is treated as data, never as an instruction.
 
 **Q: Does it send the invoice to the client?**
 A: No. It can open an email draft with a link to the PDF. Pressing Send opens that draft in your own email app, and you send it from there.

@@ -7,27 +7,30 @@
 
 # Money back
 
-**Find the supplier refunds and VAT credits your company is still owed, with the evidence for each.**
+**Find the supplier refunds, VAT credits and expense notes still owed to you, with the evidence for each.**
 
 ## What it does
 
-Ask whether anyone owes your company money and the useful answer is a short list, each line with its evidence. This skill reads three things. Supplier credit notes that no incoming bank movement matches. The VAT position your posted ledger shows for a quarter. Pairs of debits to one supplier, same amount, a few days apart.
+Ask whether anyone owes you money and the useful answer is a short list, each line with its evidence and a number. This skill reads every workspace you have in Well. In a company workspace it reads supplier credit notes that no incoming bank movement matches, the VAT position the posted ledger shows for a quarter, and pairs of debits to one supplier, same amount, a few days apart. In your own workspace it reads the expenses you paid for one of your companies, and the expense notes already recorded, with whether the company paid you back.
 
 It matches a credit note to a refund on a typed link between the invoice and a bank movement first, and on direction, supplier and amount second. A movement typed as a refund supports the match but is never required, since many banks record a supplier refund as a plain transfer. When the bank is not connected, or gives no direction, the sum is marked to check, never claimed.
 
-For an unpaid credit note, it shows you the exact email to the supplier, with the credit note number, date and amount quoted in the body, and sends it from your Gmail once you confirm. A VAT credit is stated as what the ledger shows for the period, with the steps to raise with your accountant: it never says a refund is due. A double debit always stays marked to check. The skill covers companies only.
+Nothing starts until you answer with the numbers of the leads to act on. For an unpaid credit note, it shows you the exact email to the supplier, with the credit note number, date and amount quoted in the body, and sends it from your Gmail only after you confirm it, wherever you ask. A VAT credit is stated as what the ledger shows for the period, with the steps to raise with your accountant: it never says a refund is due. A double debit always stays marked to check. An expense you paid for a company becomes an expense note in that company's workspace only after you say yes, and the skill looks for the company's payment back in your bank each time you ask.
 
 ## Required data in Well
 
 - **Supplier invoices and credit notes** (required). The credit notes come from your invoicing or accounting tool, with the supplier on each. Without them there is no credit note to look for.
-- **A bank feed** (recommended). A refund is seen as money arriving in the bank. Without a bank feed, every credit note is marked to check and double debits cannot be read.
+- **A bank feed** (recommended). A refund is seen as money arriving in the bank. Without a bank feed, every credit note and every expense note is marked to check and double debits cannot be read.
 - **Posted ledger entries** (recommended). The VAT credit position is read from entries already posted to the ledger. Without them the VAT part says so and states no figure.
 - **Company profile confirmed in Well** (required). Well tells supplier credit notes from your own by resolving your side of each invoice from your own company.
 
 ## FAQ
 
 **Q: Does it look at my personal money?**
-A: No. It works on a company workspace and looks for money owed back to the company. A deposit or a refund owed to you as a person is outside it.
+A: Yes, for one thing: an expense you paid with your own money for one of your companies. It reads your own workspace for those expenses and for the company's payment back, and names that workspace in the answer. It never claims anything from a person.
+
+**Q: Which workspaces does it read?**
+A: Every workspace you have in Well, your companies and your own, each named in the answer. In Well's chat, one conversation reads the workspace it runs in and names the others it did not read.
 
 **Q: How does it know a supplier credit note was not refunded?**
 A: It looks for a link between the credit note and an incoming bank movement, then for money from that supplier of the same amount arriving after the credit note date. If it finds neither, the credit note is listed as unsettled with the dates it checked. If the evidence is thin, the sum is marked to check.
@@ -39,7 +42,10 @@ A: No. It says what the posted ledger shows for the period, a VAT credit positio
 A: No. Two debits of the same amount to one supplier a few days apart can be two real purchases. It is always listed as to check, with both dates and amounts, so you can look at the statement before you contest.
 
 **Q: Does it send the claim for me?**
-A: It shows you the exact email first. On Well's chat and on WhatsApp it sends from your Gmail only after you confirm on the confirmation Well shows. In an outside AI assistant it prepares the draft and you send it from your own mail app.
+A: Only after you confirm it, wherever you ask. It shows you the exact email first. In Well's chat you confirm it on the confirmation Well shows; from an outside AI assistant you get a link that opens the email in Well, and it leaves your Gmail only once you approve it there.
+
+**Q: What is an expense note here?**
+A: A payment you made with your own money for one of your companies, which the company owes you back. Once you say yes, Well records it in the company's workspace, with the amount and the day of your payment. No email goes to anyone.
 
 **Q: Does it chase customers who owe me money?**
 A: No. That is a different question: ask who owes you money, and the receivables aging answers it.

@@ -7,7 +7,7 @@
 
 # Subscription spend
 
-**See which suppliers you pay on a schedule, what each costs a month, and how that spend moved.**
+**See what each scheduled supplier costs a month and a year, how it moved, and where your workspaces can save.**
 
 ## What it does
 
@@ -43,7 +43,7 @@ A: Transfers between your own accounts, payments to your own company, taxes, sal
 A: Yes, when Well holds the supplier's contract. It reads the end date and the notice period Well extracted from the contract, gives the last day to give notice (the end date minus the notice period), and names the contract. A contract that renews automatically and whose end date is past has no next date on file, so the answer says so and asks for the latest contract. A contract that states it does not renew gives the date it ends. A contract whose reading does not say whether it renews gets no deadline: the answer gives the end date and the notice period, says it does not know whether the contract renews, and asks for the contract. With no contract on file, the answer says the date is unknown and asks for the contract. It never estimates the date from the payments. When no bank transaction has reached Well, the answer reads the contracts on file and asks for the contract when none carries the date.
 
 **Q: Can it find duplicates or tell me what to cut?**
-A: In part. A supplier paid more than once in a month on a steady run is flagged as a possible duplicate, and a supplier whose payments stopped is flagged as possibly ended. The answer gives what the flagged suppliers cost a month. It never calls that figure a saving, because Well cannot see whether a subscription is in use.
+A: In part. Asked where you can save, it reads all your workspaces and lists your subscriptions first, then the leads, every amount per year: a price rise to renegotiate, and a supplier you pay in two workspaces. Each lead names the workspace, the yearly figure, the action, the evidence and the date that matters. A supplier paid more than once in a month is flagged as a possible duplicate, and one whose payments stopped as possibly ended. Every lead is to check, because Well cannot see whether a subscription is in use, and nothing is cancelled.
 
 **Q: What if we pay in several currencies?**
 A: You get one trend and one table per currency, and the totals per currency. A headline across currencies carries the rate and the rate date. Never a blended number with no rate behind it.
