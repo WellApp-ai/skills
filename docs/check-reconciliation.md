@@ -33,7 +33,7 @@ A: No. It reads Well's own ledger and sends nothing to your accounting tool. For
 A: Your request is the go-ahead for the re-runs. In Well's chat the posting re-run may still ask for one confirm. Both re-runs write nothing outside Well, and re-running the posting books nothing twice.
 
 **Q: Why does it not tell me how many invoices matched?**
-A: On a host that cannot wait, the matching is only queued when the answer is written. Well says how many invoices it looks at again, and you can ask again a few minutes later for the count.
+A: On a host that cannot wait, the matching is only queued when the answer is written. Well says how many invoices it looks at again, and you can ask again for the count.
 
 **Q: What if I name no month?**
 A: It checks every open month since the last closed month, at most twelve. A clean month counts in one line. A month with gaps gets its re-run and one line.

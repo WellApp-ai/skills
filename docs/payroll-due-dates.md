@@ -20,7 +20,7 @@ It is deliberately narrow about what it will not do. It never files, signs, tran
 
 - **Payslips in Well** (required). The rows every amount comes from. They arrive from a payroll connector sync, or from pay documents dropped into Well and extracted. With no payslips the skill can still name what is due, but no line carries an amount.
 - **A country on your accounting settings** (required). Picks which jurisdiction's deadline reference the answer reads from. The skill covers the United States, Germany, Belgium, Italy, Spain and France; another country is named as uncovered rather than guessed at.
-- **A month to anchor the calendar on** (required). The skill looks forward from one pinned month. Pin it from the period picker or from the month named in the question.
+- **A month to anchor the calendar on** (required). The skill looks forward from one pinned month. It takes the month named in the question, reads an ended quarter as its last month, and takes the last complete month when none is named or the quarter is still running, saying which month it took.
 - **Bank transactions linked to your payslips** (recommended). What turns "due" into "already paid". Without the link every leg reads as outstanding, which overstates what is still to come.
 - **Prior authority and insurer documents** (optional). A German BG Beitragsbescheid or a French taux AT/MP notice already in the workspace gives a real rate or a real amount. Nothing reaches into an authority mailbox to fetch one.
 

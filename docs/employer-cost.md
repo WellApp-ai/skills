@@ -7,7 +7,7 @@
 
 # Employer cost
 
-**Read one month of payslips and state, per person, gross pay plus the employee deductions and the employer charges the payslip printed, then list the payroll related bills paid from the bank that no payslip carries.**
+**Read a month of payslips, or each of several months, and state, per person, gross pay plus the employee deductions and the employer charges the payslip printed, then list the payroll related bills paid from the bank that no payslip carries.**
 
 ## What it does
 
@@ -18,9 +18,9 @@ It is deliberately narrow everywhere else. It files nothing and pays nothing. It
 ## Required data in Well
 
 - **Payslips in Well** (required). The rows the per person figure comes from. They arrive from a payroll sync, or from pay documents dropped into Well and extracted. Without them there is no employer charge to read.
-- **A calendar month to read** (required). The skill reads one complete month at a time, pinned from the period picker or from the month named in the question.
+- **A calendar month to read** (required). The skill reads complete months only: the month named in the question, the last complete month when none is named, or each month when several are named (twelve at most), with one set of figures per month.
 - **Bank transactions for the month** (recommended). Where the off payslip bills are read from. Without them the answer covers the payslip halves only, and says the off payslip side was not checked.
-- **A category on the payees behind those bills** (recommended). What separates an insurer or a fund from an ordinary supplier. An uncategorised payee is listed as unclassified rather than counted into the payroll total.
+- **A category on the payees behind those bills** (recommended). What separates an insurer or a fund from an ordinary supplier. An uncategorised debit paid to a person is listed as unclassified rather than counted into the payroll total.
 - **Your workspace base currency** (optional). Read only when the month holds more than one currency and you ask for a single figure. Without it the answer stays per currency.
 
 ## FAQ

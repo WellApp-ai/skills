@@ -1,6 +1,6 @@
 ---
 name: "payroll-cost-by-month"
-description: "Read the payslips Well holds for one calendar month and state gross pay, tax withheld, social contributions and net pay per employee, each in the currency the payslip was issued in, over Well's MCP financial graph. Use when the user asks \"what did payroll cost last month\", \"gross to net payroll summary\", \"what did each person take home\", \"payroll cost by month\", \"how much did we pay in salaries\", or \"show me last month's payslips\". Requires payslips in Well, synced from a payroll connector or extracted from pay documents dropped into the workspace. It states only what a payslip printed: employer charges are out of scope, and a missing amount is reported as unread rather than as zero."
+description: "Read the payslips Well holds for a calendar month, or for each of several months, and state gross pay, tax withheld, social contributions and net pay per employee, each in the currency the payslip was issued in, over Well's MCP financial graph. Use when the user asks \"what did payroll cost last month\", \"gross to net payroll summary\", \"what did each person take home\", \"payroll cost by month\", \"how much did we pay in salaries\", or \"show me last month's payslips\". Requires payslips in Well, synced from a payroll connector or extracted from pay documents dropped into the workspace. It states only what a payslip printed: employer charges are out of scope, and a missing amount is reported as unread rather than as zero."
 license: PolyForm-Perimeter-1.0.0
 ---
 

@@ -7,11 +7,11 @@
 
 # Payroll cost by month
 
-**Read the payslips for a month and state gross pay, tax withheld, social contributions and net pay per employee, in the currency each payslip was issued in.**
+**Read the payslips for a month, or for each of several months, and state gross pay, tax withheld, social contributions and net pay per employee, in the currency each payslip was issued in.**
 
 ## What it does
 
-Ask what payroll cost last month and you usually get one of two answers: a bank total that mixes salaries with taxes and contributions paid on other dates, or a spreadsheet somebody retyped from PDFs. This skill reads the payslip rows in Well instead, for the one calendar month you pin, and states the four amounts a payslip prints for each person: gross pay, tax withheld, social contributions, and net pay.
+Ask what payroll cost last month and you usually get one of two answers: a bank total that mixes salaries with taxes and contributions paid on other dates, or a spreadsheet somebody retyped from PDFs. This skill reads the payslip rows in Well instead, for the calendar month you pin, and states the four amounts a payslip prints for each person: gross pay, tax withheld, social contributions, and net pay. Name no month and it reads the last complete month and says which one. Name several, up to twelve, or a quarter, and you get one total per month, with a month that holds no payslip saying so while the other months keep their totals.
 
 Every figure stays in the currency its own payslip was issued in. When the month holds more than one currency and you ask for a single total, the conversion states the rate and the date it used, and a currency with no rate is named and left out rather than quietly dropped from the total.
 
@@ -20,7 +20,7 @@ It is deliberately narrow. It reports the employee side of a payslip, not the em
 ## Required data in Well
 
 - **Payslips in Well** (required). The rows this skill reads. They arrive from a payroll connector sync, or from pay documents dropped into Well and extracted.
-- **A calendar month to read** (required). The skill reads one complete month at a time, pinned from the period picker or from the month named in the question.
+- **A calendar month to read** (required). The skill reads complete months only: the month named in the question, the last complete month when none is named, or each month when several are named (twelve at most), with one total per month.
 - **Your workspace base currency** (recommended). Read only when the month holds payslips in more than one currency and you ask for a single total. Without it, the answer stays per currency.
 
 ## FAQ
