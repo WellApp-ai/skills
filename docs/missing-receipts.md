@@ -11,7 +11,7 @@
 
 ## What it does
 
-Ask your AI assistant which expenses are missing receipts, and it checks your synced invoices for any that have no source document attached — no receipt or bill PDF on file. You get a list of exactly which invoices need paperwork, with amounts, dates, and currency, straight from your invoicing data. To get a missing receipt, name the expense: Well hands it to the Chrome extension, which opens the vendor's site in your own browser, or to a saved browser skill when one covers that vendor. Ask for all the missing receipts and Well uses its fetch flow. The run starts only when you start it in the extension, and nothing is reported as fetched until the document is in Well. When you send a receipt photo or PDF, it offers the payments that fit and attaches the receipt to the one you pick.
+Ask your AI assistant which invoices have no document attached, and it checks your synced invoices for any that have no source document attached — no receipt or bill PDF on file. You get a list of exactly which invoices need paperwork, with amounts, dates, and currency, straight from your invoicing data. To get a missing receipt, name the expense: Well hands it to the Chrome extension, which opens the vendor's site in your own browser, or to a saved browser skill when one covers that vendor. Ask for all the missing receipts and Well uses its fetch flow. The run starts only when you start it in the extension, and nothing is reported as fetched until the document is in Well. When you send a receipt photo or PDF, it offers the payments that fit and attaches the receipt to the one you pick.
 
 ## Required data in Well
 
