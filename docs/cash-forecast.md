@@ -11,7 +11,7 @@
 
 ## What it does
 
-Ask your AI assistant to project your cash forward, and it returns your real settled month-end balances followed by a worst-case projection, computed from your own accounts and the same trailing burn your runway divides by. The projection assumes no incoming revenue, so it is a floor rather than a prediction, and the answer says so every time rather than letting you mistake one for the other. A question about how your cash has moved month by month is answered here too: the month-end series is the settled half of this same card, so the history arrives with the projection beside it rather than on a chart of its own.
+Ask your AI assistant to project your cash forward, and it returns your real settled month-end balances followed by a worst-case projection, computed from your own accounts and the same trailing burn your runway divides by. The projection counts no revenue except the monthly inflows your bank already shows, at the smallest amount each paid, so it is a floor rather than a prediction, and the answer says so every time rather than letting you mistake one for the other. A question about how your cash has moved month by month is answered here too: the month-end series is the settled half of this same card, so the history arrives with the projection beside it rather than on a chart of its own.
 
 ## Required data in Well
 
@@ -22,7 +22,7 @@ Ask your AI assistant to project your cash forward, and it returns your real set
 ## FAQ
 
 **Q: Does it model expected revenue?**
-A: No, and that is the point. It assumes nothing comes in, so the date it gives you is the earliest possible one. Revenue only pushes it later.
+A: No, and that is the point. It counts only the customers your bank shows paying you every month, each at the smallest amount it paid. A quarterly or yearly payer, a payment that may have stopped, an unpaid invoice and a deal are not counted, so the date it gives you is a floor. Other revenue only pushes it later.
 
 **Q: How is this different from runway?**
 A: Runway gives you one number, the months left. This gives you the shape month by month, so you can see which month gets tight. Both use the same burn.

@@ -7,7 +7,7 @@
 
 # Signing back
 
-**Come back to a workspace and know in one turn what changed, where it stands, and what to do next.**
+**Get your brief or recap in one turn: what changed, where the workspace stands, and what to do next.**
 
 ## What it does
 

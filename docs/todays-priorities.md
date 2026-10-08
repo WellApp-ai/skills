@@ -7,7 +7,7 @@
 
 # Today's priorities
 
-**See what matters today: your meetings and the work waiting on you, in one list.**
+**See today's priorities and agenda: your meetings and the work waiting on you, in one list.**
 
 ## What it does
 
