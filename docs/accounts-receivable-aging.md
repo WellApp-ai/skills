@@ -7,7 +7,7 @@
 
 # Receivables aging
 
-**See who owes you money, and how long they have been sitting on it.**
+**See who owes you money: the unpaid and overdue customer invoices, how late each is, and the total.**
 
 ## What it does
 

@@ -16,6 +16,7 @@ Well reads the member's own notes for the requested window and applies private s
 ## Required data in Well
 
 - **The member's email records** (required). Well reads only the member's own recorded email notes.
+- **The member's person records** (optional). A sender named by a role, such as the accountant, is found among the people Well holds.
 
 ## FAQ
 

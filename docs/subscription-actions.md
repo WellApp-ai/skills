@@ -17,9 +17,9 @@ A cancellation leads with the notice date and the end of service, because a canc
 
 A double debit is two debits to one supplier of the same amount, a few days apart. It is always marked to check, because two real purchases can look the same. The email asks the supplier to check and refund the second debit, and the answer gives the bank route if the supplier does not: a refund request for a SEPA direct debit, marked to confirm because it depends on the mandate and on your bank agreement, or a card dispute with the bank that issued the card. A right is named only when your records show every fact it needs.
 
-A cancellation and a contest act on the supplier's own site first, through the Well browser extension in your own signed-in browser: on WhatsApp you confirm the task on its card, then press Launch in the Well side panel, and Well tells you on WhatsApp when the task starts, when it waits for you, and how it ends. The email to the supplier is the fallback, when the supplier has no site Well knows or the extension cannot be used. In Well's chat and on WhatsApp the email goes out from your Gmail only after you confirm it on the confirmation Well shows. In an outside AI assistant, you get the draft and send it from your own mail app.
+A cancellation and a contest act on the supplier's own site first, through the Well browser extension in your own signed-in browser: Well gives you a link that you open on a computer with a Chromium-based browser and the extension, and the task runs once you click Open in the extension. The email to the supplier is the fallback, when the supplier has no site Well knows or the extension cannot be used. In Well's chat and on WhatsApp the email goes out from your Gmail only after you confirm it on the confirmation Well shows. In an outside AI assistant, you get the draft and send it from your own mail app.
 
-With several workspaces, the skill works in rounds, one workspace at a time, starting from your personal workspace, and each round names its workspace.
+With several workspaces, the skill works in rounds, one workspace at a time, the workspace that pays the most first, and each round names its workspace. When you answer a subscription recap with lead numbers, it shows the plan, biggest amount first, then acts on the leads you picked and on no other.
 
 ## Required data in Well
 
@@ -30,7 +30,7 @@ With several workspaces, the skill works in rounds, one workspace at a time, sta
 ## FAQ
 
 **Q: Does it cancel the subscription for me?**
-A: When the Well browser extension can reach the supplier's site, yes: the extension cancels from the supplier's own site in your browser, once you confirm the task and press Launch, and it hands the tab back to you for a sign-in or a payment step. Otherwise it writes the cancellation email to the supplier and, in Well's chat and on WhatsApp, sends it from your Gmail once you confirm. It does not stop the debit at your bank. When the assistant can search the web, it also gives the supplier's own cancellation page with its source and the steps that page states. Otherwise it says the supplier may require cancelling from your account settings.
+A: When the Well browser extension can reach the supplier's site, yes: the extension cancels from the supplier's own site in your browser, once you open Well's link and start the task, and it hands the tab back to you for a sign-in or a payment step. Otherwise it writes the cancellation email to the supplier and, in Well's chat and on WhatsApp, sends it from your Gmail once you confirm. It does not stop the debit at your bank. When the assistant can search the web, it also gives the supplier's own cancellation page with its source and the steps that page states. Otherwise it says the supplier may require cancelling from your account settings.
 
 **Q: How does it know my notice date?**
 A: Only from a contract on file. Without one, it says the notice date is unknown and asks you for the contract. It never estimates a date from the payments.
@@ -45,7 +45,7 @@ A: It never promises an amount or a result. It asks the supplier, and if the sup
 A: When the assistant can search the web, it quotes one comparable offer with its source. It never invents a price, and it never calls a lower price a saving before the supplier agrees.
 
 **Q: Does it send anything without me?**
-A: No. A task for the extension waits for your confirmation and for your press on Launch. An email is shown whole first; in Well's chat and on WhatsApp it is sent only after you confirm on the confirmation Well shows. In an outside AI assistant it gives you the draft to send yourself.
+A: No. A task for the extension waits until you open Well's link and start it. An email is shown whole first; in Well's chat and on WhatsApp it is sent only after you confirm on the confirmation Well shows. In an outside AI assistant it gives you the draft to send yourself.
 
 ---
 

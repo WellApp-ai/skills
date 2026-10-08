@@ -1,6 +1,6 @@
 ---
 name: "mailbox"
-description: "Summarize the important mail observed this week or find the last mail from one sender, from Well's records. It reads the member's own notes and applies their private skipped-sender choices to the weekly summary. Do not list newsletters or save a sender choice; mail-senders owns those asks. A read-only question about the member's own mail is in scope: load this skill and answer with no yes first. Do not write mail or commitments."
+description: "Summarize the important mail observed this week or find the last mail from one sender, named by an address or by a role such as the accountant, from Well's records. It reads the member's own notes and person records and applies their private skipped-sender choices to the weekly summary. Do not list newsletters or save a sender choice; mail-senders owns those asks. A read-only question about the member's own mail is in scope: load this skill and answer with no yes first. Do not write mail or commitments."
 license: PolyForm-Perimeter-1.0.0
 ---
 
