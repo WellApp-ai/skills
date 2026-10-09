@@ -27,7 +27,7 @@ For what you owe rather than what you are owed, ask `bills-due`. For one custome
 ## FAQ
 
 **Q: Why does it need to know my own company?**
-A: To tell receivables from payables. Your own company is what Well resolves the two sides of an invoice against, so without it the skill cannot separate invoices you issued from bills you received. It asks you to confirm rather than guessing from a name or a logo.
+A: To tell receivables from payables. Your own company is what Well resolves the two sides of an invoice against, so without it the skill cannot separate invoices you issued from bills you received. Until it is set, the answer lists the unpaid invoices on both sides and says so, and asks you to confirm on its last line rather than guessing from a name or a logo.
 
 **Q: Which aging bands does it use?**
 A: Current (not yet due), 1-30, 31-60, 61-90, and 90+ days past due, measured from the due date against a stated as-of date.

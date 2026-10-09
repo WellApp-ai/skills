@@ -28,7 +28,7 @@ It is an aged view of invoices, not a ledger extract. It does not tie the bands 
 ## FAQ
 
 **Q: Why does it need to know my own company?**
-A: To tell what you owe from what you are owed. Your own company is what Well resolves the two sides of an invoice against, so without it a bill cannot be placed on the payable side. The skill asks you to confirm rather than guessing from a name or a logo.
+A: To tell what you owe from what you are owed. Your own company is what Well resolves the two sides of an invoice against, so without it a bill cannot be placed on the payable side. Until it is set, the answer lists the unpaid invoices on both sides and says so, and asks you to confirm on its last line rather than guessing from a name or a logo.
 
 **Q: Which aging bands does it use?**
 A: Current (not yet due), 1-30, 31-60, 61-90, and 90+ days past due, measured from the due date against a stated as-of date.

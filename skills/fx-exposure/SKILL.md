@@ -1,6 +1,6 @@
 ---
 name: "fx-exposure"
-description: "Measure how exposed a company is to foreign-currency risk using Well's MCP financial graph — outstanding invoice balances and cash balances summed by each currency other than the reporting currency and converted to the reporting currency at real exchange rates. Use when the user asks \"measure our FX exposure\", \"FX exposure\", \"currency risk\", \"how much of our cash/receivables is in foreign currency\", \"what's our exposure to EUR/USD/GBP\", or \"currency breakdown of our cash and invoices\". Requires a connected Well workspace with invoicing and/or banking data plus a resolvable reporting currency; if either is missing, this skill walks the user through connecting one or confirming the reporting currency first."
+description: "Measure how exposed a company is to foreign-currency risk using Well's MCP financial graph — outstanding invoice balances and cash balances summed by each currency other than the reporting currency and converted to the reporting currency at real exchange rates. Use when the user asks \"measure our FX exposure\", \"FX exposure\", \"currency risk\", \"how much of our cash/receivables is in foreign currency\", \"what's our exposure to EUR/USD/GBP\", or \"currency breakdown of our cash and invoices\". It answers first from the cash and the invoices Well already holds. The reporting currency it converts into is the one the user names, the one in the accounting settings, or the one the accounts show; a missing connection is asked for after the answer."
 license: PolyForm-Perimeter-1.0.0
 ---
 

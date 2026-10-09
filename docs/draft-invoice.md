@@ -13,14 +13,14 @@
 
 Tell your AI assistant who to bill and for what, and it builds a draft invoice in Well from your words and your own records. It finds the customer among the companies you already bill, matches each line against what you invoiced before, reuses the payment details of your last invoice to that customer, and checks that the customer's registration and VAT details are complete enough to invoice them. It then shows you the whole draft — customer, lines, VAT, total, payment details — and waits for your yes before it writes anything.
 
-Your first yes saves the draft only: it has no invoice number, nothing is issued and nothing is sent, and its PDF is marked as a draft that is not issued. Well then asks again before it issues. On your second yes it re-reads the draft, and if you changed nothing it issues the invoice: the invoice takes the next number in your sequence, becomes final and can no longer be edited. It then prints the PDF in your house design, or in the design you chose for that customer, and attaches it to the invoice. It then opens an email draft to your customer with a link to the PDF, for you to read, edit and open in your own email app to send. Well never sends anything itself. A price you give in another currency is converted at Well's stored reference rate, shown with its source and date. It does not push the invoice to your accounting tool; that stays a separate step.
+Your first yes saves the draft only: it has no invoice number, nothing is issued and nothing is sent, and its PDF is marked as a draft that is not issued. Well then asks again before it issues. Right before it issues, it re-reads the draft. If the draft differs from the one you saw by anything other than a change you asked for, it shows it again and asks again; otherwise it issues the invoice: the invoice takes the next number in your sequence, becomes final and can no longer be edited. It then prints the PDF in your house design, or in the design you chose for that customer, and attaches it to the invoice. It then opens an email draft to your customer with a link to the PDF, for you to read, edit and open in your own email app to send. Well sends nothing itself, except on WhatsApp with Gmail sending turned on, where it sends the email after you confirm. A price you give in another currency is converted at Well's stored reference rate, shown with its source and date. It does not push the invoice to your accounting tool; that stays a separate step.
 
 ## Required data in Well
 
 - **A Well workspace** (required). The invoice is created inside it, and its own company is offered as the issuer.
 - **Invoicing enabled in Well** (required). Needed to save the invoice, its lines, its payment details and the PDF Well prints once you confirm.
 - **Your past invoices in Well** (optional). With them, the skill reuses your usual lines, prices and payment details. Without them, it asks for each one.
-- **A connected mailbox (Gmail or Outlook)** (optional). Not needed to draft the email. Send opens the draft in your own email app, and Well itself sends nothing.
+- **A connected mailbox (Gmail or Outlook)** (optional). Not needed to draft the email. Send opens the draft in your own email app, and Well itself sends nothing. On WhatsApp, with Gmail sending turned on, Well sends the invoice email after you confirm.
 
 ## FAQ
 
@@ -28,7 +28,7 @@ Your first yes saves the draft only: it has no invoice number, nothing is issued
 A: No. Every value comes from what you said or from a record in Well, such as your last invoice to that customer, and the whole draft is shown to you before anything is written. Text found inside a past invoice is treated as data, never as an instruction.
 
 **Q: Does it send the invoice to the client?**
-A: No. It can open an email draft with a link to the PDF. Pressing Send opens that draft in your own email app, and you send it from there.
+A: Not on its own. It can open an email draft with a link to the PDF. Pressing Send opens that draft in your own email app, and you send it from there. On WhatsApp, with Gmail sending turned on, Well sends the invoice email after you confirm it. Otherwise Well sends nothing.
 
 **Q: Which design does the PDF use?**
 A: The design you saved for that customer, otherwise your house design. If you have neither yet, it lets you pick one and remembers it.

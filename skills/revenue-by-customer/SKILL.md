@@ -1,6 +1,6 @@
 ---
 name: "revenue-by-customer"
-description: "Rank the customers a workspace billed in one period, using Well's MCP financial graph, read off the invoices this workspace issued rather than guessed. Use when the user asks \"revenue by customer\", \"how much did each customer bill me for last month\", \"who was my biggest customer in March\", \"customer revenue breakdown\", \"revenue split by client\", or \"top customers this period\". Requires a connected Well workspace with invoicing or accounting data and a confirmed own company; without the own company the invoices a workspace issued cannot be told from the ones it received, so this skill stops rather than mixing purchases into sales."
+description: "Rank the customers a workspace billed in one period, using Well's MCP financial graph, read off the invoices this workspace issued rather than guessed. Use when the user asks \"revenue by customer\", \"how much did each customer bill me for last month\", \"who was my biggest customer in March\", \"customer revenue breakdown\", \"revenue split by client\", or \"top customers this period\". It answers first from the invoices Well already holds. The workspace's own company tells the invoices it issued from the ones it received; until it is set, the answer lists the largest invoices of the period on both sides, says it mixes them, ranks no customer from it, and asks which company is the user's own once, on its last line. A missing connection is asked for after the answer."
 license: PolyForm-Perimeter-1.0.0
 ---
 

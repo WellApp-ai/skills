@@ -39,7 +39,7 @@ A: It is listed on its own line with its supplier and amount, outside the calend
 A: Not from the calendar. A bill a source system calls settled with no bank payment matched to it keeps its full balance on the record, so filtering on the balance alone would put a paid bill back on the list. The calendar runs on payment status instead, and reports that group under its own heading so you can see it.
 
 **Q: Why does it need to know my own company?**
-A: To tell bills from invoices you issued. Your own company is what Well resolves the two sides of an invoice against, so without it the skill cannot separate what you owe from what you are owed. It asks you to confirm rather than guessing from a name or a logo.
+A: To tell bills from invoices you issued. Your own company is what Well resolves the two sides of an invoice against, so without it the skill cannot separate what you owe from what you are owed. Until it is set, the answer lists the unpaid invoices on both sides and says so, and asks you to confirm on its last line rather than guessing from a name or a logo.
 
 **Q: Does it convert everything into one currency?**
 A: Only with the rate and rate date shown. Currencies are never blended into a single figure. A currency with no rate available is reported on its own and named as excluded from the converted total.
