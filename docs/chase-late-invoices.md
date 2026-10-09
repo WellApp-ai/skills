@@ -13,7 +13,7 @@
 
 A handful of invoices dragging weeks past due rarely feels urgent enough to act on today, and that is exactly how they end up sitting for months. This skill turns that vague sense of "I should follow up" into a short, ranked list: which customers owe the most, for how long, with their contact info already resolved from your synced data and a chase message already drafted in a tone that matches how overdue it is.
 
-Nothing is sent automatically. Every message comes back as a draft for you to read, edit, and send yourself, and for each customer you name or pick it opens that draft as an email card you edit and send from your own mail app. This skill has no way to send email or messages on its own, by design. What it removes is the friction of assembling the who, the contact info, and the words, so following up becomes a one-click decision instead of a research project.
+Nothing is sent automatically. Every message comes back as a draft for you to read, edit, and send yourself, and for each customer you name or pick it opens that draft as an email card you edit and send from your own mail app. On WhatsApp, Well shows that email on a confirmation and sends it from your own Gmail only when you tap Confirmer. What it removes is the friction of assembling the who, the contact info, and the words, so following up becomes a one-click decision instead of a research project.
 
 ## Required data in Well
 
@@ -24,7 +24,7 @@ Nothing is sent automatically. Every message comes back as a draft for you to re
 ## FAQ
 
 **Q: Does this actually send the message?**
-A: No. It drafts a message per customer and hands it to you to review, edit, and send yourself. For a customer you name or pick, the draft opens as an email card, and your own press on that card sends it. There is no send capability behind this skill, and on WhatsApp the drafts stay in the chat.
+A: Only after you approve it. It drafts a message per customer and hands it to you to review, edit, and send yourself. For a customer you name or pick, the draft opens as an email card, and your own press on that card sends it. On WhatsApp, Well shows the email (recipient, subject and the whole text) on a confirmation, and sends it from your own Gmail only when you tap Confirmer. Without Gmail, the draft comes first with a link that opens it in your own mail app.
 
 **Q: How are customers ranked?**
 A: By a score: the amount overdue multiplied by the days the oldest of those invoices is past due, so the customers who owe the most for the longest come first. Each customer's historical paid revenue is shown alongside the score as a separate signal, in case you want to weigh a long-standing client differently.

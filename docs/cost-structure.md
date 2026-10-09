@@ -7,7 +7,7 @@
 
 # Cost structure
 
-**See where your company's money actually goes, no spreadsheets required.**
+**See where your money goes: spend by category, the suppliers you pay most, and the trend by category.**
 
 ## What it does
 
