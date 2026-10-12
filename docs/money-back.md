@@ -7,22 +7,22 @@
 
 # Money back
 
-**Find the supplier refunds, VAT credits and expense notes still owed to you, with the evidence for each.**
+**Answer who owes you money in one reply: unpaid customer invoices, supplier refunds and VAT credits.**
 
 ## What it does
 
-Ask whether anyone owes you money and the useful answer is a short list, each line with its evidence and a number. This skill reads every workspace you have in Well. In a company workspace it reads supplier credit notes that no incoming bank movement matches, the VAT position the posted ledger shows for a quarter, and pairs of debits to one supplier, same amount, a few days apart. In your own workspace it reads the expenses you paid for one of your companies, and the expense notes already recorded, with whether the company paid you back.
+Ask whether anyone owes you money and the useful answer is a short list, each line with its evidence and a number. This skill reads every workspace you have in Well. For the broad question it first runs the receivables contribution: the receivables skill reads the customer invoices still owed, per currency with the overdue part, and hands the findings back, and this skill states them as the first block of one combined answer. Then it reads, in each workspace, supplier credit notes that no incoming bank movement matches, the VAT your invoices and entries suggest you may recover by quarter, and pairs of debits to one supplier, same amount, a few days apart. In your own workspace it also reads the expenses you paid for one of your companies, and the expense notes already recorded, with whether the company paid you back. Every workspace is read in place, and nothing about a company is asked: a credit note Well cannot place on a side is listed to check, with its issuer and its receiver named.
 
-It matches a credit note to a refund on a typed link between the invoice and a bank movement first, and on direction, supplier and amount second. A movement typed as a refund supports the match but is never required, since many banks record a supplier refund as a plain transfer. When the bank is not connected, or gives no direction, the sum is marked to check, never claimed.
+It treats a credit note as settled only on a confirmed link between the invoice and a bank movement. An incoming movement of the same amount and currency from the same supplier, after the credit note date, is shown as a probable refund to confirm: the credit note is not chased, not counted as money waiting and not counted as settled. A movement typed as a refund makes that candidate stronger and never settles it alone. When the bank is not connected, or gives no direction, the sum is marked to check, never claimed.
 
-Nothing starts until you answer with the numbers of the leads to act on. For an unpaid credit note, it shows you the exact email to the supplier, with the credit note number, date and amount quoted in the body, and sends it from your Gmail only after you confirm it, wherever you ask. A VAT credit is stated as what the ledger shows for the period, with the steps to raise with your accountant: it never says a refund is due. A double debit always stays marked to check. An expense you paid for a company becomes an expense note in that company's workspace only after you say yes, and the skill looks for the company's payment back in your bank each time you ask.
+Nothing starts until you answer with the numbers of the leads to act on. For an unpaid credit note, it shows you the exact email to the supplier, with the credit note number, date and amount quoted in the body, and sends it from your Gmail only after you confirm it, wherever you ask. A VAT credit is stated as what the data suggests for the period, a possibility and not money in the bank, with the steps to raise with your accountant: it never says a refund is due. A double debit stays marked to check and blocked until the bank shows two separate payments; then it shows you the email that contests the second debit and sends it once you confirm. An expense you paid for a company becomes an expense note in that company's workspace only after you say yes, and the skill looks for the company's payment back in your bank each time you ask.
 
 ## Required data in Well
 
-- **Supplier invoices and credit notes** (required). The credit notes come from your invoicing or accounting tool, with the supplier on each. Without them there is no credit note to look for.
+- **Customer invoices the company issued** (recommended). The receivables contribution of a broad question reads the customer invoices still unpaid from the same invoicing or accounting tool, with the payment state on each.
+- **Supplier invoices and credit notes** (required). The credit notes come from your invoicing or accounting tool, with the supplier on each; one can also arrive by email or by an upload, and it is read wherever it sits.
 - **A bank feed** (recommended). A refund is seen as money arriving in the bank. Without a bank feed, every credit note and every expense note is marked to check and double debits cannot be read.
-- **Posted ledger entries** (recommended). The VAT credit position is read from entries already posted to the ledger. Without them the VAT part says so and states no figure.
-- **Company profile confirmed in Well** (required). Well tells supplier credit notes from your own by resolving your side of each invoice from your own company.
+- **Ledger entries or tax-bearing invoices** (recommended). The VAT part reads ledger entries, draft or validated, and the tax stated on supplier invoices. It says what the figure rests on, and reads either source when only one exists.
 
 ## FAQ
 
@@ -30,16 +30,16 @@ Nothing starts until you answer with the numbers of the leads to act on. For an 
 A: Yes, for one thing: an expense you paid with your own money for one of your companies. It reads your own workspace for those expenses and for the company's payment back, and names that workspace in the answer. It never claims anything from a person.
 
 **Q: Which workspaces does it read?**
-A: Every workspace you have in Well, your companies and your own, each named in the answer. In Well's chat, one conversation reads the workspace it runs in and names the others it did not read.
+A: Every workspace you have in Well, your companies and your own, each named in the answer. On WhatsApp, one answer reads every workspace, your own included, with no question about which one. In Well's app chat, one conversation reads the workspace it runs in and names the others it did not read.
 
 **Q: How does it know a supplier credit note was not refunded?**
-A: It looks for a link between the credit note and an incoming bank movement, then for money from that supplier of the same amount arriving after the credit note date. If it finds neither, the credit note is listed as unsettled with the dates it checked. If the evidence is thin, the sum is marked to check.
+A: It looks for a confirmed link between the credit note and an incoming bank movement. Money from that supplier of the same amount arriving after the credit note date is shown as a probable refund, to confirm: the credit note is not chased and not counted as settled. If it finds neither, the credit note is listed as unsettled with the dates it checked. If the evidence is thin, the sum is marked to check.
 
 **Q: Does it say a VAT refund is due?**
-A: No. It says what the posted ledger shows for the period, a VAT credit position of an amount, and gives the steps to raise with your accountant. Whether the credit is carried forward or claimed is your accountant's decision.
+A: No. It says what your invoices and entries suggest for the period, a VAT credit possibility of an amount, and gives the steps to raise with your accountant. Whether the credit is carried forward or claimed is your accountant's decision.
 
 **Q: Is a double debit a sure claim?**
-A: No. Two debits of the same amount to one supplier a few days apart can be two real purchases. It is always listed as to check, with both dates and amounts, so you can look at the statement before you contest.
+A: Only when the bank already shows two separate payments. Two debits of the same amount to one supplier a few days apart can be two real purchases or one debit imported twice. While Well cannot tell, the pair is listed as to check and blocked, with both dates and amounts, and nothing is contested. A debit imported twice is not a double payment, and a pair already dismissed is not raised again. When the bank shows two separate payments with no second invoice, the pair is a lead: you pick it, see the email that asks the supplier to refund the second debit, and it leaves only once you confirm it.
 
 **Q: Does it send the claim for me?**
 A: Only after you confirm it, wherever you ask. It shows you the exact email first. In Well's chat you confirm it on the confirmation Well shows; from an outside AI assistant you get a link that opens the email in Well, and it leaves your Gmail only once you approve it there.
@@ -48,7 +48,10 @@ A: Only after you confirm it, wherever you ask. It shows you the exact email fir
 A: A payment you made with your own money for one of your companies, which the company owes you back. Once you say yes, Well records it in the company's workspace, with the amount and the day of your payment. No email goes to anyone.
 
 **Q: Does it chase customers who owe me money?**
-A: No. That is a different question: ask who owes you money, and the receivables aging answers it.
+A: The broad question "does anyone owe me money" is answered here, and it includes the customer invoices still unpaid, read by the receivables skill as a contributor. Sending a chase or drafting a reminder for one customer is `chase-late-invoices`, and the per-customer aging detail with how late each invoice is `accounts-receivable-aging`.
+
+**Q: How is the combined answer built?**
+A: For the broad question, the receivables skill reads the customer invoices first and hands its findings back; this skill then reads the supplier credit notes, the VAT evidence, the possible double debits and the expense notes, and writes one answer with the receivables verdict first, then the recovery findings, then the VAT possibilities, then what is uncertain. At most one question closes it.
 
 ---
 

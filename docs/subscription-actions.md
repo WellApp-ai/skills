@@ -7,7 +7,7 @@
 
 # Subscription actions
 
-**Cancel a subscription, ask for a better price or contest a double debit, with your bank's facts in the email.**
+**Act on a subscription you name or pick by number from a list: cancel, renegotiate or contest a double debit.**
 
 ## What it does
 
@@ -15,7 +15,7 @@ Ask Well to cancel, renegotiate or contest a subscription, and it starts from wh
 
 A cancellation leads with the notice date and the end of service, because a cancellation cannot be taken back. Those dates come only from a contract on file. With no contract, the answer says the notice date is unknown and asks you for the contract, and the email asks the supplier to confirm the end of service in writing. Because many suppliers also ask you to cancel from the account settings, the answer points to the supplier's own cancellation page when the assistant can search the web, and says so when it cannot.
 
-A double debit is two debits to one supplier of the same amount, a few days apart. It is always marked to check, because two real purchases can look the same. The email asks the supplier to check and refund the second debit, and the answer gives the bank route if the supplier does not: a refund request for a SEPA direct debit, marked to confirm because it depends on the mandate and on your bank agreement, or a card dispute with the bank that issued the card. A right is named only when your records show every fact it needs.
+A double debit is two debits to one supplier of the same amount, a few days apart. It is contested only when the bank shows them as two separate payments. While Well cannot tell two real purchases or one debit imported twice from a double charge, the pair stays marked to check: you get the contest email as a draft marked to check, and nothing is sent or started. Once confirmed, the email asks the supplier to check and refund the second debit, and the answer gives the bank route if the supplier does not: a refund request for a SEPA direct debit, marked to confirm because it depends on the mandate and on your bank agreement, or a card dispute with the bank that issued the card. A right is named only when your records show every fact it needs.
 
 A cancellation and a contest act on the supplier's own site first, through the Well browser extension in your own signed-in browser: Well gives you a link that you open on a computer with a Chromium-based browser and the extension, and the task runs once you click Open in the extension. The email to the supplier is the fallback, when the supplier has no site Well knows or the extension cannot be used. In Well's chat and on WhatsApp the email goes out from your Gmail only after you confirm it on the confirmation Well shows. In an outside AI assistant, you get the draft and send it from your own mail app.
 
@@ -36,7 +36,7 @@ A: When the Well browser extension can reach the supplier's site, yes: the exten
 A: Only from a contract on file. Without one, it says the notice date is unknown and asks you for the contract. It never estimates a date from the payments.
 
 **Q: Is a double debit a sure claim?**
-A: No. Two debits of the same amount a few days apart can be two real purchases. It is always marked to check, with both dates and amounts, and the email asks the supplier to check and refund the second one.
+A: Only when the bank shows the two debits as two separate payments. Two debits of the same amount a few days apart can be two real purchases or one debit imported twice. While Well cannot tell, the pair is marked to check, with both dates and amounts, and you get the contest email as a draft marked to check: nothing is sent. Once the two payments are confirmed, the contest asks the supplier to check and refund the second one.
 
 **Q: Will I get my money back?**
 A: It never promises an amount or a result. It asks the supplier, and if the supplier does not refund, it gives the bank route that fits how the debit was paid. The supplier or the bank decides.

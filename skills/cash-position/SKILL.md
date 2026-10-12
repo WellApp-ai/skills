@@ -1,6 +1,6 @@
 ---
 name: "cash-position"
-description: "Answer \"how much cash do we have right now?\" using Well's MCP financial graph: the total of your real bank balances, computed here from the workspace's own accounts, with every rule it rests on visible and repairable. Use when the user asks \"what's our cash position\", \"how much cash do we have right now\", \"current bank balance\", \"how much money is in the bank\", or \"what's our total cash on hand today\". Requires a connected Well workspace with a banking connector; if none is connected, this skill guides the user to connect one first."
+description: "Answer \"how much cash do we have right now?\" using Well's MCP financial graph: the total of your real bank balances, computed here from the workspace's own accounts, with every rule it rests on visible and repairable. Use when the user asks \"what's our cash position\", \"how much cash do we have right now\", \"current bank balance\", \"how much money is in the bank\", \"what's our total cash on hand today\", or what they can look at on their cash right now (\"que puis-je regarder sur ma trésorerie ?\"). It reads the bank's state before it offers any reading, so an ask that forbids a change or wants to see first still loads it: a read changes nothing. Requires a connected Well workspace with a banking connector; if none is connected, this skill guides the user to connect one first."
 license: PolyForm-Perimeter-1.0.0
 ---
 

@@ -22,7 +22,6 @@ Transfers between your own accounts, taxes, salaries, social charges, loan repay
 ## Required data in Well
 
 - **Banking connector** (required). The subscriptions are read from the payments that leave your bank accounts and your connected credit cards.
-- **Company profile confirmed in Well** (recommended). Lets the read leave out payments to your own accounts at a bank that is not connected, which would otherwise read as a supplier.
 - **Exchange rates** (recommended). Spend in several currencies is reported per currency, with one trend and one table each. A headline across currencies carries the rate and the rate date used.
 
 ## FAQ

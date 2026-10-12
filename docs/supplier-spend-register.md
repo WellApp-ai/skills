@@ -7,11 +7,11 @@
 
 # Supplier spend register
 
-**See what you paid each supplier over a year, ranked, with the invoices that could not be placed counted beside the total.**
+**See what each supplier invoiced you over a year, ranked, with unplaced invoices counted.**
 
 ## What it does
 
-Ask your AI assistant how much you paid each supplier last year, and it reads the purchase side of your synced invoices, sums them per supplier, and ranks from your largest down. The side is resolved from the company you confirmed as your own, not from a supplier name, so a supplier trading under two labels does not quietly split into two smaller rows.
+Ask your AI assistant how much each supplier invoiced you last year, and it reads the purchase side of your synced invoices, sums them per supplier, and ranks from your largest down. The side is resolved by Well on the server, not from a supplier name.
 
 Every invoice sits in exactly one of four buckets: one you owe, one you are owed, one between two companies you own, and one Well could not place. The register covers the first bucket and reports the count of the fourth beside the total, because an invoice with no resolved side may still be one you paid. A register that hides those rows reads as complete when it is not.
 
@@ -20,7 +20,6 @@ It is a gross register. It reports what the invoices say you were billed, with n
 ## Required data in Well
 
 - **Invoicing or accounting connector** (required). This is where the supplier invoices you received, and their payment status, come from. Either one is enough.
-- **Company profile confirmed in Well** (required). The purchase side of an invoice is resolved from the company you confirm as your own. Without it, invoices land in the unplaced bucket instead of the register.
 - **Exchange rates** (recommended). A year that spans several currencies is reported per currency unless rates cover it, in which case each figure carries the rate and the rate date used.
 
 ## FAQ

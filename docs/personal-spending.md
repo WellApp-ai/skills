@@ -7,7 +7,7 @@
 
 # Personal spending
 
-**See what you spent on one thing this month, and how that compares to a usual month.**
+**See what you spent on one category, such as groceries, this month and how that compares to a usual month.**
 
 ## What it does
 

@@ -48,7 +48,7 @@ A: No. The ritenuta d'acconto, the IRPF retención and the Künstlersozialabgabe
 A: Only if you ask, and only with your say-so on the turn. A contractor platform's contract and people lists are treated as a consequential call rather than a plain read, so this skill runs on invoices, transactions and contract records by default. A supplier missing from that platform is never reported as unmanaged.
 
 **Q: Does it prepare a 1099 or a year-end contractor statement?**
-A: No. There is no 1099, DAS2 or fiche 281.50 preparation here. For what you paid each supplier over a year, ranked, ask for the supplier spend register instead.
+A: No. There is no 1099, DAS2 or fiche 281.50 preparation here. For what each supplier invoiced you over a year, ranked, ask for the supplier spend register instead.
 
 ---
 

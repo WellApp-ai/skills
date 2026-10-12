@@ -13,12 +13,11 @@
 
 Ask your AI assistant how much each customer billed you for last month, and it reads the answer off the invoices your workspace issued: every sales invoice in the period, grouped by the customer it was addressed to, ranked from the biggest down, with the currency and the period stated beside each figure.
 The number is the invoice total as issued, gross of tax. Well's own invoice arithmetic reports a different measure, net of tax and net of credit notes, so the two are stated apart and never added together. Invoices whose customer is not recorded stay as a single unattributed line, and invoices Well could place on neither side of the relationship are counted and reported beside the ranking rather than dropped, because an unplaced invoice may still belong in the figure.
-The skill needs to know which company is yours. That is what separates the invoices you issued from the bills you received, and it is resolved from your workspace's own company rather than from a party name. If it is not set, the skill says so, lists the largest invoices on both sides as an unsplit list and asks which company is yours on its last line, because a ranking that mixes purchases into sales reads exactly like a correct one.
+Well places the side of each invoice on the server, never from a party name. When it cannot, the skill lists the largest invoices on both sides as an unsplit list to check and ranks no customer from it, because a ranking that mixes purchases into sales reads exactly like a correct one.
 
 ## Required data in Well
 
 - **Invoicing or accounting connector** (required). This is where the invoices your workspace issued, and the customers they were addressed to, come from.
-- **Company profile confirmed in Well** (required). The sale side of an invoice is resolved from your own company. Without it, an invoice you received looks the same as one you issued.
 - **A period to rank** (optional). Name a month or a date range, or take the default, which is the last complete calendar month.
 
 ## FAQ
@@ -32,8 +31,8 @@ A: They measure different things. The per-customer figure is the invoice total a
 **Q: Can it rank suppliers or spend?**
 A: No. This reads the invoices your workspace issued. For money going out, ask for your cost structure instead.
 
-**Q: What happens if my own company is not confirmed?**
-A: The skill lists the largest invoices of the period on both sides first, says the list mixes what you billed and what you received, ranks no customer from it, and asks which company is yours on its last line. Ranking without it would mix the bills you received into the invoices you issued, and the result would read as a clean answer.
+**Q: How does it tell what I owe from what I am owed?**
+A: Well places the side of each invoice on the server and never asks you to pick a company in this answer. An invoice it cannot place is listed to check, with its issuer and its receiver named, and counted beside the total.
 
 **Q: Is the ranking always complete?**
 A: One read returns at most 500 invoices. When the period holds more, the skill says so, reports the share it covered as a floor rather than a total, and offers a shorter period.

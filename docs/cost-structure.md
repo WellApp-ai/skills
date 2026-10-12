@@ -7,7 +7,7 @@
 
 # Cost structure
 
-**See where your money goes: spend by category, the suppliers you pay most, and the trend by category.**
+**See a company's or household's spend by category, supplier and trend; not for savings: use Subscription spend.**
 
 ## What it does
 

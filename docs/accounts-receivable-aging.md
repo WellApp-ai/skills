@@ -7,13 +7,13 @@
 
 # Receivables aging
 
-**See who owes you money: the unpaid and overdue customer invoices, how late each is, and the total.**
+**See which customers still owe you money: the unpaid and overdue invoices, how late each is, and the total.**
 
 ## What it does
 
 Ask your AI assistant who owes you money, and it reads the answer from your synced invoices. Every customer invoice still carrying a balance is sorted into an aging band (current, 1-30, 31-60, 61-90, and 90+ days past due), with the customer, the amount, the currency and the due date on each row.
 
-Which side of an invoice your workspace occupies is resolved from your confirmed own company, not from a party name, so an entity that appears under a registered name in one source and a trade name in another still lands on the correct side. Invoices Well cannot place on either side are counted and reported beside the total rather than dropped, because an unplaced invoice may still be owed to you.
+Which side of an invoice your workspace occupies is resolved by Well on the server, never from a party name and never by asking you to pick a company. Invoices Well cannot place on either side are counted and reported beside the total rather than dropped, and the oldest are listed to check with their issuer and receiver named: Well does not say they are owed to you.
 
 The skill says what it cannot age. An invoice with no due date recorded gets its own line instead of an invented one. An invoice whose payment status could not be recomputed is named rather than counted as settled. A total never blends currencies: each currency is converted at a stated rate and rate date, or reported on its own.
 
@@ -22,12 +22,11 @@ For what you owe rather than what you are owed, ask `bills-due`. For one custome
 ## Required data in Well
 
 - **Invoicing or accounting connector** (required). Where your issued customer invoices and their payment state come from. Either one is enough.
-- **Company profile confirmed in Well** (required). Well resolves which side of an invoice you occupy from your own company. Without it, receivables cannot be told apart from payables.
 
 ## FAQ
 
-**Q: Why does it need to know my own company?**
-A: To tell receivables from payables. Your own company is what Well resolves the two sides of an invoice against, so without it the skill cannot separate invoices you issued from bills you received. Until it is set, the answer lists the unpaid invoices on both sides and says so, and asks you to confirm on its last line rather than guessing from a name or a logo.
+**Q: How does it tell receivables from payables?**
+A: Well places the side of each invoice on the server, from the company records your workspace holds, and never asks you to pick a company in this answer. An invoice it cannot place is listed to check, with its issuer and its receiver named, and counted beside the total instead of being counted as owed to you.
 
 **Q: Which aging bands does it use?**
 A: Current (not yet due), 1-30, 31-60, 61-90, and 90+ days past due, measured from the due date against a stated as-of date.
@@ -46,6 +45,9 @@ A: Only with the rate and rate date shown. Currencies are never blended into a s
 
 **Q: Does it chase the payment for me?**
 A: No. The skill surfaces who is late and by how much, and drafts a reminder when you ask for one. Sending the follow-up stays with you.
+
+**Q: Does it answer "does anyone owe me money"?**
+A: It answers the customer-invoice part: which customers still owe you, how much each owes and how late they are. The wider ask, where supplier refunds, credit notes and VAT possibilities sit beside the unpaid invoices, is `money-back`'s. That skill reads them and folds this receivables read into its single answer.
 
 ---
 

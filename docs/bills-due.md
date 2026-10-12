@@ -13,7 +13,7 @@
 
 Ask your AI assistant what bills are coming due, and it reads the answer from your synced invoices. Every bill still carrying a balance is placed on a date-ordered calendar (overdue, this week, this month, later), with the supplier, the amount, the currency and the due date on each row, and a running cumulative total beside it.
 
-Which side of an invoice your workspace occupies is resolved from your confirmed own company, not from a party name, so a supplier that appears under a registered name in one source and a trade name in another still lands on the correct side. Invoices Well cannot place on either side are counted and reported beside the total rather than dropped, because an unplaced invoice may still be owed by you.
+Which side of an invoice your workspace occupies is resolved by Well on the server, never from a party name and never by asking you to pick a company. Invoices Well cannot place on either side are counted and reported beside the total rather than dropped, and the oldest are listed to check with their issuer and receiver named.
 
 The calendar states its own edges. A due date is optional on an invoice record, and payment terms are held as free text that nothing parses into a date, so a bill with no due date is listed separately instead of being slotted into a week it was never assigned to. A bill a source system calls settled with no bank payment matched to it keeps its full balance on the record, so the calendar runs on payment status rather than on the balance alone, and reports that group under its own heading.
 
@@ -22,7 +22,6 @@ It covers bills that exist as invoices. Rent, subscriptions and the next payroll
 ## Required data in Well
 
 - **Invoicing or accounting connector** (required). Where your received bills and their payment state come from. Either one is enough.
-- **Company profile confirmed in Well** (required). Well resolves which side of an invoice you occupy from your own company. Without it, bills you received cannot be told apart from invoices you issued.
 
 ## FAQ
 
@@ -38,8 +37,8 @@ A: It is listed on its own line with its supplier and amount, outside the calend
 **Q: Could it ask me to pay something twice?**
 A: Not from the calendar. A bill a source system calls settled with no bank payment matched to it keeps its full balance on the record, so filtering on the balance alone would put a paid bill back on the list. The calendar runs on payment status instead, and reports that group under its own heading so you can see it.
 
-**Q: Why does it need to know my own company?**
-A: To tell bills from invoices you issued. Your own company is what Well resolves the two sides of an invoice against, so without it the skill cannot separate what you owe from what you are owed. Until it is set, the answer lists the unpaid invoices on both sides and says so, and asks you to confirm on its last line rather than guessing from a name or a logo.
+**Q: How does it tell what I owe from what I am owed?**
+A: Well places the side of each invoice on the server and never asks you to pick a company in this answer. An invoice it cannot place is listed to check, with its issuer and its receiver named, and counted beside the total.
 
 **Q: Does it convert everything into one currency?**
 A: Only with the rate and rate date shown. Currencies are never blended into a single figure. A currency with no rate available is reported on its own and named as excluded from the converted total.

@@ -20,7 +20,6 @@ It is a revenue lifetime value, stated as such: no margin or cost is applied, so
 ## Required data in Well
 
 - **Invoicing / accounting connector** (required). This is where your issued customer invoices come from.
-- **Company profile confirmed in Well** (required). The skill needs to know which company is yours so it can tell your issued (customer-facing) invoices apart from bills you have received.
 
 ## FAQ
 

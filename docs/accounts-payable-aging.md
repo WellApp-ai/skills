@@ -13,22 +13,21 @@
 
 Ask your AI assistant what you owe your suppliers and how overdue it is, and it reads the answer from your synced invoices. Every supplier bill still carrying a balance is sorted into an aging band (current, 1-30, 31-60, 61-90, and 90+ days past due), with the supplier, the amount, the currency and the due date on each row.
 
-Which side of an invoice your workspace occupies is resolved from your confirmed own company, not from a party name, so a supplier trading under a registered name in one source and a trade name in another still lands on the payable side. Invoices Well cannot place on either side are counted and reported beside the total rather than dropped, because an unplaced invoice may still be one you owe.
+Which side of an invoice your workspace occupies is resolved by Well on the server, never from a party name and never by asking you to pick a company. Invoices Well cannot place on either side are counted and reported beside the total rather than dropped, and the oldest are listed to check with their issuer and receiver named.
 
 The skill says what it cannot age. A bill with no due date recorded gets its own line instead of an invented one. A bill whose amount or balance is not recorded is counted and named as unpriced rather than summed at zero. A bill a source system asserts is settled, with no bank payment matched to it, is reported under its own heading rather than counted as paid: Well's balance figures stay bank-derived, so that assertion moves no balance.
 
-It is an aged view of invoices, not a ledger extract. It does not tie the bands to a supplier control account, and it does not pay, dispute or chase anyone. For a date-ordered payment calendar of what falls due and when, ask `bills-due`. For the customer side of an aged balance, ask `accounts-receivable-aging`. For what you paid each supplier over a year, ask `supplier-spend-register`.
+It is an aged view of invoices, not a ledger extract. It does not tie the bands to a supplier control account, and it does not pay, dispute or chase anyone. For a date-ordered payment calendar of what falls due and when, ask `bills-due`. For the customer side of an aged balance, ask `accounts-receivable-aging`. For what each supplier invoiced you over a year, ask `supplier-spend-register`.
 
 ## Required data in Well
 
 - **Invoicing or accounting connector** (required). Where your supplier bills and their payment state come from. Either one is enough.
-- **Company profile confirmed in Well** (required). Well resolves which side of an invoice you occupy from your own company. Without it, a bill cannot be placed on the payable side.
 - **Bank connector** (recommended). Well derives what is still owed on a bill from the payments matched against it in your bank feed. Without one, a bill a source system calls settled rests on that system's word alone, and the skill reports it under its own heading.
 
 ## FAQ
 
-**Q: Why does it need to know my own company?**
-A: To tell what you owe from what you are owed. Your own company is what Well resolves the two sides of an invoice against, so without it a bill cannot be placed on the payable side. Until it is set, the answer lists the unpaid invoices on both sides and says so, and asks you to confirm on its last line rather than guessing from a name or a logo.
+**Q: How does it tell what I owe from what I am owed?**
+A: Well places the side of each invoice on the server and never asks you to pick a company in this answer. An invoice it cannot place is listed to check, with its issuer and its receiver named, and counted beside the total.
 
 **Q: Which aging bands does it use?**
 A: Current (not yet due), 1-30, 31-60, 61-90, and 90+ days past due, measured from the due date against a stated as-of date.

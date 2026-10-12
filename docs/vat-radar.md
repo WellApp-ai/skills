@@ -7,32 +7,34 @@
 
 # VAT radar
 
-**See the net VAT your posted ledger shows for a quarter and which invoices to fix first.**
+**See the VAT position your data suggests for a quarter, and which invoices to fix first.**
 
 ## What it does
 
-Ask for your VAT position and the useful answer is one net figure with its working beside it. This skill reads the VAT posted to your ledger for the months you name, or for the current quarter when you name none, and reports the collected VAT, the deductible VAT and the net payable exactly as the read returns them. The ledger counts VAT when an invoice is posted (the debit basis), so the receipts basis can differ. A running month is marked as still moving.
+Ask for your VAT position and the useful answer is the possibility the data suggests, with its working beside it. A position question reads draft, validated and locked entries plus tax stated on supplier and customer documents for the months you name, or the current quarter when you name none. It reports quarter rows, keeps purchases to check separate, and never turns a missing side into zero or a supplier-only figure into a net position.
+
+A filing or readiness question reads the VAT posted to the ledger for the months you name and reports the collected VAT, deductible VAT and net payable exactly as the posted read returns them. The posted figure is on the debit basis, so the receipts basis can differ. A running month is marked as still moving.
 
 The figure is only as good as the invoices behind it. An invoice line with no VAT rate, or an invoice with no supplier, leaves VAT that no rate can claim. The skill lists those invoices by their supplier, number and date, says which of the two is wrong on each, and says what to set. Where the ledger holds a figure the return cannot place, it says so before it quotes a total.
 
-It stops where the data stops. It is a working paper for your accountant, not a return. This skill files nothing itself, gives no printed box number, and does not tell you a refund is due. Where Well has a browser skill for the return and the chat can run one, it offers that skill, and nothing runs until you start it from the card. When deductible VAT exceeds collected VAT, it states a VAT credit position and leaves the claim to your accountant. Only French workspaces are read. Purchases with no invoice in Well are not in the figure, and the skill offers to fetch them.
+It stops where the data stops. It is a working paper for your accountant, not a return. This skill files nothing itself, gives no printed box number, and does not tell you a refund is due. Where Well has a browser skill for the return and the chat can run one, it offers that skill, and nothing runs until you start it from the card. When the possibilities read suggests a credit, it states a VAT credit possibility and leaves the claim to your accountant. Only French filing rules are modelled. Purchases with no invoice in Well are not in the figure, and the skill offers to fetch them.
 
 ## Required data in Well
 
-- **Posted ledger entries** (required). The VAT is read from entries already posted to the ledger. A window with no posted entry has no VAT to state, and the skill says so instead of reporting nil.
-- **A French accounting country** (required). Only the French VAT return is modelled. A workspace with another accounting country, or none, gets a plain refusal and no estimate.
+- **Ledger entries and VAT-bearing documents** (required). A position question reads draft, validated and locked ledger entries plus supplier and customer documents. A filing or readiness question reads the posted basis, or the same entries and documents when nothing is posted. When neither source states VAT, the read says so instead of reporting nil.
+- **A French accounting country** (recommended). The posted filing basis is modelled for France only. A workspace in another country, or with none, still gets the position the read returns (the possibilities basis reads without a country and places purchases in the to-check class), with one line that VAT filing for that country is not mapped in Well.
 - **Invoices behind the spend** (recommended). Deductible VAT comes from invoices. Spend with no invoice in Well adds no deductible VAT, so the net due reads higher than it will once those invoices arrive.
 
 ## FAQ
 
 **Q: Does this file my VAT return?**
-A: Not by itself. This skill is a working paper, and it transmits nothing to the tax office. Your accountant places each figure on the return, and this gives them the figure and the invoices to check first. Where Well has a browser skill for the return and the chat can run one, this skill offers it, and nothing runs until you start it from the card.
+A: Not by itself. This skill is a working paper, and it transmits nothing to the tax office. Your accountant places each figure on the return, and this gives them the figure and the invoices to check first. Where Well has a browser skill for the return and the chat can run one, this skill prepares the filled CA3 from your posted ledger and offers the skill, and nothing runs until you start it from the card. You submit the return yourself.
 
 **Q: Why does it not give box numbers?**
-A: Because Well does not guess a printed box. It states the VAT by rate and by direction, and your accountant places each figure on the form.
+A: Because Well does not guess a printed box. It states the VAT by rate and by direction, and your accountant places each figure on the form. Where Well prepares the filled CA3, the form carries each figure on its line.
 
-**Q: Does a VAT credit mean I get a refund?**
-A: Not from this skill. A credit means deductible VAT exceeds collected VAT in the window. Whether it is carried forward or claimed is a decision for your accountant, so the skill states the position and stops.
+**Q: Does a VAT credit possibility mean I get a refund?**
+A: Not from this skill. A possibility means the data suggests deductible VAT could exceed collected VAT in the window. Whether it is carried forward or claimed is a decision for your accountant, so the skill states the possibility and stops.
 
 **Q: Why is my VAT higher than I expected?**
 A: Often because deductible VAT is missing. An invoice with no VAT rate, an invoice with no supplier, or spend with no invoice at all adds nothing to the deductible side. The skill lists the first two and offers to fetch the third.
@@ -41,7 +43,7 @@ A: Often because deductible VAT is missing. An invoice with no VAT rate, an invo
 A: No. A month still running is marked, and its figures can still move. The window total includes it, so read the total as provisional until the month ends.
 
 **Q: Can it read a workspace outside France?**
-A: Not yet. It refuses and says which country the workspace is set to, rather than applying French rules to another regime.
+A: Yes, as far as the data goes. It gives the position the read returns and says in one line that VAT filing for that country is not mapped in Well, rather than applying French rules to another regime.
 
 ---
 
