@@ -13,7 +13,7 @@
 
 Ask your AI assistant what your runway is, and it divides your real synced cash balances by your actual trailing burn, computed here from your own accounts and your own transactions rather than estimated. You get months and days, plus both numbers behind the division, so the figure is something you can challenge rather than take on faith.
 The division is all it is. Money you have committed but not yet paid, an unpaid supplier bill or next month's payroll, is not deducted, and the answer says so. When a rate is missing, the cash stays per currency rather than arriving as one total nobody can stand behind. When a balance could not be read, the cash is reported as a floor and the months are not presented as exact.
-Neither side is handed over by a server. Well reads your balances and sums your transactions, and this skill totals, averages and divides them in the open, under policies you confirm: which account types count as cash, and which categories are not spend.
+Neither side is handed over by a server. Well reads your balances and sums your transactions, this skill totals and averages them in the open, and Well's server divides them by one rule, under policies you confirm: which account types count as cash, and which categories are not spend.
 
 ## Required data in Well
 
@@ -39,7 +39,7 @@ A: It refuses to report one base-currency cash figure. It says the rate is missi
 A: The months are not presented as exact. An unreadable balance or a missing rate bounds the cash side, so the answer says the cash is a floor and names how many accounts it left out.
 
 **Q: Does Well compute the runway for me?**
-A: No. Neither side is derived on the server. Well reads the balances and sums the transactions, this skill measures both halves and divides them, and the card draws the division it was handed.
+A: Well's server holds the division. Well reads the balances and sums the transactions, this skill measures both halves, and the server divides them, classifies the result and rounds it by one rule, the same one on every host.
 
 **Q: What if a bank is still syncing?**
 A: The skill says so rather than answering from partial data. A runway number built on half your accounts is worse than no number.

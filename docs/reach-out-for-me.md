@@ -32,7 +32,7 @@ A: No. It shows each email first. In Well's chat and on WhatsApp it sends an ema
 A: From the contact's record in Well: the primary address first, else the only one on file. With several addresses and none marked primary, it asks which one. With none, it asks you for it. It never builds an address from a name or a website.
 
 **Q: Can it book an appointment for me?**
-A: It writes the email that asks for the appointment, with only the times you gave. With no time given, it asks the contact for theirs. It never says you are free at a time you did not name, and it adds nothing to your calendar.
+A: It writes the email that asks for the appointment, with only the times you gave. With no time given, it asks the contact for theirs. It never says you are free at a time you did not name, and it adds nothing to your calendar. It reads your own calendar for each time you gave before it drafts the email, and tells you, never the contact, when one already takes that slot.
 
 **Q: Can it message my contact on WhatsApp?**
 A: No. Well writes to your contacts by email only. A contact who never wrote to Well has not agreed to get WhatsApp messages from it.
