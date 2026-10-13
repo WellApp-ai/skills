@@ -22,7 +22,7 @@ Nothing starts until you answer with the numbers of the leads to act on. For an 
 - **Customer invoices the company issued** (recommended). The receivables contribution of a broad question reads the customer invoices still unpaid from the same invoicing or accounting tool, with the payment state on each.
 - **Supplier invoices and credit notes** (required). The credit notes come from your invoicing or accounting tool, with the supplier on each; one can also arrive by email or by an upload, and it is read wherever it sits.
 - **A bank feed** (recommended). A refund is seen as money arriving in the bank. Without a bank feed, every credit note and every expense note is marked to check and double debits cannot be read.
-- **Ledger entries or tax-bearing invoices** (recommended). The VAT part reads ledger entries, draft or validated, and the tax stated on supplier invoices. It says what the figure rests on, and reads either source when only one exists.
+- **Ledger entries or tax-bearing invoices** (recommended). The VAT part reads ledger entries in any state, and the tax stated on supplier invoices. It says what the figure rests on, and reads either source when only one exists.
 
 ## FAQ
 
