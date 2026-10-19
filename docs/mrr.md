@@ -7,37 +7,37 @@
 
 # Recurring revenue
 
-**Know what you can count on earning each month, averaged over real months.**
+**See the monthly run-rate of live subscriptions, or an invoice average when no typed subscriptions are present.**
 
 ## What it does
 
-Ask your AI assistant what your MRR is, and it reports the trailing average of the revenue you actually invoiced under the billing contexts you count as recurring — purchase invoices excluded structurally, credit notes netted, currencies converted, and every month in the window counted in the divisor.
+Ask your AI assistant what your MRR is. When Well has live typed sold subscriptions, it reports their server-calculated monthly run-rate, totals each currency separately, names each client, and can list the 12 newest invoices linked to one subscription, with the full count when more exist. Rows with missing or impossible amounts stay out of the figure and are named. A failed latest sync is reported with the last successful sync date. This path is text only and does not convert currencies.
 
-It computes the figure rather than reading it off a black box, which means you can see what it rests on. Each check runs in the open: the connection, whether the syncs actually finished, and which company is yours, because that is what separates the invoices you issued from the ones you received. A check that fails **stops** and shows you what to fix instead of reporting a figure with a caveat you would have to notice.
+If there are no live typed sold subscriptions, the skill follows the invoice path. It reports the trailing average of revenue you invoiced under the billing contexts you count as recurring — purchase invoices excluded structurally, credit notes netted, currencies converted, and every month in the window counted in the divisor. Each invoice check runs in the open: the connection, whether syncs finished, and which company is yours. A failed check stops and shows what to fix instead of adding a caveat to a figure.
 
-You also choose what counts. Nothing is recurring by default: the skill shows you each billing context with the revenue behind it, and you decide which ones your business treats as recurring. The revenue that carries no billing context at all is one more choice, with its amount: if you only bill subscriptions, you can count it.
+On the invoice path, you choose what counts. Nothing is recurring by default: the skill shows you each billing context with the revenue behind it, and you decide which ones your business treats as recurring. The revenue that carries no billing context at all is one more choice, with its amount: if you only bill subscriptions, you can count it.
 
 ## Required data in Well
 
 - **Invoicing or accounting connector** (required). This is where your issued customer invoices come from.
-- **Company profile confirmed in Well** (required). The skill needs to know which company is yours, so it can tell the invoices you issued from the bills you received.
+- **Company profile confirmed in Well** (required). The reader needs to know which company is yours, so it can tell the subscriptions you sell from the ones you buy, and the invoices you issued from the bills you received.
 
 ## FAQ
 
 **Q: Why average instead of last month?**
-A: Because one annual renewal or a delayed invoice run can double or halve a single month. The average over a window is the figure you can plan against.
+A: The invoice path averages a window because one annual renewal or a delayed invoice run can double or halve a single month. Live typed subscriptions use their current monthly run-rate instead.
 
 **Q: How does it know what is recurring?**
-A: It does not, and it does not guess. It shows you each billing context with the revenue behind it and you decide, because a retainer is recurring for one business and a one-off for another.
+A: The invoice path does not guess. It shows each billing context with its revenue and you decide, because a retainer is recurring for one business and a one-off for another. Live typed subscriptions already identify their billing intervals.
 
 **Q: What about revenue with no billing context?**
-A: It is listed as one more choice, with its amount. Well cannot tell how those invoices were billed, so they count only if you tick them, for example when you only bill subscriptions. Either way the answer states the amount.
+A: On the invoice path it is listed as one more choice, with its amount. Well cannot tell how those invoices were billed, so they count only if you tick them, for example when you only bill subscriptions. Either way the answer states the amount.
 
 **Q: Does it split MRR into new, expansion and churn?**
-A: No. That split needs a month by month record of each subscription's state, and Well keeps none of that. The figure is built from the invoices you issued, so it reports the level of recurring revenue and how it moved between two windows, never what moved it.
+A: No. This answer reports a current subscription run-rate or an invoice average. It does not keep a month by month record of each subscription's state, so it cannot say what moved the figure.
 
 **Q: Does the card work the number out?**
-A: No. The card draws the figure this skill computed and records that the caller computed it. The arithmetic runs in the open here, over the invoice sum and the billing contexts you ticked, which is what lets you check it.
+A: The typed subscription answer is text only. On the invoice path, the card draws the figure this skill computed from the invoice sum and the billing contexts you chose; it does not work the number out.
 
 ---
 

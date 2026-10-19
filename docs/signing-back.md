@@ -7,7 +7,7 @@
 
 # Signing back
 
-**Get your brief or recap in one turn: what changed, where the workspace stands, and what to do next.**
+**Get your morning brief or a recap: what matters today for the company, what changed, and what to do next.**
 
 ## What it does
 

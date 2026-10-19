@@ -7,11 +7,11 @@
 
 # Today's priorities
 
-**See today's priorities and agenda: your meetings and the work waiting on you, in one list.**
+**Plan your day: today's meetings and the work waiting on you, in one agenda.**
 
 ## What it does
 
-Ask your AI assistant what is important today, and it reads your calendar for the day and the open work in your workspace, then answers in one list.
+Ask your AI assistant what is important today, and it reads your calendar for the day and the open work in your workspace, then answers with both in order.
 
 Events come from your own calendar, the one of the Google account you connected to Well. An all-day event is listed apart from the timed ones, so it does not read as a meeting at midnight. A repeating event shows once for the day, and a cancelled event is left out.
 

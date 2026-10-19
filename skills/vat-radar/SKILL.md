@@ -1,6 +1,6 @@
 ---
 name: "vat-radar"
-description: "Read a workspace's VAT position from Well's data. Position questions use draft, validated and locked entries plus supplier and customer documents; filing and readiness questions use posted ledger VAT, or the same entries and documents when nothing is posted, and list unreliable invoices with fixes. Use for VAT amounts, deductible VAT, deadlines, readiness, invoices, or filing and CA3-box requests. It files nothing itself, names no printed box, and never says a refund is due. Position questions use the possibilities basis; filing and readiness questions use the posted basis, and the possibilities basis when nothing is posted."
+description: "Read a workspace's VAT position from Well's data. Position questions use draft, validated and locked entries plus supplier and customer documents; filing and readiness questions use posted ledger VAT, or the same entries and documents when nothing is posted, and list unreliable invoices with fixes. Use for VAT amounts, deductible VAT, deadlines, readiness, invoices, or filing and CA3-box requests. It files nothing itself, names no printed box, and never says a refund is due. Position questions use the possibilities basis; filing and readiness questions use the posted basis, and the possibilities basis when nothing is posted. Load this skill before you write any text."
 license: PolyForm-Perimeter-1.0.0
 ---
 

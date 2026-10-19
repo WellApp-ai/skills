@@ -22,7 +22,7 @@ Ask your AI assistant to project your cash forward, and it returns your real set
 ## FAQ
 
 **Q: Does it model expected revenue?**
-A: No, and that is the point. It counts only the customers your bank shows paying you every month, each at the smallest amount it paid. A quarterly or yearly payer, a payment that may have stopped, an unpaid invoice and a deal are not counted, so the date it gives you is a floor. Other revenue only pushes it later.
+A: The default forecast is a floor. It counts only the customers your bank shows paying you every month, each at the smallest amount it paid. A quarterly or yearly payer, a payment that may have stopped and an unpaid invoice are not counted. If you ask to include deals, I check the deals Well holds, ones you created or ones a connected CRM synced, then ask before adding won deals at full value in their close month and open deals at their chance, their own or their live stage's. An open deal with no chance stays out, with the reason "no stage weight".
 
 **Q: How is this different from runway?**
 A: Runway gives you one number, the months left. This gives you the shape month by month, so you can see which month gets tight. Both use the same burn.

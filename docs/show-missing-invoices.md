@@ -7,7 +7,7 @@
 
 # Missing supplier invoices
 
-**See which suppliers owe you paperwork, before your accountant asks.**
+**See which suppliers owe you paperwork for a month or this week, before your accountant asks.**
 
 ## What it does
 

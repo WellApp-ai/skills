@@ -11,7 +11,7 @@
 
 ## What it does
 
-Ask for your VAT position and the useful answer is the possibility the data suggests, with its working beside it. A position question reads draft, validated and locked entries plus tax stated on supplier and customer documents for the months you name, or the current quarter when you name none. It reports quarter rows, keeps purchases to check separate, and never turns a missing side into zero or a supplier-only figure into a net position.
+Ask for your VAT position and the useful answer is the possibility the data suggests, with its working beside it. A position question reads draft, validated and locked entries plus tax stated on supplier and customer documents for the months you name, or the current quarter when you name none. It reports quarter rows with their month and rate split, keeps purchases to check separate, and never turns a missing side into zero or a supplier-only figure into a net position.
 
 A filing or readiness question reads the VAT posted to the ledger for the months you name and reports the collected VAT, deductible VAT and net payable exactly as the posted read returns them. The posted figure is on the debit basis, so the receipts basis can differ. A running month is marked as still moving.
 

@@ -1,6 +1,6 @@
 ---
 name: "revenue-by-customer"
-description: "Rank the customers a workspace billed in one period, using Well's MCP financial graph, read off the invoices this workspace issued rather than guessed. Use when the user asks \"revenue by customer\", \"how much did each customer bill me for last month\", \"who was my biggest customer in March\", \"customer revenue breakdown\", \"revenue split by client\", or \"top customers this period\". It answers first from the invoices Well already holds. Well places the side of each invoice on the server; when it cannot, the answer lists the largest invoices of the period on both sides to check, ranks no customer from them, and asks nothing about a company. A missing connection is asked for after the answer."
+description: "Rank the customers a workspace billed in one period, using Well's MCP financial graph, read off the invoices this workspace issued rather than guessed. Use when the user asks \"revenue by customer\", \"how much did each customer bill me for last month\", \"who was my biggest customer in March\", \"customer revenue breakdown\", \"revenue split by client\", or \"top billed customers this period\". It answers first from the invoices Well already holds. Well places the side of each invoice on the server; when it cannot, the answer lists the largest invoices of the period on both sides to check, ranks no customer from them, and asks nothing about a company. A missing connection is asked for after the answer."
 license: PolyForm-Perimeter-1.0.0
 ---
 

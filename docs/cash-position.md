@@ -36,7 +36,7 @@ A: Because an account nobody has claimed is silently left out of the total. The 
 A: Any account whose type sits outside the cash scope you confirmed, and it names what fell out rather than hiding it. Credit cards and loans are liabilities, so most businesses exclude them, but that choice is yours to make and to change.
 
 **Q: What happens when the read comes back empty?**
-A: It stops and says the balances could not be read. An empty read is not a zero, and reporting one as the other would turn a failed call into a confident answer.
+A: It stops and states that the balances for the requested accounts and period are unknown. No returned balance does not establish a zero.
 
 **Q: How is this different from the runway skill?**
 A: This one answers what is in the bank today. Runway adds your burn rate to tell you how long that cash lasts.

@@ -7,7 +7,7 @@
 
 # Check bank and books
 
-**Check that your bank and your books match, and re-run what missed rows.**
+**Compare your bank with your books, list the gaps, and re-run what missed rows.**
 
 ## What it does
 
@@ -15,7 +15,7 @@ Well matches invoices to bank payments and posts the result to its own ledger. B
 
 The matching only queues work, so on a host that cannot wait, Well says the matching was relaunched and gives no count of what matched. The posting runs at once. Where Well can read the posting again, it gives the before and after counts. Where it cannot, it gives the rows that were ready before the re-run, and what the re-run sent across the workspace. Rows that wait on a category or a ledger account are handed to the cards that fix them, and entries of a closed month that are not on the accounting tool yet are handed to the export card. Nothing is sent to the accounting tool from here.
 
-A read that fails is never reported as a clean month. A count from a read that was cut short is a floor, and the answer says so.
+A read that fails is never reported as a clean month. A count from a read that is incomplete is a floor, and the answer says so.
 
 ## Required data in Well
 

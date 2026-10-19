@@ -7,7 +7,7 @@
 
 # Mailbox
 
-**Summarize the member's observed mail week and respect private skipped senders.**
+**Find who waits for your reply, even asked about WhatsApp or LinkedIn, a sender's last mail and your mail week.**
 
 ## What it does
 

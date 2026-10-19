@@ -7,7 +7,7 @@
 
 # Rank clients by LTV
 
-**Find out what each customer is worth over its whole life, ranked from the most valuable down.**
+**Rank your most valuable customers by lifetime value, over a year you name or their whole life.**
 
 ## What it does
 

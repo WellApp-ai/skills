@@ -12,7 +12,7 @@
 ## What it does
 
 Ask your AI assistant what your runway is, and it divides your real synced cash balances by your actual trailing burn, computed here from your own accounts and your own transactions rather than estimated. You get months and days, plus both numbers behind the division, so the figure is something you can challenge rather than take on faith.
-The division is all it is. Money you have committed but not yet paid, an unpaid supplier bill or next month's payroll, is not deducted, and the answer says so. When a rate is missing, the cash stays per currency rather than arriving as one total nobody can stand behind. When a balance could not be read, the cash is reported as a floor and the months are not presented as exact.
+The division is all it is. Money you have committed but not yet paid, an unpaid supplier bill or next month's payroll, is not deducted, and the answer says so. When a rate is missing, the cash stays per currency rather than arriving as one total nobody can stand behind. When a balance is absent from the returned data, its amount and date are unknown. Report only the verified cash total and do not present runway as exact.
 Neither side is handed over by a server. Well reads your balances and sums your transactions, this skill totals and averages them in the open, and Well's server divides them by one rule, under policies you confirm: which account types count as cash, and which categories are not spend.
 
 ## Required data in Well
@@ -36,7 +36,7 @@ A: No, and it refuses to. An unpaid supplier bill and next month's payroll are n
 A: It refuses to report one base-currency cash figure. It says the rate is missing and stays per currency, because a blended total nobody can re-derive is worse than two numbers you can.
 
 **Q: What if one of the balances cannot be read?**
-A: The months are not presented as exact. An unreadable balance or a missing rate bounds the cash side, so the answer says the cash is a floor and names how many accounts it left out.
+A: Do not present the months as exact when a balance or rate is absent. Name the number of accounts without returned balances, when known, and state which amounts and dates remain unknown.
 
 **Q: Does Well compute the runway for me?**
 A: Well's server holds the division. Well reads the balances and sums the transactions, this skill measures both halves, and the server divides them, classifies the result and rounds it by one rule, the same one on every host.
