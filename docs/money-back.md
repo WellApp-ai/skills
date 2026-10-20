@@ -7,7 +7,7 @@
 
 # Money back
 
-**Answer who owes you money in one reply: unpaid customer invoices, supplier refunds and VAT credits.**
+**Find money owed back to you: refunds, credit notes, VAT credits, double debits, then unpaid customer invoices.**
 
 ## What it does
 

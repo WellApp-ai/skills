@@ -101,12 +101,14 @@ Ask for any of these by name. Several are setup steps another skill invokes on i
 | `import-statement` | Drop a statement you already have, and get its transactions as records. | [View details →](docs/import-statement.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/import-statement.skill) |
 | `insurance-switch` | Lay your insurance offers next to your current contract, and get the letter that ends it. | [View details →](docs/insurance-switch.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/insurance-switch.skill) |
 | `invite-teammates` | Get your teammates into the workspace, without leaving the conversation. | [View details →](docs/invite-teammates.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/invite-teammates.skill) |
+| `invoice-compliance` | Know which invoices are missing a legal line before your customer or the tax office does. | [View details →](docs/invoice-compliance.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/invoice-compliance.skill) |
 | `invoice-design` | Pick how an invoice prints, from the designs and records you already have. | [View details →](docs/invoice-design.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/invoice-design.skill) |
 | `mail-senders` | List newsletter senders from records and save one private sender choice. | [View details →](docs/mail-senders.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/mail-senders.skill) |
 | `mailbox` | Find who waits for your reply, even asked about WhatsApp or LinkedIn, a sender's last mail and your mail week. | [View details →](docs/mailbox.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/mailbox.skill) |
 | `memory` | Tell Well once, and it remembers what matters about you and your business. | [View details →](docs/memory.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/memory.skill) |
 | `missing-receipts` | Find the bills with no paperwork attached, before an auditor does. | [View details →](docs/missing-receipts.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/missing-receipts.skill) |
-| `money-back` | Answer who owes you money in one reply: unpaid customer invoices, supplier refunds and VAT credits. | [View details →](docs/money-back.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/money-back.skill) |
+| `money-back` | Find money owed back to you: refunds, credit notes, VAT credits, double debits, then unpaid customer invoices. | [View details →](docs/money-back.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/money-back.skill) |
+| `money-leak-finder` | Find the double charges and price rises in your bank debits, each with the dates and amounts your bank shows. | [View details →](docs/money-leak-finder.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/money-leak-finder.skill) |
 | `mrr` | See the monthly run-rate of live subscriptions, or an invoice average when no typed subscriptions are present. | [View details →](docs/mrr.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/mrr.skill) |
 | `normalize-currency` | Turn mixed currencies into one number you can actually audit. | [View details →](docs/normalize-currency.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/normalize-currency.skill) |
 | `optimize-supplier-prices` | See what you paid a supplier, how its price moved, and get the negotiation email drafted. | [View details →](docs/optimize-supplier-prices.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/optimize-supplier-prices.skill) |
@@ -228,12 +230,14 @@ Install the following official skills from Well. Instructions:
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/import-statement/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/insurance-switch/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/invite-teammates/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/invoice-compliance/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/invoice-design/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/mail-senders/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/mailbox/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/memory/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/missing-receipts/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/money-back/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/money-leak-finder/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/mrr/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/normalize-currency/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/optimize-supplier-prices/SKILL.md
