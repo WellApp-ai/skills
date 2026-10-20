@@ -129,7 +129,8 @@ Ask for any of these by name. Several are setup steps another skill invokes on i
 | `runway` | Know how many months of cash you have at your current burn, with both sides of the division shown. | [View details →](docs/runway.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/runway.skill) |
 | `runway-stress-test` | See how long your cash lasts if a customer pays late, leaves, or you hire. | [View details →](docs/runway-stress-test.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/runway-stress-test.skill) |
 | `saas-billing` | See who cancelled, which payments failed and what was refunded, read live from Stripe, Paddle or Lago. | [View details →](docs/saas-billing.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/saas-billing.skill) |
-| `show-missing-invoices` | See which suppliers owe you paperwork for a month or this week, before your accountant asks. | [View details →](docs/show-missing-invoices.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/show-missing-invoices.skill) |
+| `secure-payroll` | Know if payroll is safe, and which vendor bills to push if it is not. | [View details →](docs/secure-payroll.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/secure-payroll.skill) |
+| `show-missing-invoices` | See which suppliers owe you paperwork, in each of your files, for a month, a quarter or this week. | [View details →](docs/show-missing-invoices.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/show-missing-invoices.skill) |
 | `signing-back` | Get your morning brief or a recap: what matters today for the company, what changed, and what to do next. | [View details →](docs/signing-back.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/signing-back.skill) |
 | `subscription-actions` | Act on a subscription you name or pick by number from a list: cancel, renegotiate or contest a double debit. | [View details →](docs/subscription-actions.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/subscription-actions.skill) |
 | `subscription-spend` | See what each scheduled supplier costs a month and a year, how it moved, and where your workspaces can save. | [View details →](docs/subscription-spend.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/subscription-spend.skill) |
@@ -255,6 +256,7 @@ Install the following official skills from Well. Instructions:
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/runway/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/runway-stress-test/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/saas-billing/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/secure-payroll/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/show-missing-invoices/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/signing-back/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/subscription-actions/SKILL.md

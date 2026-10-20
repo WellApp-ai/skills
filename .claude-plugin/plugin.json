@@ -93,6 +93,7 @@
     "./skills/runway",
     "./skills/runway-stress-test",
     "./skills/saas-billing",
+    "./skills/secure-payroll",
     "./skills/show-missing-invoices",
     "./skills/signing-back",
     "./skills/subscription-actions",
