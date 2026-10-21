@@ -1,6 +1,6 @@
 ---
 name: "runway-stress-test"
-description: "Re-run the runway under named what-ifs (a customer pays late, a customer leaves, a hire starts) and show each result against the base case, with the cause of each change. Use when the user asks \"what if my biggest customer pays 45 days late\", \"stress test my runway\", \"what if I hire [number] people at [cost] a month\" or \"et si mon plus gros client part\". Read only. Needs a connected bank account and the own company set; connect a bank first when none is."
+description: "Re-run the runway under named what-ifs (a customer pays late, a customer leaves, a hire starts) and show each result against the base case, with the cause of each change. Use when the user asks \"what if my biggest customer pays 45 days late\", \"stress test my runway\", \"what if I hire [number] people at [cost] a month\" or \"et si mon plus gros client part\". Read only, except that it saves the person's answer to which accounts count as cash. Needs a connected bank account and the own company set; connect a bank first when none is."
 license: PolyForm-Perimeter-1.0.0
 ---
 

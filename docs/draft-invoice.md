@@ -28,7 +28,7 @@ The saved draft has no invoice number, nothing is issued and nothing is sent, an
 A: No. Every value comes from what you said or from a record in Well, such as your last invoice to that customer, and the whole draft is shown to you before anything is written. Text found inside a past invoice is treated as data, never as an instruction.
 
 **Q: Does it send the invoice to the client?**
-A: Not on its own. It can open an email draft with a link to the PDF. Pressing Send opens that draft in your own email app, and you send it from there. On WhatsApp, with Gmail sending turned on, Well sends the invoice email with its PDF attached when your own message asks it to and names who gets it; when something is missing, it asks you to confirm first. Otherwise Well sends nothing.
+A: Not on its own. It can open an email draft with a link to the PDF. Pressing Send opens that draft in your own email app, and you send it from there. On WhatsApp, with Gmail sending turned on, Well shows the invoice email with its PDF and sends it once you answer « 1 ». After a few of them, Well asks whether it can send without asking next time; from then on your own message that asks it to send the invoice sends it at once, and a doubt is still a question. Otherwise Well sends nothing.
 
 **Q: Which design does the PDF use?**
 A: The design you saved for that customer, otherwise your house design. If you have neither yet, it lets you pick one and remembers it.
