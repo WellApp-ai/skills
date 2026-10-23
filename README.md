@@ -53,6 +53,7 @@ Ask for any of these by name. Several are setup steps another skill invokes on i
 | Skill | What you get | Details | Claude Desktop |
 |---|---|---|---|
 | `accounting-reports` | Read your profit and loss or balance sheet from QuickBooks, Xero or Pennylane. | [View details →](docs/accounting-reports.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/accounting-reports.skill) |
+| `accounting-review` | Work through your open accounting items, one category at a time. | [View details →](docs/accounting-review.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/accounting-review.skill) |
 | `accounting-settings` | Set the accounting basics every period-scoped answer depends on. | [View details →](docs/accounting-settings.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/accounting-settings.skill) |
 | `accounts-payable-aging` | See what you owe your suppliers, and how long each bill has been past due. | [View details →](docs/accounts-payable-aging.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/accounts-payable-aging.skill) |
 | `accounts-receivable-aging` | See which customers still owe you money: the unpaid and overdue invoices, how late each is, and the total. | [View details →](docs/accounts-receivable-aging.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/accounts-receivable-aging.skill) |
@@ -182,6 +183,7 @@ Install the following official skills from Well. Instructions:
 
 1. Fetch these files:
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounting-reports/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounting-review/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounting-settings/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounts-payable-aging/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounts-receivable-aging/SKILL.md
