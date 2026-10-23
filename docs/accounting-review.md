@@ -7,7 +7,7 @@
 
 # Accounting review
 
-**Work through your open accounting items, one category at a time.**
+**Work through your open accounting items by category.**
 
 ## What it does
 

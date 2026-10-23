@@ -7,7 +7,7 @@
 
 # First employer setup
 
-**Well reads your confirmed company, its public registry record and your accounting country, then lays out the one time employer setup list for that country, counted back from the start date you give, with the portal link, who to contact and your own company details written out for each step to copy.**
+**The one-time employer setup list for your company's country, counted back from your start date, with links and contacts.**
 
 ## What it does
 
