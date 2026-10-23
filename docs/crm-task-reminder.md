@@ -13,7 +13,7 @@
 
 Ask your AI assistant which Attio tasks are due, or turn on the morning reminder to get them on WhatsApp. The skill reads the tasks Well synced from Attio, drops the ones Attio marks completed, and keeps the open tasks whose due date is today or earlier. Overdue tasks come first, oldest first, then the tasks due today.
 
-Each task carries its text, its due date, its company when the task names one, and its Attio link when Attio sent one. Nothing is guessed: a task with no company named shows no company, and a task with no due date is counted, never placed on a day.
+Each task carries its title and due date. A task with no due date is counted, never placed on a day.
 
 The list is as fresh as the last Attio sync, and the message says so when that sync is older than a day. The skill reads only. It never completes, moves or creates a task, and it sends at most one reminder a day.
 

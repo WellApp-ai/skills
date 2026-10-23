@@ -13,13 +13,13 @@
 
 Ask Well to cancel, renegotiate or contest a subscription, and it starts from what your bank shows: the supplier's last debits, how often they come, and whether the amount moved. Every email quotes those facts, never a figure the bank does not hold.
 
-A cancellation leads with the notice date and the end of service, because a cancellation cannot be taken back. Those dates come only from a contract on file. With no contract, the answer says the notice date is unknown and asks you for the contract, and the email asks the supplier to confirm the end of service in writing. Because many suppliers also ask you to cancel from the account settings, the answer points to the supplier's own cancellation page when the assistant can search the web, and says so when it cannot.
+A cancellation leads with the notice date and the end of service, because a cancellation cannot be taken back. Those dates come only from a contract on file. With no contract, the answer says the notice date is unknown and asks you for the contract. Because many suppliers also ask you to cancel from the account settings, the answer points to the supplier's own cancellation page when the assistant can search the web, and says so when it cannot.
 
-A double debit is two debits to one supplier of the same amount, a few days apart. It is contested only when the bank shows them as two separate payments. While Well cannot tell two real purchases or one debit imported twice from a double charge, the pair stays marked to check: you get the contest email as a draft marked to check, and nothing is sent or started. Once confirmed, the email asks the supplier to check and refund the second debit, and the answer gives the bank route if the supplier does not: a refund request for a SEPA direct debit, marked to confirm because it depends on the mandate and on your bank agreement, or a card dispute with the bank that issued the card. A right is named only when your records show every fact it needs.
+A double debit is two debits to one supplier of the same amount, a few days apart. It is contested only when the bank shows them as two separate payments. Until then the pair stays marked to check: you get the contest email as a draft marked to check, and nothing is sent or started. Once confirmed, the email asks the supplier to check and refund the second debit, and the answer gives the bank route if the supplier does not, marked to confirm. A right is named only when your records show every fact it needs.
 
-A cancellation and a contest act on the supplier's own site first, through the Well browser extension in your own signed-in browser: Well gives you a link that you open on a computer with a Chromium-based browser and the extension, and the task runs once you click Open in the extension. The email to the supplier is the fallback, when the supplier has no site Well knows or the extension cannot be used. In Well's chat and on WhatsApp the email goes out from your Gmail only after you confirm it on the confirmation Well shows. In an outside AI assistant, you get the draft and send it from your own mail app.
+A cancellation and a contest act on the supplier's own site first, through the Well browser extension in your own signed-in browser: you open Well's link on a computer with the extension, and the task runs once you click Open in the extension. The email to the supplier is the fallback. In Well's chat and on WhatsApp it goes out from your Gmail only after you confirm it; in an outside AI assistant, you get the draft and send it yourself.
 
-With several workspaces, the skill works in rounds, one workspace at a time, the workspace that pays the most first, and each round names its workspace. When you answer a subscription recap with lead numbers, it shows the plan, biggest amount first, then acts on the leads you picked and on no other.
+With several workspaces, the skill works in rounds, the workspace that pays the most first. When you answer a subscription recap with lead numbers, it shows the plan, then acts on the leads you picked and on no other.
 
 ## Required data in Well
 
@@ -30,22 +30,19 @@ With several workspaces, the skill works in rounds, one workspace at a time, the
 ## FAQ
 
 **Q: Does it cancel the subscription for me?**
-A: When the Well browser extension can reach the supplier's site, yes: the extension cancels from the supplier's own site in your browser, once you open Well's link and start the task, and it hands the tab back to you for a sign-in or a payment step. Otherwise it writes the cancellation email to the supplier and, in Well's chat and on WhatsApp, sends it from your Gmail once you confirm. It does not stop the debit at your bank. When the assistant can search the web, it also gives the supplier's own cancellation page with its source and the steps that page states. Otherwise it says the supplier may require cancelling from your account settings.
+A: When the Well browser extension can reach the supplier's site, yes: it cancels from the supplier's own site in your browser once you open Well's link and start the task, and it hands the tab back to you for a sign-in or a payment step. Otherwise it writes the cancellation email and, in Well's chat and on WhatsApp, sends it from your Gmail once you confirm. It does not stop the debit at your bank. It also gives the supplier's own cancellation page with its source when it can search the web, else it says the supplier may require cancelling from your account settings.
 
 **Q: How does it know my notice date?**
 A: Only from a contract on file. Without one, it says the notice date is unknown and asks you for the contract. It never estimates a date from the payments.
 
 **Q: Is a double debit a sure claim?**
-A: Only when the bank shows the two debits as two separate payments. Two debits of the same amount a few days apart can be two real purchases or one debit imported twice. While Well cannot tell, the pair is marked to check, with both dates and amounts, and you get the contest email as a draft marked to check: nothing is sent. Once the two payments are confirmed, the contest asks the supplier to check and refund the second one.
+A: Only when the bank shows the two debits as two separate payments. Until then the pair is marked to check, with both dates and amounts, and you get the contest email as a draft marked to check: nothing is sent.
 
 **Q: Will I get my money back?**
 A: It never promises an amount or a result. It asks the supplier, and if the supplier does not refund, it gives the bank route that fits how the debit was paid. The supplier or the bank decides.
 
-**Q: Does it find a cheaper offer?**
-A: When the assistant can search the web, it quotes one comparable offer with its source. It never invents a price, and it never calls a lower price a saving before the supplier agrees.
-
 **Q: Does it send anything without me?**
-A: No. A task for the extension waits until you open Well's link and start it. An email is shown whole first; in Well's chat and on WhatsApp it is sent only after you confirm on the confirmation Well shows. In an outside AI assistant it gives you the draft to send yourself.
+A: No. A task for the extension waits until you open Well's link and start it. An email is shown whole first, and in Well's chat and on WhatsApp it is sent only after you confirm on the confirmation Well shows.
 
 ---
 
