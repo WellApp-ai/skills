@@ -15,13 +15,13 @@ Ask what a month has not booked yet and the useful answer is not one number. A t
 
 Both reads are capped. When a page fills, the count that comes back is a floor rather than the month's total, and the answer says so instead of quoting it as exact. When a read fails, the pile is unknown rather than clear, and the answer says that too: an empty list from a failed read is not an empty pile. Neither read totals an amount, and no aggregate groups the unposted set, so the skill states counts and leaves money out rather than adding up a page it already called a floor.
 
-It is a read from end to end. Each pile is drawn as its own card, and the card carries the picker that clears a row in place: a category on the uncategorized rows, a ledger account on the unposted rows, chosen from the chart the read returned. The skill itself categorizes nothing, posts nothing and closes nothing. For the supplier paperwork a month is still owed, ask for the missing invoices instead.
+The reads show each pile separately. The person makes each change. On WhatsApp, a short numbered list shows each uncategorized row's proposal. A valid number saves that proposal on the same row and confirms the category. An invalid number names the missing line and repeats the list. On web, the card carries the picker for each row. This skill posts nothing and closes nothing. For supplier paperwork a month is still owed, ask for the missing invoices instead.
 
 ## Required data in Well
 
 - **Bank connector** (required). The movements are what the two piles are read from. Without a bank behind the month there is nothing to check against the ledger.
 - **Accounting connector, or the chart Well seeds** (recommended). The unposted pile is only meaningful where a posting target exists. The read returns the chart a row can be assigned from, and says when that list came back short.
-- **A month the workspace can name** (required). The skill reads one complete month at a time, pinned from the period picker or from the month named in the question.
+- **A month for month-end questions** (recommended). Month-end questions use the period picker or a month named in the question. A categorize ask without a month uses the running month to date and skips the period picker.
 
 ## FAQ
 
@@ -41,7 +41,7 @@ A: Not as a pile of its own. It reads transactions, so a payslip that never reac
 A: Only when the read succeeded and the page did not fill. A page that filled means more rows exist and the count is a floor. A read that failed means the pile is unknown, and the answer says so rather than reporting it clear.
 
 **Q: Does it categorize or post anything?**
-A: No. Every tool it calls is a read. The cards carry the pickers, so a row is cleared on the card by the person looking at it, not by this skill.
+A: The first answer reads the worklists. When you pick a category on a card, a WhatsApp list, or the categorize page, Well saves that choice on the row. Well then confirms the saved category. The skill does not post or close anything.
 
 ---
 

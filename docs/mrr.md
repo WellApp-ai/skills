@@ -11,11 +11,11 @@
 
 ## What it does
 
-Ask your AI assistant what your MRR is. When Well has live typed sold subscriptions, it reports their server-calculated monthly run-rate, totals each currency separately, names each client, and can list the 12 newest invoices linked to one subscription, with the full count when more exist. Rows with missing or impossible amounts stay out of the figure and are named. A failed latest sync is reported with the last successful sync date. This path is text only and does not convert currencies.
+Ask your AI assistant what your MRR is. When Well has live typed sold subscriptions, it reports their server-calculated monthly run-rate and totals each currency separately. It gives client details only when asked and can list the 12 newest invoices linked to one subscription, with the full count when more exist. Rows with missing or impossible amounts stay out of the figure and are named. A failed latest sync is reported with the last successful sync date. This path is text only and does not convert currencies.
 
-If there are no live typed sold subscriptions, the skill follows the invoice path. It reports the trailing average of revenue you invoiced under the billing contexts you count as recurring — purchase invoices excluded structurally, credit notes netted, currencies converted, and every month in the window counted in the divisor. Each invoice check runs in the open: the connection, whether syncs finished, and which company is yours. A failed check stops and shows what to fix instead of adding a caveat to a figure.
+If Well holds no live sold subscriptions, the skill works from your invoices instead. It reports the trailing average of revenue you invoiced under the billing contexts you count as recurring — purchase invoices excluded structurally, credit notes netted, currencies converted, and every month in the window counted in the divisor. Each invoice check runs in the open: the connection, whether syncs finished, and which company is yours. A failed check stops and shows what to fix instead of adding a caveat to a figure.
 
-On the invoice path, you choose what counts. Nothing is recurring by default: the skill shows you each billing context with the revenue behind it, and you decide which ones your business treats as recurring. The revenue that carries no billing context at all is one more choice, with its amount: if you only bill subscriptions, you can count it.
+On the invoice average, you choose what counts. Nothing is recurring by default: the skill shows you each billing context with the revenue behind it, and you decide which ones your business treats as recurring. The revenue that carries no billing context at all is one more choice, with its amount: if you only bill subscriptions, you can count it.
 
 ## Required data in Well
 
