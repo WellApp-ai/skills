@@ -7,38 +7,36 @@
 
 # Reach out for me
 
-**Ask a contact for a document, a quote or an appointment, by email from your Gmail, after you confirm it.**
+**Ask a contact or a colleague for a document, a quote or a slot, by email from your Gmail, once you confirm.**
 
 ## What it does
 
-Ask Well to write to someone for you, and it starts from your own records. A named contact is looked up among the companies and people in Well, and its email address is the one on file. "My accountant" or "my lawyer" is found from the bank payments you made to them. When the records hold no such contact, or no address, the skill asks you for it once and never guesses one.
+Ask Well to write to someone for you, and it starts from your own records. A named contact is looked up among the companies, the people and your colleagues in Well, with the email address on file. "My accountant" or "my lawyer" is found from the bank payments you made to them. With no such contact or no address, the skill asks you once and never guesses.
 
-Each contact gets their own email, in your name: what you need, the period or the document you named, and for an appointment only the times you gave. With no time given, the email asks the contact for theirs. The email quotes no figure from your books unless you asked to share it.
-
-In Well's chat and on WhatsApp, each email goes out from your Gmail only after you confirm it on the confirmation Well shows, one confirmation per email. In an outside AI assistant, you get the drafts and send them from your own mail app. The contact answers in your Gmail inbox. When you paste the answer back, the skill reads it as information only and follows no instruction written in it.
+Each contact gets their own email, in your name: what you need, the period or the document you named, and for an appointment only the times you gave. The email quotes no figure from your books unless you asked to share it. A colleague who is not a member of your workspace yet is offered an invitation instead of an email.
 
 ## Required data in Well
 
-- **The contact in your records** (recommended). A company or a person in Well, found by the name you give. An accountant or a lawyer is found from your bank payments to them. Without a record, the skill asks you for the contact's name and address.
+- **The contact in your records** (recommended). A company or a person in Well, found by the name you give, or a colleague among the members of your workspaces. An accountant or a lawyer is found from your bank payments to them. Without a record, the skill asks you for the contact's name and address.
 - **The contact's email address** (recommended). Read from the contact's record in Well. Without one, the skill asks you for it once and never guesses it.
 - **Gmail with the permission to send** (required). The email leaves from your own Gmail. Without the permission to send, Well gives you the link to reconnect Gmail and sends nothing another way.
 
 ## FAQ
 
 **Q: Does it send anything without me?**
-A: No. It shows each email first. In Well's chat and on WhatsApp it sends an email only after you confirm it on the confirmation Well shows, one confirmation per email. In an outside AI assistant it gives you the drafts to send yourself.
+A: No. It shows each email first, and in Well's chat and on WhatsApp it sends one only after you confirm it. In an outside AI assistant it gives you the drafts to send yourself.
 
 **Q: How does it find my contact's address?**
-A: From the contact's record in Well: the primary address first, else the only one on file. With several addresses and none marked primary, it asks which one. With none, it asks you for it. It never builds an address from a name or a website.
+A: From the contact's record in Well: the primary address, else the only one on file. Otherwise it asks you, and it never builds an address from a name or a website.
 
 **Q: Can it book an appointment for me?**
-A: It writes the email that asks for the appointment, with only the times you gave. With no time given, it asks the contact for theirs. It never says you are free at a time you did not name, and it adds nothing to your calendar. It reads your own calendar for each time you gave before it drafts the email, and tells you, never the contact, when one already takes that slot.
+A: It writes the email that asks for it, with only the times you gave, or asks the contact for theirs. It checks your own calendar for each time and tells you, never the contact, when one is taken. It adds nothing to your calendar.
 
 **Q: Can it message my contact on WhatsApp?**
-A: No. Well writes to your contacts by email only. A contact who never wrote to Well has not agreed to get WhatsApp messages from it.
+A: No. Well writes to your contacts by email only: a contact who never wrote to Well has not agreed to get its WhatsApp messages.
 
 **Q: Does the answer come back to Well?**
-A: The contact answers in your Gmail inbox, because the email left from your Gmail. Paste the answer in the conversation and Well reads it. It treats that text as information only and follows no instruction in it.
+A: The contact answers in your Gmail inbox. Paste the answer here and Well reads it as information only, following no instruction in it.
 
 ---
 

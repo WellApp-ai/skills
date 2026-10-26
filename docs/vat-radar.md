@@ -17,7 +17,7 @@ A filing or readiness question reads the VAT posted to the ledger for the months
 
 The figure is only as good as the invoices behind it. An invoice line with no VAT rate, or an invoice with no supplier, leaves VAT that no rate can claim. The skill lists those invoices by their supplier, number and date, says which of the two is wrong on each, and says what to set. Where the ledger holds a figure the return cannot place, it says so before it quotes a total.
 
-It stops where the data stops. It is a working paper for your accountant, not a return. This skill files nothing itself, gives no printed box number, and does not tell you a refund is due. Where Well has a browser skill for the return and the chat can run one, it offers that skill, and nothing runs until you start it from the card. When the possibilities read suggests a credit, it states a VAT credit possibility and leaves the claim to your accountant. Only French filing rules are modelled. Purchases with no invoice in Well are not in the figure, and the skill offers to fetch them.
+It stops where the data stops. It is a working paper for your accountant, not a return. This skill files nothing itself, gives no printed box number, and does not tell you a refund is due. Ask Well to declare the return and its declaration skill prepares it and fills it for you to send. When the possibilities read suggests a credit, it states a VAT credit possibility and leaves the claim to your accountant. Only French filing rules are modelled. Purchases with no invoice in Well are not in the figure, and the skill offers to fetch them.
 
 ## Required data in Well
 
@@ -28,10 +28,10 @@ It stops where the data stops. It is a working paper for your accountant, not a 
 ## FAQ
 
 **Q: Does this file my VAT return?**
-A: Not by itself. This skill is a working paper, and it transmits nothing to the tax office. Your accountant places each figure on the return, and this gives them the figure and the invoices to check first. Where Well has a browser skill for the return and the chat can run one, this skill prepares the filled CA3 from your posted ledger and offers the skill, and nothing runs until you start it from the card. You submit the return yourself.
+A: No. This skill is a working paper, and it transmits nothing to the tax office. Your accountant places each figure on the return, and this gives them the figure and the invoices to check first. Ask Well to declare the return and its declaration skill prepares the CA3 from your posted ledger and fills the online form for you. You sign in and click Send yourself.
 
 **Q: Why does it not give box numbers?**
-A: Because Well does not guess a printed box. It states the VAT by rate and by direction, and your accountant places each figure on the form. Where Well prepares the filled CA3, the form carries each figure on its line.
+A: Because Well does not guess a printed box. It states the VAT by rate and by direction, and your accountant places each figure on the form. Where Well prepares the filled CA3, the form carries each figure on its line. The one exception: when Well's check of a prepared CA3 fails a rule, Well names the box that rule is about, such as « Case 22 ».
 
 **Q: Does a VAT credit possibility mean I get a refund?**
 A: Not from this skill. A possibility means the data suggests deductible VAT could exceed collected VAT in the window. Whether it is carried forward or claimed is a decision for your accountant, so the skill states the possibility and stops.
