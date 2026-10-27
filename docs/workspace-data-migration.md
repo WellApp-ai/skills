@@ -7,23 +7,23 @@
 
 # Bring a connector across
 
-**Bring a connected bank across from the signup workspace instead of connecting it again.**
+**Move a connected bank from the signup workspace instead of connecting it again.**
 
 ## What it does
 
-Sign-up mints a membership workspace with no own company; a bank connected there lands its transactions on a workspace that cannot post them. When the close later runs in the company workspace, this skill offers to bring that connector across rather than connect it again: a second connector row is minted here that borrows the original's credentials and syncs from a fresh cursor, so the history follows without moving a single transaction.
+Sign-up mints a membership workspace with no own company; a bank connected there lands its transactions on a workspace that cannot post them. When the close later runs in the company workspace, this skill offers to move that connection here rather than connect it again: the connection and every transaction it synced change workspace, and the next sync runs here, so the history is never pulled twice and cash counts once.
 
 It draws a card of the connectors that could follow — each graded by how strongly its account holder was proved to be this company, the strong matches pre-ticked — and brings across only the ones you confirm. Keep for later brings nothing across; the close then asks you to connect a bank instead, and the offer returns on the next close.
 
 ## Required data in Well
 
 - **A company Well workspace** (required). The connectors follow the workspace this card is drawn on.
-- **Owner or admin rights** (required). Borrowing the parent's credentials is an owner/admin action, and the acting person must also hold a membership on the parent workspace.
+- **Owner or admin rights** (required). Moving a connection is an owner/admin action on both the personal workspace it leaves and the company workspace it joins.
 
 ## FAQ
 
 **Q: Does this move my transactions?**
-A: No. A new connector row is created on this workspace that borrows the original's credentials; the history arrives with its first sync. Nothing is moved off the parent workspace.
+A: Yes. The connection and the transactions it already synced move to this workspace together, so nothing is synced twice. The personal workspace no longer shows them.
 
 **Q: What if I decline?**
 A: Keep for later brings nothing across and the close continues to connect a bank. The offer returns on the next close.

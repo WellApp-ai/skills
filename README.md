@@ -144,7 +144,7 @@ Ask for any of these by name. Several are setup steps another skill invokes on i
 | `unposted-and-blocked` | See what in a month has not reached the ledger, and which pile each item sits in. | [View details →](docs/unposted-and-blocked.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/unposted-and-blocked.skill) |
 | `vat-radar` | See the VAT position your data suggests for a quarter, and which invoices to fix first. | [View details →](docs/vat-radar.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/vat-radar.skill) |
 | `whats-next` | Five things worth doing next in this workspace, each one a click that starts it. | [View details →](docs/whats-next.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/whats-next.skill) |
-| `workspace-data-migration` | Bring a connected bank across from the signup workspace instead of connecting it again. | [View details →](docs/workspace-data-migration.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/workspace-data-migration.skill) |
+| `workspace-data-migration` | Move a connected bank from the signup workspace instead of connecting it again. | [View details →](docs/workspace-data-migration.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/workspace-data-migration.skill) |
 
 The Claude Desktop column is a one-file download: open it and Desktop installs the skill. Nothing to unzip, and it never needs updating.
 
