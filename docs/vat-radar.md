@@ -23,7 +23,7 @@ It stops where the data stops. It is a working paper for your accountant, not a 
 
 - **Ledger entries and VAT-bearing documents** (required). A position question reads draft, validated and locked ledger entries plus supplier and customer documents. A filing or readiness question reads the posted basis, or the same entries and documents when nothing is posted. When neither source states VAT, the read says so instead of reporting nil.
 - **A French accounting country** (recommended). The posted filing basis is modelled for France only. A workspace in another country, or with none, still gets the position the read returns (the possibilities basis reads without a country and places purchases in the to-check class), with one line that VAT filing for that country is not mapped in Well.
-- **Invoices behind the spend** (recommended). Deductible VAT comes from invoices. Spend with no invoice in Well adds no deductible VAT, so the net due reads higher than it will once those invoices arrive.
+- **Invoices behind the spend** (recommended). Deductible VAT comes from invoices. Spend with no invoice in Well adds no deductible VAT, so the net due reads higher than it will once those invoices arrive. A connected bank shows that spend.
 
 ## FAQ
 
