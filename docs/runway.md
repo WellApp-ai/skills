@@ -24,7 +24,7 @@ Neither side is handed over by a server. Well reads your balances and sums your 
 ## FAQ
 
 **Q: How is burn calculated?**
-A: As a trailing average over the last 3 full months by default, so a single unusual month cannot distort the figure. You can ask for a different window, and the runway is recomputed from that same window.
+A: As a trailing average over the last 3 full months by default, so a single unusual month cannot distort the figure. The burn is net: the recurring inflow the bank measured for the last full month is taken off that average outflow. You can ask for a different window, and the runway is recomputed from that same window.
 
 **Q: Is this a forecast?**
 A: No. Runway is computed from real balances and real trailing spend. Nothing is modelled or predicted, and the skill shows the arithmetic it used.

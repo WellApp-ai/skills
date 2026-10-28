@@ -20,7 +20,7 @@ On the invoice average, you choose what counts. Nothing is recurring by default:
 ## Required data in Well
 
 - **Invoicing or accounting connector** (required). This is where your issued customer invoices come from.
-- **Company profile confirmed in Well** (required). The reader needs to know which company is yours, so it can tell the subscriptions you sell from the ones you buy, and the invoices you issued from the bills you received.
+- **Company identity proved in Well** (required). An anchor, a books confirmation, or a connected account holder can prove which companies are yours. Without that read-side proof, the reader asks you to confirm a company before it separates sales from purchases.
 
 ## FAQ
 
