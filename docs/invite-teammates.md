@@ -11,7 +11,7 @@
 
 ## What it does
 
-Ask to add a teammate and this skill reads who you can invite, shows Well's invite card, and sends the invitations. Out of the box the card offers the people Well detected: the ones who share the workspace owner's corporate email domain and hold no membership yet. A close-books or fetch-missing-invoices flow can hand it a specific set of people instead — the owners it just assigned — so anyone still waiting on an invitation can open their task. Each card row carries a checkbox and a state chip (`has access` or `invited`), and the card adds a contact search with email chips, a role select (admin or member), and a target picker (this workspace or a workspace group). Ticking who to invite, picking a role and a target, and clicking Send invitations creates the memberships and sends the invitation emails. Several invitations go in one send, each address reports its own result, and an address that already has access is refused rather than downgraded. It invites people only — it assigns no work and sets no accounting data.
+Ask to add a teammate and this skill reads who you can invite, shows Well's invite card, and sends the invitations. Out of the box the card offers the people Well detected who hold no membership yet. When the workspace owner is on a corporate email domain, they are the people who share it; when the owner is on a personal address, they are the people Well has seen in several of the workspace's connected tools. A close-books or fetch-missing-invoices flow can hand it a specific set of people instead — the owners it just assigned — so anyone still waiting on an invitation can open their task. Each card row carries a checkbox and a state chip (`has access` or `invited`), and the card adds a contact search with email chips, a role select (admin or member), and a target picker (this workspace or a workspace group). Ticking who to invite, picking a role and a target, and clicking Send invitations creates the memberships and sends the invitation emails. Several invitations go in one send, each address reports its own result, and an address that already has access is refused rather than downgraded. It invites people only — it assigns no work and sets no accounting data.
 
 ## Required data in Well
 
@@ -20,7 +20,7 @@ Ask to add a teammate and this skill reads who you can invite, shows Well's invi
 ## FAQ
 
 **Q: Who does it offer by default?**
-A: The people who share the workspace owner's email domain and hold no membership yet. A calling flow can hand it a specific set instead.
+A: When the workspace owner is on a corporate email domain, the people who share it and hold no membership yet. When the owner is on a personal address, the people Well has seen in several of the workspace's connected tools who hold no membership yet. A calling flow can hand it a specific set instead.
 
 **Q: What happens to someone who already has access?**
 A: They are left off the send. An invitation that is only pending is re-issued instead, which is what lets that person in.
