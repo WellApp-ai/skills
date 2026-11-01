@@ -17,7 +17,7 @@ A cancellation leads with the notice date and the end of service, because a canc
 
 A double debit is two debits to one supplier of the same amount, a few days apart. It is contested only when the bank shows them as two separate payments. Until then the pair stays marked to check: you get the contest email as a draft marked to check, and nothing is sent or started. Once confirmed, the email asks the supplier to check and refund the second debit, and the answer gives the bank route if the supplier does not, marked to confirm. A right is named only when your records show every fact it needs.
 
-A cancellation and a contest act on the supplier's own site first, through the Well browser extension in your own signed-in browser: you open Well's link on a computer with the extension, and the task runs once you click Open in the extension. The email to the supplier is the fallback. In Well's chat and on WhatsApp it goes out from your Gmail only after you confirm it; in an outside AI assistant, you get the draft and send it yourself.
+A cancellation and a contest act on the supplier's own site first, through the Well extension in your own signed-in browser: you open Well's link on a computer with the extension, and the task runs once you click Open in the extension. The email to the supplier is the fallback. In Well's chat and on WhatsApp it goes out from your Gmail only after you confirm it; in an outside AI assistant, you get the draft and send it yourself.
 
 With several workspaces, the skill works in rounds, the workspace that pays the most first. When you answer a subscription recap with lead numbers, it shows the plan, then acts on the leads you picked and on no other.
 
@@ -30,7 +30,7 @@ With several workspaces, the skill works in rounds, the workspace that pays the 
 ## FAQ
 
 **Q: Does it cancel the subscription for me?**
-A: When the Well browser extension can reach the supplier's site, yes: it cancels from the supplier's own site in your browser once you open Well's link and start the task, and it hands the tab back to you for a sign-in or a payment step. Otherwise it writes the cancellation email and, in Well's chat and on WhatsApp, sends it from your Gmail once you confirm. It does not stop the debit at your bank. It also gives the supplier's own cancellation page with its source when it can search the web, else it says the supplier may require cancelling from your account settings.
+A: When the Well extension can reach the supplier's site, yes: it cancels from the supplier's own site in your browser once you open Well's link and start the task, and it hands the tab back to you for a sign-in or a payment step. Otherwise it writes the cancellation email and, in Well's chat and on WhatsApp, sends it from your Gmail once you confirm. It does not stop the debit at your bank. It also gives the supplier's own cancellation page with its source when it can search the web, else it says the supplier may require cancelling from your account settings.
 
 **Q: How does it know my notice date?**
 A: Only from a contract on file. Without one, it says the notice date is unknown and asks you for the contract. It never estimates a date from the payments.

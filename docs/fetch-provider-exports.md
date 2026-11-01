@@ -11,11 +11,11 @@
 
 ## What it does
 
-A connector is the best way to get a provider's data into Well, and some providers do not offer one. Gusto, for example, gives its API only to approved partners. The data is still yours, and the provider's web app still lets you export it: a payroll journal, an employee roster, time off balances, as CSV files. This skill does those exports for you. It shows a card with the provider and every file Well can fetch from it. When you click Deploy, Well opens a page that asks you to confirm, and the Well browser extension then opens the provider in a new tab. Its agent works the site the way you would: for each file it finds the report, picks the range and the format, and starts the download. A file your account does not have, such as contractor payments when you have no contractors, is skipped with the reason. The run uses your browser and your session, so Well never holds your provider password. When a login or a two-factor code stands in the way, the agent hands the tab back to you. The files stay in your downloads, and Well also files a copy of each in the workspace you chose.
+A connector is the best way to get a provider's data into Well, and some providers do not offer one. Gusto, for example, gives its API only to approved partners. The data is still yours, and the provider's web app still lets you export it: a payroll journal, an employee roster, time off balances, as CSV files. This skill does those exports for you. It shows a card with the provider and every file Well can fetch from it. When you click Deploy, Well opens a page that asks you to confirm, and the Well extension then opens the provider in a new tab. Its agent works the site the way you would: for each file it finds the report, picks the range and the format, and starts the download. A file your account does not have, such as contractor payments when you have no contractors, is skipped with the reason. The run uses your browser and your session, so Well never holds your provider password. When a login or a two-factor code stands in the way, the agent hands the tab back to you. The files stay in your downloads, and Well also files a copy of each in the workspace you chose.
 
 ## Required data in Well
 
-- **The Well browser extension** (required). The download happens in your browser, through the extension, in your own signed-in session with the provider.
+- **The Well extension** (required). The download happens in your browser, through the extension, in your own signed-in session with the provider.
 - **A provider account** (required). You must be able to sign in to the provider in the same browser. The agent never types a password; it hands the tab back to you for the login.
 
 ## FAQ

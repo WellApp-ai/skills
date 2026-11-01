@@ -24,6 +24,7 @@
     "./skills/assign-missing-invoices",
     "./skills/avg-burn",
     "./skills/bills-due",
+    "./skills/board-from-photo",
     "./skills/board-pack",
     "./skills/calculate-hours",
     "./skills/call-and-claim",

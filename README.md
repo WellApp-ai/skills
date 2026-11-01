@@ -60,6 +60,7 @@ Ask for any of these by name. Several are setup steps another skill invokes on i
 | `assign-missing-invoices` | Put a name on every settled expense that still has no invoice. | [View details →](docs/assign-missing-invoices.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/assign-missing-invoices.skill) |
 | `avg-burn` | Know what you spend in an average month over a window you can see, with the months that carried no spend counted. | [View details →](docs/avg-burn.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/avg-burn.skill) |
 | `bills-due` | See what you owe and when, ordered by due date with a running total. | [View details →](docs/bills-due.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/bills-due.skill) |
+| `board-from-photo` | Send a dashboard picture, get the same board in Well's own figures. | [View details →](docs/board-from-photo.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/board-from-photo.skill) |
 | `board-pack` | The board numbers in one pass, each with its scope and its window stated. | [View details →](docs/board-pack.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/board-pack.skill) |
 | `calculate-hours` | Send a photo of paper time cards and get hours per person and pay at the rate Well holds, not a payslip. | [View details →](docs/calculate-hours.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/calculate-hours.skill) |
 | `call-and-claim` | Claim a refund or a compensation with the evidence in hand, and know what to say when you call. | [View details →](docs/call-and-claim.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/call-and-claim.skill) |
@@ -190,6 +191,7 @@ Install the following official skills from Well. Instructions:
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/assign-missing-invoices/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/avg-burn/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/bills-due/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/board-from-photo/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/board-pack/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/calculate-hours/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/call-and-claim/SKILL.md
