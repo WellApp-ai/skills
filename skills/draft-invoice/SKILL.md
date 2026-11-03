@@ -1,6 +1,6 @@
 ---
 name: "draft-invoice"
-description: "Draft invoices from plain chat requests and prepare them for review. Use to draft, create or send a new invoice, as in \"draft an invoice for a client\", \"bill [client] for [work]\", \"invoice [client] [amount]\", or \"fais une facture à [client]\". This is a WRITE flow. On WhatsApp, create and define an unmatched named customer, then save its draft; several matches need a numbered pick. Elsewhere, a first yes saves the draft. Issue on its own yes, or in a complete WhatsApp order when nothing blocks it. Needs a connected Well workspace."
+description: "Draft invoices from plain chat requests and prepare them for review. Use to draft, create or send a new invoice, as in \"draft an invoice for a client\", \"bill [client] for [work]\", \"invoice [client] [amount]\", or \"fais une facture à [client]\". This is a WRITE flow. On WhatsApp, create and define an unmatched named customer, then save its draft; several matches need a numbered pick. Elsewhere, a first yes saves the draft. Issue only on its own later yes; on WhatsApp the turn that saves a draft never issues it, even when the request says to issue it. Needs a connected Well workspace."
 license: PolyForm-Perimeter-1.0.0
 ---
 
