@@ -1,6 +1,6 @@
 ---
 name: "export-to-accounting-tool"
-description: "Send a closed period's native journal entries to the workspace's connected accounting tool, on a card the user confirms. Use it as the last step of a close, once the period has reached `period_closed`: it reads whether a write-capable accounting connector is present and whether its grant can post, draws the export card when it can, and hands back `resolution: exported | nothing_to_send | no_tool | failed`. Never call it before the period is closed — the underlying write refuses on any earlier checkpoint. Requires a connected Well workspace; the accounting connection and its write scope are read, never assumed."
+description: "Send a closed period's native journal entries to the workspace's connected accounting tool, on a card the user confirms. Use it right after the lock of a close, once the period has reached `period_closed`: it reads whether a write-capable accounting connector is present and whether its grant can post, draws the export card when it can, and hands back `resolution: exported | nothing_to_send | no_tool | failed`. Never call it before the period is closed — the underlying write refuses on any earlier checkpoint. Requires a connected Well workspace; the accounting connection and its write scope are read, never assumed."
 license: PolyForm-Perimeter-1.0.0
 ---
 
