@@ -18,7 +18,7 @@ Well places the side of each invoice on the server, never from a party name. Whe
 ## Required data in Well
 
 - **Invoicing or accounting connector** (required). This is where the invoices your workspace issued, and the customers they were addressed to, come from.
-- **A period to rank** (optional). Name a month or a date range, or take the default, which is the last complete calendar month.
+- **A period to rank** (optional). Name a month, a date range or a stretch such as the last 12 months, and that window is the one ranked. With none named, the default is the last complete calendar month.
 
 ## FAQ
 

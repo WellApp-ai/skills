@@ -7,7 +7,7 @@
 
 # Missing invoice sweep
 
-**Walk the whole month-end sweep in one prompt.**
+**Get the invoices missing for a month, from Gmail, supplier portals and the bank feed.**
 
 ## What it does
 
