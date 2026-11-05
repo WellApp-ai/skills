@@ -11,11 +11,11 @@
 
 ## What it does
 
-Coming back to a finance workspace after days away means rebuilding a picture in your head: something synced, something failed, a month sits open, a supplier still owes you an invoice. The tools never put it in front of you.
+Coming back to a finance workspace after days away means rebuilding a picture in your head: something synced, something failed, a month is not closed yet, a supplier still owes you an invoice. The tools never put it in front of you.
 
 Ask your assistant what happened since last time and get the whole picture in one turn: what landed and which connector brought it, what failed and needs you, and where the workspace stands today. Every figure is exactly what Well returned, dated in your workspace's own time zone.
 
-The five next steps that close the turn are ranked by Well, not the assistant: the gaps blocking your books come first, then the open month's close, then the questions worth asking once the data holds. A skill you ran today is left off the list. Click one and it starts. For the same five steps without the recap, see [`whats-next`](whats-next.md).
+The five next steps that close the turn are ranked by Well, not the assistant: the gaps blocking your books come first, then closing the month to work on, then the questions worth asking once the data holds. A skill you ran today is left off the list. Click one and it starts. For the same five steps without the recap, see [`whats-next`](whats-next.md).
 
 ## Required data in Well
 
@@ -28,7 +28,7 @@ The five next steps that close the turn are ranked by Well, not the assistant: t
 A: In the Well app it opens every new conversation. In Claude it runs when you ask what happened since last time, or when a flow closes on its next steps.
 
 **Q: Where do the five next steps come from?**
-A: Well ranks them on the server from the workspace's gaps: skills that add data first, then the open month's close, then analysis. A skill you ran in the last day is left out. The assistant draws them and starts the one you click.
+A: Well ranks them on the server from the workspace's gaps: skills that add data first, then closing the month to work on, then analysis. A skill you ran in the last day is left out. The assistant draws them and starts the one you click.
 
 **Q: Does reading the recap change anything?**
 A: It advances your read cursor, the same one the app's activity feed uses, so the next recap starts where this one ended.
