@@ -7,7 +7,7 @@
 
 # Subscription actions
 
-**Act on a subscription you name or pick by number from a list: cancel, renegotiate or contest a double debit.**
+**Act on a subscription you name or pick by number: cancel, renegotiate or contest a double debit.**
 
 ## What it does
 
@@ -19,7 +19,7 @@ A double debit is two debits to one supplier of the same amount, a few days apar
 
 A cancellation and a contest act on the supplier's own site first, through the Well extension in your own signed-in browser: you open Well's link on a computer with the extension, and the task runs once you click Open in the extension. The email to the supplier is the fallback. In Well's chat and on WhatsApp it goes out from your Gmail only after you confirm it; in an outside AI assistant, you get the draft and send it yourself.
 
-With several workspaces, the skill works in rounds, the workspace that pays the most first. When you answer a subscription recap with lead numbers, it shows the plan, then acts on the leads you picked and on no other.
+With several workspaces, Well's chat works in rounds, the workspace that pays the most first; on WhatsApp every action runs in its own workspace in the same turn. When you answer a subscription recap with lead numbers, it shows the plan, then acts on the leads you picked and on no other.
 
 ## Required data in Well
 

@@ -7,7 +7,7 @@
 
 # Signing back
 
-**Get your morning brief or a recap: what matters today for the company, what changed, and what to do next.**
+**Get your morning brief or a recap: what matters today, what changed, and what to do next.**
 
 ## What it does
 

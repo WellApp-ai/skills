@@ -7,7 +7,7 @@
 
 # Recurring revenue
 
-**See the monthly run-rate of live subscriptions, or an invoice average when no typed subscriptions are present.**
+**See the monthly run-rate of live subscriptions, or an invoice average when none are typed.**
 
 ## What it does
 

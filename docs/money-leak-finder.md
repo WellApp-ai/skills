@@ -7,7 +7,7 @@
 
 # Money leak finder
 
-**Find the double charges and price rises in your bank debits, each with the dates and amounts your bank shows.**
+**Find double charges and price rises in your bank debits, each with the dates and amounts.**
 
 ## What it does
 

@@ -7,7 +7,7 @@
 
 # Subscription spend
 
-**See what each scheduled supplier costs a month and a year, how it moved, and where your workspaces can save.**
+**See what each scheduled supplier costs a month and a year, how it moved, and where to save.**
 
 ## What it does
 

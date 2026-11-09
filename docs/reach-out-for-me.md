@@ -7,7 +7,7 @@
 
 # Reach out for me
 
-**Ask a contact or a colleague for a document, a quote or a slot, by email from your Gmail, once you confirm.**
+**Ask a contact or a colleague for a document, a quote or a slot by Gmail, once you confirm.**
 
 ## What it does
 

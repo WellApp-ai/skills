@@ -7,7 +7,7 @@
 
 # Chase late invoices
 
-**Get a prioritized list of who to chase for payment, with their contact info and a message already drafted.**
+**Get a ranked list of who to chase for payment, with contact info and a message drafted.**
 
 ## What it does
 

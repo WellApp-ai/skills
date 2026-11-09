@@ -15,11 +15,11 @@ A board in Well stores a QUESTION, not an answer. Each block carries the feed it
 
 That is what makes a board safe to keep, and it is also why opening one is real work. This skill does that work: it reads the board, runs each block's own measure over that block's own window, and draws the result.
 
-The measures are not recomputed here in some shortcut form. A cash position is the cash position skill's answer, under its rules about which accounts count. An average burn is the burn skill's answer, under its rules about which months are finished. Reading a board is the same set of answers you would get by asking for each measure one at a time, laid out the way you arranged them.
+The measures are not recomputed here in some shortcut form. A cash position is the cash position skill's answer, under its rules about which accounts count. Reading a board is the same set of answers you would get by asking for each measure one at a time.
 
 No figure is written back. Open the same board tomorrow and every figure on it is tomorrow's, which is why no block on it carries a date: there is no stored number for a date to qualify. What the board keeps is your answer to each choice card, such as which accounts count as cash, so it asks again only when a new option appears.
 
-Each measure runs its own checks, the same ones it runs when you ask for that figure alone, and each measure's own skill states them. A check that fails shows you what to fix, and the run carries on once it is fixed. The board is drawn only when every block on it is measured, so it never shows a block with a hole where its figure should be.
+Each measure runs its own checks, the same ones it runs when you ask for that figure alone. A check that fails shows you what to fix, and the run carries on once it is fixed. The board is drawn only when every block on it is measured.
 
 ## Required data in Well
 

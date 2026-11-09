@@ -13,7 +13,7 @@
 
 You've just been shown the transactions with no invoice attached. The obvious next question is "so go get them" — and the answer starts with a preview. This skill takes the vendors you picked, groups them into the agents Well would run — one per provider, with the counterparties and the number of transactions behind each — and writes it out in your language, one line per agent, plus the rows only you can upload by hand and the providers still waiting to be connected. Nothing is queued yet: no agent has run, no task is queued, no browser session is open.
 
-Then it hands the vendors over. The preview card gives a checkbox to each vendor. Tick the ones to chase, and the card's **Deploy** action creates the durable fetch tasks and opens the collect link that starts the runs — nothing is queued until that click. The Well extension collects from the link, and the extension's side panel is where a run is reported. This skill is the last brick of Well's fetch-missing-invoices flow: read the plan first, then queue and hand off the link.
+Then it hands the vendors over. The preview card gives a checkbox to each vendor. Tick the ones to chase, and the card's **Deploy** action starts the fetch: one browser task per supplier, in your Chrome when its Well extension runs browser tasks, else in a Well cloud browser. Nothing starts until that click, and no page opens. Well sends what each task finds. This skill is the last brick of Well's fetch-missing-invoices flow: read the plan first, then start the fetch.
 
 ## Required data in Well
 
@@ -23,13 +23,13 @@ Then it hands the vendors over. The preview card gives a checkbox to each vendor
 ## FAQ
 
 **Q: Does the chat collect the invoices?**
-A: No. The chat only previews. The collecting happens in the Well app, through the browser extension, and only after you start it on that page.
+A: The chat previews first. The fetch starts only on your Deploy click: Well runs one browser task per supplier, in your Chrome or in a Well cloud browser, and sends what each one finds.
 
 **Q: What about vendors with no agent?**
 A: They are listed with the reason, either connect the provider or upload it by hand. They are never silently dropped from the count.
 
 **Q: Can I pick a subset?**
-A: Yes. Every vendor the preview names has its own checkbox, and only the ones you tick are handed over.
+A: Yes. Every vendor the preview names has its own checkbox, and only the ones you tick are fetched.
 
 ---
 

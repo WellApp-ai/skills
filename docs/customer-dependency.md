@@ -7,7 +7,7 @@
 
 # Customer Dependency
 
-**See how much of your revenue rides on a few customers, and what a late or lost one does to your cash.**
+**See how much revenue rides on a few customers, and what a late or lost one does to your cash.**
 
 ## What it does
 

@@ -7,7 +7,7 @@
 
 # Revenue by customer
 
-**See how much each customer billed in a period, ranked by revenue, with the part you could not place named.**
+**See what each customer billed in a period, ranked by revenue, with the part you could not place named.**
 
 ## What it does
 
