@@ -11,23 +11,21 @@
 
 ## What it does
 
-A sales review puts four questions side by side: which deals you won, which you lost, which customers carry your billing, and who is late paying you.
+Deals come from Well, counted by the day they closed, and from a connected Pipedrive, read live and counted by the day each was won or lost. Well stores no lost reason, so the review says it is not recorded; a Pipedrive deal shows its own. Customers are ranked on invoices you issued, before tax, each currency apart. Late payers come from your unpaid invoices past their due date.
 
-Deals come from the deals held in Well, counted by the day they closed. Well stores no reason for a lost deal, so the review says the reason is not recorded and never invents one. Customers are ranked on invoices you issued, before tax, and each currency keeps its own total. Late payers come from your unpaid invoices past their due date.
-
-It reads only. It changes nothing in Well or in your CRM and sends nothing.
+It only reads: it changes nothing in Well or your CRM and sends nothing.
 
 ## Required data in Well
 
-- **Invoicing tool** (recommended). The invoices you issued give the largest customers with their share, and the unpaid ones give the late payers.
+- **Invoicing tool** (recommended). Issued invoices rank your largest customers, and unpaid ones give the late payers.
 
 ## FAQ
 
 **Q: Does it read the deals of my CRM?**
-A: It reads the deals held in Well, counted by the day they closed. A CRM whose deals carry no close date in Well, such as Attio, is named as not dated, and its deals are not counted.
+A: It reads Well's deals by the day they closed, and Pipedrive live by the day each deal was won or lost. Attio gives no won or lost date, so its deals are named as not dated and not counted.
 
 **Q: Why does a lost deal show no reason?**
-A: Well does not store the reason a deal was lost. The review says the reason is not recorded rather than guess one.
+A: Well does not store why a deal was lost, so the review says the reason is not recorded rather than guess one. A Pipedrive deal shows the reason filled in Pipedrive.
 
 **Q: What if the month is not over?**
 A: The reply opens on a provisional line with the date of the read, and every figure covers the month so far.
