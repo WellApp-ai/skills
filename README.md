@@ -105,7 +105,7 @@ Ask for any of these by name. Several are setup steps another skill invokes on i
 | `invite-teammates` | Get your teammates into the workspace, without leaving the conversation. | [View details →](docs/invite-teammates.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/invite-teammates.skill) |
 | `invoice-compliance` | Know which invoices are missing a legal line before your customer or the tax office does. | [View details →](docs/invoice-compliance.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/invoice-compliance.skill) |
 | `invoice-design` | Pick how an invoice prints, from the designs and records you already have. | [View details →](docs/invoice-design.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/invoice-design.skill) |
-| `mail-senders` | List newsletter senders from records and save one private sender choice. | [View details →](docs/mail-senders.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/mail-senders.skill) |
+| `mail-senders` | List newsletter senders, unsubscribe the ones you name and clear them from your inbox. | [View details →](docs/mail-senders.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/mail-senders.skill) |
 | `mailbox` | Find who waits for your reply, even asked about WhatsApp or LinkedIn, a sender's last mail and your mail week. | [View details →](docs/mailbox.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/mailbox.skill) |
 | `memory` | Tell Well once, and it remembers what matters about you and your business. | [View details →](docs/memory.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/memory.skill) |
 | `missing-receipts` | Find the bills with no paperwork attached, before an auditor does. | [View details →](docs/missing-receipts.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/missing-receipts.skill) |
@@ -129,10 +129,11 @@ Ask for any of these by name. Several are setup steps another skill invokes on i
 | `repost-journals` | Re-run the posting pipeline for the rows that were ready but never posted. | [View details →](docs/repost-journals.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/repost-journals.skill) |
 | `resolve-board` | A board you saved, drawn with today's figures rather than the day it was built. | [View details →](docs/resolve-board.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/resolve-board.skill) |
 | `reuse-invoice-design` | Drop one of your invoices and keep its look for every next invoice. | [View details →](docs/reuse-invoice-design.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/reuse-invoice-design.skill) |
-| `revenue-by-customer` | See what each customer billed in a period, ranked by revenue, with the part you could not place named. | [View details →](docs/revenue-by-customer.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/revenue-by-customer.skill) |
+| `revenue-by-customer` | See what each customer billed in a period, ranked net of tax, with the part not placed on a client named. | [View details →](docs/revenue-by-customer.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/revenue-by-customer.skill) |
 | `runway` | Know how many months of cash you have at your current burn, with both sides of the division shown. | [View details →](docs/runway.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/runway.skill) |
 | `runway-stress-test` | See how long your cash lasts if a customer pays late, leaves, or you hire. | [View details →](docs/runway-stress-test.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/runway-stress-test.skill) |
 | `saas-billing` | See who cancelled, which payments failed and what was refunded, read live from Stripe, Paddle or Lago. | [View details →](docs/saas-billing.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/saas-billing.skill) |
+| `sales-review` | Get your month in sales on one screen: deals won and lost, your biggest customers and who pays late. | [View details →](docs/sales-review.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/sales-review.skill) |
 | `secure-payroll` | Know if payroll is safe, and which vendor bills to push if it is not. | [View details →](docs/secure-payroll.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/secure-payroll.skill) |
 | `show-missing-invoices` | See which suppliers owe you paperwork, in each of your files, for a month, a quarter or this week. | [View details →](docs/show-missing-invoices.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/show-missing-invoices.skill) |
 | `signing-back` | Get your morning brief or a recap: what matters today, what changed, and what to do next. | [View details →](docs/signing-back.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/signing-back.skill) |
@@ -265,6 +266,7 @@ Install the following official skills from Well. Instructions:
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/runway/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/runway-stress-test/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/saas-billing/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/sales-review/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/secure-payroll/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/show-missing-invoices/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/signing-back/SKILL.md

@@ -7,20 +7,27 @@
 
 # Mail senders
 
-**List newsletter senders from records and save one private sender choice.**
+**List newsletter senders, unsubscribe the ones you name and clear them from your inbox.**
 
 ## What it does
 
-Well reads the member's own email records, groups observed list mail by normalized sender, and reports counts, dates and coverage. The member can save one private choice per sender. Skip only affects the weekly mailbox summary; unsubscribe is recorded as a wish because Well cannot do it.
+Well reads the member's own email records, groups observed list mail by normalized sender, and reports counts, dates and coverage. The member can save one private choice per sender. Skip only affects the weekly mailbox summary. An unsubscribe uses the one-click link or the unsubscribe email that the sender's newest mail declares. When the sender offers only a page, or an email Well does not send, Well gives the member the link or the email. An inbox clean takes each named sender's mail out of the inbox: Gmail keeps it under All Mail, so the mailbox search still finds it.
 
 ## Required data in Well
 
 - **The member's email records** (required). Well reads only the member's own recorded email notes.
+- **Permission to change the mailbox** (optional). Archiving needs the mailbox connection to allow changes. Without it, nothing is archived, and Well gives the page that grants it when it can.
 
 ## FAQ
 
 **Q: Can Well unsubscribe me?**
-A: Well records the wish but cannot unsubscribe for you.
+A: Yes, from Gmail senders, one confirmation per sender. Well uses the sender's own unsubscribe link or email. When the sender offers only a page, Well gives you the link.
+
+**Q: Does Well delete my newsletters?**
+A: No. Archiving takes the mail out of the inbox only. It stays in the mailbox and its search.
+
+**Q: Does Well know which newsletters I open?**
+A: No. Well's records hold no opened state, so you tell Well which senders you read.
 
 ---
 
