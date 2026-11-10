@@ -13,25 +13,25 @@
 
 Your insurance premium went up and you have a few quotes. The useful answer is the facts in one place, and the way out of the current contract. This skill reads the insurance contract Well extracted from your documents, or asks you for it when none is on file. It lays each quote you send next to the contract, with the premium and how often it is paid, the cover limit and the deductible, and names where each figure comes from. A figure no source gives stays blank: it never fills one in.
 
-It shows facts only. Well is not registered as an insurance intermediary, so it ranks no offer and does not say which one to take.
+It shows the facts side by side, and compares and picks when you ask. When you want Well to find quotes, it reads them on a comparison site.
 
-Then it explains how to end the current contract, by case: a car or home insurance held for more than a year, which you may switch at any time and which the new insurer ends for you when the law gives it that role; a car or home insurance held for less than a year, ended at its renewal date with a termination letter drafted for you; a contract taken out online, which the insurer must let you end online; and a business contract, ended at its renewal date with the notice period it states. For any other contract, such as health or loan insurance, the rules depend on the contract, so Well asks for it and gives no date. A legal ground is named only when the dates on file fit it. The renewal date comes from the contract, and a notice deadline only from a term the contract states: Well never estimates either. It sends, signs and pays nothing. You send the letter yourself.
+Then it explains how to end the current contract, by case: a car or home insurance held for more than a year, which you may switch at any time and which the new insurer ends for you when the law gives it that role; a car or home insurance held for less than a year, ended at its renewal date with a termination letter drafted for you; a contract taken out online, which the insurer must let you end online; and a business contract, ended at its renewal date with the notice period it states. For any other contract, such as health or loan insurance, the rules depend on the contract, so Well asks for it and gives no date. A legal ground is named only when the dates on file fit it. The renewal date comes from the contract, and a notice deadline only from a term the contract states: Well never estimates either. You send the letter yourself.
 
 ## Required data in Well
 
-- **The quotes you received** (required). Paste or attach each quote in the conversation. Well compares only the offers you give it and never looks prices up.
+- **The quotes you received** (required). Paste or attach each quote in the conversation, or ask Well to find quotes on a comparison site.
 - **Your current insurance contract** (recommended). Upload it to Well, or forward it by email, so Well reads its insurer, policy number, cover dates, premium and deductible. Without it, Well asks you for it and gives no date.
 
 ## FAQ
 
 **Q: Does it tell me which offer to take?**
-A: No. Well is not registered as an insurance intermediary, so it shows the facts side by side and ranks nothing. The choice of cover is yours, or a broker's.
+A: Yes, when you ask. Well shows the facts side by side, and then compares the offers and picks one from those facts. The choice stays yours.
 
 **Q: Where do the prices come from?**
-A: From the quotes you send and the contract Well holds. Each figure names its source. Well never looks a price up and never fills in a figure a quote does not state.
+A: From the quotes you send and the contract Well holds. Each figure names its source. Well never fills in a figure a source does not state. When you ask Well to find quotes, it reads the prices on a comparison site and gives them as that site shows them.
 
 **Q: Does it cancel my contract for me?**
-A: No. It explains how to end the contract in your case and drafts the termination letter. You send the letter yourself, or the new insurer does it for you when the law gives it that role. Well sends, signs and pays nothing.
+A: No. It explains how to end the contract in your case and drafts the termination letter. You send the letter yourself, or the new insurer does it for you when the law gives it that role.
 
 **Q: Does it tell me the last day to cancel?**
 A: Only when your contract states it. Well reads the end of the cover period from the contract on file. The insurance details Well stores hold no notice period, so Well asks you for the latest contract or renewal notice rather than estimate a deadline.
