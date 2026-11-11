@@ -32,7 +32,7 @@ A: By a score: the amount overdue multiplied by the days the oldest of those inv
 A: From the company record already stored in Well for that customer: its saved email addresses and phone numbers. If none are on file, this skill says so rather than guessing an address.
 
 **Q: What about invoices it cannot rank?**
-A: They are named, not chased. An invoice with no due date, a payment status Well could not work out, a balance that is missing, or a settlement the source system claims but no bank payment backs is listed on its own line with a count, and no message is drafted from it.
+A: They are named, not chased. An invoice with no due date, a payment status Well could not work out, a balance that is missing, or a settlement the source system claims but the bank has not matched in full is listed on its own line with a count, and no message is drafted from it.
 
 ---
 

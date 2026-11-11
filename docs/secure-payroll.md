@@ -15,7 +15,7 @@ You give the payroll amount and date. Well sets your bank balance, the customer 
 
 If payroll is short, Well proposes which bills to push, latest due first so each one slips the fewest days, and shows the largest-first list beside it. You choose. Each pushed bill gets a new date, the days it runs late and any late fee written on the bill, or a note that none is on record. Every figure is computed by Well to the cent.
 
-Well never counts an overdue customer invoice as sure cash, adds amounts in different currencies or turns an unknown balance into zero. A bill in another currency is listed to check, with no figure. If some bills or invoices may be missing from the figures, or pushing every bill still leaves payroll short, it says so.
+Well never counts an overdue customer invoice as sure cash, adds amounts in different currencies or turns an unknown balance into zero. A bill in another currency is listed apart, in its own currency, with no figure. If some bills or invoices may be missing from the figures, or pushing every bill still leaves payroll short, it says so.
 
 ## Required data in Well
 

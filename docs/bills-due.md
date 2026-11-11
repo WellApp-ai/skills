@@ -13,9 +13,9 @@
 
 Ask your AI assistant what bills are coming due, and it reads the answer from your synced invoices. Every bill still carrying a balance is placed on a date-ordered calendar (overdue, this week, this month, later), with the supplier, the amount, the currency and the due date on each row, and a running cumulative total beside it.
 
-Which side of an invoice your workspace occupies is resolved by Well on the server, never from a party name and never by asking you to pick a company. Invoices Well cannot place on either side are counted and reported beside the total rather than dropped, and the oldest are listed to check with their issuer and receiver named.
+Which side of an invoice your workspace occupies is resolved by Well on the server, never from a party name and never by asking you to pick a company. Invoices Well cannot place on either side are counted and reported beside the total rather than dropped, and the oldest are listed with their issuer and receiver named.
 
-The calendar states its own edges. A due date is optional on an invoice record, and payment terms are held as free text that nothing parses into a date, so a bill with no due date is listed separately instead of being slotted into a week it was never assigned to. A bill a source system calls settled with no bank payment matched to it keeps its full balance on the record, so the calendar runs on payment status rather than on the balance alone, and reports that group under its own heading.
+The calendar states its own edges. A due date is optional on an invoice record, and payment terms are held as free text that nothing parses into a date, so a bill with no due date is listed separately instead of being slotted into a week it was never assigned to. A bill a source system calls settled while the bank has matched none or only part of it keeps a balance on the record, so the calendar runs on payment status rather than on the balance alone, and reports that group under its own heading with the amount seen in the bank.
 
 It covers bills that exist as invoices. Rent, subscriptions and the next payroll have no invoice behind them until one arrives, so near-term outflow is understated by whatever those come to, and the answer says so. For what you are owed rather than what you owe, ask `accounts-receivable-aging`. For the cash you hold against it, ask `cash-position`.
 
@@ -35,10 +35,10 @@ A: No. It reads bills that exist as invoices in your workspace. An obligation wi
 A: It is listed on its own line with its supplier and amount, outside the calendar. A due date is optional on an invoice record, and payment terms sit as free text that nothing parses into a date, so placing the bill in a week would be a guess wearing the look of a real deadline.
 
 **Q: Could it ask me to pay something twice?**
-A: Not from the calendar. A bill a source system calls settled with no bank payment matched to it keeps its full balance on the record, so filtering on the balance alone would put a paid bill back on the list. The calendar runs on payment status instead, and reports that group under its own heading so you can see it.
+A: Not from the calendar. A bill a source system calls settled while the bank has matched none or only part of it keeps a balance on the record, so filtering on the balance alone would put a paid bill back on the list. The calendar runs on payment status instead, and reports that group under its own heading so you can see it.
 
 **Q: How does it tell what I owe from what I am owed?**
-A: Well places the side of each invoice on the server and never asks you to pick a company in this answer. An invoice it cannot place is listed to check, with its issuer and its receiver named, and counted beside the total.
+A: Well places the side of each invoice on the server and never asks you to pick a company in this answer. An invoice it cannot place is listed with its issuer and its receiver named, and counted beside the total.
 
 **Q: Does it convert everything into one currency?**
 A: Only with the rate and rate date shown. Currencies are never blended into a single figure. A currency with no rate available is reported on its own and named as excluded from the converted total.

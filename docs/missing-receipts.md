@@ -16,7 +16,7 @@ Ask your AI assistant which invoices have no document attached, and it checks yo
 ## Required data in Well
 
 - **Invoicing / bills connector** (required). The primary source: every invoice's attached-document status.
-- **Banking or accounting connector** (optional). It enables a secondary check for transactions with no linked document.
+- **Banking or accounting connector** (optional). It enables the transaction check when the person asks whether spend has a receipt.
 - **Bank connector** (optional). With a bank connected, a receipt you send is matched to the payment it settles.
 
 ## FAQ

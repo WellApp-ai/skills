@@ -13,7 +13,7 @@
 
 Ask your AI assistant who your biggest clients were over the last 12 months, this month or last week, and it reads the answer off the invoices your workspace issued: the sales invoices in the period, grouped by the customer they were addressed to, ranked from the biggest down, with the currency and the exact dates of the period stated beside each figure.
 The number is net of tax. Over whole complete months, credit notes are netted too. Well's own invoice total is on the same basis, but it also counts invoices placed on no customer, so the two are stated apart and never added together. Invoices whose customer is not recorded stay as a single line outside the ranking, and invoices Well could place on neither side of the relationship are counted and reported beside the ranking rather than dropped, because an unplaced invoice may still belong in the figure.
-Well places the side of each invoice on the server, never from a party name. When it cannot, the skill lists the largest invoices on both sides as an unsplit list to check and ranks no customer from it, because a ranking that mixes purchases into sales reads exactly like a correct one.
+Well places the side of each invoice on the server, never from a party name. When it cannot, the skill lists the largest invoices on both sides as an unsplit list, side not placed, and ranks no customer from it, because a ranking that mixes purchases into sales reads exactly like a correct one.
 
 ## Required data in Well
 
@@ -32,7 +32,7 @@ A: Both are net of tax. Well's own total also counts the invoices placed on no c
 A: No. This reads the invoices your workspace issued. For money going out, ask for your cost structure instead.
 
 **Q: How does it tell what I owe from what I am owed?**
-A: Well places the side of each invoice on the server and never asks you to pick a company in this answer. An invoice it cannot place is listed to check, with its issuer and its receiver named, and counted beside the total.
+A: Well places the side of each invoice on the server and never asks you to pick a company in this answer. An invoice it cannot place is listed with its issuer and its receiver named, and counted beside the total.
 
 **Q: Is the ranking always complete?**
 A: One read returns at most 500 invoices. When the period holds more, the skill says so, reports the share it covered as a floor rather than a total, and offers a shorter period.

@@ -13,7 +13,7 @@
 
 Ask your AI assistant who owes you money, and it reads the answer from your synced invoices. Every customer invoice still carrying a balance is sorted into an aging band (current, 1-30, 31-60, 61-90, and 90+ days past due), with the customer, the amount, the currency and the due date on each row.
 
-Which side of an invoice your workspace occupies is resolved by Well on the server, never from a party name and never by asking you to pick a company. Invoices Well cannot place on either side are counted and reported beside the total rather than dropped, and the oldest are listed to check with their issuer and receiver named: Well does not say they are owed to you.
+Which side of an invoice your workspace occupies is resolved by Well on the server, never from a party name and never by asking you to pick a company. Invoices Well cannot place on either side are counted and reported beside the total rather than dropped, and the oldest are listed with their issuer and receiver named: Well does not say they are owed to you.
 
 The skill says what it cannot age. An invoice with no due date recorded gets its own line instead of an invented one. An invoice whose payment status could not be recomputed is named rather than counted as settled. A total never blends currencies: each currency is converted at a stated rate and rate date, or reported on its own.
 
@@ -26,7 +26,7 @@ For what you owe rather than what you are owed, ask `bills-due`. For one custome
 ## FAQ
 
 **Q: How does it tell receivables from payables?**
-A: Well places the side of each invoice on the server, from the company records your workspace holds, and never asks you to pick a company in this answer. An invoice it cannot place is listed to check, with its issuer and its receiver named, and counted beside the total instead of being counted as owed to you.
+A: Well places the side of each invoice on the server, from the company records your workspace holds, and never asks you to pick a company in this answer. An invoice it cannot place is listed with its issuer and its receiver named, and counted beside the total instead of being counted as owed to you.
 
 **Q: Which aging bands does it use?**
 A: Current (not yet due), 1-30, 31-60, 61-90, and 90+ days past due, measured from the due date against a stated as-of date.
@@ -38,7 +38,7 @@ A: It gets its own line, listed with its amount and customer. It is in the outst
 A: It is named, not summed. Well recomputes payment status from the payments allocated against an invoice, and that recompute halts on a few conditions, such as an invoice total that is missing or not positive, an allocation in a currency with no exchange rate available, or a locked period. A halted row keeps no fresh payment status or balance, so the skill lists those invoices separately instead of treating them as settled or as overdue.
 
 **Q: Which payment status does it report?**
-A: The one Well recomputes from allocated payments, and it says so. Where a source system asserts an invoice is settled but no bank payment has been matched to it yet, the skill reports that state under its own heading rather than silently choosing between the two answers.
+A: The one Well recomputes from allocated payments, and it says so. Where a source system asserts an invoice is settled but the bank has matched none or only part of it, the skill reports that state under its own heading rather than silently choosing between the two answers.
 
 **Q: Does it convert everything into one currency?**
 A: Only with the rate and rate date shown. Currencies are never blended into a single figure. A currency with no rate available is reported on its own and named as excluded from the converted total.

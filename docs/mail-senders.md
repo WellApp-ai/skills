@@ -11,7 +11,7 @@
 
 ## What it does
 
-Well reads the member's own email records, groups observed list mail by normalized sender, and reports counts, dates and coverage. The member can save one private choice per sender. Skip only affects the weekly mailbox summary. An unsubscribe uses the one-click link or the unsubscribe email that the sender's newest mail declares. When the sender offers only a page, or an email Well does not send, Well gives the member the link or the email. An inbox clean takes each named sender's mail out of the inbox: Gmail keeps it under All Mail, so the mailbox search still finds it.
+Well reads the member's own email records, groups observed list mail by normalized sender, and reports counts, dates and coverage. The member can save one private choice per sender. Skip only affects the weekly mailbox summary. An unsubscribe uses the one-click link or the unsubscribe email that the sender's newest mail declares. When the sender offers only a page, Well unsubscribes on that page on WhatsApp and gives the link elsewhere; for an email Well does not send, it gives the email. An inbox clean takes each named sender's mail out of the inbox: Gmail keeps it under All Mail, so the mailbox search still finds it.
 
 ## Required data in Well
 
@@ -21,7 +21,7 @@ Well reads the member's own email records, groups observed list mail by normaliz
 ## FAQ
 
 **Q: Can Well unsubscribe me?**
-A: Yes, from Gmail senders, one confirmation per sender. Well uses the sender's own unsubscribe link or email. When the sender offers only a page, Well gives you the link.
+A: Yes, from Gmail senders, one confirmation per sender. Well uses the sender's own unsubscribe link or email. When the sender offers only a page, Well does it there on WhatsApp and gives you the link elsewhere.
 
 **Q: Does Well delete my newsletters?**
 A: No. Archiving takes the mail out of the inbox only. It stays in the mailbox and its search.

@@ -13,9 +13,9 @@
 
 Ask your AI assistant what you owe your suppliers and how overdue it is, and it reads the answer from your synced invoices. Every supplier bill still carrying a balance is sorted into an aging band (current, 1-30, 31-60, 61-90, and 90+ days past due), with the supplier, the amount, the currency and the due date on each row.
 
-Which side of an invoice your workspace occupies is resolved by Well on the server, never from a party name and never by asking you to pick a company. Invoices Well cannot place on either side are counted and reported beside the total rather than dropped, and the oldest are listed to check with their issuer and receiver named.
+Which side of an invoice your workspace occupies is resolved by Well on the server, never from a party name and never by asking you to pick a company. Invoices Well cannot place on either side are counted and reported beside the total rather than dropped, and the oldest are listed with their issuer and receiver named.
 
-The skill says what it cannot age. A bill with no due date recorded gets its own line instead of an invented one. A bill whose amount or balance is not recorded is counted and named as unpriced rather than summed at zero. A bill a source system asserts is settled, with no bank payment matched to it, is reported under its own heading rather than counted as paid: Well's balance figures stay bank-derived, so that assertion moves no balance.
+The skill says what it cannot age. A bill with no due date recorded gets its own line instead of an invented one. A bill whose amount or balance is not recorded is counted and named as unpriced rather than summed at zero. A bill a source system asserts is settled, with the bank having matched none or only part of it, is reported under its own heading with the amount seen in the bank, rather than counted as paid: Well's balance figures stay bank-derived, so that assertion moves no balance.
 
 It is an aged view of invoices, not a ledger extract. It does not tie the bands to a supplier control account, and it does not pay, dispute or chase anyone. For a date-ordered payment calendar of what falls due and when, ask `bills-due`. For the customer side of an aged balance, ask `accounts-receivable-aging`. For what each supplier invoiced you over a year, ask `supplier-spend-register`.
 
@@ -27,7 +27,7 @@ It is an aged view of invoices, not a ledger extract. It does not tie the bands 
 ## FAQ
 
 **Q: How does it tell what I owe from what I am owed?**
-A: Well places the side of each invoice on the server and never asks you to pick a company in this answer. An invoice it cannot place is listed to check, with its issuer and its receiver named, and counted beside the total.
+A: Well places the side of each invoice on the server and never asks you to pick a company in this answer. An invoice it cannot place is listed with its issuer and its receiver named, and counted beside the total.
 
 **Q: Which aging bands does it use?**
 A: Current (not yet due), 1-30, 31-60, 61-90, and 90+ days past due, measured from the due date against a stated as-of date.
@@ -39,7 +39,7 @@ A: The calendar orders bills by the date they fall due and runs a cumulative tot
 A: No. The bands are built from invoice rows, not from ledger postings. The auxiliary account on a journal entry line is optional in Well and is commonly not set, so an aged balance keyed on a supplier control account is not something this skill can produce. Read it as an aged invoice view.
 
 **Q: Does a bill marked paid by my invoicing tool count as settled?**
-A: Not inside the bands. A payment a connector asserts never moves the paid amount or the balance on the invoice, because those stay bank-derived, so that bill still carries its full amount. The skill reports those bills under their own heading with a count and a total, and says which reading they come from, rather than choosing silently between the two answers.
+A: Not inside the bands. A payment a connector asserts never moves the paid amount or the balance on the invoice, because those stay bank-derived, so the bank may have matched none or only part of that bill. The skill reports those bills under their own heading with a count, a total and the amount seen in the bank, and says which reading they come from, rather than choosing silently between the two answers.
 
 **Q: What happens to a bill with no due date?**
 A: It gets its own line, listed with its supplier and amount, and is left out of the bands. A due date is optional on an invoice record, and no other date substitutes for one: aging a row from its issue date instead would read as a real overdue figure while resting on a guess.
