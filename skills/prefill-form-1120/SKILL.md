@@ -1,6 +1,6 @@
 ---
 name: "prefill-form-1120"
-description: "Prefill page 1 of IRS Form 1120, the U.S. Corporation Income Tax Return, from a closed fiscal year's posted ledger in Well. Fetches the current template from the IRS, writes the identity block, the tax year and the book figures Well can source into named AcroForm fields, and returns the filled PDF with every field it left blank named. Use when the user asks to \"prefill my 1120\", \"fill in Form 1120\", \"start my corporate return\", \"get my 1120 ready\" or \"put our numbers on the 1120\". Requires a connected Well workspace with an accounting connector and a closed fiscal year; it produces a draft for review, never a filed return."
+description: "Prefill page 1 of IRS Form 1120, the U.S. Corporation Income Tax Return, from a closed fiscal year's posted ledger in Well. Fetches the current IRS template, writes the identity block, the tax year and the book figures Well can source into named AcroForm fields, and returns the filled PDF with every blank field named. Requires a connected Well workspace with an accounting connector and a closed fiscal year; it produces a draft for review, never a filed return. Use when asked to \"prefill my 1120\" or \"start my corporate return\"."
 license: PolyForm-Perimeter-1.0.0
 ---
 

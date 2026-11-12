@@ -1,6 +1,6 @@
 ---
 name: "invite-teammates"
-description: "Invite teammates into one Well workspace from a conversation. It offers the people Well detected who hold no membership yet: those on the owner's corporate email domain or, for an owner on a personal address, those seen across several connected tools (a calling flow can pass a set instead). Use to answer Well's invite offer (\"oui\", \"plus tard\", \"non\") or to invite one (\"invite Marie\"), when the user gives a mobile number (\"invite +33 6 00 00 00 01 as admin\"), asks how inviting someone with only a number works (\"comment tu invites quelqu'un qui n'a qu'un numéro ?\"), asks for the invitation link (\"donne-moi le lien d'invitation\") or to stop it, or a close-books or fetch-missing-invoices flow needs its owners invited. A later or a first no waits 30 days, a second no stops it for good. Needs define-workspace. Do not use to assign expense ownership (assign-missing-invoices), set the own company (confirm-my-company), or connect a tool (connect-tools)."
+description: "Invite teammates into one Well workspace from a conversation. It offers the people Well detected who hold no membership yet: those on the owner's corporate email domain or, for an owner on a personal address, those seen across several connected tools (a calling flow can pass a set instead). A later or a first no waits 30 days, a second no stops it for good. Needs define-workspace. Use to invite a teammate or to answer yes or no to inviting one (\"invite Marie\", \"non\")."
 license: PolyForm-Perimeter-1.0.0
 ---
 

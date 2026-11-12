@@ -1,6 +1,6 @@
 ---
 name: "check-payslip"
-description: "Read one person's payslip for a month, list the lines it printed beside the same contract's earlier payslips, and name every line whose amount changed, appeared or disappeared, with the contract terms Well holds stated next to it. Use when the user asks \"is this payslip right\", \"why is this payslip different from last month\", \"check my employee's payslip\", \"what changed on the bulletin de paie\", \"check this Entgeltabrechnung\", \"read this fiche de paie\", \"check the cedolino paga\", \"does this nómina look right\", or \"what moved on this pay statement since March\". Requires payslips in Well for the same employment contract, at least one month to compare against, and a month to read. It refuses to file anything with any authority, refuses to recompute gross, tax, contributions or net, and refuses to check a deduction against a withholding form such as a W-4, an IT-2104, an ELStAM notice, a modulo detrazioni, a modelo 145 or a taux PAS notice, because none is a readable field in Well."
+description: "Read one person's payslip for a month, list its lines beside the same contract's earlier payslips, and name every line whose amount changed, appeared or disappeared, with the contract terms Well holds. It never recomputes gross, tax, contributions or net, never checks a deduction against a withholding form, and files nothing. Use when asked \"is this payslip right\" or \"why is this payslip different from last month\"."
 license: PolyForm-Perimeter-1.0.0
 ---
 

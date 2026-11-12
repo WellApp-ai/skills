@@ -1,6 +1,6 @@
 ---
 name: "cash-flow-waterfall"
-description: "Answer \"where did the cash go?\" using Well's MCP financial graph: a bridge from the opening cash position to the closing one, computed here from the workspace's own balances and its own transactions, with every rule it rests on stated and any gap between them reported rather than hidden. Use when the user asks \"where did the cash go\", \"reconcile our cash movement\", \"why did our balance change\", \"show me the cash flow bridge\", or \"how did we get from last month's balance to this one\". Requires a connected Well workspace with a banking connector; if none is connected, this skill guides the user to connect one first."
+description: "Show where the cash went: a bridge from the opening cash to the closing cash, built from the workspace's own balances and transactions, with any gap between them reported. Use when asked \"where did the cash go\" or \"why did our balance change\", not a forecast."
 license: PolyForm-Perimeter-1.0.0
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: "define-period"
-description: "Pin the calendar month or months — with their fiscal coordinates — a Well workspace job works on, written server-side by the user's click on the period picker card, and hand the selection off as a typed result; or, in `collect` mode, hand one month's coordinates back to a caller that commits the period by starting a run, where naming the month is starting and this skill writes no commit. Use when the user says \"last month\", \"March\", \"2026-03\", \"the period we're working on\", asks which month a job covers, when a Well skill needs the period fixed before it reads data, or when a close or other start-a-run flow needs one month collected first. Defaults to the last complete month, refuses a month that has not ended, derives fiscal coordinates from the workspace's fiscal-year start month, and reports whether the selection has any activity. Do not use to close, lock, or reopen a period, to run a month-end close, to resolve which workspace the conversation is about, or to list what is missing inside the month."
+description: "Pin the calendar month or months, with fiscal coordinates, that a Well workspace job works on, and hand the selection off as a typed result. In `collect` mode it hands one month back to a caller that commits it. Use when asked \"last month\", \"March\" or which month a job covers, or a skill needs a period."
 license: PolyForm-Perimeter-1.0.0
 ---
 

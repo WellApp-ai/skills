@@ -1,6 +1,6 @@
 ---
 name: "chase-late-invoices"
-description: "Rank overdue customer invoices by how much is owed and how late it is, look up each customer's contact info already stored in Well, and draft a ready-to-send chase message per customer, using Well's MCP financial graph and backed by real invoice data rather than guesswork. Use when the user asks \"who should I chase for payment\", \"draft a late-payment email\", \"who do I need to follow up with\", \"chase overdue invoices\", \"collections reminder\", \"relance le client de la facture d'août\", or \"help me get paid faster\". It drafts the messages and, for each customer the user names (a month names the customer of that invoice) or picks, opens the draft as an email card; on WhatsApp it sends it from the user's mailbox only after their tap on Confirmer. It answers first from the invoices Well holds: an invoice whose side Well cannot place is listed to check with its issuer and receiver named and gets no draft, and nothing is asked about a company."
+description: "Rank overdue customer invoices by amount owed and lateness, look up each customer's contact info already stored in Well, and draft a ready-to-send chase message per customer, from real invoice data. It opens the draft as an email card; on WhatsApp it sends from the user's mailbox only after their tap on Confirmer. It answers first from the invoices Well holds. Use when asked \"who should I chase\" or for a late-payment email, not just who owes money."
 license: PolyForm-Perimeter-1.0.0
 ---
 

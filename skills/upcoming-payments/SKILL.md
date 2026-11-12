@@ -1,6 +1,6 @@
 ---
 name: "upcoming-payments"
-description: "Answer \"what's left before payday?\" in a person's own space on Well's MCP business graph: the recurring debits still to come from their bank history, each with its next day and amount, a running total, the next payday, and what the balance leaves before it. Use when the user asks \"what's coming out before payday\", \"which bills are due before I get paid\", \"what's left until payday\", \"when is my next payday\", \"my upcoming direct debits\", « qu'est-ce qui part avant ma paie ? », « combien il me reste avant la paie » or « mes prochains prélèvements ». It reads a personal space only. The supplier bills a company still owes are bills-due, and the list of what the person pays for on a schedule, with its cost per month, is subscription-spend. Requires bank transactions in the personal space; if none has landed, it guides connecting a bank first."
+description: "Answer \"what's left before payday?\" in a person's own space on Well's MCP business graph: the recurring debits still to come from their bank history, each with its next day and amount, a running total, the next payday, and what the balance leaves before it. It reads a personal space only; with no bank transactions there, it guides connecting a bank first. Use when asked \"what's left before payday?\", not company bills (bills-due)."
 license: PolyForm-Perimeter-1.0.0
 ---
 

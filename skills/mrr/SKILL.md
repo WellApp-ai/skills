@@ -1,6 +1,6 @@
 ---
 name: "mrr"
-description: "Answer \"what is our MRR?\" from live sold subscription rows when they are available, or from the trailing average of issued invoices when they are not. Both paths use Well's MCP financial graph, and the invoice path keeps every check it rests on visible and repairable. Use when the user asks \"what's our MRR\", \"what's our monthly recurring revenue\", \"how much recurring revenue do we have\", or \"what's our revenue run rate\". Requires a resolved Well workspace. The invoice average also needs proof of which invoices the workspace issued; when no anchor, books confirmation, or account holder proves that side, this skill guides the user to set it up."
+description: "Answer \"what is our MRR?\" from live sold subscription rows, or from the trailing average of issued invoices when there are none, over Well's MCP financial graph. Use for \"what's our MRR\" or \"run rate\", not who owes money (accounts-receivable-aging)."
 license: PolyForm-Perimeter-1.0.0
 ---
 

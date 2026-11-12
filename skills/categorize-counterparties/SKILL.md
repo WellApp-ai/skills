@@ -1,6 +1,6 @@
 ---
 name: "categorize-counterparties"
-description: "Raise category coverage on the counterparties (suppliers and customers) behind one Well workspace's spend — for a given month's still-missing invoices, or workspace-wide across everything still uncategorized. Renders Well's counterparties card, where each listed row carries a catalog-category select, every pick saves immediately, and Continue hands the turn back; the skill reads one list, points at the card, and proposes categories only when the user explicitly asks it to. Use when the user asks to categorize or tag their suppliers, vendors, or counterparties, says \"which suppliers have no category\", \"categorize the companies behind my spend\", \"clean up my vendor categories before I close the books\", or when a fetch-missing-invoices flow reaches its counterparty categorization step. Never invents a category outside the catalog. Do not use to categorize individual transactions (that is `unposted-and-blocked`), to compute a spend figure (that is `cost-structure`), or to connect a tool (that is `connect-tools`)."
+description: "Raise category coverage on the counterparties (suppliers and customers) behind one workspace's spend, for a month's missing invoices or workspace-wide. It renders Well's counterparties card; every pick saves at once. It never invents a category outside the catalog. Use when asked to categorize suppliers or vendors, not transactions (unposted-and-blocked)."
 license: PolyForm-Perimeter-1.0.0
 ---
 

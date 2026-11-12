@@ -13,6 +13,8 @@
 
 Say "work through my accounting items" and the assistant takes the open items Well cannot settle alone, in category order: bank statements without an account, documents Well could not place, matches to confirm, bank lines missing from the books, possible duplicates, bank accounts to confirm, invoices to check and conflicting records.
 
+Well never asks you which bank account a statement belongs to, which workspace a document belongs to, or whether two invoices are the same. It decides from the records it holds and says its reason in one clause. When nothing it holds settles one, the item stays with Well.
+
 For each item it states the amount or reference and what Well proposes. Each resolution goes through a confirmation card that you approve before it writes. Items that need the web app come back with a link, because Well does not decide them in chat.
 
 A tail-match or folded-edge review is never closed by a status change. Its decision is a choice you make, so it goes to you with its link.

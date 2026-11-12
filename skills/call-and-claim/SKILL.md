@@ -1,6 +1,6 @@
 ---
 name: "call-and-claim"
-description: "Claim a refund or a compensation from one business for one purchase or one service: a delayed or cancelled flight, an order never delivered, a charge for something not received. It reads the evidence in Well first (the supplier's invoice or booking, and its bank debits), names a right only when the records and the person's own facts hold every fact it needs, else marks it \"to confirm\" (« à confirmer » in French), prepares the call as a script the person reads, and writes the claim email. Use when the user asks \"réclame une indemnisation pour mon vol en retard\", \"claim compensation for my delayed flight\", \"ma commande n'a jamais été livrée, réclame le remboursement\", \"get my money back from this supplier\", \"prépare l'appel au service client\" or \"what do I say when I call them\". It never promises an amount, it never places a call, and it sends nothing without the person's confirmation."
+description: "Claim a refund or a compensation from one business for one purchase or service, such as a delayed flight or an order never delivered. It reads the evidence in Well first, names a right only when every fact it needs is held, prepares the call as a script and writes the claim email. It places no call and sends nothing without the person's confirmation. Use to claim compensation or a refund, or for what to say on the call; not a subscription debit."
 license: PolyForm-Perimeter-1.0.0
 ---
 

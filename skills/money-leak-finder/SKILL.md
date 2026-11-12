@@ -1,6 +1,6 @@
 ---
 name: "money-leak-finder"
-description: "Scan a workspace's recent bank debits for money leaks using Well's MCP financial graph, then list the charges to check: duplicate charges, silent price rises on fixed-price subscriptions, and new recurring vendors that crept in. Use when the user asks \"where am I losing money\", \"find double charges\", \"did any vendor raise their price\", \"what new subscriptions crept in\", \"review my spending for overpayments\", \"find wasted spend\", or \"what am I paying for that I should not be\". Charges are grouped by the vendor company and never by memo text, and every line carries the vendor, the dates, the amounts and the currency. It does not detect charges that continued after a cancellation, because Well holds no cancellation date. Requires a connected Well workspace with a bank; if it is missing, this skill walks the user through connecting one first."
+description: "Scan a workspace's recent bank debits for duplicate charges, silent price rises on fixed-price subscriptions and new recurring vendors, and list the charges to check, grouped by vendor company with dates, amounts and currency. Use for money leaks, double charges, price rises, \"paiements bizarres\"; not subscription-spend."
 license: PolyForm-Perimeter-1.0.0
 ---
 

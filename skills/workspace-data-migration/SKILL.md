@@ -1,6 +1,6 @@
 ---
 name: "workspace-data-migration"
-description: "Move a bank (or other ledger) connection from the person's personal (membership/signup) workspace to a Well company workspace they run, with the transactions it already synced, over Well's MCP server, on a card the user confirms. Use it in the close-books bank step when the company workspace holds no bank transaction yet and a connection in the person's personal workspace could follow it here (its account holder matches this company), or when the person asks to move a connection and its data from their personal workspace to a company workspace they run, even one that already holds transactions. The company workspace may be a child or a sibling of the personal one. It draws the connector-retarget card, the user picks which connections to move, and Confirm moves each connection with its transactions, so no history is pulled twice. Keep for later moves nothing and the flow continues to connect a bank. Requires a connected Well workspace and owner/admin rights on both workspaces."
+description: "Move a bank (or other ledger) connection from the person's personal workspace to a Well company workspace they run, with the transactions it already synced, over Well's MCP server, on a card the user confirms. Requires owner or admin rights on both workspaces. Use in the close-books bank step with no transactions yet, or to move a connection to a company."
 license: PolyForm-Perimeter-1.0.0
 ---
 

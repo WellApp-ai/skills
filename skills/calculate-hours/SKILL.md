@@ -1,6 +1,6 @@
 ---
 name: "calculate-hours"
-description: "Send a photo of paper time cards. Get hours per person and the pay at the rate Well holds. Not a payslip."
+description: "Read a photo of paper time cards and give the hours per person and the pay at the rate Well holds. Use when sent a photo of paper time cards, or asked for hours and pay, not a payslip."
 license: PolyForm-Perimeter-1.0.0
 ---
 

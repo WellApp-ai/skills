@@ -1,6 +1,6 @@
 ---
 name: "optimize-supplier-prices"
-description: "See whether you pay one supplier more than before, currency by currency. Get a negotiation email drafted if you want one."
+description: "See whether you pay one supplier more than before, currency by currency. Get a negotiation email drafted if you want one. Use for \"what do we pay [supplier]?\", not for a spend ranking (supplier-spend-register)."
 license: PolyForm-Perimeter-1.0.0
 ---
 

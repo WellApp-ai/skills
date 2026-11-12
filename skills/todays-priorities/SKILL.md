@@ -1,6 +1,6 @@
 ---
 name: "todays-priorities"
-description: "Answer \"what is important for me to do today?\" by reading the person's own calendar events for the day and the open work Well already tracks for the workspace, then answering with the two as their own blocks, in order: the meetings first, then the work that is due or blocked. Use when the user asks what to do today, for the day's priorities or for the day's agenda: \"what's important today\", \"what are my priorities today\", \"what should I do today\", \"what do I have today\", \"what's on my plate\", \"plan my day\", \"qu'est-ce que j'ai d'important à faire aujourd'hui\", \"c'est quoi mes priorités aujourd'hui\", or \"mon programme du jour\". Do not use for a brief, a recap or a catch-up of what happened (that is `signing-back`), also when the brief asks what matters today or for the company. Needs the person's own Google Calendar connected to Well; if it is missing, this skill says so, gives the link to connect it when Well has one, and answers from the workspace's open work alone."
+description: "Answer \"what is important for me to do today?\" from the person's own calendar events for the day and the open work Well tracks for the workspace, as two blocks: the meetings first, then the work that is due or blocked. Needs the person's own Google Calendar; without it, it says so and answers from the open work alone. Use when asked \"what are my priorities today\" or \"plan my day\", not for a brief (signing-back)."
 license: PolyForm-Perimeter-1.0.0
 ---
 

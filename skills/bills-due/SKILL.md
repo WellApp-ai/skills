@@ -1,6 +1,6 @@
 ---
 name: "bills-due"
-description: "Answer \"what bills are coming due, and how much do they add up to by date?\" using Well's MCP financial graph: every bill the workspace still owes, ordered by due date, with a running total so the reader can see how much cash leaves and by when. Use when the user asks how much falls due by when, not to see the bills: \"what bills are due\", \"upcoming supplier payments\", \"what do we owe this week\", \"AP due dates\", \"when are our bills due\", \"payment calendar\", \"quelles factures fournisseurs arrivent à échéance\", \"qu'est-ce que je dois payer cette semaine\" or \"mes échéances fournisseurs\". A request to see the bills as rows or in a layout (\"show me the supplier due dates in a calendar\", \"show me my unpaid supplier invoices\") goes to show-records. Debits before payday in a personal space are upcoming-payments. It answers first from the invoices Well holds; one whose side Well cannot place is listed with both parties named, and nothing is asked about a company. A missing connection is asked after the answer."
+description: "Answer \"what bills are coming due, and how much do they add up to by date?\" from Well's MCP financial graph: every bill the workspace still owes, ordered by due date, with a running total. It answers first from the invoices Well holds and asks for a missing connection after the answer. Use for how much falls due by when, not to see the bills as rows (show-records)."
 license: PolyForm-Perimeter-1.0.0
 ---
 

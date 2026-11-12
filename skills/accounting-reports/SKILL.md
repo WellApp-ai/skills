@@ -1,6 +1,6 @@
 ---
 name: "accounting-reports"
-description: "Read a profit and loss, balance sheet or cash flow statement from the user's connected QuickBooks, Xero or Pennylane, and state its key lines with their source. Use when the user asks \"show me my P&L\", \"what does my balance sheet say\", \"the cash flow statement from QuickBooks\", \"montre-moi mon compte de résultat\" or \"mon bilan Pennylane au 30 septembre\", or names QuickBooks, Xero or Pennylane for any report, an aged report from QuickBooks included. QuickBooks and Xero reports are stated as the tool returns them; Pennylane shares only its trial balance, so Well computes the totals from it. Do not use it for an aged report that names no tool (that is `accounts-payable-aging` or `accounts-receivable-aging`) or for a cash bridge from the bank feed (that is `cash-flow-waterfall`). Requires a connected QuickBooks, Xero or Pennylane in a Well workspace; guides the user to connect one first."
+description: "Read a profit and loss, balance sheet or cash flow statement from the user's connected QuickBooks, Xero or Pennylane, and state its key lines with their source. Pennylane shares only its trial balance, so Well computes the totals from it. Use for \"show me my P&L\" or any report naming QuickBooks, Xero or Pennylane."
 license: PolyForm-Perimeter-1.0.0
 ---
 

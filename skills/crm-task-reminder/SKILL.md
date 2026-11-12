@@ -1,6 +1,6 @@
 ---
 name: "crm-task-reminder"
-description: "List the Attio tasks that are due today or overdue from the tasks Well syncs from Attio. For a member who turned the morning reminder on, a routine runs it with nobody present (`run: unattended`) and sends the one WhatsApp message it words. Use when the user asks \"which Attio tasks are due today\", \"what CRM follow-ups are late\", \"what is overdue in Attio\", or \"remind me of my CRM tasks\". Requires a connected Attio workspace. It reads Attio only: it never creates, completes or moves an Attio task, and offers at most a draft follow-up e-mail for the most urgent task, through `write-email`, never sent without the person's own approval there."
+description: "List the Attio tasks due today or overdue, from the tasks Well syncs from Attio; it reads only. A routine can run it unattended (`run: unattended`) and send one WhatsApp message. Requires a connected Attio workspace. Use when asked \"which Attio tasks are due today\" or \"what CRM follow-ups are late\"."
 license: PolyForm-Perimeter-1.0.0
 ---
 

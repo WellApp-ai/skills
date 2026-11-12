@@ -1,6 +1,6 @@
 ---
 name: "define-workspace"
-description: "Resolve which Well workspace (legal entity / company account) a conversation works in, and hand it off as a typed result — workspace_id, name, identity, and how it was resolved — to any Well skill or flow that follows. Use when the user asks to select, choose, switch, or confirm a workspace, says \"use my FR entity\" / \"work in workspace X\" / \"which company account is this\", or when a Well skill needs one workspace pinned before it reads or writes data. Resolves several entities too — \"do both my companies\", \"FR and US\" — as a pin plus a server-held queue the caller walks one workspace per pass. Do not use to connect a bank or accounting tool, to compute any financial figure, or to confirm the company identity inside the Well app."
+description: "Resolve which Well workspace (legal entity) a conversation works in and hand it off as a typed result: workspace_id, name, identity and how it was resolved. It walks several entities one per pass. Use when asked to select, switch or confirm a workspace, or \"which company account is this\"."
 license: PolyForm-Perimeter-1.0.0
 ---
 

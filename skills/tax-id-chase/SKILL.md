@@ -1,6 +1,6 @@
 ---
 name: "tax-id-chase"
-description: "List the companies in a Well workspace that carry no tax identifier on file, so the chase for a SIREN, a VAT number or a tax id happens before year end rather than during filing week. Use when the user asks \"which suppliers have no tax number\", \"which companies are missing a VAT number\", \"tax id chase list\", \"who has no SIREN on file\", \"missing tax identifiers\", \"which vendors have no registration number\", or \"clean up my vendor tax details before year end\". This is a read: it lists the gap and shows one company's registry detail card. It does not rank counterparties by amount paid, apply a statutory reporting threshold, or file anything. Requires a connected Well workspace with an accounting or invoicing connector, so counterparty companies exist to chase."
+description: "List the companies in a Well workspace that carry no tax identifier on file, so the chase for a SIREN, a VAT number or a tax id happens before year end. This is a read: it shows one company's registry detail card, ranks nobody by amount paid and files nothing. Needs an accounting or invoicing connector. Use when asked \"which suppliers have no tax number\" or \"who has no SIREN on file\"."
 license: PolyForm-Perimeter-1.0.0
 ---
 

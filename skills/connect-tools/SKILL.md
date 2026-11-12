@@ -1,6 +1,6 @@
 ---
 name: "connect-tools"
-description: "Check which sources a workspace has connected (bank, accounting, invoicing), connect the missing ones with install links, and hand off a coverage result. Use to connect or install a finance tool by name (\"connecte Gmail\", \"install Stripe\", the Well extension link), link an accounting tool (Pennylane, Xero…), asked \"which tools are connected\", \"is my Outlook inbox connected\", \"what can Well read and change in my tools?\" (« qu'est-ce que tu peux lire et modifier dans mes outils ? »), \"use Well from ChatGPT\" (« je veux utiliser Well depuis Claude »), or when a skill needs bank / accounting / invoicing data first. Also use when the user names or asks about one tool, even one Well does not carry yet, or names a tool to connect but bars actions (« ne lance aucune action sans me demander »): reading the connection state is not an action. Do not use to compute figures, to trigger a sync, to run a connector's own actions, for export-fed providers like Gusto (fetch-provider-exports), or for an API key (about-well)."
+description: "Check which sources a workspace has connected (bank, accounting, invoicing), connect the missing ones with install links, and hand off a coverage result. Not for an API key (about-well). Use for \"help me connect my tools\", \"install Stripe\" or \"which tools are connected\"."
 license: PolyForm-Perimeter-1.0.0
 ---
 

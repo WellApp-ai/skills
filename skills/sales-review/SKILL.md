@@ -1,6 +1,6 @@
 ---
 name: "sales-review"
-description: "Give the month's sales review in one reply, with the deals won and lost, the largest customers with their share, and the late payers, each line with its source. Use when asked for the \"monthly sales review\", the \"sales recap for the month\", « la revue commerciale du mois », « le bilan commercial du mois » or « le point commercial », and when asked \"how many deals did I win and lose this month\". A month still running is marked provisional. It only reads, so nothing is written or sent. It needs deals in Well, a connected Pipedrive or invoices from an invoicing tool, and the reply names each line it could not read."
+description: "Give the month's sales review in one reply, with the deals won and lost, the largest customers with their share, and the late payers, each line with its source. A month still running is marked provisional. It only reads, so nothing is written or sent. It needs deals in Well, a connected Pipedrive or invoices from an invoicing tool, and the reply names each line it could not read. Use when asked for the \"monthly sales review\" or « la revue commerciale du mois »."
 license: PolyForm-Perimeter-1.0.0
 ---
 

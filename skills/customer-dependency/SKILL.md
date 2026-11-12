@@ -1,6 +1,6 @@
 ---
 name: "customer-dependency"
-description: "See what share of your revenue sits with your top customers, what the biggest owes, and the cash you lose if they walk."
+description: "See what share of your revenue sits with your top customers, what the biggest owes, and the cash you lose if they walk. Use when asked \"how dependent am I on top customers\", not a full list (revenue-by-customer)."
 license: PolyForm-Perimeter-1.0.0
 ---
 

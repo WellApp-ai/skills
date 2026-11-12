@@ -1,6 +1,6 @@
 ---
 name: "repost-journals"
-description: "Check whether a fiscal period's transactions and invoices are posted to the ledger, and when a re-triggerable gap remains — rows that are ready to post and simply have not — surface a card whose one CTA re-runs the posting pipeline for the workspace. Use inside a close, or on its own to ask \"did the accounting post?\". Do not use to pick a ledger account, to categorize a transaction, or to resolve a party: those are substantive blockers this step never lists."
+description: "Check whether a fiscal period's transactions and invoices are posted to the ledger, and when a re-triggerable gap remains (rows that are ready to post and simply have not) surface a card whose one CTA re-runs the posting pipeline for the workspace. Use inside a close, or to ask \"did the accounting post?\", not to pick an account."
 license: PolyForm-Perimeter-1.0.0
 ---
 

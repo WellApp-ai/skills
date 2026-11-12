@@ -1,6 +1,6 @@
 ---
 name: "connect-bank"
-description: "Get a bank account connected to a Well workspace and confirm the feed is live — read which banks are already connected, still running their first sync, or in error, hand the user Well's one-click bank install link, and return a typed bank-coverage result to the flow that follows. Use when the user asks whether a bank is connected, how bank linking works or why transactions are missing, asks about connecting a bank another way (\"what would a direct Qonto connection add\", \"is there a better way to connect my bank\", \"qu'est-ce qu'une connexion directe à Qonto ajouterait ?\"), or asks to connect a bank (Qonto or a Plaid-supported bank) alongside another request, or when a Well skill needs settled bank spend in the workspace before it continues. Do not use to connect accounting or invoicing tools (that is connect-tools), to compute a figure, to force a re-sync, or to disconnect an account."
+description: "Get a bank account connected to a Well workspace and confirm the feed is live: read which banks are connected, on their first sync, or in error, hand the user Well's one-click bank install link, and return a typed bank-coverage result. Use for a live-feed check, how bank linking works or missing rows; never to add a bank."
 license: PolyForm-Perimeter-1.0.0
 ---
 

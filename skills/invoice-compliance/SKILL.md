@@ -1,6 +1,6 @@
 ---
 name: "invoice-compliance"
-description: "Find invoices missing a VAT number, company ID, payment terms or late-fee wording before your client bounces them."
+description: "Find invoices missing a VAT number, company ID, payment terms or late-fee wording before your client bounces them. Use when asked \"are my invoices compliant\" or \"is this invoice ready to send\"."
 license: PolyForm-Perimeter-1.0.0
 ---
 

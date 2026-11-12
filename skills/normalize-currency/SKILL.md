@@ -1,6 +1,6 @@
 ---
 name: "normalize-currency"
-description: "Turn a set of amounts in different currencies into one auditable answer — either a single converted total carrying the exchange rate and as-of date behind it, or a clean per-currency breakdown — and never a blended figure. Use when a Well skill has totals spanning more than one currency, needs a rate from the `exchange_rates` root, or must state which date's rate a converted number used. Do not use when a Well tool already returned a converted figure, to fetch live market rates from outside Well, or to compute any business metric."
+description: "Turn amounts in different currencies into one auditable answer: a converted total with its exchange rate and as-of date, or a per-currency breakdown, never a blended figure. Use when totals mix currencies, not when a Well tool already converted."
 license: PolyForm-Perimeter-1.0.0
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: "accounts-payable-aging"
-description: "Answer \"what do I owe my suppliers, and how overdue is it?\" using Well's MCP financial graph: every supplier bill still carrying a balance, sorted into aging bands (current, 1-30, 31-60, 61-90, 90+ days past due), read from synced invoice data. Use when the user asks how overdue supplier bills are, not to see them: \"accounts payable aging\", \"AP aging\", \"aged balance for suppliers\", \"aged creditors\", \"how overdue are our supplier bills\", \"what do we owe and since when\", \"which suppliers have we left unpaid the longest\", or \"balance âgée fournisseur\". For a date-ordered payment calendar instead of past-due bands, use `bills-due`; for the rows, show-records. A request that names Xero or QuickBooks goes to accounting-reports. It answers first from the invoices Well already holds. Well places the side of each invoice on the server; an invoice it cannot place is listed with its issuer and receiver named, and nothing is asked about a company. A missing connection is asked for after the answer."
+description: "Answer \"what do I owe my suppliers, and how overdue is it?\" from synced invoice data: every supplier bill still carrying a balance, sorted into aging bands (current, 1-30, 31-60, 61-90, 90+ days past due). It answers first from the invoices Well already holds and asks for a missing connection after the answer. Use for how overdue supplier bills are, not to see them or their due dates (bills-due)."
 license: PolyForm-Perimeter-1.0.0
 ---
 

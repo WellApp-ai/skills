@@ -1,6 +1,6 @@
 ---
 name: "accounting-review"
-description: "Work through the open accounting items of a Well workspace with the member, one category at a time. Propose each match, gap or review and resolve it with its own write tool, or hand a web-only item back with its link. This is a WRITE flow where each resolution goes through the write gate, which asks the member to confirm it unless the run's approved settings say otherwise. Use when the user asks \"work through my accounting items\", \"handle my accounting items\" or \"/accounting-review [category]\"."
+description: "Work through the open accounting items of a Well workspace with the member, one category at a time. Propose each match, gap or review and resolve it with its own write tool, or hand a web-only item back with its link. This is a WRITE flow where each resolution goes through the write gate, which asks the member to confirm it unless the run's approved settings say otherwise. Use when asked \"work through my accounting items\" or \"/accounting-review [category]\"."
 license: PolyForm-Perimeter-1.0.0
 ---
 

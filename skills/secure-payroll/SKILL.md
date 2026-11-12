@@ -1,6 +1,6 @@
 ---
 name: "secure-payroll"
-description: "Give Well a payroll amount and date. See if you can pay it, and which vendor bills to delay if you cannot."
+description: "Check if cash covers a payroll amount on a date, and name the vendor bills to delay if it does not. Use when asked \"will payroll bounce\" or \"can I pay payroll on the 28th\"."
 license: PolyForm-Perimeter-1.0.0
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: "chart-of-accounts"
-description: "Read the chart of accounts a Well workspace posts to, account number by account number, using Well's MCP context graph. Use when the user asks \"what chart of accounts are we on\", \"show me our chart of accounts\", \"list our ledger accounts\", \"what account numbers do we use\", \"which accounts can a transaction post to\", \"do we have a 606 account\", or \"what is account 1112\". The accounts are put on screen as a table ordered by number, with the account type and class each row carries. It emits no statutory code and no Well role binding, because the Well to statutory translation runs at export time and no chart level read reaches it. Requires a connected Well workspace; the chart is seeded when the workspace is provisioned, and an imported accounting book adds the accounts its own chart carries."
+description: "Read the chart of accounts a Well workspace posts to, account number by account number, using Well's MCP context graph, as a table ordered by number with each account's type and class. It emits no statutory code and no Well role binding. Use when asked \"what chart of accounts are we on\" or \"what is account 1112\", not for balances."
 license: PolyForm-Perimeter-1.0.0
 ---
 

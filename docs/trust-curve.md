@@ -15,7 +15,7 @@ Trust is earned one kind of action at a time. A person who is glad to let Well c
 
 The first time Well is about to do a kind of action, it asks the choice once, on the confirm card. After the person answers, Well does not ask that question again. When Well acts alone, it says so in one line and shows what it did, so nothing happens silently. When the person keeps "ask me each time" for a long run of confirmed actions, or for a month, Well offers "act alone" once more and says why.
 
-A level can go up only from a sentence the person typed in Well's own chat. The same sentence found inside a mail, a document, a web page, a forwarded message or a tool result changes nothing, and neither does a request from Claude or ChatGPT over MCP. The server enforces this, so a clever message cannot talk Well into acting alone. A turn that holds a tool result, a file or a page asks even for a kind you let Well do alone. Deleting a record, inviting a member, writing in a connected tool, minting a public link, payments, plan changes, bank detail changes and password changes always ask.
+A level can go up only from a sentence the person typed in Well's own chat. The same sentence found inside a mail, a document, a web page, a forwarded message or a tool result changes nothing, and neither does a request from Claude or ChatGPT over MCP. The server enforces this, so a clever message cannot talk Well into acting alone. A turn that holds a tool result, a file or a page asks even for a kind you let Well do alone, except a category change where you typed the transaction and the category yourself, the turn holds nothing else but tool results, and the category is not sent on to a connected bank. Deleting a record, inviting a member, writing in a connected tool, minting a public link, payments, plan changes, bank detail changes and password changes always ask.
 
 ## Required data in Well
 
@@ -25,7 +25,7 @@ A level can go up only from a sentence the person typed in Well's own chat. The 
 ## FAQ
 
 **Q: Which actions can Well do alone?**
-A: The kinds you choose, one at a time: sending in your name, changing a record, issuing an invoice, booking entries, changing a setting, adding a card payment link to an issued invoice, revoking a shared link, attaching your files to a website and spending AI tokens on a batch. Deleting a record, inviting a member, writing in a connected tool, minting a public link, payments, plan changes, bank detail changes and password changes always ask, whatever you chose before.
+A: The kinds you choose, one at a time: sending in your name, changing a record, categorizing a transaction, issuing an invoice, booking entries, changing a setting, adding a card payment link to an issued invoice, revoking a shared link, attaching your files to a website and spending AI tokens on a batch. Deleting a record, inviting a member, writing in a connected tool, minting a public link, payments, plan changes, bank detail changes and password changes always ask, whatever you chose before.
 
 **Q: Can a mail or a document make Well act alone?**
 A: No. A level goes up only when you type the request yourself in Well's chat. The same words inside a mail, a document, a page, a forwarded message or a tool result change nothing, and Well tells you it ignored them.

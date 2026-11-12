@@ -1,6 +1,6 @@
 ---
 name: "prefill-form-1099-nec"
-description: "Fill IRS Form 1099-NEC for a closed calendar year from what the ledger already holds about who you paid, one sheet per payee. Fetches the current template from the IRS, totals posted payments per counterparty, writes the identity blocks and box 1, asks once for what the books cannot know, and refuses the state block. Use when the user asks to \"prefill my 1099s\", \"fill the 1099-NEC\" or \"get our contractor forms ready\". Requires a connected Well workspace and a closed calendar year; it produces a draft for review, never a filed return."
+description: "Fill IRS Form 1099-NEC for a closed calendar year from what the ledger holds about who you paid, one sheet per payee. Fetches the current IRS template, totals posted payments per counterparty, writes the identity blocks and box 1, asks once for what the books cannot know, and refuses the state block. Requires a connected Well workspace and a closed calendar year; it produces a draft for review, never a filed return. Use when asked to \"prefill my 1099s\", \"fill the 1099-NEC\" or \"get our contractor forms ready\"."
 license: PolyForm-Perimeter-1.0.0
 ---
 

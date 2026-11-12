@@ -21,6 +21,7 @@
     "./skills/accounting-settings",
     "./skills/accounts-payable-aging",
     "./skills/accounts-receivable-aging",
+    "./skills/approve-accounts-meeting",
     "./skills/assign-missing-invoices",
     "./skills/avg-burn",
     "./skills/bills-due",

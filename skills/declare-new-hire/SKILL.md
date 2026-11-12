@@ -1,6 +1,6 @@
 ---
 name: "declare-new-hire"
-description: "Lay out what a new hire needs before day one in the country you hire in, name the forms to collect and the notices to hand over, and, on your explicit yes, record the person in Well and file the signed contract as a document. Use when the user asks \"I just signed someone, what do I do before day one\", \"new hire checklist\", \"what forms does my first employee sign\", \"onboarding an employee in France\", or names a form: W-4, I-9, the state new hire report, DPAE, Dimona, UniLav, DEUEV Anmeldung, Modelo 145 or contrat de travail. Requires a connected Well workspace, the country you employ in, and the hire's name, job title and start date. This is a WRITE flow, so it shows what it is about to write and asks first. This skill never files: it submits no DPAE, Dimona IN, UniLav, alta, DEUEV Anmeldung or new hire report, holds no field for a national identity number, and does not read the signed contract's terms into a record."
+description: "Lay out what a new hire needs before day one in the country you hire in: the forms to collect and the notices to hand over. On your yes, record the person in Well and file the signed contract as a document. This is a WRITE flow: it shows what it will write and asks first. This skill never files. Use when asked \"new hire checklist\" or \"what do I do before day one\" (W-4, DPAE, Dimona)."
 license: PolyForm-Perimeter-1.0.0
 ---
 

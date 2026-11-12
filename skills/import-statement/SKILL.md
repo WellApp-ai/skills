@@ -1,6 +1,6 @@
 ---
 name: "import-statement"
-description: "Put a bank statement the user already has — a pdf, a csv, an ofx, an xml, or a photo of the page — through Well's own extraction, so the statement, its lines and the transactions behind them land as records in one Well workspace. Takes the file three ways: the claim token from a drop on Well's website, which collects every statement dropped together, an upload of bytes the user attaches to the conversation, or pasted text. Use for a statement dropped on Well's website, pasted as text or sent as a file over MCP, or when the user has a statement in hand and nothing connected yet, says \"read this statement\", \"I have a pdf of my account\", \"I dropped a file on your site\", or when a gap-list or close flow needs transactions for a period no connector covers. It is the cold-start on-ramp: the only Well skill that produces transactions without a bank connector. Do not use to connect a bank for ongoing sync — that is connect-bank — to read balances, or to list what invoices are missing."
+description: "Put a bank statement the user already has (a pdf, a csv, an ofx, an xml or a photo of the page) through Well's own extraction, so the statement, its lines and the transactions behind them land as records in one Well workspace. Takes a claim token from a drop on Well's website, an upload, or pasted text. It is the only Well skill that produces transactions without a bank connector. Use for a statement dropped on Well's site or pasted (« ce relevé que je te colle »); no sync."
 license: PolyForm-Perimeter-1.0.0
 ---
 

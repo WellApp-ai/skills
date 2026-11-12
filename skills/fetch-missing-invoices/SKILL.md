@@ -1,6 +1,6 @@
 ---
 name: "fetch-missing-invoices"
-description: "Use for \"what am I missing?\" (« il me manque quoi ? »), to get or plan a chase; no site named: \"what am I missing for March?\", « il me manque quoi pour octobre ? », \"get the invoices missing for March\", \"fetch the invoices I'm missing\", or for close-books. Shows the gaps and starts the fetch in one turn. Also to chase missing invoices or receipts. Walks Well's missing-invoice flow: workspace, fiscal year, months, bank feed or statement, categories, gap owners, vendors to chase, connectors, and Well's browser agents fetch that pick. A WRITE flow: a supplier Well lacks joins its catalog on your yes. A caller that fixed workspace, period and scope starts mid-flow. Also use when the user only asks to be reminded of each missing invoice: say Well sends no reminder per invoice and offer the list. Do not use to compute a spend total, close a period, run one brick alone, or when the person names the sites to get the invoices from: a task per named site (site-account-task, run-errands)."
+description: "Show the invoices a workspace is missing and start the fetch in one turn: gaps, vendors to chase, connectors, and Well's browser agents fetch the pick. A WRITE flow: a supplier Well lacks joins its catalog on your yes. Use to get or plan a chase in a month, \"what am I missing\", « il me manque quoi »; no site named"
 license: PolyForm-Perimeter-1.0.0
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: "payment-invoice-lookup"
-description: "Find the reconciliation counterpart for a specific invoice, payment, or transaction (\"what payment settled this invoice\", \"what invoice does this payment belong to\"), or list every transaction/invoice with no reconciliation match at all — a compliance/reconciliation gap — using Well's MCP financial graph. Use when the user asks \"what happened with this payment\", \"find the invoice for this transaction\", \"why is this payment unmatched\", or \"find the details behind this invoice/payment\". Do not use for money owed back to the company (a refund that never arrived, an unused credit note, a VAT credit, dormant money): that is money-back. Requires a connected Well workspace with invoicing and banking/accounting data; if none is connected, this skill walks the user through connecting one first."
+description: "Find the reconciliation counterpart of one invoice, payment or transaction, or list every transaction or invoice with no reconciliation match, using Well's MCP financial graph. Use for \"why is this payment unmatched?\", not for money owed back (money-back)."
 license: PolyForm-Perimeter-1.0.0
 ---
 

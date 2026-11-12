@@ -57,6 +57,7 @@ Ask for any of these by name. Several are setup steps another skill invokes on i
 | `accounting-settings` | Set the accounting basics every period-scoped answer depends on. | [View details →](docs/accounting-settings.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/accounting-settings.skill) |
 | `accounts-payable-aging` | See what you owe your suppliers, and how long each bill has been past due. | [View details →](docs/accounts-payable-aging.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/accounts-payable-aging.skill) |
 | `accounts-receivable-aging` | See which customers still owe you money: the unpaid and overdue invoices, how late each is, and the total. | [View details →](docs/accounts-receivable-aging.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/accounts-receivable-aging.skill) |
+| `approve-accounts-meeting` | Your meeting notice and minutes to approve the accounts, drafted for you to check. | [View details →](docs/approve-accounts-meeting.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/approve-accounts-meeting.skill) |
 | `assign-missing-invoices` | Put a name on every settled expense that still has no invoice. | [View details →](docs/assign-missing-invoices.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/assign-missing-invoices.skill) |
 | `avg-burn` | Know what you spend in an average month over a window you can see, with the months that carried no spend counted. | [View details →](docs/avg-burn.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/avg-burn.skill) |
 | `bills-due` | See what you owe and when, ordered by due date with a running total. | [View details →](docs/bills-due.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/bills-due.skill) |
@@ -190,6 +191,7 @@ Install the following official skills from Well. Instructions:
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounting-settings/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounts-payable-aging/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/accounts-receivable-aging/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/approve-accounts-meeting/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/assign-missing-invoices/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/avg-burn/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/bills-due/SKILL.md

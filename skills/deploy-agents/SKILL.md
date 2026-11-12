@@ -1,6 +1,6 @@
 ---
 name: "deploy-agents"
-description: "Preview what Well would fetch for the vendors the user picked — which agents would run, over which counterparties and transactions, which rows need a manual upload, and which providers need connecting — then, on the Deploy click, start the fetch: one browser task per supplier with a portal address, in the person's Chrome or a Well cloud browser. Nothing starts until Deploy. This is a WRITE skill: a supplier Well lacks joins its catalog on the user's yes. Use when the user asks to fetch or chase the invoices of the picked vendors, says \"launch the agents\", \"go get those invoices\", \"deploy the collectors\", or when the fetch-missing-invoices flow reaches its last step after the missing rows have been picked. Do not use to run a collection from the session, to invoke a connector's own actions, to create or edit an invoice, to connect a provider, to list the missing invoices, to answer a plan ask before any pick (use fetch-missing-invoices), or to design a team of assistants from a goal (use design-agent-team)."
+description: "Preview what Well would fetch for the vendors the user picked, then on the Deploy click start one browser task per supplier with a portal address. Nothing starts until Deploy. This is a WRITE skill: a supplier Well lacks joins its catalog on the user's yes. Use for \"launch the agents\" on picked vendors; no pick yet is fetch-missing-invoices."
 license: PolyForm-Perimeter-1.0.0
 ---
 

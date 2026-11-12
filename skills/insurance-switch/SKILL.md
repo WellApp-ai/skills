@@ -1,6 +1,6 @@
 ---
 name: "insurance-switch"
-description: "Compare an insurance contract with the offers the person received, and explain how to end the current contract: the facts side by side (premium, cover, deductible), a pick when the person asks for one, the end of the cover period read from the contract on file, and a termination letter drafted for the person to send themselves. Use when the user asks \"mon assurance a augmenté, aide-moi à comparer\", \"compare ces devis d'assurance\", \"comment résilier mon assurance auto\", \"lettre de résiliation d'assurance\", \"my insurance went up, help me switch\", \"compare these insurance quotes\" or \"how do I cancel my insurance\". Business and personal insurance. It never estimates a date. Finding new quotes on the insurers' and comparators' sites goes to `run-errands`."
+description: "Compare an insurance contract with the offers the person received, and explain how to end the current contract: the facts side by side (premium, cover, deductible), a pick when the person asks for one, the end of the cover period read from the contract on file, and a termination letter drafted for the person to send themselves. Business and personal insurance. It never estimates a date. Use for \"compare insurance quotes\" or \"cancel my insurance\"; to find quotes: run-errands."
 license: PolyForm-Perimeter-1.0.0
 ---
 

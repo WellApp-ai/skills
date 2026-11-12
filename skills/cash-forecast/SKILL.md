@@ -1,6 +1,6 @@
 ---
 name: "cash-forecast"
-description: "Answer \"what will our cash look like?\" and \"how has our cash moved month by month?\" using Well's MCP financial graph: settled month-end balances followed by a worst-case projection computed here from the workspace's own balances and its own trailing burn, counting only the inflows its bank shows arriving every month. Use when the user asks \"what will our cash look like\", \"how has our cash moved month by month\", \"show me our cash forecast\", \"project our cash forward\", \"when do we hit zero\", \"chart our cash over time\", \"is our cash going up or down\", \"what does our cash runway look like month by month\", or \"put our actual cash against our forecast in a Google Sheet\" (the table comes back in the reply; Well reads and writes no Google Sheet). Requires a connected Well workspace with a banking connector; if none is connected, this skill guides the user to connect one first."
+description: "Chart settled month-end cash, then project a worst case from the workspace's own balances and trailing burn, counting only the inflows its bank shows arriving every month. Use when asked \"what will our cash look like\" or \"when do we hit zero\", or cash month by month."
 license: PolyForm-Perimeter-1.0.0
 ---
 

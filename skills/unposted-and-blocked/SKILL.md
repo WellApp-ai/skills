@@ -1,6 +1,6 @@
 ---
 name: "unposted-and-blocked"
-description: "List what one month has not booked yet, in two piles: the transactions with no category, and the transactions that carry a category or a ledger role and still have no ledger account to post to. Use when asked \"Sort my uncategorized transactions\", \"categorize my transactions\", \"aide-moi à catégoriser mes transactions\", \"what in March has not made it into the books\", \"what has not posted yet\", \"which transactions are still uncategorized\", \"propose-moi des catégories sans rien modifier\", \"category for one uncategorized row\", \"what is my bookkeeper going to have to book by hand\", or when a close flow needs a period's two repair worklists. Needs a workspace and bank connector; month-end needs a month. A categorize ask without a month uses the running month to date without a picker and reads only the uncategorized pile. On WhatsApp, a number saves that row's proposal. A request that refuses change lists proposals in text. \"Are there entries left to post?\" lists draft journal entries without asking for a month."
+description: "List what one month has not booked yet, in two piles: the transactions with no category, and the transactions that carry a category or a ledger role and still have no ledger account to post to. Needs a workspace and bank connector; month-end needs a month. Use when asked \"categorize my transactions\" or \"what has not posted yet\", not missing invoices."
 license: PolyForm-Perimeter-1.0.0
 ---
 
