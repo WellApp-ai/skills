@@ -36,7 +36,7 @@ A: Your request is the go-ahead for the re-runs. In Well's chat the posting re-r
 A: On a host that cannot wait, the matching is only queued when the answer is written. Well says how many invoices it looks at again, and you can ask again for the count.
 
 **Q: What if I name no month?**
-A: It checks every open month since the last closed month, at most twelve. A clean month counts in one line. A month with gaps gets its re-run and one line.
+A: It checks every open month since the last closed month, at most twelve. A clean month counts in one line (a read-only ask adds the nothing-changed and different-check lines). A month with gaps gets its re-run and one line.
 
 **Q: Does it find invoices that are missing?**
 A: No. A bank payment with no invoice behind it is a different check. Ask for the missing invoices of the month.

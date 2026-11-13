@@ -1,6 +1,6 @@
 ---
 name: "show-missing-invoices"
-description: "List the settled spend in one Well workspace with no supplier invoice for a month or fiscal period, one row per counterparty, each saying how the gap closes: Well's agent fetches it, connect the provider, or upload it by hand. Covers client files of a workspace group and gives the weekly total. Needs a workspace from define-workspace and a period from define-period. When asked for a reminder per missing invoice, Well sends none: say so, and offer the list. Use to list suppliers owing invoices, per file or week; read only, never to get or plan a chase."
+description: "List the settled spend in one Well workspace with no supplier invoice for a month or fiscal period, one row per counterparty, each saying how the gap closes: Well's agent fetches it, connect the provider, or upload it by hand. Covers client files of a workspace group and gives the weekly total. Needs a workspace from define-workspace and a period from define-period. When asked for a reminder per missing invoice, Well sends none: say so, and offer the list. Use to list suppliers owing invoices, per file or week; never to get or plan a chase."
 license: PolyForm-Perimeter-1.0.0
 ---
 
