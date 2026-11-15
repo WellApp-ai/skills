@@ -1,6 +1,6 @@
 ---
 name: "company-profile"
-description: "Compose everything Well knows about one named company, customer or vendor, into a single 360 view: profile info, contact channels, and the invoice relationship as issuer, receiver, or both. If the company can't be found, it says so instead of guessing. Use when asked \"customer 360\", \"everything about [company name]\" or \"who is this company\"."
+description: "Compose everything Well knows about one named company, customer or vendor, into a single 360 view: profile info, contact channels, and the invoice relationship as issuer, receiver, or both. If the company can't be found, it says so instead of guessing. Use for \"customer 360\", \"everything about X\", \"who is this company\", or a lone company card."
 license: PolyForm-Perimeter-1.0.0
 ---
 

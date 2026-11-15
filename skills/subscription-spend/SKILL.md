@@ -1,6 +1,6 @@
 ---
 name: "subscription-spend"
-description: "Find the subscriptions inside a workspace's bank spend: the suppliers paid from a bank account or card on a regular cadence, each with its monthly and yearly cost and amount changes, drawn as a trend and a monthly table. Asked where to save, it reads all the person's workspaces and gives numbered leads, biggest per year first. With no bank, it lists subscriptions from received invoices, then offers the bank. Asked when a subscription can be cancelled, it gives the notice deadline when Well holds the contract, else asks for it. It lists a refused payment, a double debit or a price rise. Use when asked \"what subscriptions are we paying for\" or \"did any go up\"; not to cancel one."
+description: "Find the subscriptions inside a workspace's bank spend: the suppliers paid from a bank account or card on a regular cadence, each with its monthly and yearly cost and amount changes, drawn as a trend and a monthly table. Asked where to save, it reads all the person's workspaces and gives numbered leads, biggest per year first. With no bank, it lists subscriptions from received invoices, then offers the bank. Asked when a subscription can be cancelled, it gives the notice deadline when Well holds the contract; with none on file, it says a monthly one has no known notice period, else asks for the contract. It lists a refused payment, a double debit or a price rise. Use when asked \"what subscriptions are we paying for\" or \"did any go up\"; not to cancel one."
 license: PolyForm-Perimeter-1.0.0
 ---
 

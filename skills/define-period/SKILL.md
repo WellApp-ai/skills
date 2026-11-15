@@ -1,6 +1,6 @@
 ---
 name: "define-period"
-description: "Pin the calendar month or months, with fiscal coordinates, that a Well workspace job works on, and hand the selection off as a typed result. In `collect` mode it hands one month back to a caller that commits it. Use when asked \"last month\", \"March\" or which month a job covers, or a skill needs a period."
+description: "Pin the calendar month or months, with fiscal coordinates, that a Well workspace job works on, and hand the selection off as a typed result. In `collect` mode it hands one month back to a caller that commits it. Use for \"last month\", \"March\" or a job's month; not fiscal-year dates (accounting-settings)."
 license: PolyForm-Perimeter-1.0.0
 ---
 

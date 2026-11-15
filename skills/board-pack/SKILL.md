@@ -1,6 +1,6 @@
 ---
 name: "board-pack"
-description: "Assemble the board numbers in one pass from Well's MCP financial graph: cash, burn, runway, recurring revenue and what is owed on each side, each figure carrying its scope and window. Requires a connected Well workspace with bank data and a resolved own company. It reads and changes nothing. Use when asked \"what numbers do I put in front of the board\" or for \"my board pack\"."
+description: "Assemble the board numbers in one pass from Well's MCP financial graph: cash, burn, runway, recurring revenue and what is owed on each side, each figure carrying its scope and window. Requires a connected Well workspace with bank data and a resolved own company. It changes no record of the books; in Well's own chat it stores one PDF of the pack. Use when asked \"what numbers do I put in front of the board\" or for \"my board pack\"."
 license: PolyForm-Perimeter-1.0.0
 ---
 

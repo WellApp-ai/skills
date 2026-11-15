@@ -13,7 +13,7 @@
 
 Ask Well to cancel, renegotiate or contest a subscription, and it starts from what your bank shows: the supplier's last debits, how often they come, and whether the amount moved. Every email quotes those facts, never a figure the bank does not hold.
 
-A cancellation leads with the notice date and the end of service, because a cancellation cannot be taken back. Those dates come only from a contract on file. With no contract, the answer says the notice date is unknown and asks you for the contract. Because many suppliers also ask you to cancel from the account settings, the answer points to the supplier's own cancellation page when the assistant can search the web, and says so when it cannot.
+A cancellation leads with the notice date and the end of service, because a cancellation cannot be taken back. Those dates come only from a contract on file. When Well reads your contracts and finds none for a monthly subscription, the answer says "Monthly subscription, no known notice period." and does not ask for the contract. Otherwise, with no contract, it says the notice date is unknown and asks you for the contract. Because many suppliers also ask you to cancel from the account settings, the answer points to the supplier's own cancellation page when the assistant can search the web, and says so when it cannot.
 
 A double debit is two debits to one supplier of the same amount, a few days apart. It is contested only when the bank shows them as two separate payments, or the recap lists the month as one charge taken twice and you pick its number. Until then the pair stays marked to check: you get the contest email as a draft marked to check, and nothing is sent or started. Once confirmed, the email asks the supplier to check and refund the second debit, and the answer gives the bank route if the supplier does not, marked to confirm. A right is named only when your records show every fact it needs.
 
@@ -25,7 +25,7 @@ With several workspaces, Well's chat works in rounds, the workspace that pays th
 
 - **Banking connector** (required). The facts in every email come from the supplier's debits in your bank. A subscription paid by card is read from the card's debits when the card account is in Well.
 - **The supplier's email address** (recommended). Read from the supplier's record in Well. Without one, the skill asks you for it once and never guesses it.
-- **The contract with the supplier** (recommended). The notice date and the end of service come only from a contract on file. Without one, the skill says the notice date is unknown and asks for the contract.
+- **The contract with the supplier** (recommended). The notice date and the end of service come only from a contract on file. When Well reads your contracts and finds none for a monthly subscription, the skill says "Monthly subscription, no known notice period." and does not ask for the contract. Otherwise, without a contract, it says the notice date is unknown and asks for the contract.
 
 ## FAQ
 
@@ -33,7 +33,7 @@ With several workspaces, Well's chat works in rounds, the workspace that pays th
 A: When the Well extension can reach the supplier's site, yes: it cancels from the supplier's own site in your browser once you open Well's link and start the task, and it hands the tab back to you for a sign-in or a payment step. Otherwise it writes the cancellation email and, in Well's chat and on WhatsApp, sends it from your Gmail once you confirm. It does not stop the debit at your bank. It also gives the supplier's own cancellation page with its source when it can search the web, else it says the supplier may require cancelling from your account settings.
 
 **Q: How does it know my notice date?**
-A: Only from a contract on file. Without one, it says the notice date is unknown and asks you for the contract. It never estimates a date from the payments.
+A: Only from a contract on file. When Well reads your contracts and finds none for a monthly subscription, it says "Monthly subscription, no known notice period." and does not ask for the contract. Otherwise, without a contract, it says the notice date is unknown and asks you for the contract. It never estimates a date from the payments.
 
 **Q: Is a double debit a sure claim?**
 A: Only when the bank shows the two debits as two separate payments. Until then the pair is marked to check, with both dates and amounts, and you get the contest email as a draft marked to check: nothing is sent.

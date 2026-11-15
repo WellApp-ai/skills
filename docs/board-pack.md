@@ -17,7 +17,7 @@ Every figure is computed in the open rather than read off a black box. Well read
 
 The pack asks for no month. Every rate page averages over the same trailing months, ending with the last complete one, because a balance read today cannot be divided by a rate that stopped three months ago. How final the books are for those months is what `close-books` answers, and the pack points at it rather than reporting a verdict it never read.
 
-It changes nothing. It closes no period, posts no entry and produces no file. What it produces is the set of figures, each one re-derivable from the two numbers under it.
+It changes no record of the books. It closes no period and posts no entry. What it produces is the set of figures, each one re-derivable from the two numbers under it, and in Well's own chat one PDF of the pack, printed from the cards Well checked, to hand to the board.
 
 ## Required data in Well
 
@@ -29,7 +29,7 @@ It changes nothing. It closes no period, posts no entry and produces no file. Wh
 ## FAQ
 
 **Q: Does it produce a file I can send to my board?**
-A: No. It produces the figures and what each one rests on, in the conversation and on the cards. Nothing here assembles an archive, a PDF or a downloadable bundle, and the skill does not pretend otherwise.
+A: Yes, in Well's own chat: the pack goes out as one PDF, printed from the cards Well checked, with the cash, the burn, the runway and the recurring revenue on one sheet. Through another assistant it gives the figures and what each one rests on, and that assistant's own export makes the file.
 
 **Q: Does it include a profit and loss statement?**
 A: No. A profit and loss statement is an aggregate over ledger entry lines, and no such aggregate exists to read. Reaching a total by paging through rows is refused, because a total assembled from a sample is a wrong number rather than an approximate one. When your QuickBooks or Xero is connected, the accounting reports skill reads the profit and loss straight from that tool.
@@ -41,7 +41,7 @@ A: No. Well holds no budget, so there is nothing to compare against. What it doe
 A: No. Payslips and employment contracts are not among the records Well reads, so any headcount figure here would be invented. Payroll that moved through a bank account is counted as spend like any other outflow.
 
 **Q: Does it close or lock the period?**
-A: No. It reads and reports, and writes nothing back. Closing a month is its own flow, `close-books`, and approving it is a click you make in Well.
+A: No. It reads and reports, and changes no record of the books. Closing a month is its own flow, `close-books`, and approving it is a click you make in Well.
 
 **Q: What happens when the money is in several currencies?**
 A: Each amount is converted at its own rate, and the rate and the rate date are stated with the figure. When a rate is missing, the amount stays in its own currency and the total says what it left out, because a blended total nobody can re-derive is worse than two numbers they can.

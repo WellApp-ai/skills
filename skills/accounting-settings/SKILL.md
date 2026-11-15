@@ -1,6 +1,6 @@
 ---
 name: "accounting-settings"
-description: "Set a Well workspace's accounting settings, the fiscal year start month above all, plus the first fiscal year start date, base currency, country, accounting framework and chart-of-accounts confirmation, writing only the value the user confirms. This is a WRITE flow: it shows the current value, confirms the new one, then writes; a locked period or a close in progress refuses the fiscal year start. Requires a connected Well workspace and owner or admin rights. Use when asked \"set our fiscal year start\" or to change the currency or framework."
+description: "Set a Well workspace's accounting settings, the fiscal year start month above all, plus the first fiscal year start date, base currency, country, accounting framework and chart-of-accounts confirmation, writing only the value the user confirms. This is a WRITE flow: it shows the current value, confirms the new one, then writes; a locked period or a close in progress refuses the fiscal year start. It also dates the first fiscal year from the statutes and offers the accountant's confirmation request. Requires a connected Well workspace and owner or admin rights. Use for \"set our fiscal year start\", currency, framework, first year end, « premier exercice »."
 license: PolyForm-Perimeter-1.0.0
 ---
 

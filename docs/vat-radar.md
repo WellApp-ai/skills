@@ -11,9 +11,9 @@
 
 ## What it does
 
-Ask for your VAT position and the useful answer is the possibility the data suggests, with its working beside it. A position question reads draft, validated and locked entries plus tax stated on supplier and customer documents for the months you name, or the current quarter when you name none. It reports quarter rows with their month and rate split, keeps purchases to check separate, and never turns a missing side into zero or a supplier-only figure into a net position.
+Ask for your VAT position and the useful answer is the possibility the data suggests, with its working beside it. A position question on the running period reads draft, validated and locked entries plus tax stated on supplier and customer documents for the current quarter, or for the running months you name. It reports quarter rows with their month and rate split, keeps purchases to check separate, and never turns a missing side into zero or a supplier-only figure into a net position.
 
-A filing or readiness question reads the VAT posted to the ledger for the months you name and reports the collected VAT, deductible VAT and net payable exactly as the posted read returns them. The posted figure is on the debit basis, so the receipts basis can differ. A running month is marked as still moving.
+A filing or readiness question, or any question on months that have ended, reads the VAT posted to the ledger for the months you name and reports the collected VAT, deductible VAT and net payable exactly as the posted read returns them. The posted figure is on the debit basis, so the receipts basis can differ. A running month is marked as still moving.
 
 The figure is only as good as the invoices behind it. An invoice line with no VAT rate, or an invoice with no supplier, leaves VAT that no rate can claim. The skill lists those invoices by their supplier, number and date, says which of the two is wrong on each, and says what to set. Where the ledger holds a figure the return cannot place, it says so before it quotes a total.
 
@@ -21,7 +21,7 @@ It stops where the data stops. It is a working paper for your accountant, not a 
 
 ## Required data in Well
 
-- **Ledger entries and VAT-bearing documents** (required). A position question reads draft, validated and locked ledger entries plus supplier and customer documents. A filing or readiness question reads the posted basis, or the same entries and documents when nothing is posted. When neither source states VAT, the read says so instead of reporting nil.
+- **Ledger entries and VAT-bearing documents** (required). A position question on the running period reads draft, validated and locked ledger entries plus supplier and customer documents. A filing or readiness question, or a month that has ended, reads the posted basis, or the same entries and documents when nothing is posted. When neither source states VAT, the read says so instead of reporting nil.
 - **A French accounting country** (recommended). The posted filing basis is modelled for France only. A workspace in another country, or with none, still gets the position the read returns (the possibilities basis reads without a country and places purchases in the to-check class), with one line that VAT filing for that country is not mapped in Well.
 - **Invoices behind the spend** (recommended). Deductible VAT comes from invoices. Spend with no invoice in Well adds no deductible VAT, so the net due reads higher than it will once those invoices arrive. A connected bank shows that spend.
 
