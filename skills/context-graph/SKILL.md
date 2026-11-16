@@ -1,6 +1,6 @@
 ---
 name: "context-graph"
-description: "Build a Well workspace's context graph from a conversation: connect Well to the user's AI apps when none is connected, get the bank, accounting and invoicing sources connected with Well's connect card, recap each source in one line, then draw the context graph those sources feed. Needs define-workspace and connect-tools. Use when asked to \"build my context graph\", not for one AI app (connect-tools)."
+description: "Build a Well workspace's context graph from a conversation: connect Well to the user's AI apps when none is connected, get the bank, accounting and invoicing sources connected with Well's connect card, recap each source in one line, then draw the context graph those sources feed. Needs define-workspace and connect-tools. Use for \"build my context graph\", not one AI app (connect-tools) or a data model change."
 license: PolyForm-Perimeter-1.0.0
 ---
 
