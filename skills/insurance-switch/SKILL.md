@@ -1,6 +1,6 @@
 ---
 name: "insurance-switch"
-description: "Compare an insurance contract with the offers the person received, and explain how to end the current contract: the facts side by side (premium, cover, deductible), a pick when the person asks for one, the end of the cover period read from the contract on file, and a termination letter drafted for the person to send themselves. Business and personal insurance. It never estimates a date. Use for \"compare insurance quotes\" or \"cancel my insurance\"; to find quotes: run-errands."
+description: "Compare an insurance contract with the offers the person received, and explain how to end the current contract: the facts side by side (premium, cover, deductible), a pick when the person asks for one, the cover end read from the contract on file, and a termination letter drafted for the person to send themselves. Business and personal insurance. It never estimates a date. Use for \"compare insurance quotes\", \"cancel my insurance\" or \"review my insurance\"."
 license: PolyForm-Perimeter-1.0.0
 ---
 
