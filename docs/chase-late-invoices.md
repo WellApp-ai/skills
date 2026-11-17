@@ -29,7 +29,7 @@ A: Only after you approve it. It drafts a message per customer and hands it to y
 A: By a score: the amount overdue multiplied by the days the oldest of those invoices is past due, so the customers who owe the most for the longest come first. Each customer's historical paid revenue is shown alongside the score as a separate signal, in case you want to weigh a long-standing client differently.
 
 **Q: Where does the contact info come from?**
-A: From the company record already stored in Well for that customer: its saved email addresses and phone numbers. If none are on file, this skill says so rather than guessing an address.
+A: From the company record already stored in Well for that customer: its saved email addresses and phone numbers. If none are on file, this skill says so rather than guessing an address. For today's calls, a customer with no phone on file gets a look-up in your mail signatures and on its own website; with none found, Well makes a mail reminder task in place of the call.
 
 **Q: What about invoices it cannot rank?**
 A: They are named, not chased. An invoice with no due date, a payment status Well could not work out, a balance that is missing, or a settlement the source system claims but the bank has not matched in full is listed on its own line with a count, and no message is drafted from it.
