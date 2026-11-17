@@ -12,7 +12,7 @@
 ## What it does
 
 Ask about one customer and get their invoicing identity as Well holds it today: the legal name on the register, the registry number, the establishment being billed, the postal address and the VAT number, each shown with where the value came from.
-Every value is read from that customer's own company record in your workspace. Nothing is guessed from the company name, and no public directory is queried, so a blank row means Well holds nothing rather than that nothing exists.
+Every value is read from that customer's own company record in your workspace. Nothing is guessed from the company name. The company register and the European VAT check confirm or contradict what Well holds, and a public value never fills a row: a blank row means Well holds nothing, and a value the register gives is named beside it to confirm.
 Some details an electronic invoice needs have no home in Well yet, such as a routing address or a buyer reference. The read names those separately, so you are never asked for a value the product cannot keep. For the other side of the relationship, which company your own workspace is, ask `confirm-my-company` instead.
 
 ## Required data in Well
@@ -27,7 +27,7 @@ Some details an electronic invoice needs have no home in Well yet, such as a rou
 A: No. It reads identity and reports it. It does not transmit an invoice to any platform or to a tax authority, and it produces no Factur-X, UBL or CII file.
 
 **Q: Does it check a public company register?**
-A: No. It reads your workspace's own company records only. A blank row means Well holds no value for it, which is different from the value not existing anywhere.
+A: Yes, to check what Well holds, never to fill it in. The company register and the European VAT check confirm or contradict the values on your workspace's company record. A blank row still means Well holds no value for it, and a value the register gives is named beside it, with a task to confirm it.
 
 **Q: Why are some details listed as something Well cannot store?**
 A: Because no column holds them yet. The routing address and the buyer reference on a business customer, and the customer type, supply category, VAT rate and VAT point basis on an individual, are named separately for that reason. They are not gaps you can close, so the skill never asks you for them.

@@ -13,7 +13,7 @@
 
 Ask which of the companies you deal with have no tax number on file, and the skill reads your company records and lists the ones holding neither a tax id nor a registration number. You get the count over the whole set, not a page of it, and the rows on screen so you can start asking.
 From that list you can open one company and see its registry identity in detail: its legal name, its registration number, its VAT number, its billed establishment and its postal address, each one either held or plainly blank. A detail that Well cannot store yet is named as such rather than left looking like something you forgot to fill in.
-What the skill stays away from matters as much as what it does. It cannot rank the list by how much you paid each company, because the one arithmetic read over transactions groups by month, currency and category and carries no counterparty axis. It applies no reporting threshold, because Well holds no threshold figure, so the list is every company missing an identifier rather than the subset a form would cover. It reports an identifier as held without re-checking it against a registry, and it files nothing.
+What the skill stays away from matters as much as what it does. It cannot rank the list by how much you paid each company, because the one arithmetic read over transactions groups by month, currency and category and carries no counterparty axis. It applies no reporting threshold, because Well holds no threshold figure, so the list is every company missing an identifier rather than the subset a form would cover. It checks the list against no register: only a company you open is looked up in the company register and the European VAT check, and a public value there is a proposal to confirm, never written. It files nothing.
 
 ## Required data in Well
 
@@ -33,7 +33,7 @@ A: No. Well holds no threshold figure for 1099-NEC, DAS2, fiche 281.50 or any ot
 A: No. The scheme a transaction records covers SEPA, SWIFT, ACH, Faster Payments, Bacs, wire and other, with no card value and no third party network value, and the column is often empty. A rail answer built on that would be a guess.
 
 **Q: Does it check that an identifier on file is valid?**
-A: No. It reports the value as held. It does not re-check it against a public register and does not tell you whether the registration is still current.
+A: For a company you open, yes: the company register and the European VAT check confirm or contradict the value on file, and a disagreement becomes a task to check it. The list itself reports each value as held, with no check of every row.
 
 **Q: Can it file or prefill the form for me?**
 A: No. It produces the chase list and the per company detail. Filing stays with you.
