@@ -1,6 +1,6 @@
 ---
 name: "mail-senders"
-description: "Answer which newsletters the member receives from Well's email records, save one private keep, skip or unsubscribe choice for one sender, unsubscribe the member from senders after their yes, and take senders' mail out of the inbox. It deletes no mail, adds no label and writes no message. This is a WRITE flow: each unsubscribe, each archive and each saved choice waits for a yes on its card. Use for \"which newsletters do I get\" or \"désabonne-moi\", not mail triage (mailbox)."
+description: "Answer which newsletters the member receives from Well's email records, save one private keep, skip or unsubscribe choice for one sender, unsubscribe the member from senders after their yes, and take senders' mail out of the inbox. It deletes no mail, adds no label and writes no message. This is a WRITE flow: each unsubscribe, each archive and each saved choice waits for a yes on its card. It also quiets the e-mails a connected tool sends itself (\"Pennylane m'envoie trop de mails\"). Use for \"which newsletters do I get\" or \"désabonne-moi\", not mail triage (mailbox)."
 license: PolyForm-Perimeter-1.0.0
 ---
 

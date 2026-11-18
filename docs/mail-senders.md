@@ -26,6 +26,9 @@ A: Yes, from Gmail senders, one confirmation per sender. Well uses the sender's 
 **Q: Does Well delete my newsletters?**
 A: No. Archiving takes the mail out of the inbox only. It stays in the mailbox and its search.
 
+**Q: Can Well stop the e-mails my connected tools send?**
+A: Those e-mails come from the tool itself, so they stop in its own settings. Well gives you the tool's notification page, or changes the switches there when you ask, and you click the tool's own save button.
+
 **Q: Does Well know which newsletters I open?**
 A: No. Well's records hold no opened state, so you tell Well which senders you read.
 
