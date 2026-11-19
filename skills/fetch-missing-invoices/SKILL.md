@@ -1,6 +1,6 @@
 ---
 name: "fetch-missing-invoices"
-description: "Show the invoices a workspace is missing and start the fetch in one turn: gaps, vendors to chase, connectors, and Well's browser agents fetch the pick. A WRITE flow: a supplier Well lacks joins its catalog on your yes. Use to get or plan a chase in a month, \"what am I missing\", « il me manque quoi »; no site named"
+description: "Show the invoices a workspace is missing and start the fetch in one turn: gaps, vendors to chase, connectors, and Well's browser agents fetch the pick. A WRITE flow: a supplier Well lacks joins its catalog on your yes. Use to fetch, chase or plan a chase of missing invoices for a month; no site named"
 license: PolyForm-Perimeter-1.0.0
 ---
 
