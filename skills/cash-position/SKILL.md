@@ -1,6 +1,6 @@
 ---
 name: "cash-position"
-description: "Answer \"how much cash do we have right now?\" with the total of your real bank balances, never invested cash, computed from the workspace's own accounts, every rule it rests on visible and repairable. Use for cash now: a bank or account balance, the balances page link, a cash chart; not runway."
+description: "Answer \"how much cash do we have right now?\" with the total of your real bank balances, never invested cash, computed from the workspace's own accounts, every rule it rests on visible and repairable. Use for cash now: a bank balance, « la page des soldes » or its link, a cash chart; not runway."
 license: PolyForm-Perimeter-1.0.0
 ---
 
