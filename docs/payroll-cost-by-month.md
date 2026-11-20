@@ -11,11 +11,11 @@
 
 ## What it does
 
-Ask what payroll cost last month and you usually get one of two answers: a bank total that mixes salaries with taxes and contributions paid on other dates, or a spreadsheet somebody retyped from PDFs. This skill reads the payslip rows in Well instead, for the calendar month you pin, and states the four amounts a payslip prints for each person: gross pay, tax withheld, social contributions, and net pay. Name no month and it reads the last complete month and says which one. Name several, up to twelve, or a quarter, and you get one total per month, with a month that holds no payslip saying so while the other months keep their totals.
+Ask what went out in salaries last month and you usually get one of two answers: a bank total that mixes salaries with taxes and contributions paid on other dates, or a spreadsheet somebody retyped from PDFs. This skill reads the payslip rows in Well instead, for the calendar month you pin, and states the four amounts a payslip prints for each person: gross pay, tax withheld, social contributions, and net pay. Name no month and it reads the last complete month and says which one. Name several, up to twelve, or a quarter, and you get one total per month, with a month that holds no payslip saying so while the other months keep their totals.
 
 Every figure stays in the currency its own payslip was issued in. When the month holds more than one currency and you ask for a single total, the conversion states the rate and the date it used, and a currency with no rate is named and left out rather than quietly dropped from the total.
 
-It is deliberately narrow. It reports the employee side of a payslip, not the employer charges, because the employer versus employee side of a line is not a readable field on the payslip records. It counts the people who have a payslip in the month rather than headcount, since a contract with no payslip is not reachable from these rows. And it reads one page of records, so when the month holds more rows than one read returns it says the month was not covered instead of presenting a sample as a total. For the shape of total spend across every category, ask for the cost structure instead.
+It is deliberately narrow. It reports the pay paid out, the employee side of a payslip, not what payroll costs the company: for that, ask for the employer cost. It counts the people who have a payslip in the month rather than headcount, since a contract with no payslip is not reachable from these rows. And it reads one page of records, so when the month holds more rows than one read returns it says the month was not covered instead of presenting a sample as a total. For the shape of total spend across every category, ask for the cost structure instead.
 
 ## Required data in Well
 
@@ -26,7 +26,7 @@ It is deliberately narrow. It reports the employee side of a payslip, not the em
 ## FAQ
 
 **Q: Does this give me the fully loaded cost of employment?**
-A: No. It reports the employee side of each payslip. The employer versus employee side of a payslip line is not a readable field on the payslip records, so employer charges are out of scope and the answer says so.
+A: No. It reports the pay paid out, the employee side of each payslip. What payroll costs the company, employer charges included, is the employer cost, a separate read.
 
 **Q: Is this our headcount?**
 A: No. It counts the people who have a payslip in the month. An employment contract with no payslip for that month is not reachable from these rows, so a person on unpaid leave or one whose payslip has not landed does not appear.

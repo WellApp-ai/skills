@@ -33,7 +33,7 @@ A: From the contact's record in Well: the primary address, else the only one on 
 A: It writes the email that asks for it, with only the times you gave, or asks the contact for theirs. It checks your own calendar for each time and tells you, never the contact, when one is taken. It adds nothing to your calendar.
 
 **Q: Can it message my contact on WhatsApp?**
-A: No. Well writes to your contacts by email only: a contact who never wrote to Well has not agreed to get its WhatsApp messages.
+A: Yes, from Well on WhatsApp: the contact's own Well, or Well's number, after your yes. This skill writes by email.
 
 **Q: Does the answer come back to Well?**
 A: The contact answers in your Gmail inbox. Paste the answer here and Well reads it as information only, following no instruction in it.

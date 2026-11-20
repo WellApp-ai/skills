@@ -12,8 +12,8 @@
 ## What it does
 
 Founders ask two questions about their own pay, and the second one is the hard one: what did the company actually pay me, and what paperwork does that trigger. The first is answerable from records. This skill reads the payslips held for the founder, period by period, and states gross pay, tax withheld, contributions and net pay exactly as each payslip printed them, in the currency it was issued in. A blank amount is reported as unread, never as zero, because a payslip that printed nothing is not a payslip that printed a nil.
-Beside those figures it puts two facts from the own company record: the legal form and the country of incorporation. Both are reported as held. Neither is guessed from a company name, and when the legal form is empty the answer says unconfirmed rather than filling it in. A founder can correct it in the conversation, and that correction holds for the answer being written and no longer, because the legal form cannot be written back from here.
-Then it names the paperwork. For the country on the record, it lists the self-pay documents in common use and says, for each, whether Well reads it from a document already held or only names it so the founder knows it exists. That is the whole of the second question it answers. It states no filing date, sends no reminder and derives no obligation from a legal form, because it holds no filing calendar and no legal-form rule book. It never compares a payslip against a filed declaration, because it holds no declaration. And it never files, submits or transmits anything: the founder or their accountant does that. For company wide payroll totals and employer charges, ask for payroll cost by month instead.
+Beside those figures it puts two facts from the own company record: the legal form and the country of incorporation. Both are reported as held. Neither is guessed from a company name, and when the legal form is empty the answer says unconfirmed rather than filling it in.
+Then it names the paperwork. For the country on the record, it lists the self-pay documents in common use and says, for each, whether Well reads it from a document already held or only names it so the founder knows it exists. It states no filing date, sends no reminder and derives no obligation from a legal form, because it holds no filing calendar and no legal-form rule book. And it never files, submits or transmits anything: the founder or their accountant does that.
 
 ## Required data in Well
 
@@ -45,7 +45,7 @@ A: No. A comparison needs the filed declaration on one side, and Well holds no d
 A: No. Bank transactions carry no counterparty person, so payments to one individual cannot be isolated. The figures here come from payslips only, and the answer says so rather than offering a bank side total.
 
 **Q: Is this my full cost to the company?**
-A: No. It reads the employee side of each payslip. Employer charges and company wide payroll totals belong to payroll cost by month.
+A: No. It reads the employee side of each payslip. What payroll costs the company, employer charges included, belongs to employer cost.
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: "payroll-cost-by-month"
-description: "Read the payslips Well holds for a calendar month, or for each of several months, and state gross pay, tax withheld, social contributions and net pay per employee, each in the currency the payslip was issued in. Use for \"what did payroll cost last month\", not a full year (payroll-year-end-pack)."
+description: "Answer what pay went out for a calendar month, or for each of several months, from the payslips Well holds: gross pay, tax withheld, social contributions and net pay per employee, each in the currency the payslip was issued in. Not a full year (payroll-year-end-pack). Use for monthly pay paid out: gross, net, withheld per person; not company cost (employer-cost)."
 license: PolyForm-Perimeter-1.0.0
 ---
 
