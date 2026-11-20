@@ -15,7 +15,7 @@ Most assistants forget you between sessions, or keep everything you ever typed. 
 
 A fact about you stays yours. A fact about the business is shared with your team. Ask "what do you know about me" and Well lists both, so you can correct a line or remove it.
 
-When Well learns from a session, it is told to skip a password, a bank or card number, an id number or health information, even when you type one. A line you add or approve yourself is saved as you write it. And a memory line never changes what Well may do on its own: sending, paying or changing anything still needs your yes.
+When Well learns from a session, it keeps every fact it learns. A password, a bank or card number or an id number never goes into a memory line: it belongs in the vault. A line you add or approve yourself is saved as you write it. And a memory line never changes what Well may do on its own: sending, paying or changing anything still needs your yes.
 
 ## Required data in Well
 

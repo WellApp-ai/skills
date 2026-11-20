@@ -1,6 +1,6 @@
 ---
 name: "normalize-currency"
-description: "Turn amounts in different currencies into one auditable answer: a converted total with its exchange rate and as-of date, or a per-currency breakdown, never a blended figure. Use when totals mix currencies, not when a Well tool already converted."
+description: "Turn amounts in different currencies into one auditable answer: a converted total with its exchange rate and as-of date, or a per-currency breakdown, never a blended figure. Use only when a calling skill loads it for mixed-currency totals, not when a tool converted."
 license: PolyForm-Perimeter-1.0.0
 ---
 
