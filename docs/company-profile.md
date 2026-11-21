@@ -7,17 +7,16 @@
 
 # Company profile
 
-**Everything you know about one company, in one view.**
+**One look at a company tells you what it is to you, what is open, and what comes next.**
 
 ## What it does
 
-Whether you're prepping for a call with a customer or double-checking a vendor before you pay them, this skill pulls together everything Well knows about that one company — who they are, how to reach them, and your full invoice history together — into a single answer. No flipping between tabs, no piecing it together by hand.
+Prepping a renewal, a payment or a call? Well gathers what it knows about one company from your records, your connected tools and public registers, checks it for wrong or duplicate data, and shows a short brief with its sources: who they are, what they are to you, money and promises open, and the next step.
 
 ## Required data in Well
 
-- **Invoicing / bills connector** (required). This is where the invoice relationship (what they owe you, what you owe them) comes from.
-- **Contact details on the company record** (optional). Emails, phones, and addresses show up when they are on file. The skill says so plainly when they are not.
-- **A workspace's own company set** (recommended). Without it, the skill can still show the raw invoice totals in both directions, it just cannot label the company as a customer or vendor for you.
+- **A seat in the Well workspace** (required). Without a workspace, Well can read the public register only.
+- **Invoicing, bank or accounting connector** (recommended). The money lines come from it.
 
 ## FAQ
 

@@ -1,6 +1,6 @@
 ---
 name: "company-profile"
-description: "Compose everything Well knows about one named company, customer or vendor, into a single 360 view: profile info, contact channels, and the invoice relationship as issuer, receiver, or both. If the company can't be found, it says so instead of guessing. Use for \"customer 360\", \"everything about X\", \"who is this company\", or a lone company card."
+description: "Build or refresh the sourced dossier of one company: a supplier, a client, a bank, the member's own company, or a tool the workspace uses. It resolves the company and its duplicates first, reads what Well holds, the stored registry answer and each connected tool's record, then public registers, checks for wrong data, and returns a brief of at most 8 lines with gaps. It proposes merges, links and fixes and writes none without a yes. It answers \"brief me on this tool before the renewal\" and \"customer 360\". Not for a person (that is people-book) and not to pay a bill. Use for \"what do we know about this supplier\" or \"fiche de cette société\"."
 license: PolyForm-Perimeter-1.0.0
 ---
 
