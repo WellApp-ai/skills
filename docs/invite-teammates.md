@@ -38,7 +38,7 @@ A: Yes. Name the teammate and give their email address. Well creates the invitat
 A: Yes. Give the number and the role, admin or member. Well creates the seat in your workspace for that number and gives you its invitation link. You send the link to that number, by WhatsApp or SMS. The teammate joins by writing to Well on WhatsApp from that number: the number proves who it is, and that message is their consent. This is for a number not yet linked to Well; a person whose number is already linked to Well is invited by email instead, and accepts it from that address. The invitation works for seven days.
 
 **Q: What if I say "later" or "no" to a suggestion?**
-A: Well remembers it in Well, in Claude, in ChatGPT and on WhatsApp alike. After "later" or a first "no" the person is not suggested again for 30 days; after a second "no" they are never suggested again. Well suggests a teammate on its own at most once every 30 days.
+A: Well remembers it in Well, in Claude, in ChatGPT and on WhatsApp alike. After "later" or a first "no" the person is not suggested again for 30 days; after a second "no" they are never suggested again. Well suggests a teammate on its own at most once every 30 days. On WhatsApp it can send one list of up to 10 colleagues instead: the first list goes out once, then a new list only when a colleague no earlier list named appears, at most once every 30 days.
 
 ---
 
