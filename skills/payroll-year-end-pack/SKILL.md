@@ -1,6 +1,6 @@
 ---
 name: "payroll-year-end-pack"
-description: "Read every payslip Well holds for one calendar year, total gross pay, tax withheld, social contributions and net pay per contract and per month, name each month with no payslip or no posted journal entry, and hand the year to your accountant through the close package. It files no return and produces no annual statement. Use for \"payroll pack for last year\" or W-2, DSN, not one month (payroll-cost-by-month)."
+description: "Read every payslip Well holds for one calendar year, total gross pay, tax withheld, social contributions and net pay per contract and per month, name each month with no payslip or no posted journal entry, and hand the year to your accountant through the close package. It files no return and produces no annual statement. Use for \"payroll pack for last year\" or W-2, DSN, not one month (payroll-question)."
 license: PolyForm-Perimeter-1.0.0
 ---
 

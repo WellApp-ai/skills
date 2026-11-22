@@ -1,6 +1,6 @@
 ---
 name: "payroll-cost-by-month"
-description: "Answer what pay went out for a calendar month, or for each of several months, from the payslips Well holds: gross pay, tax withheld, social contributions and net pay per employee, each in the currency the payslip was issued in. Not a full year (payroll-year-end-pack). Use for monthly pay paid out: gross, net, withheld per person; not company cost (employer-cost)."
+description: "Answer what pay went out for a calendar month, or for each of several months, from the payslips Well holds: gross pay, tax withheld, social contributions and net pay per employee, each in the currency the payslip was issued in. Not a full year (payroll-year-end-pack). Use only when payroll-question or another skill's step loads it."
 license: PolyForm-Perimeter-1.0.0
 ---
 

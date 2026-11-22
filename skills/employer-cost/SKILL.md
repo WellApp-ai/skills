@@ -1,6 +1,6 @@
 ---
 name: "employer-cost"
-description: "Answer what payroll costs the company for one or several months: per person, gross pay, employee deductions and employer charges as the payslips printed them, then the bank-paid payroll bills no payslip carries. It files nothing. Requires payslips in Well. Use for what payroll or an employee costs the company; not pay paid out (payroll-cost-by-month)."
+description: "Answer what payroll costs the company for one or several months: per person, gross pay, employee deductions and employer charges as the payslips printed them, then the bank-paid payroll bills no payslip carries. It files nothing. Requires payslips in Well. Use only when payroll-question or another skill's step loads it."
 license: PolyForm-Perimeter-1.0.0
 ---
 

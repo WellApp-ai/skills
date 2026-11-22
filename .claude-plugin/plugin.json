@@ -82,6 +82,7 @@
     "./skills/payment-invoice-lookup",
     "./skills/payroll-cost-by-month",
     "./skills/payroll-due-dates",
+    "./skills/payroll-question",
     "./skills/payroll-year-end-pack",
     "./skills/personal-spending",
     "./skills/prefill-form-1099-nec",

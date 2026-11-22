@@ -118,6 +118,7 @@ Ask for any of these by name. Several are setup steps another skill invokes on i
 | `payment-invoice-lookup` | Find what payment settled an invoice, or catch every payment that never got one. | [View details →](docs/payment-invoice-lookup.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/payment-invoice-lookup.skill) |
 | `payroll-cost-by-month` | Read the payslips for a month, or for each of several months, and state gross pay, tax withheld, social contributions and net pay per employee, in the currency each payslip was issued in. | [View details →](docs/payroll-cost-by-month.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/payroll-cost-by-month.skill) |
 | `payroll-due-dates` | See what payroll and social obligations are coming, with the amount wherever a payslip carries one and whether the money already left the bank. | [View details →](docs/payroll-due-dates.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/payroll-due-dates.skill) |
+| `payroll-question` | Ask about payroll and get the cost or the pay, from your payslips. | [View details →](docs/payroll-question.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/payroll-question.skill) |
 | `payroll-year-end-pack` | Read every payslip for one calendar year, total gross pay, tax withheld, social contributions and net pay per contract and per month, name each month that has no payslip or no posted journal entry, and hand the year to your accountant through the close package. | [View details →](docs/payroll-year-end-pack.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/payroll-year-end-pack.skill) |
 | `personal-spending` | See what you spent on one category, such as groceries, this month against a usual month. | [View details →](docs/personal-spending.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/personal-spending.skill) |
 | `prefill-form-1099-nec` | Get one 1099-NEC per contractor back as a PDF with your own posted figures already in box 1, and the list of payees you cannot file for yet. | [View details →](docs/prefill-form-1099-nec.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/prefill-form-1099-nec.skill) |
@@ -252,6 +253,7 @@ Install the following official skills from Well. Instructions:
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/payment-invoice-lookup/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/payroll-cost-by-month/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/payroll-due-dates/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/payroll-question/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/payroll-year-end-pack/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/personal-spending/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/prefill-form-1099-nec/SKILL.md
