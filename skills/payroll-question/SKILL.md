@@ -1,6 +1,6 @@
 ---
 name: "payroll-question"
-description: "Answer a question about payroll figures by loading the one skill that reads them: what payroll or an employee costs the company, or the pay itself (gross, net, withheld, who was paid what). It reads and writes nothing itself. Use for what payroll or staff cost, or gross, net, withheld and who was paid what."
+description: "Answer a question about payroll figures by loading the one skill that reads them: what payroll or an employee costs the company, or the pay itself (gross, net, withheld, who was paid what). An ask for Well to make payslips or file a payroll return gets a refusal and one concrete next step. It writes nothing itself. Use for payroll cost, gross, net, withheld, who was paid what, or an ask to make payslips."
 license: PolyForm-Perimeter-1.0.0
 ---
 
