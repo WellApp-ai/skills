@@ -1,6 +1,6 @@
 ---
 name: "invite-teammates"
-description: "Invite teammates into one Well workspace from a conversation. It offers the people Well detected who hold no membership yet: those on the owner's corporate email domain or, for an owner on a personal address, those seen across several connected tools (a calling flow can pass a set instead). A later or a first no waits 30 days, a second no stops it for good. Needs define-workspace. Use to invite a teammate or to answer yes or no to inviting one (\"invite Marie\", \"non\")."
+description: "Invite teammates into one Well workspace from a conversation. It offers the people Well detected who hold no membership yet: those on the owner's corporate email domain or, for an owner on a personal address, those seen across several connected tools (a calling flow can pass a set instead). A later or a first no waits 30 days, a second no stops it for good. Needs define-workspace. It also answers \"invite Marie\", \"non\" and \"am I in Atelier Verdier?\". Use to invite a teammate, answer yes or no to an invite, or check a received invitation."
 license: PolyForm-Perimeter-1.0.0
 ---
 
