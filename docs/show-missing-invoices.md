@@ -11,7 +11,7 @@
 
 ## What it does
 
-Ask your AI assistant what you are missing for a month, and it reads Well's gap list for that period: the money that actually left your bank account and still has no supplier invoice behind it, one row per supplier, with the number of transactions and the total. Each row says how the gap can be closed — Well's agent can fetch it from the supplier's portal, the provider needs connecting first, or it needs an upload from you. Amounts that Well has no exchange rate for are shown as unavailable rather than folded into a wrong total, and the list covers your categorized expense transactions, which the skill tells you every time. It is the gap-list step of Well's fetch-missing-invoices flow, after `define-period` — it lists the gaps and hands them on. It never collects the documents itself.
+Ask your AI assistant what you are missing for a month, and it reads Well's gap list for that period: the money that actually left your bank account and still has no supplier invoice behind it, one row per supplier, with the number of transactions and the total. Each row says how the gap can be closed — Well's agent can fetch it from the supplier's portal, the provider needs connecting first, or it needs an upload from you. Amounts that Well has no exchange rate for are shown as unavailable rather than folded into a wrong total, and the list covers your expense transactions that carry a category or a ledger account, outside the categories that never expect a supplier invoice, which the skill tells you every time. It is the gap-list step of Well's fetch-missing-invoices flow, after `define-period` — it lists the gaps and hands them on. It never collects the documents itself.
 
 ## Required data in Well
 
