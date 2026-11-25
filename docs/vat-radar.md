@@ -28,7 +28,7 @@ It stops where the data stops. It is a working paper for your accountant, not a 
 ## FAQ
 
 **Q: Does this file my VAT return?**
-A: No. This skill is a working paper, and it transmits nothing to the tax office. Your accountant places each figure on the return, and this gives them the figure and the invoices to check first. Ask Well to declare the return and its declaration skill prepares the CA3 from your posted ledger and fills the online form for you. You sign in and click Send yourself.
+A: No. This skill is a working paper, and it transmits nothing to the tax office. Your accountant places each figure on the return, and this gives them the figure and the invoices to check first. Ask Well to declare the return and its declaration skill prepares the CA3 from your posted ledger and fills the online form for you. It signs in with your saved login; you give any code the site asks and click Send yourself.
 
 **Q: Why does it not give box numbers?**
 A: Because Well does not guess a printed box. It states the VAT by rate and by direction, and your accountant places each figure on the form. Where Well prepares the filled CA3, the form carries each figure on its line. The one exception: when Well's check of a prepared CA3 fails a rule, Well names the box that rule is about, such as « Case 22 ».
