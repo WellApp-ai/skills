@@ -13,7 +13,7 @@
 
 A SaaS founder asks billing questions every week: who cancelled, which cards failed, what was refunded, whether a customer still pays. The answer sits in the billing tool, and Well reads it there, live, through the connection you made. Stripe, Paddle and Lago each name these things in their own way, so the skill reads the tool list of your connection first and calls only a read that the list holds.
 
-Every row is a record the billing tool returned. The status is the provider's own value, such as past due, canceled, terminated or failed, and a Paddle refund or chargeback keeps the adjustment status Paddle wrote. The skill never reads a status out of a description or a reason text, and it never guesses one. The amount keeps its currency, and the date is the one the provider stamped on the record. When the billing tool holds more rows than the skill read, the answer says so and gives the count it read, rather than giving a partial list as the whole.
+Every row is a record the billing tool returned. The status is the provider's own value, such as past due, canceled, terminated or failed, and a Paddle refund or chargeback keeps the adjustment status Paddle wrote. The skill never reads a status out of a description or a reason text, and it never guesses one. The amount keeps its currency, and the date is the one the provider stamped on the record. When the billing tool holds more rows than the skill read, the answer says so and gives the count shown, rather than giving a partial list as the whole.
 
 It reads and it stops there. It cancels no subscription, issues no refund and answers no dispute, and it writes nothing into Well. Recurring revenue is a separate question with its own method, so a question about MRR goes to the recurring revenue skill.
 
