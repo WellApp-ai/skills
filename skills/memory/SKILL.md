@@ -1,6 +1,6 @@
 ---
 name: "memory"
-description: "Keep, correct, remove and recall what Well remembers about the person and their business. Use for \"remember that\" or \"what do you know about me\", not for records or amounts."
+description: "Keep, correct, remove and recall what Well remembers about the person and their business, and the rules they set for the notifications Well sends them. Use for \"remember that\" (also a notification rule) or \"what do you know about me\", not records."
 license: PolyForm-Perimeter-1.0.0
 ---
 
