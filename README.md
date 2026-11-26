@@ -102,6 +102,7 @@ Ask for any of these by name. Several are setup steps another skill invokes on i
 | `founder-own-pay` | Read the founder's own payslips, state gross pay, tax withheld, contributions and net pay per period beside the legal form and country on the own company record, and name the self-pay paperwork that goes with them. | [View details →](docs/founder-own-pay.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/founder-own-pay.skill) |
 | `fx-exposure` | See how much of your cash and receivables sit outside your reporting currency. | [View details →](docs/fx-exposure.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/fx-exposure.skill) |
 | `import-statement` | Drop a statement you already have, and get its transactions as records. | [View details →](docs/import-statement.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/import-statement.skill) |
+| `insurance-assessment` | Know which insurance you hold, what it covers and when it renews, with a brief item before each renewal. | [View details →](docs/insurance-assessment.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/insurance-assessment.skill) |
 | `insurance-switch` | Lay your insurance offers next to your current contract, and get the letter that ends it. | [View details →](docs/insurance-switch.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/insurance-switch.skill) |
 | `invite-teammates` | Get your teammates into the workspace, without leaving the conversation. | [View details →](docs/invite-teammates.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/invite-teammates.skill) |
 | `invoice-compliance` | Know which invoices are missing a legal line before your customer or the tax office does. | [View details →](docs/invoice-compliance.md) | [⬇ Install](https://github.com/WellApp-ai/skills/raw/main/dist/invoice-compliance.skill) |
@@ -237,6 +238,7 @@ Install the following official skills from Well. Instructions:
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/founder-own-pay/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/fx-exposure/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/import-statement/SKILL.md
+    - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/insurance-assessment/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/insurance-switch/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/invite-teammates/SKILL.md
     - https://raw.githubusercontent.com/WellApp-ai/skills/refs/heads/main/skills/invoice-compliance/SKILL.md
