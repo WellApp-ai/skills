@@ -1,6 +1,6 @@
 ---
 name: "check-working-time-record"
-description: "For each employee Well can reach from a payslip or an uploaded contract, say which working time record the workspace country expects, whether a timesheet is on file for the period, and how long to keep it. It checks existence and kind, never the hours, and files nothing. Use when asked \"what working time record do I need\" or \"do I have to track my employee's hours\"."
+description: "For each employee Well can reach from a payslip or an uploaded contract, say which working time record the workspace country expects, whether a timesheet is on file for the period, and how long to keep it. It checks existence and kind, never the hours, and files nothing. Use when asked \"what working time record do I need\"."
 license: PolyForm-Perimeter-1.0.0
 ---
 

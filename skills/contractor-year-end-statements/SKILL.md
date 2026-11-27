@@ -1,6 +1,6 @@
 ---
 name: "contractor-year-end-statements"
-description: "Read the purchase invoices for one calendar year, list every contractor and supplier you paid with the total for each, name the ones carrying no tax identifier on file, and say which year-end statement each jurisdiction expects and roughly when. It never files; every figure is gross, no reporting threshold is applied, and amounts are never split by payment rail. Use when asked \"who do I owe a 1099 or DAS2 this January\", \"who needs a W-9\" or \"1099-NEC list\"."
+description: "Read the purchase invoices for one calendar year, list every contractor and supplier you paid with the total for each, name the ones carrying no tax identifier on file, and say which year-end statement each jurisdiction expects and roughly when. It never files; every figure is gross, no reporting threshold is applied, and amounts are never split by payment rail. Use when asked \"who do I owe a 1099 or DAS2 this January\" or \"who needs a W-9\"."
 license: PolyForm-Perimeter-1.0.0
 ---
 
